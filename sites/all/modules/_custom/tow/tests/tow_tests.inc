@@ -1,5 +1,14 @@
 <?php
+/** 
+ *@file
+ * Testing interface
+ */
 
+/**
+ * @return array of menu items.
+ * Each item for single test.
+ * Items will be used inside hook_menu implementation.
+ */
 function tow_tests_menu() {
   $items = array();
   
