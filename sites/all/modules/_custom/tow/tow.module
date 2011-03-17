@@ -1,0 +1,202 @@
+<?php
+// $Id: tow.module,v 1.0.0.0 2011/02/28 23:42:15 tow Exp $
+/**
+ * @file
+ * Custom code for tow.
+ */
+
+include_once('./' . drupal_get_path('module', 'tow') . '/tow_table_filter.inc');
+include_once('./' . drupal_get_path('module', 'tow') . '/tow_table_sql.inc');
+include_once('./' . drupal_get_path('module', 'tow') . '/tow_table.inc');
+include_once('./' . drupal_get_path('module', 'tow') . '/tow_record.inc');
+include_once('./' . drupal_get_path('module', 'tow') . '/tow_dataset.inc');
+include_once('./' . drupal_get_path('module', 'tow') . '/tow_table_theme.inc');
+
+include_once('./' . drupal_get_path('module', 'tow') . '/tests/tow_tests.inc');
+
+/**
+ * Declare array of fields that may be used.
+ */
+function tow_possible_fields() {
+  return array('int', 'char', 'float', 'bool', 'text', 'enum');
+}
+
+/**
+ * Implementation of hook_views_api().
+ */
+function tow_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'tow'),
+  );
+}
+
+/**
+ * Implementation of hook_theme()
+ */
+function tow_theme() {
+  return array(
+    'tabular_form' => array(
+      'arguments' => array(
+        'form' => NULL,
+      ),
+    ),
+    'sortable_table' =>array(
+      'arguments' => array(
+        'header' => array(),
+        'rows' => array(),
+        'nid' => NULL,
+        'attributes' => array(),
+        'caption' => NULL
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function tow_menu() {
+  $items = array();
+  $items['table'] = array(
+    'access arguments' => array('administer site configuration'),
+    'page arguments' => array(1),
+    'page callback' => 'tow_table_callback',
+    'file' => 'tow_table.inc',
+  );
+  
+  $items['table/%/truncate'] = array(
+    'title' => 'Truncate',  
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_table_truncate_confirm', 1),
+    'file' => 'tow_table_truncate.inc',
+    'type' => MENU_CALLBACK
+  );
+  
+  $items = array_merge($items, tow_tests_menu());
+  return $items;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function tow_nodeapi(&$node, $op) {
+  // Delete all records that have ref to the table being deleted
+  // Delete all tables that have ref to the dataset being deleted
+  if ($op == 'delete')    
+    $children_type = _tow_children_type($node->type);
+    if ($children_type) {
+      $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_nid = %d", $children_type, $node->type, $node->nid);
+      while($node_to_delete = db_fetch_object($res))
+        node_delete($node_to_delete->nid);
+    }
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function tow_block($op = 'list', $delta = 0) {
+  if ($op == 'list') {
+    $blocks['create_table']['info'] = t('Create table');
+    return $blocks;
+  }
+  elseif($op == 'view') {
+    if (user_access('access content')) {
+      if($delta == 'create_table') { 
+	    return tow_dataset_create_table_block();
+      }
+    }
+  }
+  
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function tow_form_alter(&$form, &$form_state, $form_id) {  
+  
+  if ($form_id == 'dataset_node_form' || $form_id == 'table_node_form')
+    $form['#submit'][] = 'tow_submit_maintanance_mode';
+  
+  if ($form_id == 'table_node_form')
+    tow_table_form_alter(&$form, &$form_state);
+  
+  if ($form_id == 'record_node_form')
+    tow_record_form_alter(&$form, &$form_state);
+}
+
+/**
+ * Submit callback for table and dataset editing form
+ * Checks whether status of node is changed. If it is changed call tow_maintanance_mode function
+ */
+function tow_submit_maintanance_mode($form, &$form_state) {
+  if ($form['options']['status']['#default_value'] != $form_state['values']['status'])
+    tow_maintanance_mode($form_state['values']['status'], $form_state['values']['nid'], $form_state['values']['type']);
+}
+
+/**
+ * When table is published/unpublished, perform the same change of status for records connected
+ * When dataset is published/unpublished, perform the same change of status for tables connected and recursively call this function for each table
+ */
+function tow_maintanance_mode($status, $nid, $type) {
+  
+  if ($status == 1)
+    $function = 'node_publish_action'; //TODO: do we really need to call them? (do we need watchdog be affected?)
+  elseif ($status == 0)
+    $function = 'node_unpublish_action';
+  
+  $children_type = _tow_children_type($type);
+  $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_nid = %d", $children_type, $type, $nid);
+  
+  if ($type == 'dataset')
+    while($node = db_fetch_object($res)) {
+      $node = node_load($node->nid);
+      $function($node);
+      node_save($node);
+      tow_maintanance_mode($status, $node->nid, 'table');
+    }
+  elseif ($type == 'table')
+    while($node = db_fetch_object($res)) {
+      $node = node_load($node->nid);
+      $function($node);
+      node_save($node);
+    }
+}
+
+/**
+ * @return "record" for "table" and "table" for "dataset"
+ * @param unknown_type $type
+ */
+function _tow_children_type($type) {
+  switch ($type) {
+    case 'table':
+      $children_type = 'record';
+      break;
+    case 'dataset':
+      $children_type = 'table';
+      break;
+  }
+  return $children_type;
+}  
+
+/**
+ * For @param $value return boolean string
+ */
+function _tow_format_bool($value) {
+  if ($value)
+    return 'true';
+  if ($value === '0')
+    return 'false';
+}
+
+/**
+ * For @param $value return 1 if it is "true" or 1. Not case-sensitive 
+ */
+function _tow_bool_to_int($value) {
+  if (strtolower($value) == 'true')
+    return 1;
+  if ($value == 1)
+    return 1;
+  return 0;
+}

@@ -1,0 +1,4 @@
+; $Id: tow.info,v 1.0.0.0 2011/02/28 03:25:20 tow Exp $
+name = "Theory on Wheels"
+description = "Custom code for tow."
+core = 6.x
