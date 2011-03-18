@@ -64,7 +64,7 @@ function tow_table_callback($nid) { //TODO: separate logic from formatting
   $display_options['paged_view'] = true;
   */
   $display_options['paged_view'] = true;
-  $display_options['limits']['total_elements'] = 3;                   
+  $display_options['limits']['total_elements'] = 10;                   
   
   $output .= tow_table($node, $display_options);
   
@@ -168,6 +168,7 @@ function tow_table($node, $display_options = '') {
  */
 function tow_table_form_alter(&$form, &$form_state) {
   
+  ## DEFAULT
   // unset unneeded elements
   unset($form['menu']);
   unset($form['revision_information']);
@@ -183,6 +184,7 @@ function tow_table_form_alter(&$form, &$form_state) {
     '#theme' => 'tabular_form',
     '#title' => 'Fields',
     '#tree' => true,
+    '#weight' => -1,
   );
   
   $form['fields']['header'] = array(
@@ -197,6 +199,8 @@ function tow_table_form_alter(&$form, &$form_state) {
   
   // get array of fields ordered by weights
   $weights_array = unserialize($form['#node']->field_weights[0]['value']);
+
+  ## TABLE IS BEING EDITED
   if ($weights_array) {   
     $index = 0;
     foreach (tow_possible_fields() as $field_type) {
@@ -244,57 +248,102 @@ function tow_table_form_alter(&$form, &$form_state) {
         }  
       }
     }// TODO: interface for field deleting
-  }  // TODO: user friendly interface for weights changing
   
-  // add interface for field adding
-  $form['field_add'] = array(
-    '#type' => 'fieldset',
-    '#title' => 'Add row',
-    '#collapsible' => TRUE,
-    '#collapsed' => FALSE,
-    '#tree' => TRUE  
-  );
-  $form['field_add']['title'] = array(
-    '#type' => 'textfield',
-    '#description' => t('Enter title'),
-    '#size' => 5,
-    '#maxlength' => 20,
-  );
-  $form['field_add']['type'] = array(
-    '#type' => 'select',
-    '#description' => t('Select type'),
-    '#options' => tow_possible_fields(),
-  );
-  $form['field_add']['enum_options'] = array(
-    '#type' => 'textarea',
-    '#description' => t('If you choose enum, enter enum options here. Each option should be in single string.'),
-  );
-//TODO:validate
   
-  // register submit callbacks
-  $form['#submit'][] = 'tow_table_submit_fields';
-  $form['#submit'][] = 'tow_table_submit_weights';
-  $form['#submit'][] = 'tow_table_submit_field_add';
-
-}
-
-/**
- * Submit callback.
- * If user added feld, place this field title into corresponding cck field.
- */
-function tow_table_submit_field_add($form, &$form_state) {
-  $title = $form_state['values']['field_add']['title'];
-  if ($title) {
-    $possible_fields = tow_possible_fields();
-    $type = $possible_fields[$form_state['values']['field_add']['type']];
-    $key = count($form_state['values']['field_title_' . $type]) - 2;
-    $form_state['values']['field_title_' . $type][$key]['value'] = $title;
-    if ($type == 'enum') {
-      $enum_options = serialize(explode("\r\n", $form_state['values']['field_add']['enum_options']));
-      $form_state['values']['field_enum_options'][$key]['value'] = $enum_options;
+  
+    // add interface for field adding
+    $form['field_add'] = array(
+      '#type' => 'fieldset',
+      '#title' => 'Add row',
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+      '#tree' => TRUE,
+      '#weight' => -0.5  
+    );
+    $form['field_add']['title'] = array(
+      '#type' => 'textfield',
+      '#description' => t('Enter title'),
+      '#size' => 5,
+      '#maxlength' => 20,
+    );
+    $form['field_add']['type'] = array(
+      '#type' => 'select',
+      '#description' => t('Select type'),
+      '#options' => tow_possible_fields(),
+    );
+    $form['field_add']['enum_options'] = array(
+      '#type' => 'textarea',
+      '#description' => t('If you choose enum, enter enum options here. Each option should be in single string.'),
+    );
+    
+    //TODO:validate
+    // TODO: user friendly interface for weights changing
+    
+    // register submit callbacks
+    $form['#submit'][] = 'tow_table_submit_fields';
+    $form['#submit'][] = 'tow_table_submit_weights';
+    $form['#submit'][] = 'tow_table_submit_field_add';
+    
+  }  
+  
+  ## TABLE IS BEING CREATED
+  else{
+    
+    if ($_SESSION['table_definition']) {
+      $form['title']['#default_value'] = $_SESSION['table_definition']['table_name'];
+      $form['field_dataset']['#default_value'][0]['nid'] = $_SESSION['table_definition']['dataset'];
+      $count_fields = $_SESSION['table_definition']['count_fields'];
     }
-  }
+    else
+      $count_fields = 5;
+    
+    $form['buttons']['submit']['#value'] = t('Create table');
+    
+    $form['fields']['header']['#value'][] = 'Enum options';
+    
+    for ($i = 0; $i < $count_fields; $i++) {
+    
+      $form['fields']['data'][$i]['title'] = array(
+        '#type' => 'textfield',
+        '#size' => 8,
+      );    
+      $form['fields']['data'][$i]['type'] = array( 
+        '#type' => 'select',
+        '#options' => tow_possible_fields(),
+      );
+      $form['fields']['data'][$i]['enum_options'] = array(
+        '#type' => 'textarea',
+        '#rows' => 2,
+      );
+    }
+    
+    $field_types = tow_possible_fields();
+    
+    for($i = 2; $i < $count_fields; $i++) {
+      foreach ($field_types as $field_type) {
+        $form['field_title_' . $field_type][$i] = $form['field_title_' . $field_type][0];
+        $form['field_title_' . $field_type][$i]['_weight']['#delta'] = $i;
+        $form['field_title_' . $field_type][$i]['#delta'] = $i;
+        $form['field_title_' . $field_type][$i]['#weight'] = $i;
+      }
+      $form['field_enum_options'][$i] = $form['field_title_' . $field_type][0];
+      $form['field_enum_options'][$i]['_weight']['#delta'] = $i;
+      $form['field_enum_options'][$i]['#delta'] = $i;
+      $form['field_enum_options'][$i]['#weight'] = $i;
+    }
+    
+    $form['count_fields'] = array(
+      '#type' => 'value',
+      '#value' => $count_fields,
+    );
+    
+    $form['#submit'][] = 'tow_table_submit_create';
+  }  
+      
+
 }
+
+## CALLBACKS FOR EDITING
 
 /**
  * Submit callback.
@@ -323,7 +372,7 @@ function tow_table_submit_fields($form, &$form_state) {
 /**
  * Submit callback
  * If table is being saved first time set weights to be empty array.
- * If there is a field to add add one element to weights array.
+ * If there is a field to add add one element to weights array. (Rebuilding weights)
  */
 function tow_table_submit_weights($form, &$form_state) {  
   if (!$form_state['values']['field_weights'][0]['value']) {
@@ -360,4 +409,53 @@ function tow_table_submit_weights($form, &$form_state) {
     $form_state['values']['field_weights'][0]['value'] = serialize($weights);
   }
   
+}
+
+/**
+ * Submit callback.
+ * If user added feld, place this field title into corresponding cck field.
+ */
+function tow_table_submit_field_add($form, &$form_state) {
+  $title = $form_state['values']['field_add']['title'];
+  if ($title) {
+    $possible_fields = tow_possible_fields();
+    $type = $possible_fields[$form_state['values']['field_add']['type']];
+    $key = count($form_state['values']['field_title_' . $type]) - 2;
+    $form_state['values']['field_title_' . $type][$key]['value'] = $title;
+    if ($type == 'enum') {
+      $enum_options = serialize(explode("\r\n", $form_state['values']['field_add']['enum_options']));
+      $form_state['values']['field_enum_options'][$key]['value'] = $enum_options;
+    }
+  }
+}
+
+## CALLBACK FOR CREATION
+
+/**
+ * Submit callback.
+ * Place fields user submitted into cck fields.
+ * Save array of weights. 
+ */
+function tow_table_submit_create($form, &$form_state) {
+  $weights = array();
+  $weight = 0;
+  $field_types = tow_possible_fields();
+  foreach ($field_types as $type_key => $type) {
+    $delta = 0;
+    foreach ($form_state['values']['fields']['data'] as $index => $field) {
+      if ($field['type'] == $type_key) {
+        $form_state['values']['field_title_' . $type][$delta]['value'] = $field['title'];
+        if ($type == 'enum')
+          $form_state['values']['field_enum_options'][$delta]['value'] = serialize(explode("\r\n", $field['enum_options']));
+        $delta++;
+        $weights[] = $index;
+        $weight++;
+      }
+    }
+    for ($i = $form_state['values']['count_fields']; $i > $delta; $i--) {
+      unset($form_state['values']['field_title_' . $type][$i]);
+      unset($form_state['values']['field_enum_options'][$i]);
+    }      
+  }
+  $form_state['values']['field_weights'][0]['value'] = serialize($weights);
 }
