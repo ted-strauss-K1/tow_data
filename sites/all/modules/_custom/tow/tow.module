@@ -11,6 +11,7 @@ include_once('./' . drupal_get_path('module', 'tow') . '/tow_table.inc');
 include_once('./' . drupal_get_path('module', 'tow') . '/tow_record.inc');
 include_once('./' . drupal_get_path('module', 'tow') . '/tow_dataset.inc');
 include_once('./' . drupal_get_path('module', 'tow') . '/tow_table_theme.inc');
+include_once('./' . drupal_get_path('module', 'tow') . '/tow_validate.inc');
 
 include_once('./' . drupal_get_path('module', 'tow') . '/tests/tow_tests.inc');
 
