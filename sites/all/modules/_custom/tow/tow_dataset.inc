@@ -33,6 +33,12 @@ function tow_dataset_create_table_form() {
     '#title' => 'Name',
   );
   
+  $form['create_table']['count_fields'] = array(
+    '#type' => 'textfield',
+    '#title' => 'Number of fields',
+    '#size' => 2
+  );
+  
   $form['create_table']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Go')
@@ -42,18 +48,16 @@ function tow_dataset_create_table_form() {
 }
 
 /**
- * Submit callback
+ * Submit callback.
+ * Store values in $_SESSION
+ * Redirect to node/table/add 
  */
 function tow_dataset_create_table_form_submit($form, &$form_state) {
-  $node = new stdClass;
-  if ($form_state['values']['table_name']) {
-    $node->type = 'table';
-    global $user;
-    $node->uid = $user->uid;
-    $node->status = 1;
-    $node->title = $form_state['values']['table_name'];
-    $dataset_nid = arg(1);
-    $node->field_dataset = array(array('nid' => $dataset_nid));
-    node_save($node);
-  }
+  $args = arg();
+  $_SESSION['table_definition'] = array(
+    'dataset' => $args[1],
+    'table_name' => $form_state['values']['table_name'],
+    'count_fields' => $form_state['values']['count_fields']
+  );
+  drupal_goto('node/add/table');
 }
