@@ -15,6 +15,10 @@ include_once('./' . drupal_get_path('module', 'tow') . '/tow_validate.inc');
 
 include_once('./' . drupal_get_path('module', 'tow') . '/tests/tow_tests.inc');
 
+// Validation constants, min and max number of columns in a table 
+define("MIN_FIELDS_IN_TABLE", 1);
+define("MAX_FIELDS_IN_TABLE", 20);
+
 /**
  * Declare array of fields that may be used.
  */

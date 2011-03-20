@@ -127,7 +127,8 @@ function tow_record_form_alter(&$form, &$form_state) {
   }
   
   $form['#redirect'] = 'table/' . $table->nid; 
-  
+  // register validate callbacks
+  $form['#validate'][] = 'tow_record_validate_edit';
   // register submit callbacks
   $form['#submit'][] = 'tow_record_submit_table';
   $form['#submit'][] = 'tow_record_submit_values';

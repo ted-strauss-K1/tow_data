@@ -199,7 +199,8 @@ function tow_table_form_alter(&$form, &$form_state) {
   
   // get array of fields ordered by weights
   $weights_array = unserialize($form['#node']->field_weights[0]['value']);
-
+  // register common validation function
+  $form['#validate'][] = 'tow_table_validate_common';
   ## TABLE IS BEING EDITED
   if ($weights_array) {   
     $index = 0;
@@ -276,7 +277,9 @@ function tow_table_form_alter(&$form, &$form_state) {
       '#description' => t('If you choose enum, enter enum options here. Each option should be in single string.'),
     );
     
-    //TODO:validate
+    // register additional validation function for table edit case  
+    $form['#validate'][] = 'tow_table_validate_edit';
+    
     // TODO: user friendly interface for weights changing
     
     // register submit callbacks
