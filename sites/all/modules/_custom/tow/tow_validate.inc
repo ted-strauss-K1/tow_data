@@ -20,7 +20,7 @@ function tow_table_validate_common(&$form, &$form_state) {
   $field_types = tow_possible_fields();
 
    ## Unique table title
-  $table_titles_res = db_query("SELECT title FROM {node} WHERE type = 'table' AND nid IN 
+  $table_titles_res = db_query("SELECT title FROM {node} WHERE nid IN 
   	( SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d) AND nid <> %d", 
     $form_state['values']['field_dataset'][0]['nid'], $form_state['values']['nid']);
 
@@ -187,7 +187,7 @@ function tow_dataset_create_table_form_validate($form, &$form_state) {
   }
   
   ## Unique table title
-  $table_titles_res = db_query("SELECT title FROM {node} WHERE type = 'table' AND nid IN 
+   $table_titles_res = db_query("SELECT title FROM {node} WHERE nid IN 
   	(SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)", $node->nid);
   $table_titles = array();
   while ($rs = db_fetch_array($table_titles_res)) {

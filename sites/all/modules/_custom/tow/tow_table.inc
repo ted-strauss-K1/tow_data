@@ -40,8 +40,10 @@ function tow_table_display_options($node) {
  * Menu callback
  */
 function tow_table_callback($nid) { //TODO: separate logic from formatting
+  global $node_for_menu;
   global $node;
   $node = node_load($nid);
+  $node_for_menu = $node;
   if (!$node || $node->type != 'table') {
     drupal_not_found();
     die();

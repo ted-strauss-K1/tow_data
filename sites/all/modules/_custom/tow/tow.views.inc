@@ -11,10 +11,11 @@
  * Implementation of hook_views_pre_render().
  */
 function tow_views_pre_render(&$view) {
-  
+  global $node_for_menu;
+  global $node;
   if ($view->name == 'dataset') {
-    global $node;
     $node = node_load($view->args[0]);
+    $node_for_menu = $node; 
     if ($node->type !== 'dataset') {
       drupal_not_found();
       die();
