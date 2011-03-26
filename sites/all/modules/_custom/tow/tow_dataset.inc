@@ -67,4 +67,3 @@ function tow_dataset_create_table_form_submit($form, &$form_state) {
  */
 function tow_dataset_summary(&$node) {
 }
-}
