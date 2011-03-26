@@ -61,3 +61,10 @@ function tow_dataset_create_table_form_submit($form, &$form_state) {
   );
   drupal_goto('node/add/table');
 }
+/**
+ * Extracts and prepares info for dataset summary page
+ * @param $node dataset node
+ */
+function tow_dataset_summary(&$node) {
+}
+}
