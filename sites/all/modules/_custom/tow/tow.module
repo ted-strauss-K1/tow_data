@@ -95,18 +95,29 @@ function tow_nodeapi(&$node, $op) {
     $node_for_menu = $node;  
     $children_type = _tow_children_type($node->type);
   }
+  
   if ($children_type) {
     $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_nid = %d", $children_type, $node->type, $node->nid);
     while($node_to_delete = db_fetch_object($res))
       node_delete($node_to_delete->nid);
   }
-if ($op == 'view') {
+  
+  if ($op == 'view') {
    global $node_for_menu;
    $node_for_menu = $node;
- }
- if ($node->type == 'dataset' && $op == 'load') {
+  }
+ 
+  if ($node->type == 'dataset' && $op == 'load') {
 	tow_dataset_summary($node);
   }
+  
+  // Redirect from node/[table-nid] pages to table/[table-nid]
+  if ($node->type == 'table' && $op == 'load') {
+    $args = arg();
+    if (count($args) == 2 && $args[0] == 'node')
+      drupal_goto('table/' . $node->nid, NULL, NULL, 301);
+  }
+  
 }
 
 /**
@@ -171,6 +182,15 @@ global $node_for_menu;
     } 
   
   }
+  
+  // add cancel button to record, table and dataset node editing forms.
+  if ($form_id == 'record_node_form' || $form_id == 'table_node_form' || $form_id == 'dataset_node_form')
+  $form['buttons']['cancel'] = array(
+    '#type' => 'submit',
+    '#value' => t('Cancel'),
+    '#weight' => 20
+  );
+  
 }
 
 /**
