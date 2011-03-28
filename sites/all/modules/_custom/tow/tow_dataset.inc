@@ -59,7 +59,7 @@ function tow_dataset_create_table_form_submit($form, &$form_state) {
     'table_name' => $form_state['values']['table_name'],
     'count_fields' => $form_state['values']['count_fields']
   );
-  drupal_goto('node/add/table');
+  drupal_goto('node/add/table', 'destination=dataset/' . $args[1]);
 }
 /**
  * Extracts and prepares info for dataset summary page
