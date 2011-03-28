@@ -17,6 +17,7 @@ function tow_record_form_alter(&$form, &$form_state) {
   unset($form['comment_settings']);
   //unset($form['author']); //TODO: hide this field but place user id like field_table?
   unset($form['options']);
+  unset($form['buttons']['preview']);
     
   // hide native cck fields
   foreach (tow_possible_fields() as $field_type)
@@ -126,9 +127,16 @@ function tow_record_form_alter(&$form, &$form_state) {
     }
   }
   
-  $form['#redirect'] = 'table/' . $table->nid; 
+  // specify form redirection
+  $args = arg();
+  if ($args[2] == 'edit') // for node/[record-nid]/edit
+    $form_state['redirect'] = 'table/' . $table->nid;
+  else
+    $form['#redirect'] = 'table/' . $table->nid; // for node/record/add 
+  
   // register validate callbacks
   $form['#validate'][] = 'tow_record_validate_edit';
+  
   // register submit callbacks
   $form['#submit'][] = 'tow_record_submit_table';
   $form['#submit'][] = 'tow_record_submit_values';
