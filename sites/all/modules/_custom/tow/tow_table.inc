@@ -52,7 +52,7 @@ function tow_table_callback($nid) { //TODO: separate logic from formatting
   tow_table_breadcrumb($node);
   
   $output = $node->teaser;
-  $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit') . "</div>";
+  $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
   
   
   $output .= drupal_get_form('tow_table_filter');
@@ -70,8 +70,8 @@ function tow_table_callback($nid) { //TODO: separate logic from formatting
   
   $output .= tow_table($node, $display_options);
   
-  $output .= "<div>" . l('Add record..', 'node/add/record', array('html' => TRUE, 'query' => 'table=' . $node->nid)) . "</div>";
-  $output .= "<div>" . l('Truncate', 'table/' . $node->nid . '/truncate') . "</div>";
+  $output .= _tow_table_actions_list($node->nid, 'edit');
+  
   return $output;
 }
 
@@ -282,6 +282,13 @@ function tow_table_form_alter(&$form, &$form_state) {
     // register additional validation function for table edit case  
     $form['#validate'][] = 'tow_table_validate_edit';
     
+    // add interface for actions: add record, truncate, browse    
+    $form['action_links'] = array(
+      '#type' => 'item',
+      '#value' => _tow_table_actions_list($form['#node']->nid, 'browse'),
+      '#weight' => -0.3
+    );
+    
     // TODO: user friendly interface for weights changing
     
     // register submit callbacks
@@ -463,4 +470,22 @@ function tow_table_submit_create($form, &$form_state) {
     }      
   }
   $form_state['values']['field_weights'][0]['value'] = serialize($weights);
+}
+
+/**
+ * @param $nid
+ * @return html list of links: add record, truncate, browse OR edit table 
+ */
+function _tow_table_actions_list($nid, $last_link) {
+  $items = array(
+    l('Add record', 'node/add/record', array('html' => TRUE, 'query' => 'table=' . $nid)),
+    l('Delete all', 'table/' . $nid . '/truncate'),
+  );
+  
+  if ($last_link == 'edit')
+    $items[] = l('Edit table', 'node/' . $nid . '/edit');
+  elseif ($last_link == 'browse')
+    $items[] = l('Browse table', 'table/' . $nid);
+    
+  return theme_item_list($items);
 }
