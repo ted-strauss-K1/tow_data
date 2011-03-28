@@ -12,7 +12,10 @@
  * @param $form, &$form_state
  */
 function tow_table_validate_common(&$form, &$form_state) {
-
+  
+  if ($form_state['clicked_button']['#value'] == 'Cancel')
+    return;
+    
   $error = FALSE;  
   $err_field_names = array();
   $err_msgs = array();
