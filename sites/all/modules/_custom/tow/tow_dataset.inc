@@ -230,8 +230,8 @@ function tow_dataset_badge_block() {
   $posted_by = t('Posted by ') . l($dataset->name, 'user/' . $dataset->uid);
   $count = $dataset_count_tables . t(' tables') . ' ' . $dataset_count_records . t(' rows');
 
-  $added = t('added ') . _date_ago(date('ymdHi', $dataset->created));
-  $updated = t('updated ') . _date_ago(date('ymdHi', $dataset->changed));
+  $added = t('added ') . ago($dataset->created);
+  $updated = t('updated ') . ago($dataset->changed);
 
   $block['content'] = theme('tow_theme_dataset_badge', $posted_by, $count, NULL, $added, $updated, NULL);
 
@@ -268,7 +268,7 @@ function tow_dataset_stats_block() {
       'timestamp' => t('never')
     );
   }else{
-    $dataset_statistics['timestamp'] = _date_ago(date('ymdHi', $dataset_statistics['timestamp']));
+    $dataset_statistics['timestamp'] = ago($dataset_statistics['timestamp']);
   }   
   
   $block['content'] = theme('table', array(), array(
@@ -283,69 +283,16 @@ function tow_dataset_stats_block() {
 
 /**
  * @return date in "intervals ago" format. (intervals are minutes, hours, days etc.)
- * @param $querydate: ymdHi date
+ * @param $timestamp int unix time
  */
-function _date_ago($querydate){
-
-  $minusdate = date('ymdHi') - $querydate;
-
-  if($minusdate > 88697640 && $minusdate < 100000000){
-    $minusdate = $minusdate - 88697640;
-  }
-
-  switch ($minusdate) {
-
-    case ($minusdate < 99):
-      if($minusdate == 1){
-        $date_string = '1 minute ago';
-      }
-      elseif($minusdate > 59){
-        $date_string =  ($minusdate - 40).' minutes ago';
-      }
-      elseif($minusdate > 1 && $minusdate < 59){
-        $date_string = $minusdate.' minutes ago';
-      }
-      break;
-
-    case ($minusdate > 99 && $minusdate < 2359):
-      $flr = floor($minusdate * .01);
-      if($flr == 1){
-        $date_string = '1 hour ago';
-      }
-      else{
-        $date_string =  $flr.' hours ago';
-      }
-      break;
-       
-    case ($minusdate > 2359 && $minusdate < 310000):
-      $flr = floor($minusdate * .0001);
-      if($flr == 1){
-        $date_string = '1 day ago';
-      }
-      else{
-        $date_string =  $flr.' days ago';
-      }
-      break;
-       
-    case ($minusdate > 310001 && $minusdate < 12320000):
-      $flr = floor($minusdate * .000001);
-      if($flr == 1){
-        $date_string = "1 month ago";
-      }
-      else{
-        $date_string =  $flr.' months ago';
-      }
-      break;
-       
-    case ($minusdate > 100000000):
-      $flr = floor($minusdate * .00000001);
-      if($flr == 1){
-        $date_string = '1 year ago.';
-      }
-      else{
-        $date_string = $flr.' years ago';
-      }
-  }
-      
-  return $date_string;
+function ago($timestamp){
+   $difference = time() - $timestamp;
+   $periods = array("second", "minute", "hour", "day", "week", "month", "year", "decade");
+   $lengths = array("60","60","24","7","4.35","12","10");
+   for($j = 0; $difference >= $lengths[$j]; $j++)
+     $difference /= $lengths[$j];
+   $difference = round($difference);
+   if($difference != 1) $periods[$j].= "s";
+     $text = "$difference $periods[$j] ago";
+   return $text;
 }
