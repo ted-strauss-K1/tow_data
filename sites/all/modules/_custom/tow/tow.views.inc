@@ -11,19 +11,44 @@
  * Implementation of hook_views_pre_render().
  */
 function tow_views_pre_render(&$view) {
-  global $node_for_menu;
-  global $node;
+  
   if ($view->name == 'dataset') {
-    $node = node_load($view->args[0]);
-    $node_for_menu = $node; 
+    $node = node_load($view->args[0]); 
     if ($node->type !== 'dataset') {
       drupal_not_found();
       die();
     }
-    $view->attachment_before = $node->title;
-    $view->attachment_before .= "<div>" . $node->teaser . "</div>";
+    global $dataset;
+    $dataset = (object)array('nid' => $node->nid, 'title' => $node->title);
+    
+    $view->attachment_before = tow_views_dataset_attachment($view, $node);
+
   }
  
+}
+
+function tow_views_dataset_attachment($view, $node) {
+  
+  // store in global scope text like "( 5 tables)" 
+  global $bc_attachment;
+  $count = count($view->result);
+  $bc_attachment = ' (' . $count;
+  if ($count == 1)
+    $bc_attachment .= t( ' table') . ')';
+  else
+    $bc_attachment .= t( ' tables') . ')';
+  
+  $description = $node->teaser . ' ' . l('more', 'node/' . $node->nid);  
+  $edit_description = l('edit description', 'node/' . $node->nid . '/edit');
+  
+  if (is_array($node->taxonomy && !empty($node->taxonomy))) {
+    foreach ($node->taxonomy as $item)
+      $categories[] = $item->name;
+    $categories = implode(', ', $categories);
+    $edit_categories = l('edit categories', 'node/' . $node->nid . '/edit');
+  }
+   
+  return theme('tow_theme_dataset_attachment', $description, $edit_description, $categories, $edit_categories);
 }
 
 /*
