@@ -27,6 +27,10 @@ function tow_tests_truncate_nodes_form_submit($form, &$form_state){
     'node_comment_statistics',
     'node_counter',
     'node_revisions',
+    'term_data',
+    'term_hierarchy',
+    'term_node',
+    'tow_dataset_counter',
   );
   
   foreach ($tables as $table) {
