@@ -61,14 +61,14 @@ function tow_table_filter() {
  * return array of fields to filter
  */
 function tow_table_filter_fields() {
-  global $node;
+  global $table;
   $index = 0;
-  $weights_array = unserialize($node->field_weights[0]['value']);
+  $weights_array = unserialize($table->field_weights[0]['value']);
   if (!$weights_array)
     return array();
   foreach (tow_possible_fields() as $field_type)
-    if (is_array($node->{'field_title_' . $field_type}))
-      foreach($node->{'field_title_' . $field_type} as $title_value)
+    if (is_array($table->{'field_title_' . $field_type}))
+      foreach($table->{'field_title_' . $field_type} as $title_value)
         if ($title_value['value']) {
           $aux_array[$weights_array[$index]] = $title_value['value'];
           $index++;
@@ -97,9 +97,9 @@ function tow_table_filter_translate_operator($op_key) {
  * Submit callback
  */
 function tow_table_filter_submit($form, &$form_state) {
-  global $node;
+  global $table;
   if (is_numeric($_GET['order']) && $_GET['order'] >= 0 && ($_GET['sort'] == 'asc' || $_GET['sort'] == 'desc'))
     $query = 'order=' . $_GET['order'] . '&sort=' . $_GET['sort'] . '&'; 
   $query .= 'filter=' . $form_state['values']['field'] . '&op=' . $form_state['values']['operator'] . '&value=' . $form_state['values']['value'];
-  drupal_goto('table/' . $node->nid, $query);
+  drupal_goto('table/' . $table->nid, $query);
 }
