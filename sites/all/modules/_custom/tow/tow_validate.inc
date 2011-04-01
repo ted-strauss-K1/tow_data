@@ -11,11 +11,11 @@
  *
  * @param $form, &$form_state
  */
-function tow_table_validate_common(&$form, &$form_state) {
+function tow_table_validate_common($form, &$form_state) {
   
   if ($form_state['clicked_button']['#value'] == 'Cancel')
     return;
-    
+  
   $error = FALSE;  
   $err_field_names = array();
   $err_msgs = array();
@@ -179,7 +179,7 @@ function tow_dataset_create_table_form_validate($form, &$form_state) {
   $error = FALSE;  
   $err_field_names = array();
   $err_msgs = array();
-  global $node;
+  global $dataset;
   $form_state['values']['table_name'] = trim($form_state['values']['table_name']);
 
   ## Empty table title
@@ -191,7 +191,7 @@ function tow_dataset_create_table_form_validate($form, &$form_state) {
   
   ## Unique table title
    $table_titles_res = db_query("SELECT title FROM {node} WHERE nid IN 
-  	(SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)", $node->nid);
+  	(SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)", $dataset->nid);
   $table_titles = array();
   while ($rs = db_fetch_array($table_titles_res)) {
     $table_titles[] = strtolower($rs['title']);
