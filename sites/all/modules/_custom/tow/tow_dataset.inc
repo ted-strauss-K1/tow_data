@@ -6,11 +6,37 @@
  */
 
 /**
+ * Prepare global variable with dataset statistics
+ */
+function tow_dataset_extract_statistics($node) {  
+  global $dataset_statistics;
+  $dataset_statistics = db_fetch_array(db_query("SELECT count, timestamp FROM {tow_dataset_counter} WHERE nid = %d LIMIT 1", $node->nid));
+}
+
+/**
+ * If current user is not an owner of dataset node, store data about page view in tow_dataset_counter table
+ */
+function tow_dataset_update_statistics($node) {
+  // dataset owner should not affect statistics of his fatasets
+  global $user;
+  if ($user->uid == $node->uid) {
+    return;
+  }
+    
+  $time = time();
+  db_query("
+    INSERT INTO {tow_dataset_counter} (nid, count, timestamp)
+    VALUES (%d, 1, %d)
+    ON DUPLICATE KEY UPDATE count = count+1, timestamp = %d
+    ", $node->nid, $time, $time);
+}
+
+/**
  * Create table block
  */
 function tow_dataset_create_table_block() {
-  global $node;
-  if ($node->type !== 'dataset')
+  global $dataset;
+  if (!$dataset)
     return;
   $block['content'] = drupal_get_form('tow_dataset_create_table_form');
   return $block;
@@ -20,37 +46,37 @@ function tow_dataset_create_table_block() {
  * Create table form
  */
 function tow_dataset_create_table_form() {
-  
+
   $form['create_table'] = array(
     '#type' => 'fieldset',
     '#title' => 'Create a new table',
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
-  
+
   $form['create_table']['table_name'] = array(
     '#type' => 'textfield',
     '#title' => 'Name',
   );
-  
+
   $form['create_table']['count_fields'] = array(
     '#type' => 'textfield',
     '#title' => 'Number of fields',
     '#size' => 2
   );
-  
+
   $form['create_table']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Go')
   );
-  
+
   return $form;
 }
 
 /**
  * Submit callback.
  * Store values in $_SESSION
- * Redirect to node/table/add 
+ * Redirect to node/table/add
  */
 function tow_dataset_create_table_form_submit($form, &$form_state) {
   $args = arg();
@@ -61,9 +87,265 @@ function tow_dataset_create_table_form_submit($form, &$form_state) {
   );
   drupal_goto('node/add/table', 'destination=dataset/' . $args[1]);
 }
+
 /**
  * Extracts and prepares info for dataset summary page
  * @param $node dataset node
  */
 function tow_dataset_summary(&$node) {
+
+  $node->summary['edit_description'] = l('edit description', 'node/' . $node->nid . '/edit');
+  $node->summary['edit_categories'] = l('edit categories', 'node/' . $node->nid . '/edit');
+  
+  // Extract and show names of tables from the dataset
+  $table_titles_res = db_query("SELECT nid, title FROM {node} WHERE nid IN
+      (SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)", $node->nid);
+
+  $tables = array();
+
+  while ($rs = db_fetch_array($table_titles_res)) {
+    $tables[] = array ('title' => $rs['title'], 'nid' => $rs['nid'], 'link' => "table/" . $rs['nid']);
+    $tables_list[] = l($rs['title'], 'table/' . $rs['nid']);
+  }
+  if (!empty($tables_list))
+    $node->summary['tables'] = implode(', ', $tables_list);
+
+  // get nids and titles of two random tables that contain records
+  $res = db_query("
+    SELECT n.nid, title, count FROM {node} n 
+    LEFT JOIN
+    (
+	  SELECT COUNT(*) AS count, field_table_nid FROM {content_type_record}
+	  GROUP BY field_table_nid
+     ) t
+    ON n.nid = t.field_table_nid
+    WHERE n.nid IN
+    (
+	  SELECT nid FROM {content_type_table}
+	  WHERE field_dataset_nid = %d
+    )
+    AND field_table_nid > 0
+    ORDER BY RAND()
+    LIMIT 0, 2
+  ", $node->nid);
+
+  while ($table = db_fetch_object($res)) {
+    $first_record_id = rand(0, $table->count - 3);
+    $display_options['sort'] = array ('sort_index' => 'nid', 'sort_order' => 'ASC');
+    $display_options['limits'] = array ('first_elem_no' => $first_record_id, 'total_elements' => 3);
+    
+    $node->summary['view_table'][] = array(
+      'title' => l($table->title, 'table/' . $table->nid) . t(' table'),
+      'table' => tow_table(node_load($table->nid), $display_options)
+    );
+  }
+
+  tow_dataset_prepare_badge_block($node, count($tables));
+  
+  $node->summary['admin_tasks'] = _tow_dataset_admin_tasks($node);
+}
+
+/**
+ * @return array of administrator links
+ */
+function _tow_dataset_admin_tasks($node) {
+  $count = _tow_dataset_count_all($node->uid);
+  $admin_tasks = array(
+    'create' => l('Create', 'node/add/table', array('query' => 'dataset=' . $node->nid)) . t(' or ') . l('import', 'import') . t(' a new table'),
+    'manage' => l('Manage tables',  'dataset/' . $node->nid),
+    'current_status' => t('Currently a normal user (free), with ') . $count['tables'] . t(' tables, ') . $count['records'] . t(' rows.'),
+    'maintenence' => t('Put this data set into ') . l('maintenence mode', 'node/' . $node->nid . '/edit'),
+    'delete' => l('Delete this dataset forever', 'node/' . $node->nid . '/delete'),
+  );
+  return theme_item_list($admin_tasks);
+}
+
+/**
+ * Count amount of tables and records the user owns.
+ */
+function _tow_dataset_count_all($uid) {
+  $res = db_query("
+      SELECT COUNT(*) AS c FROM {node} WHERE uid = %d AND type = 'table'
+    UNION ALL
+      SELECT COUNT(*)AS c FROM {node} WHERE uid = %d AND type = 'record'
+    ", $uid, $uid);
+  
+  $data[] = db_fetch_array($res);
+  $data[] = db_fetch_array($res);  
+  
+  $count = array(
+    'tables' => $data[0]['c'],
+    'records' => $data[1]['c'],
+  );
+  
+  return $count;    
+}
+
+/**
+ * Prepare two global variables for dataset badge block
+ */
+function tow_dataset_prepare_badge_block($node, $count_tables) {
+
+  global $dataset_count_tables;
+  $dataset_count_tables = $count_tables;
+
+  global $dataset_count_records;
+  $dataset_count_records = db_result(db_query("
+    SELECT SUM(t.count) FROM {node} n 
+    LEFT JOIN
+    (
+	  SELECT COUNT(*) AS count, field_table_nid FROM {content_type_record}
+	  GROUP BY field_table_nid
+     ) t
+    ON n.nid = t.field_table_nid
+    WHERE n.nid IN
+    (
+	  SELECT nid FROM {content_type_table}
+	  WHERE field_dataset_nid = %d
+    )
+  ", $node->nid));
+
+}
+
+/**
+ * @return "Dataset badge" block
+ */
+function tow_dataset_badge_block() {
+  
+  global $dataset;
+  if (!dataset) {
+    return;
+  }
+  
+  global $dataset_count_tables;
+  if (!isset($dataset_count_tables)) {
+    return;
+  }
+    
+  global $dataset_count_records;
+  if (!isset($dataset_count_records))
+    $dataset_count_records = 0;
+  
+  
+  $posted_by = t('Posted by ') . l($dataset->name, 'user/' . $dataset->uid);
+  $count = $dataset_count_tables . t(' tables') . ' ' . $dataset_count_records . t(' rows');
+
+  $added = t('added ') . _date_ago(date('ymdHi', $dataset->created));
+  $updated = t('updated ') . _date_ago(date('ymdHi', $dataset->changed));
+
+  $block['content'] = theme('tow_theme_dataset_badge', $posted_by, $count, NULL, $added, $updated, NULL);
+
+  $account = new stdClass;
+  $account->uid = $dataset->uid;
+  $account->name = $dataset->name;
+  $account->picture = $dataset->picture;
+
+  $block['content'] .= theme('user_picture', $account);
+
+  return $block;
+}
+
+/**
+ * @return "Dataset stats" block
+ */
+function tow_dataset_stats_block() {
+  global $dataset;
+  if (!$dataset) {
+    return;
+  }
+  
+  global $dataset_count_tables;
+  if (!isset($dataset_count_tables)) {
+    return;
+  }
+  
+  $block['title'] = t('Stats');
+  
+  global $dataset_statistics;
+  if (!$dataset_statistics) {
+    $dataset_statistics = array(
+      'count' => 0,
+      'timestamp' => t('never')
+    );
+  }else{
+    $dataset_statistics['timestamp'] = _date_ago(date('ymdHi', $dataset_statistics['timestamp']));
+  }   
+  
+  $block['content'] = theme('table', array(), array(
+    array(
+      t('Views'), $dataset_statistics['count']), 
+    array(
+      t('Last view'), $dataset_statistics['timestamp'])
+  ));
+
+  return $block;
+}
+
+/**
+ * @return date in "intervals ago" format. (intervals are minutes, hours, days etc.)
+ * @param $querydate: ymdHi date
+ */
+function _date_ago($querydate){
+
+  $minusdate = date('ymdHi') - $querydate;
+
+  if($minusdate > 88697640 && $minusdate < 100000000){
+    $minusdate = $minusdate - 88697640;
+  }
+
+  switch ($minusdate) {
+
+    case ($minusdate < 99):
+      if($minusdate == 1){
+        $date_string = '1 minute ago';
+      }
+      elseif($minusdate > 59){
+        $date_string =  ($minusdate - 40).' minutes ago';
+      }
+      elseif($minusdate > 1 && $minusdate < 59){
+        $date_string = $minusdate.' minutes ago';
+      }
+      break;
+
+    case ($minusdate > 99 && $minusdate < 2359):
+      $flr = floor($minusdate * .01);
+      if($flr == 1){
+        $date_string = '1 hour ago';
+      }
+      else{
+        $date_string =  $flr.' hours ago';
+      }
+      break;
+       
+    case ($minusdate > 2359 && $minusdate < 310000):
+      $flr = floor($minusdate * .0001);
+      if($flr == 1){
+        $date_string = '1 day ago';
+      }
+      else{
+        $date_string =  $flr.' days ago';
+      }
+      break;
+       
+    case ($minusdate > 310001 && $minusdate < 12320000):
+      $flr = floor($minusdate * .000001);
+      if($flr == 1){
+        $date_string = "1 month ago";
+      }
+      else{
+        $date_string =  $flr.' months ago';
+      }
+      break;
+       
+    case ($minusdate > 100000000):
+      $flr = floor($minusdate * .00000001);
+      if($flr == 1){
+        $date_string = '1 year ago.';
+      }
+      else{
+        $date_string = $flr.' years ago';
+      }
+  }
+      
+  return $date_string;
 }
