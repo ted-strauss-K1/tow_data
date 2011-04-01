@@ -39,17 +39,21 @@ function tow_table_display_options($node) {
 /**
  * Menu callback
  */
-function tow_table_callback($nid) { //TODO: separate logic from formatting
-  global $node_for_menu;
-  global $node;
+function tow_table_callback($nid) {
+  
   $node = node_load($nid);
-  $node_for_menu = $node;
+
   if (!$node || $node->type != 'table') {
     drupal_not_found();
     die();
   }
   
-  tow_table_breadcrumb($node);
+  global $dataset;
+  global $table;
+  
+  $dataset = node_load($node->field_dataset['0']['nid']);
+  $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
+  $table = $node;
   
   $output = $node->teaser;
   $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
@@ -65,30 +69,15 @@ function tow_table_callback($nid) { //TODO: separate logic from formatting
   $display_options['limits'] = array ('first_elem_no' => 0, 'total_elements' => 10);
   $display_options['paged_view'] = true;
   */
-  $display_options['paged_view'] = true;
+  $display_options['paged_view'] = TRUE;
   $display_options['limits']['total_elements'] = 10;                   
+  $display_options['click_sortable'] = TRUE;
   
   $output .= tow_table($node, $display_options);
   
   $output .= _tow_table_actions_list($node->nid, 'edit');
   
   return $output;
-}
-
-/*
- * Build and set breadcrumb for table pages
- */
-function tow_table_breadcrumb($node, $show_count = TRUE) {
-  $breadcrumb = array();
-  $breadcrumb[] = l('Top', '<front>');
-  $dataset = node_load($node->field_dataset[0]['nid']);
-  $breadcrumb[] = l($dataset->title, 'dataset/' . $dataset->nid);
-  if ($show_count) {
-    $count = db_result(db_query("SELECT COUNT(*) FROM {content_type_record} WHERE field_table_nid = %d", $node->nid));
-    $breadcrumb[] = $node->title . ' (' . $count . ' rows)';
-  }else
-    $breadcrumb[] = l($node->title, 'node/' . $node->nid);
-  drupal_set_breadcrumb($breadcrumb);
 }
 
 /**
@@ -109,7 +98,7 @@ function tow_table_breadcrumb($node, $show_count = TRUE) {
  * 
  * @return array of table rows. Each row is array of cells. 
  */
-function tow_table($node, $display_options = '') {
+function tow_table($node, $display_options = array()) {
   
   $paged_view = isset($display_options['paged_view']);
   
@@ -158,9 +147,24 @@ function tow_table($node, $display_options = '') {
     $rows[] = array('data' => $row);
   }
   
-  $output =  theme('sortable_table', $headers, $rows, $node->nid, array('id' => 'main-table'));
-  if  ($paged_view) 
+  if ($display_options['click_sortable']) {
+    $output =  theme('sortable_table', $headers, $rows, $node->nid, array('id' => 'main-table'));
+  }else { // TODO: MOVE IT TO SQL !
+    array_shift($headers);
+    for ($i = 0; $i < count($rows); $i++) {
+      array_shift($rows[$i]['data']);
+    }
+    $output =  theme('table', $headers, $rows);
+  }
+    
+  if  ($paged_view) {
     $output .= theme('pager', NULL, $total_elements);
+    global $bc_attachment;
+    $total = db_result(db_query("SELECT COUNT(*) FROM {content_type_record} WHERE field_table_nid = %d", $node->nid));
+    $bc_attachment = ' (' . $total . t(' rows; displaying ');
+    $start = $_GET['page'] * $total_elements  + 1;
+    $bc_attachment .= $start . ' - ' . ($start + count($rows) -1) . ')';  
+  }
   
   return $output;
 }
@@ -205,6 +209,14 @@ function tow_table_form_alter(&$form, &$form_state) {
   $form['#validate'][] = 'tow_table_validate_common';
   ## TABLE IS BEING EDITED
   if ($weights_array) {   
+    
+    global $dataset;
+    global $table;
+  
+    $dataset = node_load($form['#node']->field_dataset['0']['nid']);
+    $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
+    $table = (object)array('nid' => $form['#node']->nid, 'title' => $form['#node']->title);
+    
     $index = 0;
     foreach (tow_possible_fields() as $field_type) {
       $delta = 0;
@@ -305,9 +317,19 @@ function tow_table_form_alter(&$form, &$form_state) {
       $form['title']['#default_value'] = $_SESSION['table_definition']['table_name'];
       $form['field_dataset']['#default_value'][0]['nid'] = $_SESSION['table_definition']['dataset'];
       $count_fields = $_SESSION['table_definition']['count_fields'];
+      unset($_SESSION['table_definition']);
     }
-    else
-      $count_fields = 5;
+    else{
+      $count_fields = 1;
+      if (is_numeric($_GET['dataset']))
+        $form['field_dataset']['#default_value'][0]['nid'] = $_GET['dataset'];
+        //array_unshift($form['#validate'], 'tow_table_dont_validate_cancel');
+        $form['#validate'][] =  'tow_table_dont_validate_cancel';
+    }
+    
+    global $dataset;
+    $dataset = node_load($form['field_dataset']['#default_value'][0]['nid']);
+    $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
     
     $form['buttons']['submit']['#value'] = t('Create table');
     
@@ -488,4 +510,14 @@ function _tow_table_actions_list($nid, $last_link) {
     $items[] = l('Browse table', 'table/' . $nid);
     
   return theme_item_list($items);
+}
+
+/**
+ * When "cancel" button is clicked, redirect to node dataset page without error messages.
+ */
+function tow_table_dont_validate_cancel($form, &$form_state) {
+  if ($form_state['clicked_button']['#value'] == 'Cancel') {
+    unset($_SESSION['messages']['error']);
+    drupal_goto('node/' . $form_state['values']['field_dataset'][0]['nid']);
+  }
 }
