@@ -10,6 +10,12 @@
  * @param unknown_type $form_state
  */
 function tow_record_form_alter(&$form, &$form_state) {
+  
+  global $dataset;
+  global $table;
+  global $record;
+  $record = TRUE;
+  
   // remove title, menu options, revision information, comment settings, publishing options
   unset($form['title']);
   unset($form['menu']);
@@ -31,6 +37,9 @@ function tow_record_form_alter(&$form, &$form_state) {
   if (!$table)
     return;
   
+  $dataset = node_load($table->field_dataset[0]['nid']);
+  $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
+    
   $form['table_nid'] = array(
     '#type' => 'value',
     '#value' => $table->nid
