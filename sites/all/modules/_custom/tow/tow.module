@@ -56,6 +56,26 @@ function tow_theme() {
         'caption' => NULL
       ),
     ),
+    'tow_theme_dataset_badge' => array(
+      'arguments' => array(
+        'posted_by' => NULL,
+        'count' => NULL,
+        'searches' => NULL,
+        'added' => NULL,
+        'updated' => NULL,
+        'access' => NULL,
+      ),
+      'template' => 'templates/tow_block-dataset_badge',
+    ),
+    'tow_theme_dataset_attachment' => array(
+      'arguments' => array(
+        'description' => NULL,
+        'edit_description' => NULL,
+        'categories' => NULL,
+        'edit_categories' => NULL,
+      ),
+      'template' => 'templates/tow_theme_dataset_attachment',
+    ),
   );
 }
 
@@ -64,6 +84,14 @@ function tow_theme() {
  */
 function tow_menu() {
   $items = array();
+  
+  $items['data'] = array(
+    'access arguments' => array('administer site configuration'),
+    'title' => 'Data',
+    'page callback' => 'tow_data',
+    'menu_name' => 'primary-links',
+  );
+  
   $items['table'] = array(
     'access arguments' => array('administer site configuration'),
     'page arguments' => array(1),
@@ -84,6 +112,10 @@ function tow_menu() {
   return $items;
 }
 
+function tow_data() {
+  return l('Create a new dataset', 'node/add/dataset', array('attributes' => array('class' => 'create-dataset-link')));
+}
+
 /**
  * Implementation of hook_nodeapi().
  */
@@ -91,33 +123,38 @@ function tow_nodeapi(&$node, $op) {
   // Delete all records that have ref to the table being deleted
   // Delete all tables that have ref to the dataset being deleted
   if ($op == 'delete') {    
-    global $node_for_menu;
-    $node_for_menu = $node;  
     $children_type = _tow_children_type($node->type);
+    if ($children_type) {
+      $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_nid = %d", $children_type, $node->type, $node->nid);
+      while($node_to_delete = db_fetch_object($res))
+        node_delete($node_to_delete->nid);
+    }
   }
-  
-  if ($children_type) {
-    $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_nid = %d", $children_type, $node->type, $node->nid);
-    while($node_to_delete = db_fetch_object($res))
-      node_delete($node_to_delete->nid);
-  }
-  
+    
   if ($op == 'view') {
-   global $node_for_menu;
-   $node_for_menu = $node;
+    if ($node->type == 'dataset') {
+      global $dataset;
+      $dataset = $node;
+    }
   }
  
-  if ($node->type == 'dataset' && $op == 'load') {
-	tow_dataset_summary($node);
+  if ($node->type == 'dataset' && $op == 'view') {
+	tow_dataset_extract_statistics($node);
+    tow_dataset_summary($node);
+    tow_dataset_update_statistics($node);
   }
   
   // Redirect from node/[table-nid] pages to table/[table-nid]
-  if ($node->type == 'table' && $op == 'load') {
+  if ($node->type == 'table' && $op == 'view') {
     $args = arg();
     if (count($args) == 2 && $args[0] == 'node')
       drupal_goto('table/' . $node->nid, NULL, NULL, 301);
   }
   
+  // Redirect from node/[record-nid] to node/[record-nid]/edit
+  if  ($node->type == 'record' && $op == 'view')
+    drupal_goto('node/' . $node->nid . '/edit', NULL, NULL, 301);
+    
 }
 
 /**
@@ -127,6 +164,8 @@ function tow_block($op = 'list', $delta = 0) {
   if ($op == 'list') {
     $blocks['create_table']['info'] = t('Create table');
     $blocks['pma_menu']['info'] = t('PhpMyAdmin menu');
+    $blocks['dataset_badge']['info'] = t('Dataset badge');
+    $blocks['dataset_stats']['info'] = t('Dataset statistics');
     return $blocks;
   }
   elseif($op == 'view') {
@@ -137,6 +176,12 @@ function tow_block($op = 'list', $delta = 0) {
       if ($delta == 'pma_menu') {
 	    return tow_pma_menu_block();
       }
+      if ($delta == 'dataset_badge') {
+	    return tow_dataset_badge_block();
+      }
+      if ($delta == 'dataset_stats') {
+	    return tow_dataset_stats_block();
+      }
     }
   }
   
@@ -146,40 +191,42 @@ function tow_block($op = 'list', $delta = 0) {
  * Implementation of hook_form_alter().
  */
 function tow_form_alter(&$form, &$form_state, $form_id) {  
-  
-global $node_for_menu;
-  
+    
   if ($form_id == 'dataset_node_form' || $form_id == 'table_node_form') {
-    $node_for_menu = $form['#node'];
     $form['#submit'][] = 'tow_submit_maintanance_mode';
   }
+  
   if ($form_id == 'table_node_form') {
-    $node_for_menu = $form['#node'];
     tow_table_form_alter(&$form, &$form_state);
   }
+  
   if ($form_id == 'record_node_form') {
-    $node_for_menu = $form['#node'];
-
-    global $dataset_nid;
-    $dataset_nid_res = db_query("SELECT field_dataset_nid FROM {content_type_table} WHERE nid = %d", 
-      $node_for_menu->field_table['0']['nid']);
-    while ($rs = db_fetch_array($dataset_nid_res)) {
-      $dataset_nid = ($rs['field_dataset_nid']);
-    }
-    
     tow_record_form_alter(&$form, &$form_state);
   }
   
   if ($form_id == 'node_delete_confirm' || $form_id == 'tow_table_truncate_confirm') {
-    $node_for_menu = node_load($form['nid']['#value']);
-    if ($node_for_menu->type == 'record' ){
-      global $dataset_nid;
-      $dataset_nid_res = db_query("SELECT field_dataset_nid FROM {content_type_table} WHERE nid = %d", 
-        $node_for_menu->field_table['0']['nid']);
-      while ($rs = db_fetch_array($dataset_nid_res)) {
-        $dataset_nid = ($rs['field_dataset_nid']);
-      }
-    } 
+    $node = node_load($form['nid']['#value']);
+    switch ($node->type) {
+      case 'dataset':
+        global $dataset;
+        $dataset = (object)(array('nid' => $node->nid, 'title' => $node->title));
+        break;
+      case 'table':
+        global $dataset;
+        global $table;
+        $dataset = node_load($node->field_dataset['0']['nid']);
+        $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
+        $table = (object)array('nid' => $node->nid, 'title' => $node->title);
+        break;
+      case 'record':
+        global $dataset;
+        global $table;
+        $table = node_load($node->field_table['0']['nid']);
+        $dataset = node_load($table->field_dataset['0']['nid']);
+        $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
+        $table = (object)array('nid' => $table->nid, 'title' => $table->title);
+        break;
+    }
   
   }
   
