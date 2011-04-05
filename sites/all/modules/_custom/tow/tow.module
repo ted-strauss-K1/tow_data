@@ -108,6 +108,15 @@ function tow_menu() {
     'type' => MENU_CALLBACK
   );
   
+  $items['dataset/%/maintenance'] = array(
+    'title' => 'Maintenance mode',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_dataset_maintenance_confirm', 1),
+    'file' => 'tow_dataset.inc',
+    'type' => MENU_CALLBACK
+  );
+  
   $items = array_merge($items, tow_tests_menu());
   return $items;
 }
