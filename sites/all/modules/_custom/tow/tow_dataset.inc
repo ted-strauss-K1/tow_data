@@ -149,14 +149,22 @@ function tow_dataset_summary(&$node) {
  * @return array of administrator links
  */
 function _tow_dataset_admin_tasks($node) {
+  
   $count = _tow_dataset_count_all($node->uid);
+  
+  if ($node->status)
+    $maintenance = t('Put this data set into ') . l('maintenance mode', 'dataset/' . $node->nid . '/maintenance');
+  else
+    $maintenance = t('Now this data set is in maintenance mode. ' . l('Publish it', 'dataset/' . $node->nid . '/maintenance')); 
+    
   $admin_tasks = array(
     'create' => l('Create', 'node/add/table', array('query' => 'dataset=' . $node->nid)) . t(' or ') . l('import', 'import') . t(' a new table'),
     'manage' => l('Manage tables',  'dataset/' . $node->nid),
     'current_status' => t('Currently a normal user (free), with ') . $count['tables'] . t(' tables, ') . $count['records'] . t(' rows.'),
-    'maintenence' => t('Put this data set into ') . l('maintenence mode', 'node/' . $node->nid . '/edit'),
+    'maintenence' => $maintenance,
     'delete' => l('Delete this dataset forever', 'node/' . $node->nid . '/delete'),
   );
+  
   return theme_item_list($admin_tasks);
 }
 
@@ -295,4 +303,49 @@ function ago($timestamp){
    if($difference != 1) $periods[$j].= "s";
      $text = "$difference $periods[$j] ago";
    return $text;
+}
+
+/**
+ * @return maintenance confirmation form
+ */
+function tow_dataset_maintenance_confirm(&$form_state, $nid) {
+  global $dataset;
+  $dataset = node_load($nid);
+  
+  if ($dataset->type != 'dataset') {
+    drupal_not_found();
+    die();
+  }
+  
+  $form['dataset'] = array(
+    '#type' => 'value',
+    '#value' => $dataset,
+  );
+  
+  if ($dataset->status)
+    $message = 'Are you sure you want to put %title to maintenance mode?';
+  else
+    $message = 'Now %title is in maintenance mode. Do you want to publish it?';
+  
+  return confirm_form($form,
+    t($message, array('%title' => $dataset->title)),
+    'node/'. $dataset->nid,
+    '',
+    t('Yes'),
+    t('Cancel')
+  );
+}
+
+/**
+ * Submission callback for maintenance confirmation form
+ * Published dataset becomes unpublished and vice-versa
+ */
+function tow_dataset_maintenance_confirm_submit($form, &$form_state) {
+  $dataset = $form_state['values']['dataset']; 
+  if ($dataset->status)
+    $dataset->status = 0;
+  else
+    $dataset->status = 1;
+  node_save($dataset);
+  $form_state['redirect'] = 'node/' . $dataset->nid;  
 }
