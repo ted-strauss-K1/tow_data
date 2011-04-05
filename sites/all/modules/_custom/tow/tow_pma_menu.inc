@@ -82,7 +82,7 @@ function tow_pma_breadcrumbs() {
   
   if ($table)
     $bc[] = l($dataset->title, 'dataset/' . $dataset->nid);
-  elseif ($args[0] == 'node' && $args[1] == 'add' && $args[2] == 'table')
+  elseif (    ($args[0] == 'node' && $args[1] == 'add' && $args[2] == 'table')     ||     ($args[0] == 'dataset' && $args[2] == 'maintenance')    )
       $bc[] = l($dataset->title, 'dataset/' . $dataset->nid);
     else
       $bc[] = $dataset->title;  
