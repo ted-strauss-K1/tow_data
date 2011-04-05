@@ -104,6 +104,9 @@ function tow_record_form_alter(&$form, &$form_state) {
         case 'enum':
           $input_type = 'select';
           break;
+        case 'timestamp':
+          $value['value'] = 'NOW()';
+          $input_type = 'textfield';
         default :
           $input_type = 'textfield';
       }
@@ -170,6 +173,8 @@ function tow_record_submit_values($form, &$form_state) {
     $type = $form['fields']['data'][$key]['type']['#value'];
     if ($type == 'bool')
       $value['value'] = _tow_bool_to_int($value['value']);
+    if ($type == 'timestamp')
+      $value['value'] = time();
     $delta = $form_state['values']['delta'][$key];
     $form_state['values']['field_' . $type][$delta]['_weight'] = $delta;
     $form_state['values']['field_' . $type][$delta]['value'] = $value['value'];
