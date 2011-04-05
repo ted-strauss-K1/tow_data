@@ -24,7 +24,7 @@ define("MAX_FIELDS_IN_TABLE", 20);
  * Declare array of fields that may be used.
  */
 function tow_possible_fields() {
-  return array('int', 'char', 'float', 'bool', 'text', 'enum');
+  return array('int', 'char', 'float', 'bool', 'text', 'enum', 'date', 'datetime', 'time', 'timestamp');
 }
 
 /**
