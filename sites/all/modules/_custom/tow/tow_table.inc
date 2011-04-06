@@ -50,14 +50,15 @@ function tow_table_callback($nid) {
   
   global $dataset;
   global $table;
+  global $user;
   
   $dataset = node_load($node->field_dataset['0']['nid']);
-  $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
+  $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title, 'uid' => $dataset->uid);
   $table = $node;
   
   $output = $node->teaser;
-  $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
-  
+  if ($user->uid == $dataset->uid)
+    $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
   
   $output .= drupal_get_form('tow_table_filter');
   
@@ -75,7 +76,8 @@ function tow_table_callback($nid) {
   
   $output .= tow_table($node, $display_options);
   
-  $output .= _tow_table_actions_list($node->nid, 'edit');
+  if ($user->uid == $dataset->uid)
+    $output .= _tow_table_actions_list($node->nid, 'edit');
   
   return $output;
 }
