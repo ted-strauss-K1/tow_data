@@ -38,7 +38,13 @@ function tow_dataset_create_table_block() {
   global $dataset;
   if (!$dataset)
     return;
-  $block['content'] = drupal_get_form('tow_dataset_create_table_form');
+  
+  global $user;
+  if ($user->uid === $dataset->uid) {
+    $args = arg();
+    if ($args[0] == 'dataset' && !isset($args[2]))
+      $block['content'] = drupal_get_form('tow_dataset_create_table_form');
+  }
   return $block;
 }
 
