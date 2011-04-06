@@ -19,7 +19,7 @@ function tow_views_pre_render(&$view) {
       die();
     }
     global $dataset;
-    $dataset = (object)array('nid' => $node->nid, 'title' => $node->title);
+    $dataset = (object)array('nid' => $node->nid, 'title' => $node->title, 'uid' => $node->uid);
     
     $view->attachment_before = tow_views_dataset_attachment($view, $node);
 
@@ -41,7 +41,7 @@ function tow_views_dataset_attachment($view, $node) {
   else
     $bc_attachment .= t( ' tables') . ')';
   
-  global $user;  
+  global $user;
   $description = $node->teaser . ' ' . l('more', 'node/' . $node->nid);  
   if ($user->uid == $node->uid)
     $edit_description = l('edit description', 'node/' . $node->nid . '/edit');
