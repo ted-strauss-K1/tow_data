@@ -27,6 +27,9 @@ function tow_views_pre_render(&$view) {
  
 }
 
+/**
+ * Prepare dataset view attachment: description, taxonomy with edit links for dataset owner
+ */
 function tow_views_dataset_attachment($view, $node) {
   
   // store in global scope text like "( 5 tables)" 
@@ -38,14 +41,20 @@ function tow_views_dataset_attachment($view, $node) {
   else
     $bc_attachment .= t( ' tables') . ')';
   
+  global $user;  
   $description = $node->teaser . ' ' . l('more', 'node/' . $node->nid);  
-  $edit_description = l('edit description', 'node/' . $node->nid . '/edit');
+  if ($user->uid == $node->uid)
+    $edit_description = l('edit description', 'node/' . $node->nid . '/edit');
   
-  if (is_array($node->taxonomy && !empty($node->taxonomy))) {
+  if (is_array($node->taxonomy) && !empty($node->taxonomy)) {
     foreach ($node->taxonomy as $item)
       $categories[] = $item->name;
     $categories = implode(', ', $categories);
-    $edit_categories = l('edit categories', 'node/' . $node->nid . '/edit');
+    if ($user->uid == $node->uid) {
+      $edit_categories = l('edit categories', 'node/' . $node->nid . '/edit');
+    }
+  }elseif ($user->uid == $node->uid) {
+    $edit_categories = t('This dataset does not have any categories. ') . l('Add categories', 'node/' . $node->nid . '/edit');
   }
    
   return theme('tow_theme_dataset_attachment', $description, $edit_description, $categories, $edit_categories);
