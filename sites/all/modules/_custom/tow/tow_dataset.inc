@@ -94,8 +94,13 @@ function tow_dataset_create_table_form_submit($form, &$form_state) {
  */
 function tow_dataset_summary(&$node) {
 
-  $node->summary['edit_description'] = l('edit description', 'node/' . $node->nid . '/edit');
-  $node->summary['edit_categories'] = l('edit categories', 'node/' . $node->nid . '/edit');
+  global $user;
+  // for administer view only
+  if ($user->uid == $node->uid) {
+    $node->summary['edit_description'] = l('edit description', 'node/' . $node->nid . '/edit');
+    $node->summary['edit_categories'] = l('edit categories', 'node/' . $node->nid . '/edit');
+    $node->summary['admin_tasks'] = _tow_dataset_admin_tasks($node);
+  }
   
   // Extract and show names of tables from the dataset
   $table_titles_res = db_query("SELECT nid, title FROM {node} WHERE nid IN
@@ -142,7 +147,6 @@ function tow_dataset_summary(&$node) {
 
   tow_dataset_prepare_badge_block($node, count($tables));
   
-  $node->summary['admin_tasks'] = _tow_dataset_admin_tasks($node);
 }
 
 /**
