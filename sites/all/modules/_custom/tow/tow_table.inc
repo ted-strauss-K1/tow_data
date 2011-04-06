@@ -362,7 +362,7 @@ function tow_table_form_alter(&$form, &$form_state) {
         $form['field_title_' . $field_type][$i]['#delta'] = $i;
         $form['field_title_' . $field_type][$i]['#weight'] = $i;
       }
-      $form['field_enum_options'][$i] = $form['field_title_' . $field_type][0];
+      $form['field_enum_options'][$i] = $form['field_enum_options'][0];
       $form['field_enum_options'][$i]['_weight']['#delta'] = $i;
       $form['field_enum_options'][$i]['#delta'] = $i;
       $form['field_enum_options'][$i]['#weight'] = $i;
@@ -478,11 +478,16 @@ function tow_table_submit_create($form, &$form_state) {
   $field_types = tow_possible_fields();
   foreach ($field_types as $type_key => $type) {
     $delta = 0;
+    $enum_delta = 0;
     foreach ($form_state['values']['fields']['data'] as $index => $field) {
       if ($field['type'] == $type_key) {
         $form_state['values']['field_title_' . $type][$delta]['value'] = $field['title'];
-        if ($type == 'enum')
+        $form_state['values']['field_title_' . $type][$delta]['_weight'] = $delta;
+        if ($type == 'enum') {
           $form_state['values']['field_enum_options'][$delta]['value'] = serialize(explode("\r\n", $field['enum_options']));
+          $form_state['values']['field_enum_options'][$delta]['_weight'] = $delta;
+          $enum_delta++;
+        }
         $delta++;
         $weights[] = $index;
         $weight++;
@@ -490,8 +495,12 @@ function tow_table_submit_create($form, &$form_state) {
     }
     for ($i = $form_state['values']['count_fields']; $i > $delta; $i--) {
       unset($form_state['values']['field_title_' . $type][$i]);
-      unset($form_state['values']['field_enum_options'][$i]);
-    }      
+    }
+    if ($type == 'enum') {
+      for ($i = $form_state['values']['count_fields']; $i > $enum_delta; $i--) {
+        unset($form_state['values']['field_enum_options'][$i]);
+      }
+    }
   }
   $form_state['values']['field_weights'][0]['value'] = serialize($weights);
 }
