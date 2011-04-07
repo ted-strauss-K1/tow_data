@@ -11,12 +11,19 @@
  * @param $nid of table to be truncated
  */
 function tow_table_truncate_confirm(&$form_state, $nid) {
+  
+  $node = node_load($nid);
+  
+  global $user;
+  if ($user->uid != $node->uid) {
+    drupal_access_denied();
+    die();
+  }
+  
   $form['nid'] = array(
     '#type' => 'value',
     '#value' => $nid,
   );
-  
-  $node = node_load($nid);
   
   $form['#dataset'] = $node->field_dataset[0]['nid'];
   
