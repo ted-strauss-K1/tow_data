@@ -52,6 +52,7 @@ function tow_theme() {
         'header' => array(),
         'rows' => array(),
         'nid' => NULL,
+        'uid' => NULL,
         'attributes' => array(),
         'caption' => NULL
       ),
