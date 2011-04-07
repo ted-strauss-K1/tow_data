@@ -132,6 +132,8 @@ function tow_table($node, $display_options = array()) {
     foreach ($rs as $key => $value) {
       if ($user_table['titles']['types'][$key] == 'bool') {
         $row[] = array('data' => _tow_format_bool($value));
+      }elseif ($user_table['titles']['types'][$key] == 'date') {
+        $row[] = array('data' => substr($value, 0, 10));
       }elseif ($user_table['titles']['types'][$key] == 'timestamp') {
         $row[] = array('data' => date('d M Y H:i:s', $value));  
       }elseif ($user_table['titles']['types'][$key] == 'enum') {
