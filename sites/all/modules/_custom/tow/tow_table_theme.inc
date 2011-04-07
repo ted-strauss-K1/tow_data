@@ -22,16 +22,25 @@ function theme_tabular_form($form) {
 /*
  * Theme callback.
  */
-function theme_sortable_table($header, $rows, $nid, $attributes = array(), $caption = NULL) {
+function theme_sortable_table($header, $rows, $nid, $uid = NULL, $attributes = array(), $caption = NULL) {
   
   $active = tow_table_headers($header, $nid);
   
-  $header[0] = 'Action';
+  // hide first column for all users except table owner 
+  global $user;
+  if ($user->uid == $uid) {
+    $header[0] = 'Action';
   
-  foreach($rows as $key => $value) {
-    $record_nid = $rows[$key]['data'][0]['data'];
-    $rows[$key]['data'][0] = l('edit', 'node/' . $record_nid . '/edit', array('query' => 'destination=table/' . $nid));
-    $rows[$key]['data'][0] .= ' ' . l('delete', 'node/' . $record_nid . '/delete', array('query' => 'destination=table/' . $nid));
+    foreach($rows as $key => $value) {
+      $record_nid = $rows[$key]['data'][0]['data'];
+      $rows[$key]['data'][0] = l('edit', 'node/' . $record_nid . '/edit', array('query' => 'destination=table/' . $nid));
+      $rows[$key]['data'][0] .= ' ' . l('delete', 'node/' . $record_nid . '/delete', array('query' => 'destination=table/' . $nid));
+    }
+  }else{
+    unset($header[0]);
+    foreach($rows as $key => $value) {
+      unset($rows[$key]['data'][0]);
+    }
   }
   
   // Add sticky headers, if applicable.
