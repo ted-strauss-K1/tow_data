@@ -327,6 +327,12 @@ function tow_dataset_maintenance_confirm(&$form_state, $nid) {
     die();
   }
   
+  global $user;
+  if ($user->uid != $dataset->uid) {
+    drupal_access_denied();
+    die();
+  }
+  
   $form['dataset'] = array(
     '#type' => 'value',
     '#value' => $dataset,
