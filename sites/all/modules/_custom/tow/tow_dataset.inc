@@ -348,14 +348,16 @@ function tow_dataset_maintenance_confirm(&$form_state, $nid) {
 
 /**
  * Submission callback for maintenance confirmation form
- * Published dataset becomes unpublished and vice-versa
+ * Publish dataset if it is unpublished and vice-versa
  */
 function tow_dataset_maintenance_confirm_submit($form, &$form_state) {
-  $dataset = $form_state['values']['dataset']; 
+  $dataset = $form_state['values']['dataset'];
   if ($dataset->status)
     $dataset->status = 0;
   else
     $dataset->status = 1;
   node_save($dataset);
+  // recursively perform same action with tables and records
+  tow_maintanance_mode($dataset->status, $dataset->nid, 'dataset');
   $form_state['redirect'] = 'node/' . $dataset->nid;  
 }
