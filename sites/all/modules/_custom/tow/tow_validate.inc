@@ -164,6 +164,22 @@ function tow_record_validate_edit(&$form, &$form_state) {
         break;
       case 'bool':
         break;
+   	  case 'time':
+        $value = trim($value_array['value']);
+        if (!preg_match("/^-?(([0-7]?[0-9]?[0-9])|([8][0-2][0-9])|([8][3][8])):([0-5]?[0-9])(:([0-5]?[0-9]))?$/", $value)) {
+          $error = TRUE;  
+          $err_field_names[] = "fields][data][$key][value";
+          $err_msgs[] = t('Time must be entered in \"HHH:MM:SS\" or \"HHH:MM\" format.');
+        }
+        break;
+      case 'code':
+        $value = $value_array['value'];
+        if (strlen($value) > 3) { 
+          $error = TRUE;  
+          $err_field_names[] = "fields][data][$key][value";
+          $err_msgs[] = t('Code field must not contain more than 3 symbols.');
+        } 
+        break;
     }
   }
   ## Showing error messages 
