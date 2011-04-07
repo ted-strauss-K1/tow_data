@@ -87,14 +87,14 @@ function tow_menu() {
   $items = array();
   
   $items['data'] = array(
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('access content'),
     'title' => 'Data',
     'page callback' => 'tow_data',
     'menu_name' => 'primary-links',
   );
   
   $items['table'] = array(
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('access content'),
     'page arguments' => array(1),
     'page callback' => 'tow_table_callback',
     'file' => 'tow_table.inc',
