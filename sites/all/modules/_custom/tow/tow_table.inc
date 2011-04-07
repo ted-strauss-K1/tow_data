@@ -189,6 +189,8 @@ function tow_table_form_alter(&$form, &$form_state) {
     $form['field_title_' . $field_type]['#access'] = FALSE;
   $form['field_enum_options']['#access'] = FALSE;
   
+  $form['#content_extra_fields']['body_field']['weight'] = 0;
+  
   // add tabular form containing
   $form['fields'] = array(
     '#theme' => 'tabular_form',
