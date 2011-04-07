@@ -102,7 +102,7 @@ function tow_menu() {
   
   $items['table/%/truncate'] = array(
     'title' => 'Truncate',  
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('delete own record content'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('tow_table_truncate_confirm', 1),
     'file' => 'tow_table_truncate.inc',
@@ -111,7 +111,7 @@ function tow_menu() {
   
   $items['dataset/%/maintenance'] = array(
     'title' => 'Maintenance mode',
-    'access arguments' => array('administer site configuration'),
+    'access arguments' => array('edit own dataset content'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('tow_dataset_maintenance_confirm', 1),
     'file' => 'tow_dataset.inc',
