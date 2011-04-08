@@ -5,16 +5,18 @@
  * Custom code for tow.
  */
 
-include_once('./' . drupal_get_path('module', 'tow') . '/tow_table_filter.inc');
-include_once('./' . drupal_get_path('module', 'tow') . '/tow_table_sql.inc');
-include_once('./' . drupal_get_path('module', 'tow') . '/tow_table.inc');
-include_once('./' . drupal_get_path('module', 'tow') . '/tow_record.inc');
-include_once('./' . drupal_get_path('module', 'tow') . '/tow_dataset.inc');
-include_once('./' . drupal_get_path('module', 'tow') . '/tow_table_theme.inc');
-include_once('./' . drupal_get_path('module', 'tow') . '/tow_validate.inc');
+$module_path = drupal_get_path('module', 'tow');
+include_once('./' . $module_path . '/tow_table_filter.inc');
+include_once('./' . $module_path . '/tow_table_sql.inc');
+include_once('./' . $module_path . '/tow_table.inc');
+include_once('./' . $module_path . '/tow_record.inc');
+include_once('./' . $module_path . '/tow_dataset.inc');
+include_once('./' . $module_path . '/tow_table_theme.inc');
+include_once('./' . $module_path . '/tow_validate.inc');
+include_once('./' . $module_path . '/tow_pma_menu.inc');
+include_once('./' . $module_path . '/tow_access.inc');
 
-include_once('./' . drupal_get_path('module', 'tow') . '/tow_pma_menu.inc');
-include_once('./' . drupal_get_path('module', 'tow') . '/tests/tow_tests.inc');
+include_once('./' . $module_path . '/tests/tow_tests.inc');
 
 // Validation constants, min and max number of columns in a table 
 define("MIN_FIELDS_IN_TABLE", 1);
@@ -118,6 +120,15 @@ function tow_menu() {
     'type' => MENU_CALLBACK
   );
   
+  $items['access'] = array(
+    'title' => NULL,
+    'access arguments' => array('edit own dataset content'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_access_confirm', 1, 2, 3),
+    'file' => 'tow_access.inc',
+    'type' => MENU_CALLBACK
+  );
+  
   $items = array_merge($items, tow_tests_menu());
   return $items;
 }
@@ -164,6 +175,9 @@ function tow_nodeapi(&$node, $op) {
   // Redirect from node/[record-nid] to node/[record-nid]/edit
   if  ($node->type == 'record' && $op == 'view')
     drupal_goto('node/' . $node->nid . '/edit', NULL, NULL, 301);
+  
+  if ($op == 'load' && $node->type == 'dataset')
+    tow_access_dataset($node);
     
 }
 
