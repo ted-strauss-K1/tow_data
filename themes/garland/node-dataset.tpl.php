@@ -37,6 +37,14 @@
       </div>
     <?php endif;?>
   </div>
+  
+  <div class="clear-block">
+    <?php if ($summary['access_widget']): ?>
+      <div class="access-widget">
+        <?php print $summary['access_widget']; ?>
+      </div>
+    <?php endif; ?>
+  </div>
    
   <div class="clear-block"> 
     <?php if ($summary['tables']): ?>
