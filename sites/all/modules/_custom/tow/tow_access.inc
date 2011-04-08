@@ -40,6 +40,38 @@ function tow_access_dataset($node) {
 }
 
 /**
+ * @return form for dataset access type settings
+ */
+function tow_access_type_form() {
+  global $dataset;
+  $options = array(t('Open'), t('By request'), t('Private'));
+  $current_access_type = $dataset->field_access_type[0]['value'];
+  $form['description'] = array(
+    '#type' => 'item',
+    '#value' => t('User acces set to: ') . $options[$current_access_type] . '. ' . t('Change user access:'),
+  );
+  $form['access_type'] = array(
+    '#type' => 'select',
+    '#options' => $options,
+    '#default_value' => $current_access_type,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Submit'),
+  );
+  return $form;
+}
+
+/**
+ * Submission callback
+ */
+function tow_access_type_form_submit($form, &$form_state) {
+  global $dataset;
+  $dataset->field_access_type[0]['value'] = $form_state['values']['access_type'];
+  node_save($dataset);
+}
+
+/**
  * Dependently on status from tow_access_requests @return access request button (nothing in that table) or message of request status 
  */
 function tow_access_request_widget($nid, $uid) {
