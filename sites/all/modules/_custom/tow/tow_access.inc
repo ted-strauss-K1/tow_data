@@ -12,14 +12,21 @@ function tow_access_dataset($node) {
   global $user;
   if ($user->uid != $node->uid) {
     // if access is not open
-    if ($node->field_access_type[0]['value'] == 0)
+    $access_type = $node->field_access_type[0]['value'];
+    if ($access_type == 0)
       return;
     // if access is by request
-    if ($node->field_access_type[0]['value'] == 1) {
+    if ($access_type == 1) {
       $args = arg();
       // dataset summary page
-      if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2)
+      if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
+        $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
+        if ($status != 1) {
+          global $grey_pma_menu;
+          $grey_pma_menu = TRUE;
+        }
         return;
+      }      
     }
     if (!$args)
       $args = arg();
