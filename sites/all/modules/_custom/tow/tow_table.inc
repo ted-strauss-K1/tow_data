@@ -116,7 +116,9 @@ function tow_table($node, $display_options = array()) {
 
   $headers = $user_table['titles']['values'];
   
-  array_unshift($headers, "");
+  if ($display_options['click_sortable']) {
+    array_unshift($headers, "");
+  }
 
   $query =  $user_table['query'];
   $args = $user_table['arguments'];
@@ -150,16 +152,15 @@ function tow_table($node, $display_options = array()) {
         $row[] = array('data' => $value);
       }
     }
+	if (!$display_options['click_sortable']) {
+       array_shift($row); 
+     }
     $rows[] = array('data' => $row);
   }
   
   if ($display_options['click_sortable']) {
     $output =  theme('sortable_table', $headers, $rows, $node->nid, $node->uid, array('id' => 'main-table'));
-  }else { // TODO: MOVE IT TO SQL !
-    array_shift($headers);
-    for ($i = 0; $i < count($rows); $i++) {
-      array_shift($rows[$i]['data']);
-    }
+  }else {
     $output =  theme('table', $headers, $rows);
   }
     
