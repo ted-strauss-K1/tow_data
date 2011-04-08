@@ -99,15 +99,18 @@ function tow_dataset_create_table_form_submit($form, &$form_state) {
  * @param $node dataset node
  */
 function tow_dataset_summary(&$node) {
-
+  
   global $user;
   // for administer view only
   if ($user->uid == $node->uid) {
     $node->summary['edit_description'] = l('edit description', 'node/' . $node->nid . '/edit');
     $node->summary['edit_categories'] = l('edit categories', 'node/' . $node->nid . '/edit');
     $node->summary['admin_tasks'] = _tow_dataset_admin_tasks($node);
+  // for user view
+  // if access by request
+  }elseif($node->field_access_type[0]['value'] == 1) {
+    $node->summary['access_widget'] = tow_access_request_widget($node->nid, $user->uid);
   }
-  
   // Extract and show names of tables from the dataset
   $table_titles_res = db_query("SELECT nid, title FROM {node} WHERE nid IN
       (SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)", $node->nid);
@@ -170,10 +173,17 @@ function _tow_dataset_admin_tasks($node) {
   $admin_tasks = array(
     'create' => l('Create', 'node/add/table', array('query' => 'dataset=' . $node->nid)) . t(' or ') . l('import', 'import') . t(' a new table'),
     'manage' => l('Manage tables',  'dataset/' . $node->nid),
+    'access' => drupal_get_form('tow_access_type_form'),
+  );
+  
+  if ($node->field_access_type[0]['value'] == 1)
+    $admin_tasks['access_requests'] = tow_access_requests($node->nid); 
+  
+  $admin_tasks = array_merge($admin_tasks, array(
     'current_status' => t('Currently a normal user (free), with ') . $count['tables'] . t(' tables, ') . $count['records'] . t(' rows.'),
     'maintenence' => $maintenance,
     'delete' => l('Delete this dataset forever', 'node/' . $node->nid . '/delete'),
-  );
+  ));
   
   return theme_item_list($admin_tasks);
 }
