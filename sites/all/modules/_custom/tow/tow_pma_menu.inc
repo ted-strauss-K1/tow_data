@@ -17,9 +17,16 @@ function tow_pma_menu_block() {
     'search' => t("Search"), 'export' => t("Export"), 'import' => t("Import"));
   $links = tow_pma_menu_links($node_for_menu);
   
-  // TODO: check if the number of links is equal to the number of menu items  
-  foreach($links as $key => $link) {
-    $items[] = l($menu_items[$key], $link);
+  global $grey_pma_menu;
+  if ($grey_pma_menu) {
+    foreach($links as $key => $link) {
+      $items[] = t($key);
+    }
+    $items[0] = l('summary', $menu_items['summary']);
+  }else{
+    foreach($links as $key => $link) {
+      $items[] = l($menu_items[$key], $link);
+    }
   }
 
   //$block['subject'] = t('PMA menu'); 
