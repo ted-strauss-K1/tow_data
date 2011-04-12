@@ -28,5 +28,13 @@ function tow_tests_menu() {
     'file' => '/tests/tow_tests_truncate_nodes.inc',
   );
   
+   $items['tests/tow_tests_generate_data'] = array(
+    'title' => 'Generate Data',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'tow_tests_generate_data',
+    'menu_name' => 'menu-tests',
+    'file' => '/tests/tow_tests_generate_data.inc',
+  );
+  
   return $items;
 }

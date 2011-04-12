@@ -23,6 +23,7 @@ function tow_tests_truncate_nodes_form_submit($form, &$form_state){
   $tables = array(
     'content_type_table',
     'content_type_record',
+  	'content_type_dataset',
     'node',
     'node_comment_statistics',
     'node_counter',
@@ -31,6 +32,7 @@ function tow_tests_truncate_nodes_form_submit($form, &$form_state){
     'term_hierarchy',
     'term_node',
     'tow_dataset_counter',
+    'tow_access_requests',
   );
   
   foreach ($tables as $table) {
