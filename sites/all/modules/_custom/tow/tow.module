@@ -165,20 +165,17 @@ function tow_nodeapi(&$node, $op) {
     tow_dataset_update_statistics($node);
   }
   
-  // Redirect from node/[table-nid] pages to table/[table-nid]
+  // Add table structure to table node
   if ($node->type == 'table' && $op == 'view') {
-    $args = arg();
-    if (count($args) == 2 && $args[0] == 'node')
-      drupal_goto('table/' . $node->nid, NULL, NULL, 301);
+    tow_table_structure($node);
   }
   
   // Redirect from node/[record-nid] to node/[record-nid]/edit
   if  ($node->type == 'record' && $op == 'view')
     drupal_goto('node/' . $node->nid . '/edit', NULL, NULL, 301);
-  
+
   if ($op == 'load' && $node->type == 'dataset')
     tow_access_dataset($node);
-    
 }
 
 /**
@@ -220,12 +217,16 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
     $form['#submit'][] = 'tow_submit_maintanance_mode';
   }
   
-  if ($form_id == 'table_node_form') {
-    tow_table_form_alter(&$form, &$form_state);
-  }
-  
-  if ($form_id == 'record_node_form') {
-    tow_record_form_alter(&$form, &$form_state);
+  switch ($form_id) {
+    case 'dataset_node_form':
+      tow_dataset_form_alter(&$form, &$form_state);
+      break;
+    case 'table_node_form':
+      tow_table_form_alter(&$form, &$form_state);
+      break;
+    case 'record_node_form':
+      tow_record_form_alter(&$form, &$form_state);
+      break;
   }
   
   if ($form_id == 'node_delete_confirm' || $form_id == 'tow_table_truncate_confirm') {
