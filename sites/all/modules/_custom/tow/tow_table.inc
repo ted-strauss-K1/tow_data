@@ -140,12 +140,7 @@ function tow_table($node, $display_options = array()) {
         $row[] = array('data' => date('d M Y H:i:s', $value));  
       }elseif ($user_table['titles']['types'][$key] == 'enum') {
         $title_enum = $user_table['titles']['values'][$key];
-        foreach($node->field_title_enum as $enum_delta => $enum_value) {
-          if ($enum_value['value'] == $title_enum) {
-            unset($node->field_title_enum[$enum_delta]);
-            break;
-          }
-        }
+        $enum_delta = array_search( array('value' => $title_enum), $node->field_title_enum);
         $enum_options = unserialize($node->field_enum_options[$enum_delta]['value']);
         $row[] = array('data' => $enum_options[$value]); 
       }else {
