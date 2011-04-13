@@ -186,13 +186,13 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
         for ($requesting_user_index = 1; $requesting_user_index <= $requesting_users_qty; $requesting_user_index++){
           // generate new $ruid, it should be unique, not in $ruids yet
           do {
-            $ruid = mt_rand(0, $user_qty-1);
-          } while (in_array($ruid, $ruids));
-          $ruids[] = $ruid;
+            $ru_index = mt_rand(0, $user_qty-1);
+          } while (in_array($users[$ru_index]['uid'], $ruids));
+          $ruids[] = $users[$ru_index]['uid'];
           // generate status for the request
           $status = mt_rand(0, 2) - 1;
           db_query("INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp) VALUES (%d, %d, %d, %d)", 
-            $dataset_nid, $users[$requesting_user_index]['uid'], $status, time() - mt_rand(1, 2*pow(10, 6)));
+            $dataset_nid, $users[$ru_index]['uid'], $status, time() - mt_rand(1, 2*pow(10, 6)));
         }  // for 
       } // if 
       
