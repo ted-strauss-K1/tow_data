@@ -539,3 +539,51 @@ function tow_table_dont_validate_cancel($form, &$form_state) {
     drupal_goto('node/' . $form_state['values']['field_dataset'][0]['nid']);
   }
 }
+
+/**
+ * Add table structure themed as table to the node
+ */
+function tow_table_structure(&$node) {
+  
+  global $dataset;
+  global $table;
+  
+  $dataset = node_load($node->field_dataset['0']['nid']);
+  $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
+  $table = (object)array('nid' => $node->nid, 'title' => $node->title);
+  
+  $headers = array(t('Field'), t('Type'));
+  
+  $weights_array = unserialize($node->field_weights[0]['value']);
+  
+  // if there are any fields fill rows and sort them by weights
+  if (!empty($weights_array)) {
+    $index = 0;
+    foreach (tow_possible_fields() as $field_type) {
+      $delta = 0;
+      if (!is_array($node->{'field_title_' . $field_type}))
+        continue;
+      foreach($node->{'field_title_' . $field_type} as $title_value)
+        if ($title_value['value']) {
+          $rows[$weights_array[$index]]['value'] = $title_value['value'];
+          $rows[$weights_array[$index]]['type'] = $field_type;
+          if ($field_type == 'enum') {
+            $enum_options = unserialize($node->field_enum_options[$delta]['value']);
+            if ($enum_options) {  
+              $enum_options_string = implode(' | ', $enum_options);
+              $rows[$weights_array[$index]]['type'] .= ' : ' . $enum_options_string;
+            }
+          }
+          $index++;
+          $delta++;
+        }
+      }
+    
+      ksort($rows);
+      
+      $node->structure = theme('table', $headers, $rows);  
+  }else{
+    $node->structure = t('There are no rows');
+  }
+  
+}
