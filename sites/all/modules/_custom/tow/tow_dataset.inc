@@ -109,7 +109,7 @@ function tow_dataset_summary(&$node) {
   
   global $user;
   // for administer view only
-  if ($user->uid == $node->uid) {
+  if ($user->uid == $node->uid || user_access('edit any table content')) {
     $node->summary['edit_description'] = l('edit description', 'node/' . $node->nid . '/edit');
     $node->summary['edit_categories'] = l('edit categories', 'node/' . $node->nid . '/edit');
     $node->summary['admin_tasks'] = _tow_dataset_admin_tasks($node);
@@ -119,14 +119,22 @@ function tow_dataset_summary(&$node) {
     $node->summary['access_widget'] = tow_access_request_widget($node->nid, $user->uid);
   }
   // Extract and show names of tables from the dataset
-  $table_titles_res = db_query("SELECT nid, title FROM {node} WHERE nid IN
-      (SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)", $node->nid);
+  $table_titles_res = db_query("
+    SELECT nid, title FROM {node} WHERE nid IN
+      (SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)
+      ", $node->nid);
 
   $tables = array();
-
-  while ($rs = db_fetch_array($table_titles_res)) {
-    $tables[] = array ('title' => $rs['title'], 'nid' => $rs['nid'], 'link' => "table/" . $rs['nid']);
-    $tables_list[] = l($rs['title'], 'table/' . $rs['nid']);
+  
+  global $grey_pma_menu;
+  if ($grey_pma_menu) {
+    while ($rs = db_fetch_array($table_titles_res)) {
+      $tables_list[] = $rs['title'];
+    }
+  }else {
+    while ($rs = db_fetch_array($table_titles_res)) {
+      $tables_list[] = l($rs['title'], 'table/' . $rs['nid']);
+    }
   }
   if (!empty($tables_list))
     $node->summary['tables'] = implode(', ', $tables_list);
@@ -154,14 +162,21 @@ function tow_dataset_summary(&$node) {
     $first_record_id = rand(0, $table->count - 3);
     $display_options['sort'] = array ('sort_index' => 'nid', 'sort_order' => 'ASC');
     $display_options['limits'] = array ('first_elem_no' => $first_record_id, 'total_elements' => 3);
-    
-    $node->summary['view_table'][] = array(
-      'title' => l($table->title, 'table/' . $table->nid) . t(' table'),
-      'table' => tow_table(node_load($table->nid), $display_options)
-    );
+        
+    if ($grey_pma_menu)
+      $node->summary['view_table'][] = array(
+        'title' => $table->title,
+        'table' => tow_table(node_load($table->nid), $display_options)
+      );
+    else
+      $node->summary['view_table'][] = array(
+        'title' => l($table->title, 'table/' . $table->nid) . t(' table'),
+        'table' => tow_table(node_load($table->nid), $display_options)
+      );
+      
   }
 
-  tow_dataset_prepare_badge_block($node, count($tables));
+  tow_dataset_prepare_badge_block($node, count($tables_list));
   
 }
 
@@ -345,7 +360,7 @@ function tow_dataset_maintenance_confirm(&$form_state, $nid) {
   }
   
   global $user;
-  if ($user->uid != $dataset->uid) {
+  if ($user->uid != $dataset->uid && !user_access('edit any dataset content')) {
     drupal_access_denied();
     die();
   }
