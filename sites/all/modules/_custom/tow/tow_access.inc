@@ -20,8 +20,10 @@ function tow_access_dataset($node) {
       $args = arg();
       // dataset summary page
       if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
-        $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
-        if ($status != 1) {
+        if ($user->uid) {
+          $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
+        }
+        if ($status != 1 && !user_access('edit any dataset content')) {
           global $grey_pma_menu;
           $grey_pma_menu = TRUE;
         }
@@ -33,9 +35,13 @@ function tow_access_dataset($node) {
     // search page
     if ($args[0] == 'search')
       return;
-    $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
+    if ($user->uid)
+      $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
     // if user has no access
     if ($status != 1) {
+      if (user_access('edit any dataset content')) {
+        return;
+      }
       // from dataset summary perform redirect to dataset structure to avoid eternal cycling
       if ($args[0] == 'node' && $args[1] == $node->nid)
           drupal_goto('dataset/' . $node->nid);
@@ -116,7 +122,12 @@ function tow_access_request_form() {
 function tow_access_request_form_submit($form, &$form_state) {
   global $dataset;
   global $user;
-  db_query("INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp) VALUES (%d, %d, 0, %d)", $dataset->nid, $user->uid, time());
+  if ($user->uid) {
+    db_query("INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp) VALUES (%d, %d, 0, %d)", $dataset->nid, $user->uid, time());
+  }else {
+    drupal_access_denied();
+    die();
+  }
 }
 
 /**
@@ -175,7 +186,7 @@ function tow_access_confirm($form_state, $action, $nid, $uid) {
   global $dataset;
   $dataset = node_load($nid);
   
-  if ($user->uid == $dataset->uid) {
+  if ($user->uid == $dataset->uid || user_access('edit any dataset content')) {
     if (  ($action == 'grant' || $action == 'deny')  && is_numeric($nid) && is_numeric($uid)  ) {
       
       $requester = user_load($uid);
