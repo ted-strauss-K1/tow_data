@@ -95,6 +95,13 @@ function tow_dataset_create_table_form_submit($form, &$form_state) {
 }
 
 /**
+ * Part of hook_form_alter implementation.
+ */
+function tow_dataset_form_alter(&$form, &$form_state) {
+  $form['#validate'][] = 'tow_dataset_dont_validate_cancel';
+}
+
+/**
  * Extracts and prepares info for dataset summary page
  * @param $node dataset node
  */
@@ -376,4 +383,17 @@ function tow_dataset_maintenance_confirm_submit($form, &$form_state) {
   // recursively perform same action with tables and records
   tow_maintanance_mode($dataset->status, $dataset->nid, 'dataset');
   $form_state['redirect'] = 'node/' . $dataset->nid;  
+}
+
+/**
+ * When "cancel" button is clicked, redirect to dataset summary or to data page without error messages.
+ */
+function tow_dataset_dont_validate_cancel($form, &$form_state) {
+  if ($form_state['clicked_button']['#value'] == 'Cancel') {
+    unset($_SESSION['messages']['error']);
+    if ($form_state['values']['nid'])
+      drupal_goto('node/' . $form_state['values']['nid']);
+    else
+      drupal_goto('data');
+  }
 }
