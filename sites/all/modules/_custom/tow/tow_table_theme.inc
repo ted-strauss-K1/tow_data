@@ -25,10 +25,10 @@ function theme_tabular_form($form) {
 function theme_sortable_table($header, $rows, $nid, $uid = NULL, $attributes = array(), $caption = NULL) {
   
   $active = tow_table_headers($header, $nid);
-  
+
   // hide first column for all users except table owner 
   global $user;
-  if ($user->uid == $uid) {
+  if ($user->uid == $uid || user_access('edit any table content')) {
     $header[0] = 'Action';
   
     foreach($rows as $key => $value) {
