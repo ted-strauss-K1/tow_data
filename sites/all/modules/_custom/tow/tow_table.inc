@@ -57,7 +57,7 @@ function tow_table_callback($nid) {
   $table = $node;
   
   $output = $node->teaser;
-  if ($user->uid == $dataset->uid)
+  if ($user->uid == $dataset->uid || user_access('edit any table content'))
     $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
   
   $output .= drupal_get_form('tow_table_filter');
