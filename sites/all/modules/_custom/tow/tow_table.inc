@@ -140,7 +140,12 @@ function tow_table($node, $display_options = array()) {
         $row[] = array('data' => date('d M Y H:i:s', $value));  
       }elseif ($user_table['titles']['types'][$key] == 'enum') {
         $title_enum = $user_table['titles']['values'][$key];
-        $enum_delta = array_search( array('value' => $title_enum), $node->field_title_enum);
+        foreach($node->field_title_enum as $enum_delta => $enum_value) {
+          if ($enum_value['value'] == $title_enum) {
+            unset($node->field_title_enum[$enum_delta]);
+            break;
+          }
+        }
         $enum_options = unserialize($node->field_enum_options[$enum_delta]['value']);
         $row[] = array('data' => $enum_options[$value]); 
       }else {
@@ -267,9 +272,8 @@ function tow_table_form_alter(&$form, &$form_state) {
         }  
       }
     }// TODO: interface for field deleting
-  
-  
-  
+
+    
     // add interface for field adding
     $form['field_add'] = array(
       '#type' => 'fieldset',
@@ -542,12 +546,22 @@ function tow_table_structure(&$node) {
   
   global $dataset;
   global $table;
+  global $bc_attachment;
+  global $user;
+  
+  $bc_attachment = ' (' . t('table structure') . ')';
   
   $dataset = node_load($node->field_dataset['0']['nid']);
   $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
   $table = (object)array('nid' => $node->nid, 'title' => $node->title);
   
-  $headers = array(t('Field'), t('Type'));
+  if ($user->uid == $node->uid || user_access('edit any table content')) {
+    $node->structure['clone'] = drupal_get_form('tow_table_clone_table_form');
+    $node->structure['delete'] = drupal_get_form('tow_table_delete_table_form');
+    $node->structure['edit_description'] = l('edit description', 'node/' . $node->nid . '/edit');
+  }
+  
+  $headers = array(t('Action'), t('Field'), t('Type'), t('% Blanks'));
   
   $weights_array = unserialize($node->field_weights[0]['value']);
   
@@ -560,8 +574,11 @@ function tow_table_structure(&$node) {
         continue;
       foreach($node->{'field_title_' . $field_type} as $title_value)
         if ($title_value['value']) {
+          $rows[$weights_array[$index]]['action'] = l('delete', 'field_delete/' . $table->nid . '/' . $field_type . '/' . $delta) . ' '
+            . l('edit', 'field_edit/' . $table->nid . '/' . $field_type . '/' . $delta);
           $rows[$weights_array[$index]]['value'] = $title_value['value'];
           $rows[$weights_array[$index]]['type'] = $field_type;
+          $rows[$weights_array[$index]]['blanks'] = tow_table_structure_blanks($node->nid, $delta, $field_type);
           if ($field_type == 'enum') {
             $enum_options = unserialize($node->field_enum_options[$delta]['value']);
             if ($enum_options) {  
@@ -576,9 +593,253 @@ function tow_table_structure(&$node) {
     
       ksort($rows);
       
-      $node->structure = theme('table', $headers, $rows);  
+      $node->structure['structure'] = theme('table', $headers, $rows);  
   }else{
-    $node->structure = t('There are no rows');
+    $node->structure['structure'] = t('There are no rows');
+    $count_fields = 0;
   }
   
+  $count_rows = db_result(db_query("SELECT COUNT(*) FROM {content_type_record} WHERE field_table_nid = %d", $table->nid));
+  if ($count_rows == 1)
+    $count_rows .= ' ' . t('row');
+  else
+    $count_rows .= ' ' . t('rows');
+    
+  $count_fields = count($rows);
+  if ($count_fields == 1)
+    $count_fields .= ' ' . t('field');
+  else
+    $count_fields .= ' ' . t('fields');
+  
+  $node->structure['table_stats'] = t('This table has %rows and %fields', array('%rows' => $count_rows, '%fields' => $count_fields));
+  global $table_statistics;
+  if (!$table_statistics)
+    $table_statistics = 0;
+  $node->structure['table_stats'] .= "<br>" . t('Views') . ': ' . $table_statistics;
+  
+  if ($user->uid == $node->uid || user_access('edit any table content')) {
+    foreach($rows as $row)
+      $existing_fields[] = $row['value'];
+    $node->structure['field_add'] = drupal_get_form('tow_table_field_add_form', $node, $existing_fields);
+  }
+}
+
+/**
+ * @return percentage of blank cells of field
+ */
+function tow_table_structure_blanks($table_nid, $delta, $type) {
+  $blanks = round(db_result(db_query("
+    SELECT 1 - (
+      SELECT COUNT(*)
+      FROM {content_field_%s} x INNER JOIN {content_type_record} r 
+      ON x.nid = r.nid AND x.field_%s_value IS NOT NULL
+      WHERE r.field_table_nid = %d
+      AND x.delta = %d
+    ) / (
+      SELECT COUNT(*) FROM `content_type_record` WHERE field_table_nid = %d
+    )
+    ", $type, $type, $table_nid, $delta, $table_nid)) * 100);
+  if ($blanks != 0)
+    $blanks .= '%';
+  return $blanks;
+}
+
+/**
+ * @return form with 'Clone table' button
+ */
+function tow_table_clone_table_form() {
+  $form['clone'] = array(
+    '#type' => 'submit',
+    '#value' => t('Clone table')
+  );
+  return $form;
+}
+
+/**
+ * Submission callback
+ * Save node of table type similar to original.
+ */
+function tow_table_clone_table_form_submit($form, &$form_state) {
+  global $dataset;
+  global $table;
+  $node = node_load($table->nid);
+  unset($node->nid, $node->vid, $node->created, $node->changed, $node->comment, $node->last_comment_timestamp, $node->last_comment_name, $node->comment_count);
+  
+  $title = $node->title;
+  $len = $i = strlen($title) - 1;
+  while (is_numeric($title[$i])) {
+    $number .= $title[$i];
+    $i--;
+  }
+  
+  if (isset($number)) {
+    $number = strrev($number);
+    $word = substr($title, 0, 1 + $len - strlen($number));
+  }
+  else {
+    $word = $title;
+  }
+  
+  $highest_db_title = db_result(db_query("
+    SELECT title FROM {node} n INNER JOIN {content_type_table} ctt
+    ON n.nid = ctt.nid AND ctt.field_dataset_nid = %d
+    WHERE n.title LIKE '%s%' ORDER BY title DESC LIMIT 1
+    ", $dataset->nid, $word));
+  
+  if ($highest_db_title == $title) {
+    $number++;
+    if ($number < 10)
+      $number = '0' . $number;
+    $node->title = $word . $number;
+  }else {
+    $node->title = _numbered_title($highest_db_title);
+  }
+  
+  node_save($node);
+  global $user;
+  $nid = db_result(db_query("SELECT nid FROM {node} WHERE uid = %d ORDER BY nid DESC LIMIT 1", $user->uid));
+  drupal_set_message(t('Table %title has been created', array('%title' => $node->title)));
+  $form_state['redirect'] = 'node/' . $nid;
+  //drupal_set_message(t('Table') . ' ' . l($node->title, 'node/' . $nid) . ' ' . t('has been created'));
+}
+
+/**
+ * @return form with 'Delete table' button
+ */
+function tow_table_delete_table_form() {
+  $form['delete'] = array(
+    '#type' => 'submit',
+    '#value' => t('Delete table')
+  );
+  return $form;
+}
+
+/**
+ * Submission callback
+ * Delete table node and redirect to dataset
+ */
+function tow_table_delete_table_form_submit($form, &$form_state) {
+  global $table;
+  global $dataset;
+  node_delete($table->nid);  
+  $form_state['redirect'] = 'dataset/' . $dataset->nid;
+}
+
+/**
+ * If @param $title has no digits at the end, e.g. 'mytable', @return "mytable01"
+ * If it has digits at the end, e.g. 'table05', @return 'table06'
+ */
+function _numbered_title($title) {
+  
+  $len = $i = strlen($title) - 1;
+  while (is_numeric($title[$i])) {
+    $number .= $title[$i];
+    $i--;
+  }
+  
+  if (isset($number)) {
+    $number = strrev($number);
+    $word = substr($title, 0, 1 + $len - strlen($number));
+    $number++;
+    if ($number < 10)
+      $number = '0' . $number;
+  }
+  else {
+    $word = $title;
+    $number = '01';
+  }
+      
+  return $word . $number;
+}
+
+/**
+ * User interface for field adding 
+ */
+function tow_table_field_add_form($form_state, $node, $existing_fields) {
+
+  $form['existing_fields'] = array(
+    '#type' => 'value', 
+    '#value' => $existing_fields
+  );
+  $form['node'] = array(
+    '#type' => 'value',
+    '#value' => $node
+  );
+  $form['field_add'] = array(
+    '#type' => 'fieldset',
+    '#title' => 'Add field',
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+    '#tree' => TRUE,
+    '#weight' => -0.5  
+  );
+  $form['field_add']['title'] = array(
+    '#type' => 'textfield',
+    '#description' => t('Enter title'),
+    '#size' => 5,
+    '#maxlength' => 20,
+  );
+  $form['field_add']['type'] = array(
+    '#type' => 'select',
+    '#description' => t('Select type'),
+    '#options' => tow_possible_fields(),
+  );
+  $form['field_add']['enum_options'] = array(
+    '#type' => 'textarea',
+    '#description' => t('If you choose enum, enter enum options here. Each option should be in single string.'),
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('add field')
+  );
+  return $form;
+}
+
+/**
+ * Submission callback
+ * Rebuild array of weights
+ * Add field to table node
+ */
+function tow_table_field_add_form_submit($form, &$form_state) {
+  $node = $form_state['values']['node'];
+  $title = $form_state['values']['field_add']['title'];
+  $possible_fields = tow_possible_fields();
+  $type = $possible_fields[$form_state['values']['field_add']['type']];
+
+  $weights = unserialize($node->field_weights[0]['value']);
+  if ($weights) {
+    $pos = 0;
+    foreach ($possible_fields as $type_value) {
+      foreach ($node->{'field_title_' . $type_value} as $field) {
+        if ($field['value']) {
+          $pos++;
+        }
+      }
+      if ($type == $type_value) {
+        break;
+      }
+    }
+    $weights_left = array_slice($weights, 0, $pos);
+    $insert = array(max($weights) + 1);
+    $weights_right = array_slice($weights, $pos);
+    $weights = array_merge($weights_left, $insert, $weights_right);
+  }else {
+    $weights[] = 0;
+  }
+  $node->field_weights[0]['value'] = serialize($weights);
+  
+  if ($node->{'field_title_' . $type}[0]['value'])
+    $delta = count($node->{'field_title_' . $type});
+  else
+    $delta = 0;
+  
+  $node->{'field_title_' . $type}[$delta] = array('value' => $title);
+  
+  if ($type == 'enum') {
+    $enum_options = serialize(explode("\r\n", $form_state['values']['field_add']['enum_options']));
+    $node->field_enum_options[$delta]['value'] = $enum_options;
+  }
+  
+  node_save($node);
+  drupal_set_message('Field has been added');
 }
