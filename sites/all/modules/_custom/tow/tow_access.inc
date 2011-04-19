@@ -13,8 +13,19 @@ function tow_access_dataset($node) {
   if ($user->uid != $node->uid) {
     // if access is not open
     $access_type = $node->field_access_type[0]['value'];
-    if ($access_type == 0)
+    if ($access_type == 0) {
+      if ($user->uid == 0) {
+        if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
+          global $grey_pma_menu;
+          $grey_pma_menu = TRUE;
+        }
+        else {
+          drupal_access_denied();
+          die();
+        }
+      }
       return;
+    }
     // if access is by request
     if ($access_type == 1) {
       $args = arg();
@@ -35,8 +46,9 @@ function tow_access_dataset($node) {
     // search page
     if ($args[0] == 'search')
       return;
-    if ($user->uid)
+    if ($user->uid) {
       $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
+    }
     // if user has no access
     if ($status != 1) {
       if (user_access('edit any dataset content')) {
