@@ -27,8 +27,10 @@ function tow_table_truncate_confirm(&$form_state, $nid) {
   
   $form['#dataset'] = $node->field_dataset[0]['nid'];
   
-  return confirm_form($form,
-    t('Are you sure you want to truncate %title?', array('%title' => $node->title)),
+  return confirm_form(
+    $form,
+    t('Are you sure you want to truncate %title?',
+      array('%title' => $node->title)),
     'table/'. $node->nid,
     t('This action cannot be undone.'),
     t('Truncate'),
