@@ -13,56 +13,49 @@ function tow_pma_menu_block() {
   if (!$dataset)
     return;
   
-  $menu_items = array('summary' => t("Summary"), 'browse' => t("Browse"), 
-    'search' => t("Search"), 'export' => t("Export"), 'import' => t("Import"));
-  $links = tow_pma_menu_links($node_for_menu);
-  
+  global $table;  
   global $grey_pma_menu;
-  if ($grey_pma_menu) {
-    foreach($links as $key => $link) {
-      $items[] = t($key);
+  
+  $items = array(
+    'top' => l('Top', 'data'),
+    'summary' => l('Summary', 'node/' . $dataset->nid)
+  );
+  
+  if ($table) {
+    if ($grey_pma_menu) {
+      $items['structure'] = t('Structure');
+      $items['browse'] = t('Browse');
+    }else {
+      $items['structure'] = l('Structure', 'node/' . $table->nid);
+      $items['browse'] = l('Browse', 'table/' . $table->nid);
     }
-    $items[0] = l('summary', $menu_items['summary']);
-  }else{
-    foreach($links as $key => $link) {
-      $items[] = l($menu_items[$key], $link);
+  }else {
+    if ($grey_pma_menu) {
+      $items['browse'] = t('Browse');
+    }else {
+      $items['browse'] = l('Browse', 'dataset/' . $dataset->nid);
     }
   }
-
-  //$block['subject'] = t('PMA menu'); 
+      
+  if ($grey_pma_menu) {
+    $items += array(
+      'search' => t("Search"), 
+      'export' => t("Export"), 
+      'import' => t("Import")
+    );
+  }else {
+    $items += array(
+      'search' => l('Search', 'search'), 
+      'export' => l('Export', 'export'), 
+      'import' => l('Import', 'import')
+    );
+  }
+ 
   $block['content'] = theme_item_list($items, NULL, 'ul');
   
   tow_pma_breadcrumbs();
   
   return $block;
-}
-
-/**
- * Generates array of links for menu
- */
-function tow_pma_menu_links() {
-  
-  global $dataset;
-  global $table;
-  
-  $links = array();
-  
-  $links['summary'] = 'node/' . $dataset->nid;
-  
-  if ($table) {
-    $links['browse'] = 'table/' . $table->nid;
-    $nid = $table->nid;
-  }else{
-    $links['browse'] = 'dataset/' . $dataset->nid;
-    $nid = $dataset->nid;
-  }
-  
-  $links['search'] =  'search/';
-  
-  $links['export'] =  'export/' .$nid;
-  $links['import'] = 'import/' . $nid;
-   
-  return $links;
 }
 
 /**
