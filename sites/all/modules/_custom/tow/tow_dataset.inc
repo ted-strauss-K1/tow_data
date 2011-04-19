@@ -6,32 +6,6 @@
  */
 
 /**
- * Prepare global variable with dataset statistics
- */
-function tow_dataset_extract_statistics($node) {  
-  global $dataset_statistics;
-  $dataset_statistics = db_fetch_array(db_query("SELECT count, timestamp FROM {tow_dataset_counter} WHERE nid = %d LIMIT 1", $node->nid));
-}
-
-/**
- * If current user is not an owner of dataset node, store data about page view in tow_dataset_counter table
- */
-function tow_dataset_update_statistics($node) {
-  // dataset owner should not affect statistics of his fatasets
-  global $user;
-  if ($user->uid == $node->uid) {
-    return;
-  }
-    
-  $time = time();
-  db_query("
-    INSERT INTO {tow_dataset_counter} (nid, count, timestamp)
-    VALUES (%d, 1, %d)
-    ON DUPLICATE KEY UPDATE count = count+1, timestamp = %d
-    ", $node->nid, $time, $time);
-}
-
-/**
  * Create table block
  */
 function tow_dataset_create_table_block() {
