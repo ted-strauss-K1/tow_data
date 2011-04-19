@@ -15,6 +15,7 @@ include_once('./' . $module_path . '/tow_table_theme.inc');
 include_once('./' . $module_path . '/tow_validate.inc');
 include_once('./' . $module_path . '/tow_pma_menu.inc');
 include_once('./' . $module_path . '/tow_access.inc');
+include_once('./' . $module_path . '/tow_statistics.inc');
 
 include_once('./' . $module_path . '/tests/tow_tests.inc');
 
@@ -129,6 +130,24 @@ function tow_menu() {
     'type' => MENU_CALLBACK
   );
   
+  $items['field_delete'] = array(
+    'title' => NULL,
+    'access arguments' => array('edit own table content'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_field_delete_confirm', 1, 2, 3),
+    'file' => 'tow_field.inc',
+    'type' => MENU_CALLBACK
+  );
+  
+  $items['field_edit'] = array(
+    'title' => NULL,
+    'access arguments' => array('edit own table content'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_field_edit_form', 1, 2, 3),
+    'file' => 'tow_field.inc',
+    'type' => MENU_CALLBACK
+  );
+  
   $items = array_merge($items, tow_tests_menu());
   return $items;
 }
@@ -160,14 +179,16 @@ function tow_nodeapi(&$node, $op) {
   }
  
   if ($node->type == 'dataset' && $op == 'view') {
-	tow_dataset_extract_statistics($node);
+	tow_statistics_dataset_extract($node->nid);
     tow_dataset_summary($node);
-    tow_dataset_update_statistics($node);
+    tow_statistics_dataset_update($node);
   }
   
   // Add table structure to table node
   if ($node->type == 'table' && $op == 'view') {
+    tow_statistics_table_extract($node->nid);
     tow_table_structure($node);
+    tow_statistics_table_update($node);
   }
   
   // Redirect from node/[record-nid] to node/[record-nid]/edit
