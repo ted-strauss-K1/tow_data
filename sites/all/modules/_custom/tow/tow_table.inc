@@ -243,6 +243,9 @@ function tow_table_form_alter(&$form, &$form_state) {
     
     ksort($aux_array);
     
+    $form['fields']['header']['#value'][] = t('Index');
+    $indexes_array = unserialize($form['#node']->field_indexes[0]['value']);
+    
     // nest arrays of delta and array of fields
     foreach($aux_array as $key => $value) {
       
@@ -259,6 +262,11 @@ function tow_table_form_alter(&$form, &$form_state) {
       $form['fields']['data'][$key]['type'] = array(
         '#type' => 'item',
         '#value' => $value['type'],
+      );
+      
+      $form['fields']['data'][$key]['index'] = array(
+        '#type' => 'checkbox',
+        '#default_value' => $indexes_array[$key],
       );
       
       if ($value['type'] == 'enum') {
@@ -298,6 +306,10 @@ function tow_table_form_alter(&$form, &$form_state) {
       '#type' => 'textarea',
       '#description' => t('If you choose enum, enter enum options here. Each option should be in single string.'),
     );
+    $form['field_add']['index'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Index')
+    );
     
     // register additional validation function for table edit case  
     $form['#validate'][] = 'tow_table_validate_edit';
@@ -315,6 +327,7 @@ function tow_table_form_alter(&$form, &$form_state) {
     $form['#submit'][] = 'tow_table_submit_fields';
     $form['#submit'][] = 'tow_table_submit_weights';
     $form['#submit'][] = 'tow_table_submit_field_add';
+    $form['#submit'][] = 'tow_table_submit_indexes';
     
   }  
   
@@ -342,6 +355,7 @@ function tow_table_form_alter(&$form, &$form_state) {
     $form['buttons']['submit']['#value'] = t('Create table');
     
     $form['fields']['header']['#value'][] = 'Enum options';
+    $form['fields']['header']['#value'][] = 'Index';
     
     for ($i = 0; $i < $count_fields; $i++) {
     
@@ -356,6 +370,9 @@ function tow_table_form_alter(&$form, &$form_state) {
       $form['fields']['data'][$i]['enum_options'] = array(
         '#type' => 'textarea',
         '#rows' => 2,
+      );
+      $form['fields']['data'][$i]['index'] = array(
+        '#type' => 'checkbox',
       );
     }
     
@@ -467,8 +484,20 @@ function tow_table_submit_field_add($form, &$form_state) {
     if ($type == 'enum') {
       $enum_options = serialize(explode("\r\n", $form_state['values']['field_add']['enum_options']));
       $form_state['values']['field_enum_options'][$key]['value'] = $enum_options;
-    }
+    }    
   }
+}
+
+/**
+ * Submit callback
+ * Save serialized array of indexes
+ */
+function tow_table_submit_indexes($form, &$form_state) {
+  foreach ($form_state['values']['fields']['data'] as $field)
+    $indexes[] = $field['index'];
+  if ($form_state['values']['field_add']['title'])
+    $indexes[] = $form_state['values']['field_add']['index'];
+  $form_state['values']['field_indexes'][0]['value'] = serialize($indexes);
 }
 
 ## CALLBACK FOR CREATION
@@ -479,8 +508,7 @@ function tow_table_submit_field_add($form, &$form_state) {
  * Save array of weights. 
  */
 function tow_table_submit_create($form, &$form_state) {
-  $weights = array();
-  $weight = 0;
+  $weights = $indexes = array();
   $field_types = tow_possible_fields();
   foreach ($field_types as $type_key => $type) {
     $delta = 0;
@@ -496,7 +524,6 @@ function tow_table_submit_create($form, &$form_state) {
         }
         $delta++;
         $weights[] = $index;
-        $weight++;
       }
     }
     for ($i = $form_state['values']['count_fields']; $i > $delta; $i--) {
@@ -508,7 +535,12 @@ function tow_table_submit_create($form, &$form_state) {
       }
     }
   }
+  
+  foreach ($form_state['values']['fields']['data'] as $field)
+    $indexes[] = $field['index'];
+  
   $form_state['values']['field_weights'][0]['value'] = serialize($weights);
+  $form_state['values']['field_indexes'][0]['value'] = serialize($indexes);
 }
 
 /**
@@ -561,9 +593,10 @@ function tow_table_structure(&$node) {
     $node->structure['edit_description'] = l('edit description', 'node/' . $node->nid . '/edit');
   }
   
-  $headers = array(t('Action'), t('Field'), t('Type'), t('% Blanks'));
+  $headers = array(t('Action'), t('Field'), t('Type'), t('Index'), t('% Blanks'));
   
   $weights_array = unserialize($node->field_weights[0]['value']);
+  $index_array = unserialize($node->field_indexes[0]['value']);
   
   // if there are any fields fill rows and sort them by weights
   if (!empty($weights_array)) {
@@ -574,10 +607,11 @@ function tow_table_structure(&$node) {
         continue;
       foreach($node->{'field_title_' . $field_type} as $title_value)
         if ($title_value['value']) {
-          $rows[$weights_array[$index]]['action'] = l('delete', 'field_delete/' . $table->nid . '/' . $field_type . '/' . $delta) . ' '
-            . l('edit', 'field_edit/' . $table->nid . '/' . $field_type . '/' . $delta);
+          $rows[$weights_array[$index]]['action'] = l('delete', 'field_delete/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]) . ' '
+            . l('edit', 'field_edit/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]);
           $rows[$weights_array[$index]]['value'] = $title_value['value'];
           $rows[$weights_array[$index]]['type'] = $field_type;
+          $rows[$weights_array[$index]]['index'] = $index_array[$weights_array[$index]] ? t('Yes') : t('No');
           $rows[$weights_array[$index]]['blanks'] = tow_table_structure_blanks($node->nid, $delta, $field_type);
           if ($field_type == 'enum') {
             $enum_options = unserialize($node->field_enum_options[$delta]['value']);
@@ -788,7 +822,11 @@ function tow_table_field_add_form($form_state, $node, $existing_fields) {
     '#type' => 'textarea',
     '#description' => t('If you choose enum, enter enum options here. Each option should be in single string.'),
   );
-  $form['submit'] = array(
+  $form['field_add']['index'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Index')
+  );
+  $form['field_add']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('add field')
   );
@@ -839,6 +877,10 @@ function tow_table_field_add_form_submit($form, &$form_state) {
     $enum_options = serialize(explode("\r\n", $form_state['values']['field_add']['enum_options']));
     $node->field_enum_options[$delta]['value'] = $enum_options;
   }
+  
+  $indexes = unserialize($node->field_indexes[0]['value']); 
+  $indexes[] = $form_state['values']['field_add']['index'];
+  $node->field_indexes[0]['value'] = serialize($indexes);
   
   node_save($node);
   drupal_set_message('Field has been added');
