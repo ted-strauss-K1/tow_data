@@ -134,7 +134,7 @@ function tow_menu() {
     'title' => NULL,
     'access arguments' => array('edit own table content'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('tow_field_delete_confirm', 1, 2, 3),
+    'page arguments' => array('tow_field_delete_confirm', 1, 2, 3, 4),
     'file' => 'tow_field.inc',
     'type' => MENU_CALLBACK
   );
@@ -143,7 +143,7 @@ function tow_menu() {
     'title' => NULL,
     'access arguments' => array('edit own table content'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('tow_field_edit_form', 1, 2, 3),
+    'page arguments' => array('tow_field_edit_form', 1, 2, 3, 4),
     'file' => 'tow_field.inc',
     'type' => MENU_CALLBACK
   );
