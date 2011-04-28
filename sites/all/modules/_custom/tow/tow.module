@@ -217,7 +217,7 @@ function tow_nodeapi(&$node, $op) {
     tow_access_dataset($node);
 
   // Submit description after table node was inserted
-  if ($node->type == 'table' && $op == 'insert') {
+  if ($node->type == 'table' && $op == 'insert')
     tow_field_descriptions_submit($node->nid);
 }
 
