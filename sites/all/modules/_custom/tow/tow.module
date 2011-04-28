@@ -16,6 +16,7 @@ include_once('./' . $module_path . '/tow_validate.inc');
 include_once('./' . $module_path . '/tow_pma_menu.inc');
 include_once('./' . $module_path . '/tow_access.inc');
 include_once('./' . $module_path . '/tow_statistics.inc');
+include_once('./' . $module_path . '/tow_field.inc');
 
 include_once('./' . $module_path . '/tests/tow_tests.inc');
 
@@ -111,7 +112,14 @@ function tow_menu() {
     'file' => 'tow_table_truncate.inc',
     'type' => MENU_CALLBACK
   );
-  
+  $items['field'] = array(
+    'title' => 'Field Description',  
+    'access arguments' => array('access content'),
+    'page callback' => 'tow_field_description_callback',
+    'page arguments' => array(2),
+    'file' => 'tow_field.inc',
+    'type' => MENU_CALLBACK
+  );
   $items['dataset/%/maintenance'] = array(
     'title' => 'Maintenance mode',
     'access arguments' => array('edit own dataset content'),
@@ -197,6 +205,10 @@ function tow_nodeapi(&$node, $op) {
 
   if ($op == 'load' && $node->type == 'dataset')
     tow_access_dataset($node);
+
+  // Submit description after table node was inserted
+  if ($node->type == 'table' && $op == 'insert') {
+    tow_field_descriptions_submit($node->nid);
 }
 
 /**

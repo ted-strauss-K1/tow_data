@@ -86,10 +86,7 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
   $max_leng = array( 'dataset_title' => 10, 'table_title' => 10,
   	'body' => 32, 'teaser' => 15, 'column_title' => 9, 'user_name' => 7, 'user_pass' => 5,
   	'enum_option' => 6, 'char_field_data' => 15, 'taxonomy_term' => 8);
-  $time_value_options = array(15, 453, 457, 457, 3245, 2357, 467, 7445, 457, 346);
-  $date_value_options = array(105, 453, 45, 4357, 35, 2357, 467, 77445, 4857, 346);
-  $timedate_value_options = array(915, 453, 4567, 457, 345, 257, 4657, 7745, 457, 3446);
-  
+    
   // Get possible types for columns
   $types = tow_possible_fields();
   foreach ($types as $value){
@@ -191,7 +188,7 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
           $ruids[] = $users[$ru_index]['uid'];
           // generate status for the request
           $status = mt_rand(0, 2) - 1;
-          db_query("INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp) VALUES (%d, %d, %d, %d)", 
+          db_query("INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp) VALUES ('%d', '%d', '%d', '%d')", 
             $dataset_nid, $users[$ru_index]['uid'], $status, time() - mt_rand(1, 2*pow(10, 6)));
         }  // for 
       } // if 
@@ -209,7 +206,8 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
       // 3.2 generate columns, their types and titles
         $columns_qty = mt_rand(3, $max_columns);
         $column_type = array();
-        
+        $indexes_array = array();
+         
         for ($col_index = 0; $col_index <= $columns_qty-1; $col_index++) {
           //3.3 types of columns
           $type_id = mt_rand(0, $types_qty-1);
@@ -225,14 +223,17 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
                               _tow_tests_get_random_string($max_leng['enum_option'] ), 
                               _tow_tests_get_random_string($max_leng['enum_option'] )));
           }
+          $indexes_array[] = mt_rand(0, 1);
         }
-          // TODO: random weights 
+
+        // TODO: random weights 
         //   3.6 field_dataset_nid, weights generate
         for ($col_index = 0; $col_index <= $columns_qty-1; $col_index++) {
           $weights_array[$col_index] = $col_index;
         }
         $new_table->field_weights[0]['value'] = serialize($weights_array);
         $new_table->field_dataset[0]['nid'] = $dataset_nid;
+        $new_table->field_indexes[0]['value'] = serialize($indexes_array);
         // 3.7 node save, get table nid
         node_save($new_table);
         $table_nid = $new_table->nid;
@@ -263,16 +264,16 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
                  $value = mt_rand(0, 1);
                  break;
                case 'time':
-                 $value = $time_value_options[mt_rand(0, 9)];
+                 $value = mt_rand(0, 10000);
                  break;
                case 'date':
-                 $value = $date_value_options[mt_rand(0, 9)];
+                 $value = date('d M Y', mt_rand(1000000, 3000000));
                  break;
                case 'datetime':
-                 $value = $datetime_value_options[mt_rand(0, 9)];
+                 $value =  date('d M Y H:i:s', mt_rand(1000000, 3000000));  ;
                  break;
                case 'timestamp':
-                 $value = $datetime_value_options[mt_rand(0, 9)];
+                 $value = time() - mt_rand(0, pow(10, 6));
                  break;
                case 'code':
                  $value = substr($data, $data_index++, 3);

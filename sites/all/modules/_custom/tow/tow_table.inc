@@ -306,6 +306,10 @@ function tow_table_form_alter(&$form, &$form_state) {
       '#type' => 'textarea',
       '#description' => t('If you choose enum, enter enum options here. Each option should be in single string.'),
     );
+    $form['field_add']['description'] = array(
+      '#type' => 'textarea',
+      '#description' => t('Write a short description to help people understand this field (optional).'),
+    );
     $form['field_add']['index'] = array(
       '#type' => 'checkbox',
       '#title' => t('Index')
@@ -355,6 +359,7 @@ function tow_table_form_alter(&$form, &$form_state) {
     $form['buttons']['submit']['#value'] = t('Create table');
     
     $form['fields']['header']['#value'][] = 'Enum options';
+    $form['fields']['header']['#value'][] = 'Description';
     $form['fields']['header']['#value'][] = 'Index';
     
     for ($i = 0; $i < $count_fields; $i++) {
@@ -368,6 +373,10 @@ function tow_table_form_alter(&$form, &$form_state) {
         '#options' => tow_possible_fields(),
       );
       $form['fields']['data'][$i]['enum_options'] = array(
+        '#type' => 'textarea',
+        '#rows' => 2,
+      );
+      $form['fields']['data'][$i]['description'] = array(
         '#type' => 'textarea',
         '#rows' => 2,
       );
@@ -485,6 +494,9 @@ function tow_table_submit_field_add($form, &$form_state) {
       $enum_options = serialize(explode("\r\n", $form_state['values']['field_add']['enum_options']));
       $form_state['values']['field_enum_options'][$key]['value'] = $enum_options;
     }    
+  // Saving description
+    $description = trim($form_state['values']['field_add']['description']);
+    _tow_field_description_save($form['#node']->nid, count($form_state['values']['fields']['data']), $description);
   }
 }
 
@@ -536,8 +548,12 @@ function tow_table_submit_create($form, &$form_state) {
     }
   }
   
-  foreach ($form_state['values']['fields']['data'] as $field)
+  global $descriptions;
+  foreach ($form_state['values']['fields']['data'] as $field) {
     $indexes[] = $field['index'];
+    // Preparing descriptions to be saved after node creation
+    $descriptions[] = trim($field['description']);
+  }
   
   $form_state['values']['field_weights'][0]['value'] = serialize($weights);
   $form_state['values']['field_indexes'][0]['value'] = serialize($indexes);
@@ -626,6 +642,12 @@ function tow_table_structure(&$node) {
       }
     
       ksort($rows);
+      
+      // Adding info link for each row
+      $index = 0;
+      foreach ($rows as $key => $value) {
+        $rows[$key]['action'] = l('info', 'field/' . $table->nid . '/' . $index++) . ' ' . $rows[$key]['action']; 
+      } 
       
       $node->structure['structure'] = theme('table', $headers, $rows);  
   }else{
@@ -822,6 +844,10 @@ function tow_table_field_add_form($form_state, $node, $existing_fields) {
     '#type' => 'textarea',
     '#description' => t('If you choose enum, enter enum options here. Each option should be in single string.'),
   );
+  $form['field_add']['description'] = array(
+    '#type' => 'textarea',
+    '#description' => t('Write a short description to help people understand this field (optional).'),
+  );
   $form['field_add']['index'] = array(
     '#type' => 'checkbox',
     '#title' => t('Index')
@@ -830,6 +856,7 @@ function tow_table_field_add_form($form_state, $node, $existing_fields) {
     '#type' => 'submit',
     '#value' => t('add field')
   );
+  $form['#validate'][] = 'tow_table_field_add_form_validate';
   return $form;
 }
 
@@ -883,5 +910,8 @@ function tow_table_field_add_form_submit($form, &$form_state) {
   $node->field_indexes[0]['value'] = serialize($indexes);
   
   node_save($node);
+  // Saving description
+  $description = trim($form_state['values']['field_add']['description']);
+  _tow_field_description_save($node->nid, count($indexes)-1, $description);
   drupal_set_message('Field has been added');
 }

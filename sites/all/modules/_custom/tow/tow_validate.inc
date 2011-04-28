@@ -82,7 +82,7 @@ function tow_table_validate_common($form, &$form_state) {
   _tow_show_validation_error($error, $err_field_names, $err_msgs);
 }
 /**
- * Performs extra form validation during table editing connected with the possibility of 
+ * Performs extra form validation during table editing from node/table_id/edit/ page connected with the possibility of 
  * adding columns.
  *
  * @param $form, &$form_state
@@ -123,6 +123,52 @@ function tow_table_validate_edit(&$form, &$form_state) {
   ## Showing error messages 
   _tow_show_validation_error($error, $err_field_names, $err_msgs);
 }
+
+/**
+ * Performs form validation during adding field from node/table_id/ page.
+ *
+ * @param $form, &$form_state
+ */
+
+function tow_table_field_add_form_validate(&$form, &$form_state) {
+  
+  $error = FALSE;  
+  $err_field_names = array();
+  $err_msgs = array();
+  
+  $field_types = tow_possible_fields();
+  
+## Empty fields check
+  if ($form_state['values']['field_add']['title'] == '') {
+    $error = TRUE;  
+    $err_field_names[] = "field_add][title";
+    $err_msgs[] = t('New field title must neither be empty nor consist of nothing but whitespaces.');
+  }
+  else {
+  
+  ## Unique new column name check
+    $column_names = $form_state['values']['existing_fields'];
+    $no = array_search(strtolower($form_state['values']['field_add']['title']), $column_names);
+  
+    if (!($no === FALSE)) {
+      $error = TRUE;
+      $err_field_names[] = "field_add][title";
+      $err_msgs[] = t('New column must have unique title.'); 
+    } 
+  }
+  ## Correct number of enum options for new field check
+  $field_types = tow_possible_fields();
+  
+  if (($field_types[$form_state['values']['field_add']['type']] == 'enum') &&
+  trim($form_state['values']['field_add']['enum_options']) == '') {
+    $error = TRUE;
+    $err_field_names[] = "field_add][enum_options";
+    $err_msgs[] = t('You must specify at least one option for enum field.');
+  }
+  ## Showing error messages 
+  _tow_show_validation_error($error, $err_field_names, $err_msgs);
+}
+
 /**
  * Performs form validation during record editing/creation.
  *
