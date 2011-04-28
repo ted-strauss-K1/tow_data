@@ -46,7 +46,7 @@ function tow_table_validate_common($form, &$form_state) {
     if ($form_state['values']['fields']['data'][$key]['title'] == '') {
       $error = TRUE;  
       $err_field_names[] = "fields][data][$key][title";
-      $err_msgs[] = t('Column titles must neither be empty nor consist of nothing but whitespaces.');
+      $err_msgs[] = t('Field titles must neither be empty nor consist of nothing but whitespaces.');
     }
   ## enum options quantity check
     if (($field_types[$form_state['values']['fields']['data'][$key]['type']] == 'enum') &&
@@ -57,10 +57,10 @@ function tow_table_validate_common($form, &$form_state) {
     }
   }  
     
-## Unique column names check
+## Unique field names check
   if (count($column_names) != count(array_unique($column_names))){
     $error = TRUE;
-    // Count the frequency of column names. At least one of them be will greater than 1.
+    // Count the frequency of field names. At least one of them be will greater than 1.
     $column_names_qty = array_count_values($column_names);
     // Remove not repeated elements from $column_names_qty array 
     $column_names_not_repeated = array_keys($column_names_qty, 1);
@@ -69,12 +69,12 @@ function tow_table_validate_common($form, &$form_state) {
     }
   
     foreach ($column_names_qty as $column_name => $qty) {
-      // extract numbers of columns with repeating titles
+      // extract numbers of fields with repeating titles
       $repeated_field_no = array_keys($column_names, $column_name);
       // set error for them
       foreach ($repeated_field_no as $no) {
         $err_field_names[] = "fields][data][$no][title";
-        $err_msgs[] = t('Column titles must have unique values.');
+        $err_msgs[] = t('Field titles must have unique values.');
       }
     } 
   }
@@ -106,9 +106,9 @@ function tow_table_validate_edit(&$form, &$form_state) {
   if (!($no === FALSE) && ($column_names[$no] != '')) {
     $error = TRUE;
     $err_field_names[] = "field_add][title";
-    $err_msgs[] = t('New column must have unique title.'); 
+    $err_msgs[] = t('New field must have unique title.'); 
     $err_field_names[] = "fields][data][$no][title";
-    $err_msgs[] = t('New column must have unique title.');
+    $err_msgs[] = t('New field must have unique title.');
   } 
   
   ## Correct number of enum options for new field check
@@ -153,7 +153,7 @@ function tow_table_field_add_form_validate(&$form, &$form_state) {
     if (!($no === FALSE)) {
       $error = TRUE;
       $err_field_names[] = "field_add][title";
-      $err_msgs[] = t('New column must have unique title.'); 
+      $err_msgs[] = t('New field must have unique title.'); 
     } 
   }
   ## Correct number of enum options for new field check
