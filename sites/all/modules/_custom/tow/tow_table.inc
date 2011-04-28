@@ -285,7 +285,7 @@ function tow_table_form_alter(&$form, &$form_state) {
     // add interface for field adding
     $form['field_add'] = array(
       '#type' => 'fieldset',
-      '#title' => 'Add row',
+      '#title' => 'Add field',
       '#collapsible' => TRUE,
       '#collapsed' => FALSE,
       '#tree' => TRUE,
