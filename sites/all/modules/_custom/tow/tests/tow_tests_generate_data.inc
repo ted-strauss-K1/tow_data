@@ -30,7 +30,7 @@ function tow_tests_generate_data_form(){
   );
    $form['max_columns'] = array(
       '#type' => 'textfield',
-      '#description' => t('Enter the maximum no of columns in the table'),
+      '#description' => t('Enter the maximum no of fields in the table'),
       '#size' => 5,
       '#maxlength' => 20,
    	  '#default_value' => 8,
