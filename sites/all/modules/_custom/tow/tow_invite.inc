@@ -64,7 +64,10 @@ function tow_invite_form_submit($form, &$form_state) {
       ON DUPLICATE KEY UPDATE status = 1
       ", $dataset->nid, $person->uid, time());
     $link = l($dataset->title, 'node/' . $dataset->nid, array('absolute' => TRUE));
-    tow_invite_user($email, $link, $form_state['values']['message'], $person->name);
+    if (tow_invite_user($email, $link, $form_state['values']['message'], $person->name))
+      drupal_set_message('Invite has been sent');
+    else
+      drupal_set_message('Invite has not been sent');
   }else{
     if (db_result(db_query("SELECT nid FROM {tow_invites} WHERE nid = %d AND email = '%s' LIMIT 1", $dataset->nid, $email))) {
       drupal_set_message('Invite had already been sent');
