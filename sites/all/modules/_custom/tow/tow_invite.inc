@@ -72,7 +72,7 @@ function tow_invite_form_submit($form, &$form_state) {
     }
     $token = user_password(32);
     $link = l($dataset->title, 'user/register', array('query' => 'token=' . $token));
-    if (tow_invite_user($email, $link, $form_state['values']['message'], $person) || TRUE) {
+    if (tow_invite_user($email, $link, $form_state['values']['message'], $person)) {
       db_query("INSERT INTO {tow_invites} VALUES (%d, '%s', '%s')", $dataset->nid, $token, $email);
       drupal_set_message('Invite has been sent');
     }else{
