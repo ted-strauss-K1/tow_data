@@ -185,7 +185,7 @@ function tow_field_edit_form_submit($form, &$form_state) {
   
   $is_new = ($form_state['values']['current_description'] === '');
   if ($form_state['values']['current_description'] !== trim($form_state['values']['description']))
-    _tow_field_description_save($table_nid, 
+    _tow_field_description_save($table_nid->nid, 
                                 $form_state['values']['field_index'], 
                                 trim($form_state['values']['description']), 
                                 $is_new);

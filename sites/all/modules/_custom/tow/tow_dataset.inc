@@ -173,7 +173,7 @@ function _tow_dataset_admin_tasks($node) {
   );
   
   if ($node->field_access_type[0]['value'])
-    $admin_tasks['invite'] = l('Invite people', 'invite/' . $node->nid) . ' ' . t('to acces your data set');
+    $admin_tasks['invite'] = l('Invite people', 'invite/' . $node->nid) . ' ' . t('to access your data set');
   
   if ($node->field_access_type[0]['value'] == 1)
     $admin_tasks['access_requests'] = tow_access_requests($node->nid); 

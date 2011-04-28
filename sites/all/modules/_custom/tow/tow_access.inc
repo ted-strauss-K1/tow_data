@@ -73,7 +73,7 @@ function tow_access_type_form() {
   $current_access_type = $dataset->field_access_type[0]['value'];
   $form['description'] = array(
     '#type' => 'item',
-    '#value' => t('User acces set to: ') . $options[$current_access_type] . '. ' . t('Change user access:'),
+    '#value' => t('User access set to: ') . $options[$current_access_type] . '. ' . t('Change user access:'),
   );
   $form['access_type'] = array(
     '#type' => 'select',
