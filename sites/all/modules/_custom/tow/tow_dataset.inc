@@ -172,6 +172,9 @@ function _tow_dataset_admin_tasks($node) {
     'access' => drupal_get_form('tow_access_type_form'),
   );
   
+  if ($node->field_access_type[0]['value'])
+    $admin_tasks['invite'] = l('Invite people', 'invite/' . $node->nid) . ' ' . t('to acces your data set');
+  
   if ($node->field_access_type[0]['value'] == 1)
     $admin_tasks['access_requests'] = tow_access_requests($node->nid); 
   
