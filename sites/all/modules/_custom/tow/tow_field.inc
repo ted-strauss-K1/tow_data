@@ -177,6 +177,7 @@ function tow_field_edit_form($form_state, $table_nid, $type, $delta, $index) {
 function tow_field_edit_form_submit($form, &$form_state) {
   global $table;
   
+  $table_nid = $table->nid;
   // Update index array of the table
   $index_array = unserialize($table->field_indexes[0]['value']);
   $index_array[$form_state['values']['field_index']] = $form_state['values']['index'];
@@ -185,7 +186,7 @@ function tow_field_edit_form_submit($form, &$form_state) {
   
   $is_new = ($form_state['values']['current_description'] === '');
   if ($form_state['values']['current_description'] !== trim($form_state['values']['description']))
-    _tow_field_description_save($table_nid->nid, 
+    _tow_field_description_save($table_nid, 
                                 $form_state['values']['field_index'], 
                                 trim($form_state['values']['description']), 
                                 $is_new);
