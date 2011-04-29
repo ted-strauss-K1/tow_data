@@ -5,6 +5,9 @@
  * @file
  */
 
+/**
+ * @return form for sending invite
+ */
 function tow_invite_form($form_state, $nid) {
   
   global $dataset;
@@ -47,6 +50,9 @@ function tow_invite_form($form_state, $nid) {
   return $form;
 }
 
+/**
+ * Submission callback
+ */
 function tow_invite_form_submit($form, &$form_state) {
   
   global $dataset;
@@ -85,6 +91,13 @@ function tow_invite_form_submit($form, &$form_state) {
   
 }
 
+/**
+ * Send invite
+ * @param $email address
+ * @param $link that will be included into e-mail
+ * @param $user_message text user want to send
+ * @param $person name of invite reciever
+ */
 function tow_invite_user($email, $link, $user_message, $person) {
   
   global $user;
@@ -115,4 +128,22 @@ function tow_invite_user($email, $link, $user_message, $person) {
 
   return drupal_mail_send($message); 
     
+}
+
+/**
+ * On user/register?token=[token] page deny access if token is not valid
+ * Do nothing if there is no ?token part of query 
+ */
+function tow_invite_register() {
+  $token = $_GET['token'];
+  if ($token) {
+    if (strlen($token) != 32 || !db_result(db_query("SELECT nid FROM {tow_invites} WHERE token = '%s' LIMIT 1", $token))) {
+      drupal_access_denied();
+      die();
+    }
+  }
+}
+
+function tow_invite_insert() {
+  
 }
