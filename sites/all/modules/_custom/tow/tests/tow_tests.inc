@@ -42,13 +42,22 @@ function tow_tests_menu() {
 /**
  * Initializes timer for performance analysis
  */
-function tow_timer_init($action = 'tow timer started') {
+function tow_timer_init($timer_name, $action) {
   global $timer;
   global $timer_index;
-  $timer = array();
-  $timer_index = 0;
-  $timer[$timer_index]['action'] = $action;
-  $timer[$timer_index]['time'] = microtime(true);
+  global $print_timings;
+  
+  if (!$timer_index) {
+    $print_timings[$timer_name] = 1;
+    $timer = array();
+    $timer_index = 0;
+    $timer[$timer_index]['action'] = $action;
+    $timer[$timer_index]['time'] = microtime(true);
+  }
+  else  {
+    // when timer is already initialized
+    tow_timer_tick($action); 
+  }
 }
 
 /**
@@ -66,16 +75,23 @@ function tow_timer_tick($action_finished) {
 /**
  * Shows timings of the registered actions
  */
-function tow_timer_show_results() {
+function tow_timer_show_results($timer_name) {
   global $timer;
   global $timer_index;
+  global $print_timings;
   
-  $timings = array();
-  foreach ($timer as $value) {
-    $timings[$value['action']] = $value['elapsed'];
+  // print timings only if $timer_name corresponds to the initial name.
+  if ($print_timings[$timer_name]) {
+ 
+    $timings = array();
+    foreach ($timer as $value) {
+      $timings[$value['action']] = $value['elapsed'];
+    }
+    drupal_set_message("<pre>" . print_r($timings). "</pre>");
+    //drupal_set_message("<pre>" . print_r($print_timings). "</pre>");
+    unset($timings);
+    unset($timer);
+    unset($timer_index);
+    unset($print_timings);
   }
-  drupal_set_message("<pre>" . print_r($timings). "</pre>");
-  unset($timings);
-  unset($timer);
-  unset($timer_index);
 }
