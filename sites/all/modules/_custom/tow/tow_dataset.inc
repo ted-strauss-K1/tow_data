@@ -93,11 +93,20 @@ function tow_dataset_summary(&$node) {
     $node->summary['access_widget'] = tow_access_request_widget($node->nid, $user->uid);
   }
   // Extract and show names of tables from the dataset
+  /* // Slow query
   $table_titles_res = db_query("
     SELECT nid, title FROM {node} WHERE nid IN
       (SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)
       ", $node->nid);
-
+  */
+  // Faster query  
+  $table_titles_res = db_query("SELECT `table`.nid AS `nid`, `node`.title AS `title` 
+								FROM {content_type_table} `table`
+								LEFT JOIN {node} `node`
+								ON `table`.nid = `node`.nid
+								WHERE `table`.field_dataset_nid = %d",
+                                $node->nid);
+ 
   $tables = array();
   
   global $grey_pma_menu;
@@ -217,6 +226,7 @@ function tow_dataset_prepare_badge_block($node, $count_tables) {
   $dataset_count_tables = $count_tables;
 
   global $dataset_count_records;
+  /* // Slow query
   $dataset_count_records = db_result(db_query("
     SELECT SUM(t.count) FROM {node} n 
     LEFT JOIN
@@ -231,7 +241,14 @@ function tow_dataset_prepare_badge_block($node, $count_tables) {
 	  WHERE field_dataset_nid = %d
     )
   ", $node->nid));
-
+  */
+  // Faster query
+  $dataset_count_records = db_result(db_query("SELECT COUNT(*) AS qty
+											   FROM {content_type_record} r 
+											   INNER JOIN {content_type_table} t
+											   ON r.field_table_nid = t.nid
+											   AND t.field_dataset_nid = %d",
+                                              $node->nid));
 }
 
 /**
