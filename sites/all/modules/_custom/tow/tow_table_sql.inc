@@ -81,15 +81,28 @@ function tow_construct_table_query($node, $display_options = '') {
 
       // second part:
       // includes all "LEFT JOIN"s
-      $query_part2 = $query_part2 . "LEFT JOIN {content_field_" .
-      $column_info['type'] . "} " . $column_info['alias'] . "\n";
+      if ($column_index > 0) {
+        $query_part2 = $query_part2 . "LEFT JOIN {content_field_" .
+        $column_info['type'] . "} " . $column_info['alias'] . "\n";
 
-      $query_part2 = $query_part2 . "\tON " . $column_info['alias'] .
-        ".nid = " . '`rec`' . ".nid\n";
+        $query_part2 = $query_part2 . "\tON " . $column_info['alias'] .
+          ".nid = " . '`rec`' . ".nid\n";
 
-      $query_part2 = $query_part2 . "\tAND " . $column_info['alias'] .
-        ".delta = " . $column_info['delta'] . "\n";
+        $query_part2 = $query_part2 . "\tAND " . $column_info['alias'] .
+          ".delta = " . $column_info['delta'] . "\n";
+      }
+      else {
+        $query_part2 = $query_part2 . "INNER JOIN {content_field_" .
+        $column_info['type'] . "} " . $column_info['alias'] . "\n";
 
+        $query_part2 = $query_part2 . "\tON `rec`.field_table_nid = %d\n";
+        
+        $query_part2 = $query_part2 . "\tAND " . $column_info['alias'] .
+          ".nid = " . '`rec`' . ".nid\n";
+
+        $query_part2 = $query_part2 . "\tAND " . $column_info['alias'] .
+          ".delta = " . $column_info['delta'] . "\n";
+      }
       // part of query, responsible for filtering
       if (($display_options['filter']) && ($display_options['filter']['filter_column_index'] == $column_index)) {
         $filter_query_part = "AND " . $column_info['alias'] . ".field_" . $column_info['type']. "_value ";
@@ -130,14 +143,15 @@ function tow_construct_table_query($node, $display_options = '') {
     )
     */
     //  5.2 Choose only records included in this table ( field_table_nid == table_nid )
-    $query = $query . "WHERE `rec`.nid\n IN (\n ";
+    //$query = $query . "WHERE `rec`.nid\n IN (\n ";
   }
-
+  else {
   // This part of query is added even if the table is empty, i. e. $aux_array is not filled in in section 1.2 and reemains unset
-  $query .= "SELECT nid\n FROM {content_type_record}\n WHERE field_table_nid =  %d";
-
+    $query .= "SELECT nid\n FROM {content_type_record}\n WHERE field_table_nid =  %d";
+  }
+  
   if ($aux_array) {
-    $query .="\n)";
+    //$query .="\n)";
 
     //  5.2 Filter results
     if ($display_options['filter']) {
