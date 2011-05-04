@@ -38,3 +38,44 @@ function tow_tests_menu() {
   
   return $items;
 }
+
+/**
+ * Initializes timer for performance analysis
+ */
+function tow_timer_init($action = 'tow timer started') {
+  global $timer;
+  global $timer_index;
+  $timer = array();
+  $timer_index = 0;
+  $timer[$timer_index]['action'] = $action;
+  $timer[$timer_index]['time'] = microtime(true);
+}
+
+/**
+ * Timer tick
+ */
+function tow_timer_tick($action_finished) {
+  global $timer;
+  global $timer_index;
+  
+  $timer[++$timer_index]['action'] = $action_finished;
+  $timer[$timer_index]['time'] = microtime(true);
+  $timer[$timer_index]['elapsed'] = $timer[$timer_index]['time']-$timer[$timer_index-1]['time'];
+}
+
+/**
+ * Shows timings of the registered actions
+ */
+function tow_timer_show_results() {
+  global $timer;
+  global $timer_index;
+  
+  $timings = array();
+  foreach ($timer as $value) {
+    $timings[$value['action']] = $value['elapsed'];
+  }
+  drupal_set_message("<pre>" . print_r($timings). "</pre>");
+  unset($timings);
+  unset($timer);
+  unset($timer_index);
+}
