@@ -80,7 +80,9 @@ function tow_dataset_form_alter(&$form, &$form_state) {
  * @param $node dataset node
  */
 function tow_dataset_summary(&$node) {
-  
+
+tow_timer_init('tow_dataset_summary', 'tow_dataset_summary called');
+
   global $user;
   // for administer view only
   if ($user->uid == $node->uid || user_access('edit any table content')) {
@@ -92,6 +94,7 @@ function tow_dataset_summary(&$node) {
   }elseif($node->field_access_type[0]['value'] == 1) {
     $node->summary['access_widget'] = tow_access_request_widget($node->nid, $user->uid);
   }
+tow_timer_tick('Extract and show names of tables started');
   // Extract and show names of tables from the dataset
   /* // Slow query
   $table_titles_res = db_query("
@@ -106,7 +109,7 @@ function tow_dataset_summary(&$node) {
 								ON `table`.nid = `node`.nid
 								WHERE `table`.field_dataset_nid = %d",
                                 $node->nid);
- 
+tow_timer_tick('Extract and show names request finished'); 
   $tables = array();
   
   global $grey_pma_menu;
@@ -121,7 +124,7 @@ function tow_dataset_summary(&$node) {
   }
   if (!empty($tables_list))
     $node->summary['tables'] = implode(', ', $tables_list);
-
+tow_timer_tick('Extract and show names of tables block ended');
   // get nids and titles of two random tables that contain records
   $res = db_query("
     SELECT n.nid, title, count FROM {node} n 
@@ -158,8 +161,12 @@ function tow_dataset_summary(&$node) {
       );
       
   }
+tow_timer_tick('get nids and titles of two random tables ended');
 
   tow_dataset_prepare_badge_block($node, count($tables_list));
+tow_timer_tick('tow_dataset_prepare_badge_block execution finished');
+  
+tow_timer_show_results('tow_dataset_summary');
   
 }
 
