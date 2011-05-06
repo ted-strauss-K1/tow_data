@@ -40,7 +40,7 @@ function tow_table_display_options($node) {
  * Menu callback
  */
 function tow_table_callback($nid) {
-  
+tow_timer_init('towtablecallback', 'tow_table_callback_started');  
   $node = node_load($nid);
 
   if (!$node || $node->type != 'table') {
@@ -73,11 +73,14 @@ function tow_table_callback($nid) {
   $display_options['paged_view'] = TRUE;
   $display_options['limits']['total_elements'] = 10;                   
   $display_options['click_sortable'] = TRUE;
-  
+tow_timer_tick('tow_table called');  
   $output .= tow_table($node, $display_options);
   
   if ($user->uid == $dataset->uid)
     $output .= _tow_table_actions_list($node->nid, 'edit');
+tow_timer_tick('tow_table_callback execution finished');
+  
+  tow_timer_show_results('towtablecallback');  
   
   return $output;
 }
@@ -101,7 +104,7 @@ function tow_table_callback($nid) {
  * @return array of table rows. Each row is array of cells. 
  */
 function tow_table($node, $display_options = array()) {
-  
+tow_timer_init('towtable', 'tow_table execution started');  
   $paged_view = isset($display_options['paged_view']);
   
   if (($paged_view) && (isset($display_options['limits']['total_elements'])))
@@ -110,10 +113,10 @@ function tow_table($node, $display_options = array()) {
     $total_elements = 10; 
   
   $headers = $rows = array();
-  
+tow_timer_tick('starting construct table query');  
   // Creating query
   $user_table = tow_construct_table_query($node, $display_options);
-
+tow_timer_tick('finished construct table query'); 
   $headers = $user_table['titles']['values'];
   
   if ($display_options['click_sortable']) {
@@ -124,9 +127,13 @@ function tow_table($node, $display_options = array()) {
   $args = $user_table['arguments'];
 
   if ($paged_view) {
+tow_timer_tick('Calling pager_query');  
     $result = pager_query($query, $total_elements, 0, NULL, $args);
+tow_timer_tick('Finished pager_query');    
   } else {
+tow_timer_tick('Calling db_query');    
     $result = db_query($query, $args);
+tow_timer_tick('Finished db_query');    
   }
   
   while ($rs = db_fetch_array($result)){
@@ -172,7 +179,8 @@ function tow_table($node, $display_options = array()) {
     $start = $_GET['page'] * $total_elements  + 1;
     $bc_attachment .= $start . ' - ' . ($start + count($rows) -1) . ')';  
   }
-  
+tow_timer_tick('tow_table execution finished');
+tow_timer_show_results('towtable');    
   return $output;
 }
 
