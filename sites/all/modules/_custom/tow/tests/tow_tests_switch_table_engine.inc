@@ -40,7 +40,7 @@ function tow_tests_switch_table_engine_form_submit($form, &$form_state){
     if ($t['Engine'] != $new_type)  
       db_query("ALTER TABLE %s ENGINE = %s", $t['Name'], $new_type);
   
-  drupal_set_message("Success! Table types were switched to " . $new_type);
+  drupal_set_message("Success! Table engines were switched to " . $new_type);
 
   $elapsed_time = time() - $time_start;
   drupal_set_message("Elapsed time: " . $elapsed_time . " seconds.");
