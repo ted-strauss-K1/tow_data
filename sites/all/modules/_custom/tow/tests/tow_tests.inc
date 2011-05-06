@@ -83,11 +83,12 @@ function tow_timer_tick($action_finished) {
   global $timer;
   global $timer_index;
   
-  $timer[++$timer_index]['action'] = $action_finished;
-  $timer[$timer_index]['time'] = microtime(true);
-  $timer[$timer_index]['elapsed'] = $timer[$timer_index]['time']-$timer[$timer_index-1]['time'];
+  if ($timer_index || $timer_index === 0) { 
+    $timer[++$timer_index]['action'] = $action_finished;
+    $timer[$timer_index]['time'] = microtime(true);
+    $timer[$timer_index]['elapsed'] = $timer[$timer_index]['time']-$timer[$timer_index-1]['time'];
+  }
 }
-
 /**
  * Shows timings of the registered actions
  */

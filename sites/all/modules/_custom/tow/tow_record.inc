@@ -154,6 +154,7 @@ tow_timer_tick('Finished specifying form redirection');
   $form['#submit'][] = 'tow_record_submit_values';
 tow_timer_tick('Finished tow_record_form_alter');
 tow_timer_show_results('tow_record_form_alter');
+tow_timer_show_results('tow_nodeapi');
 }
 
 /**

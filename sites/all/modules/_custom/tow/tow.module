@@ -180,6 +180,7 @@ function tow_data() {
 function tow_nodeapi(&$node, $op) {
   // Delete all records that have ref to the table being deleted
   // Delete all tables that have ref to the dataset being deleted
+tow_timer_tick('tow_nodeapi loaded for ' . $node->type . " ". $op);
   if ($op == 'delete') {    
     $children_type = _tow_children_type($node->type);
     if ($children_type) {
@@ -188,6 +189,12 @@ function tow_nodeapi(&$node, $op) {
         node_delete($node_to_delete->nid);
     }
   }
+
+if ($op == 'load' && $node->type == 'record' ) {
+  tow_timer_init('tow_nodeapi', 'record node will be loaded very soon');  
+  tow_timer_tick('tow_nodeapi loaded for ' . $node->type . " ". $op);
+}
+  
     
   if ($op == 'view') {
     if ($node->type == 'dataset') {
