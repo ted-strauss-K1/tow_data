@@ -17,7 +17,7 @@ function tow_tests_switch_table_engine_form(){
   $form['table_engine'] = array(
       '#type' => 'select',
       '#options' => $ops,
-      '#description' => t('Choose new table type'),
+      '#description' => t('Choose new table engine'),
       /*'#size' => 5,
       '#maxlength' => 20,
   	  '#default_value' => 2, */
