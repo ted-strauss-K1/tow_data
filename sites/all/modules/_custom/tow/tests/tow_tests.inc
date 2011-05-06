@@ -36,6 +36,13 @@ function tow_tests_menu() {
     'file' => '/tests/tow_tests_generate_data.inc',
   );
   
+  $items['tests/switch_table_type'] = array(
+    'title' => 'Switch table type',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'tow_tests_switch_table_type',
+    'menu_name' => 'menu-tests',
+    'file' => '/tests/tow_tests_switch_table_type.inc',
+  );
   return $items;
 }
 
@@ -89,6 +96,7 @@ function tow_timer_show_results($timer_name) {
     }
     drupal_set_message("<pre>" . print_r($timings). "</pre>");
     //drupal_set_message("<pre>" . print_r($print_timings). "</pre>");
+    
     unset($timings);
     unset($timer);
     unset($timer_index);
