@@ -2,11 +2,11 @@
 
 //include_once('./' . drupal_get_path('module', 'tow') . '/tests/tow_tests_truncate_cck.inc');
 
-function tow_tests_switch_table_type() {
-  return drupal_get_form('tow_tests_switch_table_type_form');  
+function tow_tests_switch_table_engine() {
+  return drupal_get_form('tow_tests_switch_table_engine_form');  
 }
 
-function tow_tests_switch_table_type_form(){
+function tow_tests_switch_table_engine_form(){
   $res = db_query('SHOW TABLE STATUS');
   $t = db_fetch_array($res);
   if ($t['Engine'] == "MyISAM") 
@@ -14,7 +14,7 @@ function tow_tests_switch_table_type_form(){
   else
     $ops = array('MyISAM', 'InnoDB');
       
-  $form['table_type'] = array(
+  $form['table_engine'] = array(
       '#type' => 'select',
       '#options' => $ops,
       '#description' => t('Choose new table type'),
@@ -30,10 +30,10 @@ function tow_tests_switch_table_type_form(){
   return $form;
 }
 
-function tow_tests_switch_table_type_form_submit($form, &$form_state){
+function tow_tests_switch_table_engine_form_submit($form, &$form_state){
   $time_start = time();
   
-  $new_type = $form['table_type']['#options'][$form_state['values']['table_type']];
+  $new_type = $form['table_engine']['#options'][$form_state['values']['table_engine']];
   
   $res = db_query('SHOW TABLE STATUS');
   while ($t = db_fetch_array($res))

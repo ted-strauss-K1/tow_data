@@ -36,12 +36,12 @@ function tow_tests_menu() {
     'file' => '/tests/tow_tests_generate_data.inc',
   );
   
-  $items['tests/switch_table_type'] = array(
-    'title' => 'Switch table type',
+  $items['tests/switch_table_engine'] = array(
+    'title' => 'Switch table engine',
     'access arguments' => array('administer site configuration'),
-    'page callback' => 'tow_tests_switch_table_type',
+    'page callback' => 'tow_tests_switch_table_engine',
     'menu_name' => 'menu-tests',
-    'file' => '/tests/tow_tests_switch_table_type.inc',
+    'file' => '/tests/tow_tests_switch_table_engine.inc',
   );
   return $items;
 }
