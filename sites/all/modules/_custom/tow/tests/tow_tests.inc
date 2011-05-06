@@ -43,6 +43,15 @@ function tow_tests_menu() {
     'menu_name' => 'menu-tests',
     'file' => '/tests/tow_tests_switch_table_engine.inc',
   );
+  
+  $items['tests/fk'] = array(
+    'title' => 'Foreign keys',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'tow_tests_fk',
+    'menu_name' => 'menu-tests',
+    'file' => '/tests/tow_tests_fk.inc',
+  );
+  
   return $items;
 }
 
