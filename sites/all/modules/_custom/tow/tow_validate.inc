@@ -24,8 +24,8 @@ function tow_table_validate_common($form, &$form_state) {
 
    ## Unique table title
   $table_titles_res = db_query("SELECT title FROM {node} WHERE nid IN 
-  	( SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d) AND nid <> %d", 
-    $form_state['values']['field_dataset'][0]['nid'], $form_state['values']['nid']);
+  	( SELECT nid FROM {content_type_table} WHERE field_dataset_value = %d) AND nid <> %d", 
+    $form_state['values']['field_dataset'][0]['value'], $form_state['values']['nid']);
 
   $table_titles = array();
   while ($rs = db_fetch_array($table_titles_res)) {
@@ -83,7 +83,7 @@ function tow_table_validate_common($form, &$form_state) {
 }
 /**
  * Performs extra form validation during table editing from node/table_id/edit/ page connected with the possibility of 
- * adding columns.
+ * adding fields.
  *
  * @param $form, &$form_state
  */
@@ -129,7 +129,6 @@ function tow_table_validate_edit(&$form, &$form_state) {
  *
  * @param $form, &$form_state
  */
-
 function tow_table_field_add_form_validate(&$form, &$form_state) {
   
   $error = FALSE;  
@@ -253,7 +252,7 @@ function tow_dataset_create_table_form_validate($form, &$form_state) {
   
   ## Unique table title
    $table_titles_res = db_query("SELECT title FROM {node} WHERE nid IN 
-  	(SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)", $dataset->nid);
+  	(SELECT nid FROM {content_type_table} WHERE field_dataset_value = %d)", $dataset->nid);
   $table_titles = array();
   while ($rs = db_fetch_array($table_titles_res)) {
     $table_titles[] = strtolower($rs['title']);
