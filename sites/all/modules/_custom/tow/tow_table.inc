@@ -40,7 +40,7 @@ function tow_table_display_options($node) {
  * Menu callback
  */
 function tow_table_callback($nid) {
-tow_timer_init('towtablecallback', 'tow_table_callback_started');  
+
   $node = node_load($nid);
 
   if (!$node || $node->type != 'table') {
@@ -52,7 +52,7 @@ tow_timer_init('towtablecallback', 'tow_table_callback_started');
   global $table;
   global $user;
   
-  $dataset = node_load($node->field_dataset['0']['nid']);
+  $dataset = node_load($node->field_dataset['0']['value']);
   $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title, 'uid' => $dataset->uid);
   $table = $node;
   
@@ -73,15 +73,12 @@ tow_timer_init('towtablecallback', 'tow_table_callback_started');
   $display_options['paged_view'] = TRUE;
   $display_options['limits']['total_elements'] = 10;                   
   $display_options['click_sortable'] = TRUE;
-tow_timer_tick('tow_table called');  
+
   $output .= tow_table($node, $display_options);
   
   if ($user->uid == $dataset->uid)
     $output .= _tow_table_actions_list($node->nid, 'edit');
-tow_timer_tick('tow_table_callback execution finished');
-  
-  tow_timer_show_results('towtablecallback');  
-  
+
   return $output;
 }
 
@@ -104,7 +101,7 @@ tow_timer_tick('tow_table_callback execution finished');
  * @return array of table rows. Each row is array of cells. 
  */
 function tow_table($node, $display_options = array()) {
-tow_timer_init('towtable', 'tow_table execution started');  
+
   $paged_view = isset($display_options['paged_view']);
   
   if (($paged_view) && (isset($display_options['limits']['total_elements'])))
@@ -113,10 +110,10 @@ tow_timer_init('towtable', 'tow_table execution started');
     $total_elements = 10; 
   
   $headers = $rows = array();
-tow_timer_tick('starting construct table query');  
+
   // Creating query
   $user_table = tow_construct_table_query($node, $display_options);
-tow_timer_tick('finished construct table query'); 
+
   $headers = $user_table['titles']['values'];
   
   if ($display_options['click_sortable']) {
@@ -127,13 +124,9 @@ tow_timer_tick('finished construct table query');
   $args = $user_table['arguments'];
 
   if ($paged_view) {
-tow_timer_tick('Calling pager_query');  
     $result = pager_query($query, $total_elements, 0, NULL, $args);
-tow_timer_tick('Finished pager_query');    
   } else {
-tow_timer_tick('Calling db_query');    
     $result = db_query($query, $args);
-tow_timer_tick('Finished db_query');    
   }
   
   while ($rs = db_fetch_array($result)){
@@ -174,13 +167,12 @@ tow_timer_tick('Finished db_query');
   if  ($paged_view) {
     $output .= theme('pager', NULL, $total_elements);
     global $bc_attachment;
-    $total = db_result(db_query("SELECT COUNT(*) FROM {content_type_record} WHERE field_table_nid = %d", $node->nid));
+    $total = db_result(db_query("SELECT COUNT(*) FROM {content_type_record} WHERE field_table_value = %d", $node->nid));
     $bc_attachment = ' (' . $total . t(' rows; displaying ');
     $start = $_GET['page'] * $total_elements  + 1;
     $bc_attachment .= $start . ' - ' . ($start + count($rows) -1) . ')';  
   }
-tow_timer_tick('tow_table execution finished');
-tow_timer_show_results('towtable');    
+
   return $output;
 }
 
@@ -199,6 +191,7 @@ function tow_table_form_alter(&$form, &$form_state) {
   foreach (tow_possible_fields() as $field_type)
     $form['field_title_' . $field_type]['#access'] = FALSE;
   $form['field_enum_options']['#access'] = FALSE;
+  $form['field_dataset']['#access'] = FALSE;
   
   $form['#content_extra_fields']['body_field']['weight'] = 0;
   
@@ -230,7 +223,7 @@ function tow_table_form_alter(&$form, &$form_state) {
     global $dataset;
     global $table;
   
-    $dataset = node_load($form['#node']->field_dataset['0']['nid']);
+    $dataset = node_load($form['#node']->field_dataset['0']['value']);
     $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
     $table = (object)array('nid' => $form['#node']->nid, 'title' => $form['#node']->title);
     
@@ -348,20 +341,20 @@ function tow_table_form_alter(&$form, &$form_state) {
     
     if ($_SESSION['table_definition']) {
       $form['title']['#default_value'] = $_SESSION['table_definition']['table_name'];
-      $form['field_dataset']['#default_value'][0]['nid'] = $_SESSION['table_definition']['dataset'];
+      $form['field_dataset'][0]['#default_value']['value'] = $_SESSION['table_definition']['dataset'];
       $count_fields = $_SESSION['table_definition']['count_fields'];
       unset($_SESSION['table_definition']);
     }
     else{
       $count_fields = 1;
       if (is_numeric($_GET['dataset']))
-        $form['field_dataset']['#default_value'][0]['nid'] = $_GET['dataset'];
+        $form['field_dataset'][0]['#default_value']['value'] = $_GET['dataset'];
         //array_unshift($form['#validate'], 'tow_table_dont_validate_cancel');
         $form['#validate'][] =  'tow_table_dont_validate_cancel';
     }
     
     global $dataset;
-    $dataset = node_load($form['field_dataset']['#default_value'][0]['nid']);
+    $dataset = node_load($form['field_dataset'][0]['#default_value']['value']);
     $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
     
     $form['buttons']['submit']['#value'] = t('Create table');
@@ -591,7 +584,7 @@ function _tow_table_actions_list($nid, $last_link) {
 function tow_table_dont_validate_cancel($form, &$form_state) {
   if ($form_state['clicked_button']['#value'] == 'Cancel') {
     unset($_SESSION['messages']['error']);
-    drupal_goto('node/' . $form_state['values']['field_dataset'][0]['nid']);
+    drupal_goto('node/' . $form_state['values']['field_dataset'][0]['value']);
   }
 }
 
@@ -607,7 +600,7 @@ function tow_table_structure(&$node) {
   
   $bc_attachment = ' (' . t('table structure') . ')';
   
-  $dataset = node_load($node->field_dataset['0']['nid']);
+  $dataset = node_load($node->field_dataset['0']['value']);
   $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
   $table = (object)array('nid' => $node->nid, 'title' => $node->title);
   
@@ -655,7 +648,7 @@ function tow_table_structure(&$node) {
       $index = 0;
       foreach ($rows as $key => $value) {
         $rows[$key]['action'] = l('info', 'field/' . $table->nid . '/' . $index++) . ' ' . $rows[$key]['action']; 
-      } 
+      }
       
       $node->structure['structure'] = theme('table', $headers, $rows);  
   }else{
@@ -663,7 +656,7 @@ function tow_table_structure(&$node) {
     $count_fields = 0;
   }
   
-  $count_rows = db_result(db_query("SELECT COUNT(*) FROM {content_type_record} WHERE field_table_nid = %d", $table->nid));
+  $count_rows = db_result(db_query("SELECT COUNT(*) FROM {content_type_record} WHERE field_table_value = %d", $table->nid));
   if ($count_rows == 1)
     $count_rows .= ' ' . t('row');
   else
@@ -697,10 +690,10 @@ function tow_table_structure_blanks($table_nid, $delta, $type) {
       SELECT COUNT(*)
       FROM {content_field_%s} x INNER JOIN {content_type_record} r 
       ON x.nid = r.nid AND x.field_%s_value IS NOT NULL
-      WHERE r.field_table_nid = %d
+      WHERE r.field_table_value = %d
       AND x.delta = %d
     ) / (
-      SELECT COUNT(*) FROM `content_type_record` WHERE field_table_nid = %d
+      SELECT COUNT(*) FROM `content_type_record` WHERE field_table_value = %d
     )
     ", $type, $type, $table_nid, $delta, $table_nid)) * 100);
   if ($blanks != 0)
@@ -746,7 +739,7 @@ function tow_table_clone_table_form_submit($form, &$form_state) {
   
   $highest_db_title = db_result(db_query("
     SELECT title FROM {node} n INNER JOIN {content_type_table} ctt
-    ON n.nid = ctt.nid AND ctt.field_dataset_nid = %d
+    ON n.nid = ctt.nid AND ctt.field_dataset_value = %d
     WHERE n.title LIKE '%s%' ORDER BY title DESC LIMIT 1
     ", $dataset->nid, $word));
   
@@ -864,7 +857,9 @@ function tow_table_field_add_form($form_state, $node, $existing_fields) {
     '#type' => 'submit',
     '#value' => t('add field')
   );
+  
   $form['#validate'][] = 'tow_table_field_add_form_validate';
+  
   return $form;
 }
 
