@@ -144,6 +144,21 @@ function tow_invite_register() {
   }
 }
 
-function tow_invite_insert() {
-  
+/**
+ * Set in the db that user invited has acces to dataset
+ * Delete corresponding invite from the db
+ * @param $accunt object of user that has just been created
+ * tow_invite_register() has just fired so there is no need of token validation
+ */
+function tow_invite_insert($account) {
+  $token = $_GET['token'];
+  if ($token) {
+    $nid = db_result(db_query("SELECT nid FROM {tow_invites} WHERE token = '%s'", $token));
+    db_query("
+      INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp)
+      VALUES (%d, %d, 1, %d)
+      ON DUPLICATE KEY UPDATE status = 1
+      ", $nid, $account->uid, time());
+    db_query("DELETE FROM {tow_invites} WHERE token = '%s'", $token);
+  }
 }
