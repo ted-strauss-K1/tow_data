@@ -180,7 +180,6 @@ function tow_data() {
 function tow_nodeapi(&$node, $op) {
   // Delete all records that have ref to the table being deleted
   // Delete all tables that have ref to the dataset being deleted
-tow_timer_tick('tow_nodeapi loaded for ' . $node->type . " ". $op);
   if ($op == 'delete') {    
     $children_type = _tow_children_type($node->type);
     if ($children_type) {
@@ -190,12 +189,6 @@ tow_timer_tick('tow_nodeapi loaded for ' . $node->type . " ". $op);
     }
   }
 
-if ($op == 'load' && $node->type == 'record' ) {
-  tow_timer_init('tow_nodeapi', 'record node will be loaded very soon');  
-  tow_timer_tick('tow_nodeapi loaded for ' . $node->type . " ". $op);
-}
-  
-    
   if ($op == 'view') {
     if ($node->type == 'dataset') {
       global $dataset;
@@ -226,6 +219,19 @@ if ($op == 'load' && $node->type == 'record' ) {
   // Submit description after table node was inserted
   if ($node->type == 'table' && $op == 'insert')
     tow_field_descriptions_submit($node->nid);
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function tow_user($op, &$edit, &$account) {
+  
+  if ($op == 'register') {
+    tow_invite_register();
+  }
+  if ($op == 'insert') {
+    tow_invite_insert($account);
+  }
 }
 
 /**
@@ -289,15 +295,15 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
       case 'table':
         global $dataset;
         global $table;
-        $dataset = node_load($node->field_dataset['0']['nid']);
+        $dataset = node_load($node->field_dataset['0']['value']);
         $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
         $table = (object)array('nid' => $node->nid, 'title' => $node->title);
         break;
       case 'record':
         global $dataset;
         global $table;
-        $table = node_load($node->field_table['0']['nid']);
-        $dataset = node_load($table->field_dataset['0']['nid']);
+        $table = node_load($node->field_table['0']['value']);
+        $dataset = node_load($table->field_dataset['0']['value']);
         $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
         $table = (object)array('nid' => $table->nid, 'title' => $table->title);
         break;
