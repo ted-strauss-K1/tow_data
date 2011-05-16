@@ -23,7 +23,7 @@ function tow_field_delete_confirm($form_state, $table_nid, $type, $delta, $index
     drupal_not_found();
     die();
   }
-  $dataset = node_load($table->field_dataset[0]['nid']);
+  $dataset = node_load($table->field_dataset[0]['value']);
      
   $form['type'] = array(
     '#type' => 'value',
@@ -65,7 +65,7 @@ function tow_field_delete_confirm_submit($form, &$form_state) {
   db_query("
     DELETE FROM {content_field_%s} WHERE nid IN
     (
-      SELECT nid FROM content_type_record WHERE field_table_nid = %d
+      SELECT nid FROM content_type_record WHERE field_table_value = %d
     )
   AND delta = %d
  ", $type, $table->nid, $delta);
@@ -110,7 +110,7 @@ function tow_field_edit_form($form_state, $table_nid, $type, $delta, $index) {
     drupal_not_found();
     die();
   }
-  $dataset = node_load($table->field_dataset[0]['nid']);
+  $dataset = node_load($table->field_dataset[0]['value']);
 
   $form['current_type'] = array(
     '#type' => 'value',
@@ -198,9 +198,9 @@ function tow_field_edit_form_submit($form, &$form_state) {
 function tow_field_description_callback($field_index, $table_nid) {
   
 // CHANGED
-  $dataset_nid_res = db_query("SELECT `field_dataset_nid` FROM {content_type_table} WHERE `nid` = %d", $table_nid);
+  $dataset_nid_res = db_query("SELECT `field_dataset_value` FROM {content_type_table} WHERE `nid` = %d", $table_nid);
   $dataset_nid = db_fetch_array($dataset_nid_res);
-  $dataset_nid = $dataset_nid['field_dataset_nid'];
+  $dataset_nid = $dataset_nid['field_dataset_value'];
   
   $dataset = node_load($dataset_nid);
 // END OF CHANGED  
