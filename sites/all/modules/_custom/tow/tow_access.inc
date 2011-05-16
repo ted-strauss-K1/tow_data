@@ -5,6 +5,20 @@
  * Access functions
  */
 
+/* 
+ * access types:
+ * 0 open
+ * 1 by request
+ * 2 private
+ */
+
+/*
+ * access statuses:
+ * -1 denied
+ *  0 pending
+ *  1 granted
+ */
+
 /**
  * Deny access for dataset if access is forbidden
  */
