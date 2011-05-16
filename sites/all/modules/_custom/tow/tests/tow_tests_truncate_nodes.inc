@@ -23,7 +23,7 @@ function tow_tests_truncate_nodes_form_submit($form, &$form_state){
   $tables = array(
     'content_type_table',
     'content_type_record',
-  	'content_type_dataset',
+    'content_type_dataset',
     'node',
     'node_comment_statistics',
     'node_counter',
