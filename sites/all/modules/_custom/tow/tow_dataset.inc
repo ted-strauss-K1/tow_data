@@ -81,8 +81,6 @@ function tow_dataset_form_alter(&$form, &$form_state) {
  */
 function tow_dataset_summary(&$node) {
 
-tow_timer_init('tow_dataset_summary', 'tow_dataset_summary called');
-
   global $user;
   // for administer view only
   if ($user->uid == $node->uid || user_access('edit any table content')) {
@@ -94,22 +92,15 @@ tow_timer_init('tow_dataset_summary', 'tow_dataset_summary called');
   }elseif($node->field_access_type[0]['value'] == 1) {
     $node->summary['access_widget'] = tow_access_request_widget($node->nid, $user->uid);
   }
-tow_timer_tick('Extract and show names of tables started');
   // Extract and show names of tables from the dataset
-  /* // Slow query
   $table_titles_res = db_query("
-    SELECT nid, title FROM {node} WHERE nid IN
-      (SELECT nid FROM {content_type_table} WHERE field_dataset_nid = %d)
-      ", $node->nid);
-  */
-  // Faster query  
-  $table_titles_res = db_query("SELECT `table`.nid AS `nid`, `node`.title AS `title` 
-								FROM {content_type_table} `table`
-								LEFT JOIN {node} `node`
-								ON `table`.nid = `node`.nid
-								WHERE `table`.field_dataset_nid = %d",
-                                $node->nid);
-tow_timer_tick('Extract and show names request finished'); 
+    SELECT `table`.nid AS `nid`, `node`.title AS `title` 
+    FROM {content_type_table} `table`
+    LEFT JOIN {node} `node`
+      ON `table`.nid = `node`.nid
+    WHERE `table`.field_dataset_value = %d
+    ", $node->nid);
+
   $tables = array();
   
   global $grey_pma_menu;
@@ -124,22 +115,22 @@ tow_timer_tick('Extract and show names request finished');
   }
   if (!empty($tables_list))
     $node->summary['tables'] = implode(', ', $tables_list);
-tow_timer_tick('Extract and show names of tables block ended');
+
   // get nids and titles of two random tables that contain records
   $res = db_query("
     SELECT n.nid, title, count FROM {node} n 
     LEFT JOIN
     (
-	  SELECT COUNT(*) AS count, field_table_nid FROM {content_type_record}
-	  GROUP BY field_table_nid
+	  SELECT COUNT(*) AS count, field_table_value FROM {content_type_record}
+	  GROUP BY field_table_value
      ) t
-    ON n.nid = t.field_table_nid
+    ON n.nid = t.field_table_value
     WHERE n.nid IN
     (
 	  SELECT nid FROM {content_type_table}
-	  WHERE field_dataset_nid = %d
+	  WHERE field_dataset_value = %d
     )
-    AND field_table_nid > 0
+    AND field_table_value > 0
     ORDER BY RAND()
     LIMIT 0, 2
   ", $node->nid);
@@ -161,13 +152,9 @@ tow_timer_tick('Extract and show names of tables block ended');
       );
       
   }
-tow_timer_tick('get nids and titles of two random tables ended');
 
   tow_dataset_prepare_badge_block($node, count($tables_list));
-tow_timer_tick('tow_dataset_prepare_badge_block execution finished');
-  
-tow_timer_show_results('tow_dataset_summary');
-  
+
 }
 
 /**
@@ -233,29 +220,15 @@ function tow_dataset_prepare_badge_block($node, $count_tables) {
   $dataset_count_tables = $count_tables;
 
   global $dataset_count_records;
-  /* // Slow query
+  
+  
   $dataset_count_records = db_result(db_query("
-    SELECT SUM(t.count) FROM {node} n 
-    LEFT JOIN
-    (
-	  SELECT COUNT(*) AS count, field_table_nid FROM {content_type_record}
-	  GROUP BY field_table_nid
-     ) t
-    ON n.nid = t.field_table_nid
-    WHERE n.nid IN
-    (
-	  SELECT nid FROM {content_type_table}
-	  WHERE field_dataset_nid = %d
-    )
-  ", $node->nid));
-  */
-  // Faster query
-  $dataset_count_records = db_result(db_query("SELECT COUNT(*) AS qty
-											   FROM {content_type_record} r 
-											   INNER JOIN {content_type_table} t
-											   ON r.field_table_nid = t.nid
-											   AND t.field_dataset_nid = %d",
-                                              $node->nid));
+    SELECT COUNT(*) AS qty
+	FROM {content_type_record} r 
+	INNER JOIN {content_type_table} t
+	  ON r.field_table_value = t.nid
+	  AND t.field_dataset_value = %d",
+    $node->nid));
 }
 
 /**
