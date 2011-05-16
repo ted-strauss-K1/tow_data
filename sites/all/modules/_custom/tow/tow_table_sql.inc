@@ -95,7 +95,7 @@ function tow_construct_table_query($node, $display_options = '') {
         $query_part2 = $query_part2 . "INNER JOIN {content_field_" .
         $column_info['type'] . "} " . $column_info['alias'] . "\n";
 
-        $query_part2 = $query_part2 . "\tON `rec`.field_table_nid = %d\n";
+        $query_part2 = $query_part2 . "\tON `rec`.field_table_value = %d\n";
         
         $query_part2 = $query_part2 . "\tAND " . $column_info['alias'] .
           ".nid = " . '`rec`' . ".nid\n";
@@ -139,15 +139,15 @@ function tow_construct_table_query($node, $display_options = '') {
     IN (
     SELECT nid
     FROM {content_type_record}
-    WHERE field_table_nid =  %d
+    WHERE field_table_value =  %d
     )
     */
-    //  5.2 Choose only records included in this table ( field_table_nid == table_nid )
+    //  5.2 Choose only records included in this table ( field_table_value == table_nid )
     //$query = $query . "WHERE `rec`.nid\n IN (\n ";
   }
   else {
   // This part of query is added even if the table is empty, i. e. $aux_array is not filled in in section 1.2 and reemains unset
-    $query .= "SELECT nid\n FROM {content_type_record}\n WHERE field_table_nid =  %d";
+    $query .= "SELECT nid\n FROM {content_type_record}\n WHERE field_table_value = %d";
   }
   
   if ($aux_array) {
@@ -226,7 +226,7 @@ WHERE `rec`.nid
 IN (
  SELECT nid
  FROM {content_type_record}
- WHERE field_table_nid = %d
+ WHERE field_table_value = %d
 ) 
 
 AND `int0`.field_int_value > 5
