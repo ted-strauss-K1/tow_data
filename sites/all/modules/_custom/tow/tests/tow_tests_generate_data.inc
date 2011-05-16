@@ -232,7 +232,7 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
           $weights_array[$col_index] = $col_index;
         }
         $new_table->field_weights[0]['value'] = serialize($weights_array);
-        $new_table->field_dataset[0]['nid'] = $dataset_nid;
+        $new_table->field_dataset[0]['value'] = $dataset_nid;
         $new_table->field_indexes[0]['value'] = serialize($indexes_array);
         // 3.7 node save, get table nid
         node_save($new_table);
@@ -281,7 +281,7 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
              }
              $new_record->{"field_" . $column_type[$col_index]['type']}[]['value'] = $value;
            }
-           $new_record->field_table[0]['nid'] = $table_nid;
+           $new_record->field_table[0]['value'] = $table_nid;
           node_save($new_record);
         } // end of records 
       } // end of tables
