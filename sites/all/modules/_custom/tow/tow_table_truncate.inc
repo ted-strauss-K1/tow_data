@@ -25,7 +25,7 @@ function tow_table_truncate_confirm(&$form_state, $nid) {
     '#value' => $nid,
   );
   
-  $form['#dataset'] = $node->field_dataset[0]['nid'];
+  $form['#dataset'] = $node->field_dataset[0]['value'];
   
   return confirm_form(
     $form,
@@ -44,7 +44,7 @@ function tow_table_truncate_confirm(&$form_state, $nid) {
  */
 function tow_table_truncate_confirm_submit($form, &$form_state) {
   if ($form_state['values']['confirm']) {
-    $res = db_query("SELECT nid FROM {content_type_record} WHERE field_table_nid = %d", $form['nid']['#value']);
+    $res = db_query("SELECT nid FROM {content_type_record} WHERE field_table_value = %d", $form['nid']['#value']);
       while($node_to_delete = db_fetch_object($res))
         node_delete($node_to_delete->nid);
   }
