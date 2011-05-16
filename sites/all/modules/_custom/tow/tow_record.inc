@@ -10,7 +10,7 @@
  * @param unknown_type $form_state
  */
 function tow_record_form_alter(&$form, &$form_state) {
-tow_timer_init('tow_record_form_alter', 'tow_record_form_alter started');  
+
   global $dataset;
   global $table;
   global $record;
@@ -24,22 +24,22 @@ tow_timer_init('tow_record_form_alter', 'tow_record_form_alter started');
   //unset($form['author']); //TODO: hide this field but place user id like field_table?
   unset($form['options']);
   unset($form['buttons']['preview']);
-tow_timer_tick('removed title, menu options');        
+
   // hide native cck fields
   foreach (tow_possible_fields() as $field_type)
     $form['field_' . $field_type]['#access'] = FALSE;
-tow_timer_tick('native cck fields were hidden');        
+
   // get table node
   if ($_GET['table'])
     $table = node_load($_GET['table']);
   else
-    $table = node_load($form['#node']->field_table[0]['nid']);
+    $table = node_load($form['#node']->field_table[0]['value']);
   if (!$table)
     return;
-tow_timer_tick('Finished reading table node');    
-  $dataset = node_load($table->field_dataset[0]['nid']);
+
+  $dataset = node_load($table->field_dataset[0]['value']);
   $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title);
-tow_timer_tick('Finished reading dataset node');        
+
   $form['table_nid'] = array(
     '#type' => 'value',
     '#value' => $table->nid
@@ -62,7 +62,7 @@ tow_timer_tick('Finished reading dataset node');
   $form['delta'] = array(
     '#tree' => TRUE
   );
-tow_timer_tick('Finished prepreparing form');      
+
   $weights_array = unserialize($table->field_weights[0]['value']);
   if ($weights_array) {   
     $index = 0;
@@ -138,23 +138,21 @@ tow_timer_tick('Finished prepreparing form');
       
     }
   }
-tow_timer_tick('Finished preparing form');  
+
   // specify form redirection
   $args = arg();
   if ($args[2] == 'edit') // for node/[record-nid]/edit
     $form_state['redirect'] = 'table/' . $table->nid;
   else
     $form['#redirect'] = 'table/' . $table->nid; // for node/record/add 
-tow_timer_tick('Finished specifying form redirection');    
+  
   // register validate callbacks
   $form['#validate'][] = 'tow_record_validate_edit';
   
   // register submit callbacks
   $form['#submit'][] = 'tow_record_submit_table';
   $form['#submit'][] = 'tow_record_submit_values';
-tow_timer_tick('Finished tow_record_form_alter');
-tow_timer_show_results('tow_record_form_alter');
-tow_timer_show_results('tow_nodeapi');
+
 }
 
 /**
@@ -162,7 +160,7 @@ tow_timer_show_results('tow_nodeapi');
  * Set nid of table.
  */
 function tow_record_submit_table($form, &$form_state) {
-  $form_state['values']['field_table'][0]['nid'] = $form_state['values']['table_nid'];
+  $form_state['values']['field_table'][0]['value'] = $form_state['values']['table_nid'];
 }
 
 /**
