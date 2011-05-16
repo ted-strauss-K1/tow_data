@@ -8,6 +8,32 @@
  */
 
 /**
+ * Implementation of hook_query_alter().
+ */
+function tow_views_query_alter(&$view, &$query) {
+  
+  if ($view->name == 'dataset') {
+    time();
+    $query->table_queue['content_type_table'] = array(
+      'table' => 'content_type_table',
+      'alias' => 'ctt',
+      'join' => new views_join,
+      'relationship' => 'node' 
+    );
+    $query->table_queue['content_type_table']['join']->construct();
+    $query->table_queue['content_type_table']['join']->table = 'content_type_table';
+    $query->table_queue['content_type_table']['join']->left_table = 'node';
+    $query->table_queue['content_type_table']['join']->left_field = 'nid';
+    $query->table_queue['content_type_table']['join']->field = 'nid';
+    $query->table_queue['content_type_table']['join']->type = 'LEFT';
+    
+    $query->where[0]['clauses'][2] = 'ctt.field_dataset_value=%d';
+    $query->where[0]['args'][1] = $view->args[0];
+
+  }
+}
+
+/**
  * Implementation of hook_views_pre_render().
  */
 function tow_views_pre_render(&$view) {
