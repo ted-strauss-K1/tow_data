@@ -289,3 +289,25 @@ function _tow_show_validation_error($error, $err_field_names, $err_msgs) {
     $_SESSION['messages']['error'] = array_unique($_SESSION['messages']['error']);
   }
 }
+
+/**
+ * Validate user registration form
+ */
+function tow_user_register_validate($form, &$form_state) {
+  
+  if ($form_state['clicked_button']['#value'] != 'Submit')
+    return;
+  
+  if ($form_state['values']['email_verify'] != $form_state['values']['mail']) {
+    $error = TRUE;
+    $err_field_names[] = 'email_verify';
+    $err_msgs[] = t('E-mail address and E-mail verify should be same');
+  }
+  
+  if (!$form_state['values']['terms_of_service']) {
+    $error = TRUE;
+    $err_field_names[] = 'terms_of_service';
+    $err_msgs[] = t('You should agree on terms of service and privacy terms');
+  }
+  _tow_show_validation_error($error, $err_field_names, $err_msgs);
+}
