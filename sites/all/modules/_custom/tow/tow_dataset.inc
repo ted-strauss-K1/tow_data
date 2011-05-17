@@ -100,9 +100,9 @@ function tow_dataset_summary(&$node) {
       ON `table`.nid = `node`.nid
     WHERE `table`.field_dataset_value = %d
     ", $node->nid);
-
-  $tables = array();
   
+  // originally, $grey_pma_menu flag is used to tell tow_pma_menu to make links like "import", "browse" not clicable when access is limited
+  // so here we use this flag to know if we should show links to tables and table contents
   global $grey_pma_menu;
   if ($grey_pma_menu) {
     while ($rs = db_fetch_array($table_titles_res)) {
@@ -111,48 +111,51 @@ function tow_dataset_summary(&$node) {
   }else {
     while ($rs = db_fetch_array($table_titles_res)) {
       $tables_list[] = l($rs['title'], 'table/' . $rs['nid']);
+      $table_nids[] = $rs['nid'];
     }
   }
   if (!empty($tables_list))
     $node->summary['tables'] = implode(', ', $tables_list);
+  
+  // get nids and count of records of two random tables that contain records    
+  if (!$grey_pma_menu) {
+    
+    shuffle($table_nids);
+    foreach($table_nids as $tn) {
+      if($count = db_result(db_query("SELECT COUNT(*) FROM {content_type_record} WHERE field_table_value = %d", $tn))) {
+        $tables[] = array(
+          'nid' => $tn,
+          'count' => $count
+        );
+        $i++;
+      }
+      if ($i == 2)
+        break;
+    }  
+  
+    // get 2 themed tables with random LIMIT 
+    foreach($tables as $table) {
+    
+      $first_record_id = rand(0, $table['count'] - 3);
+      $display_options['sort'] = array ('sort_index' => 'nid', 'sort_order' => 'ASC');
+      $display_options['limits'] = array ('first_elem_no' => $first_record_id, 'total_elements' => 3);
 
-  // get nids and titles of two random tables that contain records
-  $res = db_query("
-    SELECT n.nid, title, count FROM {node} n 
-    LEFT JOIN
-    (
-	  SELECT COUNT(*) AS count, field_table_value FROM {content_type_record}
-	  GROUP BY field_table_value
-     ) t
-    ON n.nid = t.field_table_value
-    WHERE n.nid IN
-    (
-	  SELECT nid FROM {content_type_table}
-	  WHERE field_dataset_value = %d
-    )
-    AND field_table_value > 0
-    ORDER BY RAND()
-    LIMIT 0, 2
-  ", $node->nid);
-
-  while ($table = db_fetch_object($res)) {
-    $first_record_id = rand(0, $table->count - 3);
-    $display_options['sort'] = array ('sort_index' => 'nid', 'sort_order' => 'ASC');
-    $display_options['limits'] = array ('first_elem_no' => $first_record_id, 'total_elements' => 3);
-        
-    if ($grey_pma_menu)
-      $node->summary['view_table'][] = array(
-        'title' => $table->title,
-        'table' => tow_table(node_load($table->nid), $display_options)
-      );
-    else
-      $node->summary['view_table'][] = array(
-        'title' => l($table->title, 'table/' . $table->nid) . t(' table'),
-        'table' => tow_table(node_load($table->nid), $display_options)
-      );
-      
-  }
-
+      $table_node = node_load($table['nid']);
+    
+      if ($grey_pma_menu)
+        $node->summary['view_table'][] = array(        
+          'title' => $table_node->title,
+          'table' => tow_table($table_node, $display_options)
+        );
+      else
+        $node->summary['view_table'][] = array(
+          'title' => l($table_node->title, 'table/' . $table['nid']) . t(' table'),
+          'table' => tow_table($table_node, $display_options)
+        );      
+    }
+  
+  }  
+  
   tow_dataset_prepare_badge_block($node, count($tables_list));
 
 }
