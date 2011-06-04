@@ -136,15 +136,23 @@ function tow_import_form_submit($form, &$form_state) {
 }
 
 
-function tow_import_progress_init($hash) {
+function tow_import_progress_init($hash, $copied, $filename, $dataset, $table = FALSE) {
   global $user;
         
   db_query("INSERT INTO {tow_import_progress} (sid, hash) VALUES('%s', %d)", $user->sid, $hash);
   
-  _test($hash);
+  if ($copied) {
+    tow_import_progress_set($hash, 1, 10);
+    _test($hash, $filename, $dataset, $table);
+  }
+  else {
+    tow_import_progress_set($hash, 1, -1);
+    tow_import_progress_set($hash, 4, -1); // stop
+  }
+ 
+  sleep(10);
+  tow_import_progress_delete($hash);
   
-  sleep(1);
-  //tow_import_progress_delete($hash);
 }
 
 function tow_import_progress_set($hash, $stage, $value) {
@@ -169,9 +177,13 @@ function tow_import_progress_delete($hash) {
 }
 
 
-function _test($hash) {
+function _test($hash, $filename, $dataset, $table = FALSE) {
   
-  for ($stage = 1; $stage <= 2; $stage++) {
+  $file = file_get_contents('sites/default/files/import/' . $hash);sleep(3);
+  file_delete('sites/default/files/import/' . $hash);
+  
+  // PROCESS
+  for ($stage = 2; $stage <= 2; $stage++) {
     for ($value = 1; $value <= 10; $value++) {
       usleep(500000);
       tow_import_progress_set($hash, $stage, $value);
@@ -236,10 +248,12 @@ function tow_import_upload() {
   	if ($table->field_dataset_value != $dataset->nid)
       die();
   }
-  
-  tow_import_progress_init($hash);
+  else
+    $table = FALSE;
   
   $file = file_save_upload('upload');
-  file_copy($file, 'import/' . $file->filename);
+  $filename = $file->filename;
+  $copied = file_copy($file, 'import/' . $hash);
   
+  tow_import_progress_init($hash, $copied, $filename, $dataset, $table);
 }
