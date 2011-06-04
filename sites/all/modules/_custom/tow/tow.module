@@ -19,6 +19,7 @@ include_once('./' . $module_path . '/tow_statistics.inc');
 include_once('./' . $module_path . '/tow_field.inc');
 include_once('./' . $module_path . '/tow_invite.inc');
 include_once('./' . $module_path . '/tow_register.inc');
+include_once('./' . $module_path . '/tow_import.inc');
 
 include_once('./' . $module_path . '/tests/tow_tests.inc');
 
@@ -172,6 +173,27 @@ function tow_menu() {
     'page callback' => 'tow_register_add_more_js',
     'access arguments' => array('access content'),
     'file' => 'tow_register.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['import/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_import_form', 1),
+    'access arguments' => array('edit own dataset content'),
+    'file' => 'tow_import.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['import_progress_get'] = array(
+    'page callback' => 'tow_import_progress_get',
+    'page arguments' => array(1, 2),
+    'access arguments' => array('edit own dataset content'),
+    'file' => 'tow_import.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['import/upload_dragged'] = array(
+    'page callback' => 'tow_import_dragged',
+    'access arguments' => array('edit own dataset content'),
+    'file' => 'tow_import.inc',
     'type' => MENU_CALLBACK,
   );
   
