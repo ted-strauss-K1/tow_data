@@ -23,36 +23,34 @@ Drupal.behaviors.import = function(context) {
   else
 	$('#edit-upload-wrapper div.description').hide();
   
-  $('#footer').prepend('<div class="test">Click to test</div>');
-  $('.test').click(function() {
-    $('.progress-bar').show();
-    lpInit();
-  });
-  
+  /*
   var lpInit = function(hash) {
     var hash = Math.round(Math.random()*1000000);
 	$.ajax({
 	  url: 'http://' + location.host + '/?q=import_progress_init/' + hash,
 	  dataType: 'json',
-	  success: lpStart(hash, 1)
+	  success: lpStart(hash, 1, 3)
 	});
   };
+  */
   
-  var lpStart = function(hash, stage) {
-	//alert('lpStart: stage=' + stage);
+  var lpStart = function(hash, stage, cycle) {
+	
+	cycle++;
+	if (cycle > 100)
+	  return;
+	
 	$.ajax({
 	  url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
 	  dataType: 'json',
 	  success: function (data, textStatus) {
-		lpOnComplete(hash, stage, data.response);
+		lpOnComplete(hash, stage, data.response, cycle);
 	  }
     });
   };
   
-  var lpOnComplete = function(hash, stage, response) {
+  var lpOnComplete = function(hash, stage, response, cycle) {
 
-	x_oncomplete_response = response; x_oncomplete_hash = hash; x_oncomplete_stage = stage;// debug
-	  
 	var dots;
 	var nextStage = stage;
 	
@@ -106,7 +104,7 @@ Drupal.behaviors.import = function(context) {
 	
 	setTimeout(
 	  function() {
-	    lpStart(hash, nextStage);
+	    lpStart(hash, nextStage, cycle);
 	  }, 1000);
   
   };
@@ -127,7 +125,7 @@ Drupal.behaviors.import = function(context) {
       },
       uploadStarted: function(i, file, len){
     	  $('.progress-bar').show();
-    	  lpStart(hash, 1);
+    	  lpStart(hash, 1, 0);
       },
       maxfiles: 1,
       maxfilesize: 10
