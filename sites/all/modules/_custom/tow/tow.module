@@ -175,6 +175,7 @@ function tow_menu() {
     'file' => 'tow_register.inc',
     'type' => MENU_CALLBACK,
   );
+  
   $items['import/%'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('tow_import_form', 1),
@@ -192,6 +193,22 @@ function tow_menu() {
   
   $items['import/upload_dragged'] = array(
     'page callback' => 'tow_import_dragged',
+    'access arguments' => array('edit own dataset content'),
+    'file' => 'tow_import.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['import/upload_selected'] = array(
+    'page callback' => 'tow_import_selected',
+    'page arguments' => array(2, 3, 4),
+    'access arguments' => array('edit own dataset content'),
+    'file' => 'tow_import.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['import_grab'] = array(
+    'page callback' => 'tow_import_grab',
+    'page arguments' => array(1, 2, 3, 4),
     'access arguments' => array('edit own dataset content'),
     'file' => 'tow_import.inc',
     'type' => MENU_CALLBACK,
