@@ -1,7 +1,7 @@
 // Copyright Theory on Wheels
 
 // User interface adjustment for import page
-Drupal.behaviors.import = function(context) {
+Drupal.behaviors.Import = function(context) {
 	
   // hide and show table select dependently on user choice (whether import to dataset or to table)
   $('#edit-to-table').hide();
