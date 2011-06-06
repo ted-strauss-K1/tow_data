@@ -15,7 +15,9 @@ Drupal.behaviors.import = function(context) {
   //hide progress bar
   $('.progress-bar').hide();
   
-  var hash = Math.round(Math.random()*1000000);
+  var 	hash = Math.round(Math.random()*1000000),
+  		dataset = location.pathname.replace(/\import/g, "").replace(/\//g, ""),
+  		lock = false;
   
   // For Firefox >= 3.6 add drag&drop feature 
   if ($.browser.mozilla == true && parseInt($.browser.version.replace(/\./g, "")) > 19200)
@@ -23,16 +25,37 @@ Drupal.behaviors.import = function(context) {
   else
 	$('#edit-upload-wrapper div.description').hide();
   
-  /*
-  var lpInit = function(hash) {
-    var hash = Math.round(Math.random()*1000000);
-	$.ajax({
-	  url: 'http://' + location.host + '/?q=import_progress_init/' + hash,
-	  dataType: 'json',
-	  success: lpStart(hash, 1, 3)
-	});
-  };
-  */
+  $('#edit-upload').change(function(){
+	  
+	  if (lock)
+		  return;
+	  lock = true;
+	  
+	  var files = this.files; 
+	  if (files.length != 1)
+		  return;
+	  fileUpload(hash, files[0]);
+  });
+  
+  $('.get-it').click(function(){
+	  
+	  if (lock)
+		  return;
+	  lock = true;
+	  
+	  var grab_url = $('#edit-url').val(); 
+	  if (grab_url != "") {
+		  var table = getChosenTable(); 
+		  $.ajax({
+			  url: 'http://' + location.host + '/?q=import_grab/' + hash + '/' + dataset + '/' + table,
+			  data: {grab_url : grab_url},
+			  beforeSend: function() {
+		    	  $('.progress-bar').show();
+		    	  lpStart(hash, 1, 0);
+			  }
+		  });
+	  }
+  });
   
   var lpStart = function(hash, stage, cycle) {
 	
@@ -109,28 +132,80 @@ Drupal.behaviors.import = function(context) {
   
   };
   
+  function getChosenTable() {
+	if ($('#edit-to-way-1').attr('checked') == 'checked')
+      return $('#edit-to-table').val();
+    else
+      return false;
+  }
+  
   function dragFile(hash) {
-	$('#edit-upload').filedrop({
-      url: 'upload_dragged',
-      paramname: 'files',
-      data: { 
-        hash: hash, 			// send POST variables
-        table: function() {
-		  if ($('#edit-to-way-1').attr('checked') == 'checked')
-		    return $('#edit-to-table').val();
-		  else
-			return false;
-	    },
-        dataset: location.pathname.replace(/\import/g, "").replace(/\//g, "")         
-      },
-      uploadStarted: function(i, file, len){
+    $('#edit-upload').filedrop(
+      {
+        url: 'upload_dragged',
+        paramname: 'files',
+        data: { 
+          hash: hash, 			// send POST variables
+          table: function() {
+    	    return getChosenTable();
+    	  },
+          dataset: dataset         
+        },
+		uploadStarted: function(i, file, len){
     	  $('.progress-bar').show();
     	  lpStart(hash, 1, 0);
-      },
-      maxfiles: 1,
-      maxfilesize: 10
+		},
+		maxfiles: 1,
+		maxfilesize: 10,
+		beforeEach: function(file) {
+			if (lock == false) {
+				lock = true;
+				return true;
+			}
+			else
+				return false;
+		}
     });
   };
   
-};
+  
+  function fileUpload(hash, file) {	    
+    var fileName = file.name,
+    fileSize = file.size,
+    fileData = file.getAsBinary(), // works on TEXT data ONLY.
+    boundary = "xxxxxxxxx",
+    uri = 'upload_selected/' + hash + '/' + dataset + '/' + getChosenTable(),
+    
+    xhr = new XMLHttpRequest();
+    xhr.open("POST", uri, true);
+    xhr.setRequestHeader("Content-Type", "multipart/form-data, boundary="+boundary); // simulate a file MIME POST request.
+    
+    xhr.setRequestHeader("Content-Length", fileSize);
 
+    xhr.onreadystatechange = function() {
+      if (xhr.readyState == 1) {
+    	  $('.progress-bar').show();
+    	  lpStart(hash, 1, 0);
+      }
+      if (xhr.readyState == 4) {
+        if ((xhr.status >= 200 && xhr.status <= 200) || xhr.status == 304) {
+	  	         
+          if (xhr.responseText != "") {
+            alert(xhr.responseText); // display response.
+          }
+        }
+      }
+    };    
+    
+    var body = "--" + boundary + "\r\n";
+    body += "Content-Disposition: form-data; name='files'; filename='" + fileName + "'\r\n";
+    body += "Content-Type: application/octet-stream\r\n\r\n";
+    body += fileData + "\r\n";
+    body += "--" + boundary + "--";
+
+    xhr.send(body);
+    
+    return true;
+  }
+  
+};
