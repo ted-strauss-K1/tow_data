@@ -6,6 +6,8 @@
  * Functions for import
  */
 
+######### FORM #########
+
 function tow_import_form($form_state, $nid) {
   
   drupal_add_js('sites/all/libraries/jquery.filedrop/jquery.filedrop.js');
@@ -66,7 +68,12 @@ function tow_import_form($form_state, $nid) {
 
   $form['file']['or_url'] = array('#type' => 'item', '#value' => t('or URL, where we can grab it'));
   $form['file']['url'] = array('#type' => 'textfield');
-  $form['file']['get_it'] = array('#type' => 'submit', '#value' => t('Get it!'));
+  $form['file']['get_it'] = array(
+    '#type' => 'item',
+    '#prefix' => '<div class="get-it">',
+    '#suffix' => '</div>',
+    '#value' => t('Get it!')
+  );
   
   $rows = array(
     'Uploading',
@@ -135,15 +142,16 @@ function tow_import_form_submit($form, &$form_state) {
   }  
 }
 
+######### MESSAGING INTERFACE #########
 
-function tow_import_progress_init($hash, $copied, $filename, $dataset, $table = FALSE) {
+function tow_import_progress_init($hash, $copied, $filename, $to) {
   global $user;
         
   db_query("INSERT INTO {tow_import_progress} (sid, hash) VALUES('%s', %d)", $user->sid, $hash);
   
   if ($copied) {
     tow_import_progress_set($hash, 1, 10);
-    _test($hash, $filename, $dataset, $table);
+    _test($hash, $filename, $to);
   }
   else {
     tow_import_progress_set($hash, 1, -1);
@@ -176,50 +184,62 @@ function tow_import_progress_delete($hash) {
   db_query("DELETE FROM {tow_import_progress} WHERE sid='%s' AND hash = %d", $user->sid, $hash);
 }
 
-
-function _test($hash, $filename, $dataset, $table = FALSE) {
-  
-  $file = file_get_contents('sites/default/files/import/' . $hash);sleep(3);
-  file_delete('sites/default/files/import/' . $hash);
-  
-  // PROCESS
-  for ($stage = 2; $stage <= 2; $stage++) {
-    for ($value = 1; $value <= 10; $value++) {
-      usleep(500000);
-      tow_import_progress_set($hash, $stage, $value);
-    }
-  }
-  
-  tow_import_progress_set($hash, 3, -1);
-  
-  sleep(1);
-  tow_import_progress_set($hash, 4, /*'Some content was shortened'*/ -1);
-  
-  usleep(1);
-  tow_import_progress_set($hash, 5, 'We found 2 keys');
-  
-  usleep(1);
-  tow_import_progress_set($hash, 6, '4. Done - booklist table');
-  
-}
+####### FILE TRANSFER INTERFACE ######
 
 function tow_import_dragged() {
-	
-  foreach ($_FILES['files'] as $key => $value)
-    $_FILES['files'][$key] = array('upload' => $value);
-    
-  tow_import_upload();
+
+  $hash = $_POST['hash'];
+  $dataset_nid = $_POST['dataset'];
+  $table_nid = $_POST['table'];
+
+  $to = tow_import_check_request($hash, $dataset_nid, $table_nid);  
+  tow_import_upload($hash, $to);
+  
 }
 
-function tow_import_upload() {
+function tow_import_selected($hash, $dataset_nid, $table_nid) {
+
+  $to = tow_import_check_request($hash, $dataset_nid, $table_nid);
+  tow_import_upload($hash, $to);
   
-  $hash = $_POST['hash'];  
+}
+
+function tow_import_grab($hash, $dataset_nid, $table_nid) {
+  
+  $to = tow_import_check_request($hash, $dataset_nid, $table_nid);
+  
+  $grab_url = $_GET['grab_url'];
+  $file = file_get_contents($grab_url);
+  
+  if ($file) {
+  	file_put_contents('sites/default/files/import/' . $hash, $file);
+  	tow_import_progress_init($hash, TRUE, $grab_url, $to);
+  }
+  else
+    tow_import_progress_init($hash, FALSE, $grab_url, NULL, NULL);
+  
+}
+
+function tow_import_upload($hash, $to) {
+  
+  foreach ($_FILES['files'] as $key => $value)
+    $_FILES['files'][$key] = array('upload' => $value);
+      
+  $file = file_save_upload('upload');
+  $filename = $file->filename;
+  $copied = file_copy($file, 'import/' . $hash);
+  
+  tow_import_progress_init($hash, $copied, $filename, $to);
+}
+
+function tow_import_check_request($hash, $dataset_nid, $table_nid) {
+  
   if ((int)$hash == $hash && $hash) {
   	$dataset = new stdClass;
-  	$dataset->nid = $_POST['dataset'];
+  	$dataset->nid = $dataset_nid;
     if ((int)$dataset->nid == $dataset->nid && $dataset->nid) {
       $table = new stdClass;
-      $table->nid = $_POST['table'];
+      $table->nid = $table_nid;
       if ($table->nid != 'false') {
       	;
       	if ((int)$table->nid != $table->nid) {
@@ -244,16 +264,41 @@ function tow_import_upload() {
     die();
   
   if ($table) {
-  	$table->field_dataset_value = db_result(db_query("SELECT field_dataset_value {content_type_table} WHERE nid=%d", $table->nid));
+  	$table->field_dataset_value = db_result(db_query("SELECT field_dataset_value FROM {content_type_table} WHERE nid=%d", $table->nid));
   	if ($table->field_dataset_value != $dataset->nid)
       die();
   }
   else
     $table = FALSE;
+
+  return array('dataset' => $dataset, 'table' => $table);
+}
+
+###### FILE PROCESSING ######
+
+function _test($hash, $filename, $to) {
   
-  $file = file_save_upload('upload');
-  $filename = $file->filename;
-  $copied = file_copy($file, 'import/' . $hash);
+  $file = file_get_contents('sites/default/files/import/' . $hash);
+  time();
+  file_delete('sites/default/files/import/' . $hash);
   
-  tow_import_progress_init($hash, $copied, $filename, $dataset, $table);
+  // PROCESS
+  for ($stage = 2; $stage <= 2; $stage++) {
+    for ($value = 1; $value <= 10; $value++) {
+      usleep(500000);
+      tow_import_progress_set($hash, $stage, $value);
+    }
+  }
+  
+  tow_import_progress_set($hash, 3, -1);
+  
+  sleep(1);
+  tow_import_progress_set($hash, 4, /*'Some content was shortened'*/ -1);
+  
+  usleep(1);
+  tow_import_progress_set($hash, 5, 'We found 2 keys');
+  
+  usleep(1);
+  tow_import_progress_set($hash, 6, '4. Done - booklist table');
+  
 }
