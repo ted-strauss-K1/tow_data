@@ -294,8 +294,8 @@ function _tow_show_validation_error($error, $err_field_names, $err_msgs) {
  * Validate user registration form
  */
 function tow_user_register_validate($form, &$form_state) {
-  
-  if ($form_state['clicked_button']['#value'] != 'Submit')
+
+  if ($form_state['clicked_button']['#value'] != t('Create new account'))
     return;
   
   if ($form_state['values']['email_verify'] != $form_state['values']['mail']) {
