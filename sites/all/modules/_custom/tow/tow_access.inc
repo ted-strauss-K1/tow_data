@@ -23,8 +23,10 @@
  * Deny access for dataset if access is forbidden
  */
 function tow_access_dataset($node) {
+  
   global $user;
   if ($user->uid != $node->uid) {
+  	$args = arg();
     // if access is not open
     $access_type = $node->field_access_type[0]['value'];
     if ($access_type == 0) {
@@ -42,7 +44,6 @@ function tow_access_dataset($node) {
     }
     // if access is by request
     if ($access_type == 1) {
-      $args = arg();
       // dataset summary page
       if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
         if ($user->uid) {
@@ -55,8 +56,6 @@ function tow_access_dataset($node) {
         return;
       }      
     }
-    if (!$args)
-      $args = arg();
     // search page
     if ($args[0] == 'search')
       return;
