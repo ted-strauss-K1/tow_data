@@ -50,7 +50,7 @@ function tow_import_form($form_state, $nid) {
   );
   $form['to']['table'] = array(
     '#type' => 'select',
-    '#options' => $tables
+    '#options' => tow_table_list($nid)
   );
   $form['guide'] = array('#type' => 'item', '#value' => l('Learn about importing data', 'import_learn'));
 
