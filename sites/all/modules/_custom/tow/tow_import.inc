@@ -10,21 +10,21 @@
 
 function tow_import_form($form_state, $nid) {
 
-  drupal_add_js('sites/all/libraries/jquery.filedrop/jquery.filedrop.js');
-  drupal_add_js(drupal_get_path('module', 'tow') . '/js/import.js');
-
-  $form['#attributes'] = array('enctype' => "multipart/form-data");
-  $directory_path = file_directory_path();
-  $d= file_check_directory($directory_path, FILE_CREATE_DIRECTORY, 'file_directory_path');
-
   global $dataset;
   $dataset = node_load($nid);
   if ($dataset->type !== 'dataset') {
     drupal_not_found();
     die();
   }
-
+  
+  drupal_add_js('sites/all/libraries/jquery.filedrop/jquery.filedrop.js');
+  drupal_add_js(drupal_get_path('module', 'tow') . '/js/import.js');
+  
   drupal_set_title($dataset->title);
+
+  $form['#attributes'] = array('enctype' => "multipart/form-data");
+  $directory_path = file_directory_path();
+  $d= file_check_directory($directory_path, FILE_CREATE_DIRECTORY, 'file_directory_path');
 
   // Extract and show names of tables from the dataset
   $tables_res = db_query("
