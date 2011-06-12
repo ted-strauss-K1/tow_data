@@ -9,23 +9,23 @@
 ######### FORM #########
 
 function tow_import_form($form_state, $nid) {
-  
+
   drupal_add_js('sites/all/libraries/jquery.filedrop/jquery.filedrop.js');
   drupal_add_js(drupal_get_path('module', 'tow') . '/js/import.js');
-  
+
   $form['#attributes'] = array('enctype' => "multipart/form-data");
   $directory_path = file_directory_path();
   $d= file_check_directory($directory_path, FILE_CREATE_DIRECTORY, 'file_directory_path');
-  
+
   global $dataset;
   $dataset = node_load($nid);
   if ($dataset->type !== 'dataset') {
     drupal_not_found();
     die();
   }
-  
+
   drupal_set_title($dataset->title);
-  
+
   // Extract and show names of tables from the dataset
   $tables_res = db_query("
     SELECT n.nid, n.title 
@@ -36,7 +36,7 @@ function tow_import_form($form_state, $nid) {
     ", $dataset->nid);
   while($table = db_fetch_array($tables_res))
     $tables[$table['nid']] = $table['title'];
-      
+
   // way
   $form['to'] = array(
     '#type' => 'item',
@@ -47,17 +47,16 @@ function tow_import_form($form_state, $nid) {
     '#type' => 'radios',
     '#default_value' => 0,
     '#options' => array(t('Create new table in this dataset'), t('Insert now data into a table')),
-  );  
+  );
   $form['to']['table'] = array(
     '#type' => 'select',
     '#options' => $tables
   );
   $form['guide'] = array('#type' => 'item', '#value' => l('Learn about importing data', 'import_learn'));
-  
+
   // file
   $form['file'] = array(
     '#type' => 'item',
-    //'#tree' => TRUE,
     '#title' => t('Choose files to import (only XLS, TXT & CSV formats accepted)'),
   );
   $form['file']['upload'] = array(
@@ -74,7 +73,7 @@ function tow_import_form($form_state, $nid) {
     '#suffix' => '</div>',
     '#value' => t('Get it!')
   );
-  
+
   $rows = array(
     'Uploading',
     'Validating files',
@@ -86,7 +85,7 @@ function tow_import_form($form_state, $nid) {
       'data' => array(
         $i + 1 . '.',
         t($row),
-        array('class' => 'dots', 'data' => NULL), 
+        array('class' => 'dots', 'data' => NULL),
         array('class' => 'status', 'data' => NULL),
       ),
     );
@@ -102,7 +101,7 @@ function tow_import_form($form_state, $nid) {
       ),
       'style' => 'display: none'
     );
-  }  
+  }
   $rows[] = array(
     'class' => '6',
     'data' => array(
@@ -117,17 +116,17 @@ function tow_import_form($form_state, $nid) {
     'data' => array(l('New import', 'import/' . $dataset->nid) . t(' or back to your ') . l('dataset', 'dataset/' . $dataset->nid)    ),
     'style' => 'display: none'
   );
-  
+
   $form['progress'] = array(
     '#prefix' => '<div class="progress-bar" style="display: none"><label class="progress-label">' . t('Progress') . '</label>',
     '#value' => theme('table', array(), $rows, array('class' => 'progress-table')),
     '#suffix' => '</div>'
   );
-  
+
   $form['#validate'][] = 'tow_import_form_validate';
-  
+
   $form['submit'] = array('#type' => 'submit', '#value' => 'Submit');
-  
+
   return $form;
 }
 
@@ -139,16 +138,16 @@ function tow_import_form_submit($form, &$form_state) {
   $file = file_save_upload('upload');
   if ($file = file_save_upload('upload')) {
     time();
-  }  
+  }
 }
 
 ######### MESSAGING INTERFACE #########
 
 function tow_import_progress_init($hash, $copied, $filename, $to) {
   global $user;
-        
+
   db_query("INSERT INTO {tow_import_progress} (sid, hash) VALUES('%s', %d)", $user->sid, $hash);
-  
+
   if ($copied) {
     tow_import_progress_set($hash, 1, 10);
     _test($hash, $filename, $to);
@@ -157,10 +156,10 @@ function tow_import_progress_init($hash, $copied, $filename, $to) {
     tow_import_progress_set($hash, 1, -1);
     tow_import_progress_set($hash, 4, -1); // stop
   }
- 
+
   sleep(10);
   tow_import_progress_delete($hash);
-  
+
 }
 
 function tow_import_progress_set($hash, $stage, $value) {
@@ -170,13 +169,13 @@ function tow_import_progress_set($hash, $stage, $value) {
 
 function tow_import_progress_get($hash, $stage) {
   global $user;
-  
+
   $response = db_result(db_query("SELECT SQL_NO_CACHE stage%s FROM {tow_import_progress} WHERE sid='%s' AND hash=%d", $stage, $user->sid, $hash));
-  
+
   if ($stage == 6)
     tow_import_progress_delete($hash);
-    
-  return drupal_json(array('status' => TRUE, 'response' => $response));  
+
+  return drupal_json(array('status' => TRUE, 'response' => $response));
 }
 
 function tow_import_progress_delete($hash) {
@@ -192,80 +191,80 @@ function tow_import_dragged() {
   $dataset_nid = $_POST['dataset'];
   $table_nid = $_POST['table'];
 
-  $to = tow_import_check_request($hash, $dataset_nid, $table_nid);  
+  $to = tow_import_check_request($hash, $dataset_nid, $table_nid);
   tow_import_upload($hash, $to);
-  
+
 }
 
 function tow_import_selected($hash, $dataset_nid, $table_nid) {
 
   $to = tow_import_check_request($hash, $dataset_nid, $table_nid);
   tow_import_upload($hash, $to);
-  
+
 }
 
 function tow_import_grab($hash, $dataset_nid, $table_nid) {
-  
+
   $to = tow_import_check_request($hash, $dataset_nid, $table_nid);
-  
+
   $grab_url = $_GET['grab_url'];
   $file = file_get_contents($grab_url);
-  
+
   if ($file) {
-  	file_put_contents('sites/default/files/import/' . $hash, $file);
-  	tow_import_progress_init($hash, TRUE, $grab_url, $to);
+    file_put_contents('sites/default/files/import/' . $hash, $file);
+    tow_import_progress_init($hash, TRUE, $grab_url, $to);
   }
   else
     tow_import_progress_init($hash, FALSE, $grab_url, NULL, NULL);
-  
+
 }
 
 function tow_import_upload($hash, $to) {
-  
+
   foreach ($_FILES['files'] as $key => $value)
     $_FILES['files'][$key] = array('upload' => $value);
-      
+
   $file = file_save_upload('upload');
   $filename = $file->filename;
   $copied = file_copy($file, 'import/' . $hash);
-  
+
   tow_import_progress_init($hash, $copied, $filename, $to);
 }
 
 function tow_import_check_request($hash, $dataset_nid, $table_nid) {
-  
+
   if ((int)$hash == $hash && $hash) {
-  	$dataset = new stdClass;
-  	$dataset->nid = $dataset_nid;
+    $dataset = new stdClass;
+    $dataset->nid = $dataset_nid;
     if ((int)$dataset->nid == $dataset->nid && $dataset->nid) {
       $table = new stdClass;
       $table->nid = $table_nid;
       if ($table->nid != 'false') {
-      	;
-      	if ((int)$table->nid != $table->nid) {
-      	  die();
-      	}
+        ;
+        if ((int)$table->nid != $table->nid) {
+          die();
+        }
       }
       else {
-      	unset($table);
-      }        	
-    } 
+        unset($table);
+      }
+    }
     else {
       die();
     }
-  } 
-  else {
-  	die();
   }
-  
+  else {
+    die();
+  }
+
   global $user;
   $dataset->uid = db_result(db_query("SELECT uid FROM {node} WHERE nid=%d", $dataset->nid));
   if ($user->uid != $dataset->uid && !user_access('edit any table content'))
     die();
-  
+
   if ($table) {
-  	$table->field_dataset_value = db_result(db_query("SELECT field_dataset_value FROM {content_type_table} WHERE nid=%d", $table->nid));
-  	if ($table->field_dataset_value != $dataset->nid)
+    $table->field_dataset_value = db_result(db_query("SELECT field_dataset_value FROM {content_type_table} WHERE nid=%d", $table->nid));
+    if ($table->field_dataset_value != $dataset->nid)
       die();
   }
   else
@@ -277,28 +276,582 @@ function tow_import_check_request($hash, $dataset_nid, $table_nid) {
 ###### FILE PROCESSING ######
 
 function _test($hash, $filename, $to) {
-  
-  $file = file_get_contents('sites/default/files/import/' . $hash);
-  time();
-  file_delete('sites/default/files/import/' . $hash);
-  
+
+  require_once 'sites/all/libraries/PHPExcelExtension/PHPExcel/IOFactory.php';
+
+  // Default column title, used in case if data file contains no column title
+  $default_column_title = "Column_";
+
+  // File to be imported
+  $imported_file_name = 'sites/default/files/import/' . $hash;
+
+  // TODO: dataset nid
+  $dataset_nid = $to['dataset']->nid;
+
+  // TODO: User id
+  $uid = $to['dataset']->uid;
+
+  if ($to['table']) {
+    // Action to be done during import: create or append
+    $import_action = "append";
+    // TODO: table nid
+    $table_nid = $to['table']->nid;
+  }
+  else {
+    $import_action = "create";
+  }
+
+  $warning_messages = array();
+
   // PROCESS
-  for ($stage = 2; $stage <= 2; $stage++) {
-    for ($value = 1; $value <= 10; $value++) {
-      usleep(500000);
-      tow_import_progress_set($hash, $stage, $value);
+
+  // 2. Data reading and validating
+  $stage = 2;
+  $progress_indicator = 1;
+  tow_import_progress_set($hash, $stage, $progress_indicator++);
+
+  /* PHPExcel_IOFactory data reading engine */
+  error_reporting(E_ALL);
+
+  // 2.1 Reading files
+  // Automatically detect filetype and load it into the $objPHPExcel object
+  $objReader = PHPExcel_IOFactory::createReaderForFile("$imported_file_name");
+  if (method_exists($objReader, 'setReadDataOnly')) {
+    $objReader->setReadDataOnly(true);
+  }
+  $objPHPExcel = $objReader->load("$imported_file_name");
+
+  // Working with active sheet
+  $worksheet_index = 0;
+  $data = array();
+
+  foreach ($objPHPExcel->getWorksheetIterator() as $worksheet) {
+    if ($import_action == 'append' && $worksheet_index) {
+
+      $warning_messages[] = '0nly first sheet will be inserted into table';
+      break;
+    }
+
+    // new table titles
+    $data['table_data'][$worksheet_index]['table_title'] =  trim($worksheet->getTitle());
+    $data['table_data'][$worksheet_index]['record_cols_qty'] = array();
+    $data['table_data'][$worksheet_index]['str_value'] = array();
+    $data['table_data'][$worksheet_index]['column_titles'] = array();
+    //$data_read = false;
+    $row_index = 0;
+    foreach ($worksheet->getRowIterator() as $row) {
+
+      if ( ($row->getRowIndex() == 1)  && ($import_action == 'create')) {
+        foreach ($row->getCellIterator() as $cell) {
+          $data['table_data'][$worksheet_index]['column_titles'][] =  $cell->getValue();
+        }
+      }
+      else {
+        foreach ($row->getCellIterator() as $cell) {
+          $data['table_data'][$worksheet_index]['str_value'][$row_index][] = $cell->getValue();
+        }
+
+        $data['table_data'][$worksheet_index]['record_cols_qty'][$row_index] =
+            count($data['table_data'][$worksheet_index]['str_value'][$row_index]);
+        $row_index++;
+
+      } // cell loop
+       
+    } // row loop
+    $data['table_data'][$worksheet_index]['rows_qty'] = $row_index;
+    if ((count($data['table_data'][$worksheet_index]['column_titles']) == 1) &&
+    ($data['table_data'][$worksheet_index]['column_titles'][0] == 'null')) {
+      $data['table_data'][$worksheet_index]['titles_cols_qty'] = 0;
+      unset($data['table_data'][$worksheet_index]['column_titles'][0]);
+    }
+    else {
+      $data['table_data'][$worksheet_index]['titles_cols_qty'] =
+          count($data['table_data'][$worksheet_index]['column_titles']);
+    }
+
+    $worksheet_index++;
+  } // worksheet loop
+  $data['table_qty'] = $worksheet_index;
+
+  $objPHPExcel->disconnectWorksheets();
+  unset($objPHPExcel, $objReader);
+  file_delete('sites/default/files/import/' . $hash);
+
+  // 2.2 Extracting table name from file name
+  tow_import_progress_set($hash, $stage, $progress_indicator++);
+
+  $info = pathinfo($filename);
+  if (!in_array($info['extension'], array('xls', 'xlsx'))) {
+    $data['table_data'][0]['table_title'] =  trim($info['filename']);
+  }
+
+  // 2.3 Check whether a table with this titles already exists in the present dataset.
+  tow_import_progress_set($hash, $stage, $progress_indicator++);
+
+  if ($import_action == 'create') {
+    $existing_table_titles_res = db_query("
+  	SELECT title 
+  	FROM {node} `n` 
+  	INNER JOIN {content_type_table} `t` 
+  	ON `n`.nid = `t`.nid
+  	AND `t`.field_dataset_value = %d", $dataset_nid);
+
+    $existing_table_titles = array();
+    while ($rs = db_fetch_array($existing_table_titles_res)) {
+      $existing_table_titles[] = strtolower($rs['title']);
+    }
+
+    // Checking and changing table title
+    foreach ($data['table_data'] as &$table) {
+      $table_name_index = 1;
+      $table_title_unique = $table['table_title'];
+      while (in_array(strtolower($table_title_unique), $existing_table_titles)) {
+        $table_title_unique = $table['table_title'] . '_' . $table_name_index;
+        $table_name_index++;
+      }
+      if ($table_name_index <> 1) {
+        $warning_messages[] = "Table \"" . $table['table_title'] . "\" already exists, new table title will be set to \"" . $table_title_unique . "\"";
+        $table['table_title'] = $table_title_unique;
+        $existing_table_titles[] = $table_title_unique;
+
+      }
+    }
+    unset($table_title_unique, $rs, $table_name_index, $existing_table_titles_res, $existing_table_titles, $table);
+  }
+
+  // TODO: handle absence of data in the data file
+
+  $types = tow_possible_fields();
+  $types_id = array_flip($types);
+
+  // 2.4 Titles validation
+  tow_import_progress_set($hash, $stage, $progress_indicator++);
+
+  foreach ($data['table_data'] as $table_index => &$table) {
+
+    if ((!$table['titles_cols_qty']) && ($import_action == 'create')) {
+      // No titles, table to be created case
+      $warning_messages[] = "No data found for the table " . $data['table_data'][$table_index]['table_title'] .
+      		". An empty table will be created.";
+      //$data['table_qty']--;
+      //unset($data['table_data'][$table_index]);
+      $consider_column_titles_as_data = false;
+    }
+    elseif ((!$table['rows_qty']) && ($import_action == 'append')) {
+      // No data, table to be appended case
+      $warning_messages[] = "No data found in the imported file. Nothing will be appended.";
+      tow_import_progress_set($hash, $stage, -1);
+      $progress_indicator = -100;
+      $data['table_qty']--;
+      unset($data['table_data'][$table_index]);
+      break;
+    }
+    elseif (($table['rows_qty']) && ($import_action == 'append')) {
+      // Data present, table to be appended case
+      $consider_column_titles_as_data = false;
+    }
+    elseif ($table['rows_qty']) {
+      // Titles present and data rows present, table to be created case
+      $consider_column_titles_as_data = false;  // set to true if column names appear to be numbers or dates
+      //  Checking that column names are neither numbers nor dates
+      foreach  ($table['column_titles'] as $key => &$column_title) {
+        // trimmming current element in the array
+        $column_title = trim($column_title);
+
+        if (is_numeric($column_title) || (strtotime($column_title) !== false) || (strtolower($column_title) === "null")) {
+          $consider_column_titles_as_data = true;
+          break;
+        }
+      }
+    }
+    else {
+      // Titles present, no data, table to be created case
+      $consider_column_titles_as_data = true;
+    }
+
+    if ($consider_column_titles_as_data) {
+      // consider the first first line from the file as data
+      array_unshift($table['str_value'], $table['column_titles']);
+      // increase row counter
+      $table['rows_qty']++;
+      // update column counter array
+      array_unshift($table['record_cols_qty'], $table['titles_cols_qty']);
+      // and set new default column titles
+      unset($table['column_titles']);
+      for ($col_index = 0; $col_index <= $table['titles_cols_qty'] - 1; $col_index++) {
+        $table['column_titles'][$col_index] = $default_column_title . $col_index;
+      }
+      $warning_messages[] = "No column titles found in data file, using default column titles";
     }
   }
-  
-  tow_import_progress_set($hash, 3, -1);
-  
-  sleep(1);
-  tow_import_progress_set($hash, 4, /*'Some content was shortened'*/ -1);
-  
-  usleep(1);
-  tow_import_progress_set($hash, 5, 'We found 2 keys');
-  
-  usleep(1);
-  tow_import_progress_set($hash, 6, '4. Done - booklist table');
-  
+  // End of titles validation
+
+  // 2.5 Data validation
+  tow_import_progress_set($hash, $stage, $progress_indicator++);
+
+  foreach ($data['table_data'] as $table_index => &$table) {
+    // detect type and count no of columns for each record
+    foreach ($table['str_value'] as $record_index => $record) {
+
+      foreach ($record as $col_index => $cell) {
+
+        // detect cell type, get its value of required type
+        $res = _tow_import_detect_type($cell);
+        $data['table_data'][$table_index]['str_value'][$record_index][$col_index] = trim($cell);
+        $data['table_data'][$table_index]['value'][$record_index][$col_index] = $res['value'];
+        $data['table_data'][$table_index]['type'][$record_index][$col_index] = $res['type'];
+        $data['table_data'][$table_index]['type_id'][$record_index][$col_index] = $types_id[$res['type']];
+
+      } // cell loop
+    } // row loop
+  }
+
+
+
+  foreach ($data['table_data'] as $table_index => &$table) {
+
+    // Data columns qty validation
+    if ($import_action == 'create') { // create case
+      if ($table['rows_qty'] && (count(array_unique($table['record_cols_qty'])) - 1)) {
+        $warning_messages[] = "Records in the table " . $data['table_data'][$table_index]['table_title'] .
+          " contain different number of columns. Table will not be created.";
+        $data['table_qty']--;
+        unset($data['table_data'][$table_index]);
+      }
+      // Data columns qty and titles qty validation
+      elseif ($table['rows_qty'] && ($table['record_cols_qty'][0] != $table['titles_cols_qty'])) {
+        $warning_messages[] = "The number of column titles in the table " . $data['table_data'][$table_index]['table_title'] .
+          " does not match the number of columns in records. Table will not be created.";
+        $data['table_qty']--;
+        unset( $data['table_data'][$table_index] );
+      }
+      // Column types validation
+      elseif ($table['rows_qty']) {
+        $invalid_types = false;
+        foreach ($table['type'] as $record_index => $record_types) {
+          foreach ($record_types as $col_index => $cell_type) {
+            if (!$record_index) {
+              $data['table_data'][$table_index]['col_type'][$col_index] = $cell_type;
+            }
+            elseif ($cell_type != $data['table_data'][$table_index]['col_type'][$col_index]) {
+              $invalid_types = true;
+              break;
+            }
+          } // cell loop
+          if ($invalid_types) {
+            $warning_messages[] = "The types of values in different rows in the table " . $data['table_data'][$table_index]['table_title'] .
+              " do not match each other. Table will not be created.";
+            unset( $data['table_data'][$table_index] );
+            $data['table_qty']--;
+            break;
+          }
+        } // row loop
+      }
+      else {
+        $data['table_data'][$table_index]['col_type'] = array();
+      } // if
+    } // create case
+    else { // append case
+      $table['titles_cols_qty'] = $table['record_cols_qty'][0];
+      
+      $table_node_to_be_updated = node_load($table_nid);
+      $weights_array = unserialize($table_node_to_be_updated->field_weights[0]['value']);
+      $index = 0;
+
+      foreach (tow_possible_fields() as $field_type) {
+        //$delta = 0;
+        if (!is_array($table_node_to_be_updated->{'field_title_' . $field_type}))
+        continue;
+        foreach($table_node_to_be_updated->{'field_title_' . $field_type} as $title_value) {
+          if ($title_value['value']) {
+            //$aux_array[$weights_array[$index]]['value'] = $title_value['value'];
+            $data['table_data'][$table_index]['col_type'][$weights_array[$index]] = $field_type;
+            //$aux_array[$weights_array[$index]]['delta'] = $delta;
+            $index++;
+            //$delta++;
+          }
+        }
+      }
+      ksort($data['table_data'][$table_index]['col_type']);
+
+      $invalid_types = false;
+      foreach ($table['type'] as $record_index => $record_types) {
+        foreach ($record_types as $col_index => $cell_type) {
+          if ($cell_type != $data['table_data'][$table_index]['col_type'][$col_index]) {
+            $invalid_types = true;
+            break;
+          }
+        } // cell loop
+        if ($invalid_types) {
+          $warning_messages[] = "The types of imported data do not match that of an existing table. No data will be appended.";
+          unset( $data['table_data'][$table_index]);
+          $data['table_qty']--;
+          break;
+        }
+      } // row loop
+
+    }
+  } // table loop
+
+  // End of data validation
+
+
+  if ($data['table_qty']) {
+    tow_import_progress_set($hash, $stage, 10);
+    $progress_indicator = 1;
+  }
+  else {
+    tow_import_progress_set($hash, $stage, -1);
+    $progress_indicator = -100;
+  }
+
+
+
+  // Creating content
+  $stage = 3;
+
+  tow_import_progress_set($hash, $stage, $progress_indicator++);
+
+  if ($import_action == 'create') {
+    // reading key titles from other tables
+    $existing_table_nids_res = db_query("
+      SELECT `nid`
+      FROM {content_type_table} `t` 
+      WHERE `t`.field_dataset_value = %d", $dataset_nid);
+
+    $column_titles_keys = array();
+    while ($rs = db_fetch_array($existing_table_nids_res)) {
+      $table_node = node_load($rs['nid']);
+      $weights_array = unserialize($table_node->field_weights[0]['value']);
+
+      $index = 0;
+      foreach (tow_possible_fields() as $field_type) {
+        //$delta = 0;
+        if (!is_array($table_node->{'field_title_' . $field_type}))
+        continue;
+        foreach($table_node->{'field_title_' . $field_type} as $title_value)
+        if ($title_value['value']) {
+          $aux_array[$weights_array[$index]]['value'] = $title_value['value'];
+          //$aux_array[$weights_array[$index]]['type'] = $field_type;
+          //$aux_array[$weights_array[$index]]['delta'] = $delta;
+          $index++;
+          //$delta++;
+        }
+      }
+      ksort($aux_array);
+      $indexes_array = unserialize($table_node->field_indexes[0]['value']);
+      foreach ($indexes_array as $key => $is_index)
+      if ($is_index) {
+        $column_titles_keys[] = $aux_array[$key]['value'];
+      }
+    }
+    unset($existing_table_nids_res, $rs, $table_node, $weights_array, $indexes_array);
+  }
+
+  tow_import_progress_set($hash, $stage, $progress_indicator++);
+  // $tables
+
+  $created_table_titles = array();
+  $created_table_nids = array();
+  $found_key_titles = array();
+  foreach ($data['table_data'] as $table_index => &$table) {
+
+    if ($import_action == 'create') {
+      // Get parameters for the present table
+      // $data = $data_all[$table_index];
+      //$table_title = $table['table_title'];
+      //$column_titles = $table['col_titles'];
+
+      // Fill in new table node
+      $new_table = new stdClass();
+      $new_table->type = 'table';
+      $new_table->title = $table['table_title'];
+      // TODO:
+      //$new_table->field_dataset_value = $dataset_nid;
+      $new_table->uid = $uid;
+      $new_table->body = "The table was imported from file \"" . $info['filename'] . '.' . $info['extension'] . '".';
+      $new_table->teaser = $new_table->body;
+
+      // 3.2 Specify columns, their types and titles
+
+      $column_type = array();
+      $indexes_array = array();
+
+      for ($col_index = 0; $col_index <= $table['titles_cols_qty'] - 1; $col_index++) {
+
+        //3.3 types of columns
+        //$type_id = mt_rand(0, $types_qty-1);
+
+        $column_type[$col_index]['type_id'] = $types_id[$table['col_type'][$col_index]];
+        $field_type = "field_title_" . $table['col_type'][$col_index];
+        $column_type[$col_index]['type'] = $table['col_type'][$col_index];
+
+        // 3.4 column titles
+        $new_table->{$field_type}[]['value'] = $table['column_titles'][$col_index];
+        // 3.5 enum options if needed
+        /*    if ($field_type == "field_title_enum") {
+        $new_table->{field_enum_options}[]['value']=
+        serialize(array(_tow_tests_get_random_string($max_leng['enum_option'] ),
+        _tow_tests_get_random_string($max_leng['enum_option'] ),
+        _tow_tests_get_random_string($max_leng['enum_option'] )));
+        }
+        */
+      }
+      // TODO: random weights
+      //   3.6 field_dataset_nid, weights generate
+      $weights_array = array ();
+      foreach ($types as $type_id => $type) {
+        foreach ($table['col_type'] as $index => $col_type) {
+          if ($col_type == $type) {
+            $delta++;
+            $weights_array[] = $index;
+          }
+        }
+      }
+
+      // searching for keys
+      $indexes_array = array();
+      foreach ($table['column_titles'] as $col_index => $col_title) {
+        if (in_array($col_title, $column_titles_keys)) {
+          $indexes_array[] = 1;
+          $found_key_titles[] = $col_title;
+        }
+        else {
+          $indexes_array[] = 0;
+        }
+      }
+
+      $new_table->field_weights[0]['value'] = serialize($weights_array);
+      $new_table->field_dataset[0]['value'] = $dataset_nid;
+      $new_table->field_indexes[0]['value'] = serialize($indexes_array);
+
+      // 3.7 node save, get table nid
+      //drupal_set_message('<pre>' . print_r($new_table, true) . '</pre>');
+      node_save($new_table);
+      $table_nid = $new_table->nid;
+
+      if ($table_nid) {
+        $created_table_nids[] = $table_nid;
+        $created_table_titles[] = $new_table->title;
+      }
+    } // create table
+    for ($record_index = 0; $record_index < $table['rows_qty']; $record_index++) {
+      // 4.1 type,
+      $new_record = new stdClass();
+      $new_record->type = 'record';
+      $new_record->uid = $uid;
+      // 4.2 data
+      for ($col_index = 0; $col_index <= $table['titles_cols_qty'] - 1; $col_index++) {
+        $new_record->{"field_" .  $table['col_type'][$col_index]}[]['value'] = $table['value'][$record_index][$col_index];
+      }
+      //drupal_set_message('<pre>' . print_r($new_record, true) . '</pre>');
+      $new_record->field_table[0]['value'] = $table_nid;
+      node_save($new_record);
+    } // end of records
+
+    unset($new_table);
+    unset($table_nid);
+  }
+
+  tow_import_progress_set($hash, $stage, 10);
+
+  if ($warning_messages) {
+    foreach  ($warning_messages as $value) {
+      $warning .= $value . '; ';
+    }
+    $warning = substr($warning, 0, -2);
+    // TODO:  make a list of warnings to be displayed
+    // $warning = theme_item_list($warning_messages, NULL, 'ul');
+    tow_import_progress_set($hash, 4, $warning);
+  }
+  else
+  tow_import_progress_set($hash, 4, -1);
+  //tow_import_progress_set($hash, 4, $warning);
+
+  if ($found_key_titles) {
+    foreach  ($found_key_titles as $value) {
+      $found_keys .= $value . '; ';
+    }
+    $found_keys = substr($found_keys, 0, -2);
+    // TODO:  make a list of warnings to be displayed
+    // $warning = theme_item_list($warning_messages, NULL, 'ul');
+    tow_import_progress_set($hash, 5, 'we found ' . count($found_key_titles) . ' key fields (' . $found_keys . ')');
+  }
+  elseif (($progress_indicator < 0) || ($import_action == 'append')) {
+    tow_import_progress_set($hash, 5, -1);
+  }
+  else {
+    tow_import_progress_set($hash, 5, "we found no key fields");
+  }
+
+  if ($import_action == 'create') {
+    if ($created_table_titles) {
+      foreach  ($created_table_titles as $value) {
+        $created_tables .= $value . '; ';
+        $created_tables_spaced .= $value . ' ';
+      }
+      foreach  ($created_table_nids as $value) {
+        $created_nids_spaced .= $value . ' ';
+      }
+      $created_tables = substr($created_tables, 0, -2);
+      // TODO:  make a list of warnings to be displayed
+      // $warning = theme_item_list($warning_messages, NULL, 'ul');
+      tow_import_progress_set($hash, 6, $created_tables . ' created./ ' . $created_tables_spaced . '/ ' . $created_nids_spaced);
+    }
+    else {
+      tow_import_progress_set($hash, 6, "no tables created");
+    }
+  }
+  else {
+    if (($progress_indicator >= 0)) {
+      tow_import_progress_set($hash, 6, $table_node_to_be_updated->title . ' updated./ ' . $table_node_to_be_updated->title . '/ ' . $table_node_to_be_updated->nid);
+    }
+    else
+    tow_import_progress_set($hash, 6, "No data was appended.");
+  }
+}
+
+function _tow_import_detect_type($str_value)
+{
+  $value = strtolower(trim($str_value));
+
+  // boolean
+  if ( ($value == 'true') ||
+  ($value == 'false') ||
+  ($value == 'yes') ||
+  ($value == 'no') )
+  {
+    $res['type'] = "bool";
+    if ($value == 'true' || $value == 'yes') {
+      $res['value'] = 'true';
+    }
+    else {
+      $res['value'] = 'false';
+    }
+  }
+  // numeric: integer or float
+  elseif  (is_numeric($value)) {
+    if (($res['value'] = (integer)$value) == $value) {
+      $res['type'] = "int";
+    }
+    else
+    {
+      $res['type'] = "float";
+      $res['value'] = (float) $value;
+    }
+  }
+  // date
+  elseif (strtotime($value)) {
+    $res['value'] = $value;
+    $res['type'] = "date";
+  }
+  elseif ($value === "null") {
+    $res['type'] = "null";
+    $res['value'] = null;
+  }
+  else {
+    $res['type'] = "text";
+    $res['value'] = $str_value;
+  }
+  return $res;
 }
