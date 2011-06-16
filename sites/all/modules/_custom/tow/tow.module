@@ -447,3 +447,26 @@ function _tow_bool_to_int($value) {
     return 1;
   return 0;
 }
+
+/**
+ * Extract and show names of tables from the dataset
+ * @param $nid : dataset nid
+ * @return array
+ */
+function tow_table_list($nid) {
+
+  $tables_res = db_query("
+    SELECT n.nid, n.title 
+    FROM {content_type_table} t
+    LEFT JOIN {node} n
+      ON t.nid = n.nid
+    WHERE t.field_dataset_value = %d
+    ", $nid);
+  
+  $tables = array();
+  
+  while($table = db_fetch_array($tables_res))
+    $tables[$table['nid']] = $table['title'];
+  
+  return $tables;
+}
