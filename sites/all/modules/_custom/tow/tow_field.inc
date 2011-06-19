@@ -178,11 +178,26 @@ function tow_field_edit_form_submit($form, &$form_state) {
   global $table;
   
   $table_nid = $table->nid;
+  $field_type = $form_state['values']['current_type'];
+  $delta = $form_state['values']['delta'];
+
   // Update index array of the table
   $index_array = unserialize($table->field_indexes[0]['value']);
   $index_array[$form_state['values']['field_index']] = $form_state['values']['index'];
-  $table->field_indexes[0]['value'] = serialize($index_array);
-  node_save($table);
+
+  $new_indexes = serialize($index_array);
+  if ($new_indexes != $table->field_indexes[0]['value']) {
+    $node_save = TRUE;
+    $table->field_indexes[0]['value'] = serialize($index_array);
+  }
+  
+  if ($table->{'field_title_' . $field_type}[$delta]['value'] != $form_state['values']['title']) {
+    $table->{'field_title_' . $field_type}[$delta]['value'] = $form_state['values']['title'];
+    $node_save = TRUE;
+  }
+  
+  if ($node_save)
+    node_save($table);
   
   $is_new = ($form_state['values']['current_description'] === '');
   if ($form_state['values']['current_description'] !== trim($form_state['values']['description']))
@@ -226,8 +241,9 @@ function tow_field_description_callback($field_index, $table_nid) {
  */
 function tow_field_descriptions_submit($table_nid) {
   global $descriptions;
-  foreach ($descriptions as $index => $description)
-    _tow_field_description_save($table_nid, $index, $description);
+  if (is_array($descriptions))
+    foreach ($descriptions as $index => $description)
+      _tow_field_description_save($table_nid, $index, $description);
   unset($descriptions);
 }
 /**
