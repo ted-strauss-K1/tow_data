@@ -114,7 +114,7 @@ function tow_dataset_summary(&$node) {
       $table_nids[] = $rs['nid'];
     }
   }
-  
+
   if (!empty($tables_list)) {
     
   	$node->summary['tables'] = implode(', ', $tables_list);
@@ -134,21 +134,24 @@ function tow_dataset_summary(&$node) {
           break;
       }  
   
-      // get 2 themed tables with random LIMIT 
-      foreach($tables as $table) {
-    
-        $first_record_id = rand(0, $table['count'] - 3);
-        $display_options['sort'] = array ('sort_index' => 'nid', 'sort_order' => 'ASC');
-        $display_options['limits'] = array ('first_elem_no' => $first_record_id, 'total_elements' => 3);
-
-        $table_node = node_load($table['nid']);
+      // get 2 themed tables with random LIMIT
+      if (!empty($tables)) {
         
-        $node->summary['view_table'][] = array(
-          'title' => l($table_node->title, 'table/' . $table['nid']) . t(' table'),
-          'table' => tow_table($table_node, $display_options)
-        );      
+        foreach($tables as $table) {
+    
+          $first_record_id = rand(0, $table['count'] - 3);
+          $display_options['sort'] = array ('sort_index' => 'nid', 'sort_order' => 'ASC');
+          $display_options['limits'] = array ('first_elem_no' => $first_record_id, 'total_elements' => 3);
+
+          $table_node = node_load($table['nid']);
+        
+          $node->summary['view_table'][] = array(
+            'title' => l($table_node->title, 'table/' . $table['nid']) . t(' table'),
+            'table' => tow_table($table_node, $display_options)
+          );      
+        }
       }
-  
+
     }  
   }
   
