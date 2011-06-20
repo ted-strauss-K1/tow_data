@@ -20,6 +20,7 @@ include_once('./' . $module_path . '/tow_field.inc');
 include_once('./' . $module_path . '/tow_invite.inc');
 include_once('./' . $module_path . '/tow_register.inc');
 include_once('./' . $module_path . '/tow_import.inc');
+include_once('./' . $module_path . '/tow_search.inc');
 
 include_once('./' . $module_path . '/tests/tow_tests.inc');
 
@@ -214,7 +215,24 @@ function tow_menu() {
     'type' => MENU_CALLBACK,
   );
   
+  $items['search/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_search_form', 1),
+    'access arguments' => array('access content'),
+    'file' => 'tow_search.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['export/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_export_form', 1),
+    'access arguments' => array('edit own dataset content'),
+    'file' => 'tow_export.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
   $items = array_merge($items, tow_tests_menu());
+  
   return $items;
 }
 
