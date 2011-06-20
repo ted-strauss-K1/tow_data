@@ -9,7 +9,7 @@
 ######### FORM #########
 
 function tow_import_form($form_state, $nid) {
-
+  
   global $dataset;
   $dataset = node_load($nid);
   if ($dataset->type !== 'dataset') {
@@ -19,23 +19,12 @@ function tow_import_form($form_state, $nid) {
   
   drupal_add_js('sites/all/libraries/jquery.filedrop/jquery.filedrop.js');
   drupal_add_js(drupal_get_path('module', 'tow') . '/js/import.js');
-  
-  drupal_set_title($dataset->title);
 
+  drupal_set_title($dataset->title);
+  
   $form['#attributes'] = array('enctype' => "multipart/form-data");
   $directory_path = file_directory_path();
   $d= file_check_directory($directory_path, FILE_CREATE_DIRECTORY, 'file_directory_path');
-
-  // Extract and show names of tables from the dataset
-  $tables_res = db_query("
-    SELECT n.nid, n.title 
-    FROM {content_type_table} t
-    LEFT JOIN {node} n
-      ON t.nid = n.nid
-    WHERE t.field_dataset_value = %d
-    ", $dataset->nid);
-  while($table = db_fetch_array($tables_res))
-    $tables[$table['nid']] = $table['title'];
 
   // way
   $form['to'] = array(
