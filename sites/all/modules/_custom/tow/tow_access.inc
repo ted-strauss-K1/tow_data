@@ -57,8 +57,8 @@ function tow_access_dataset($node) {
       }      
     }
     // search page
-    if ($args[0] == 'search')
-      return;
+#    if ($args[0] == 'search')
+#      return;
     if ($user->uid) {
       $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
     }
@@ -69,7 +69,7 @@ function tow_access_dataset($node) {
       }
       // from dataset summary perform redirect to dataset structure to avoid eternal cycling
       if ($args[0] == 'node' && $args[1] == $node->nid)
-          drupal_goto('dataset/' . $node->nid);
+        drupal_goto('dataset/' . $node->nid);
       drupal_access_denied();
       die();
     }
