@@ -45,7 +45,7 @@ function tow_pma_menu_block() {
     );
   }else {
     $items += array(
-      'search' => l('Search', 'search/' . $dataset->nid), 
+      'search' => l('Search', 'search_dataset/' . $dataset->nid), 
       'export' => l('Export', 'export/' . $dataset->nid), 
       'import' => l('Import', 'import/' . $dataset->nid)
     );
