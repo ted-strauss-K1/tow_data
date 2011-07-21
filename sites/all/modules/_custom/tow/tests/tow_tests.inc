@@ -112,3 +112,6 @@ function tow_timer_show_results($timer_name) {
     unset($print_timings);
   }
 }
+
+function x($variable) {
+  drupal_set_message('<pre>' . print_r($variable, TRUE) . '</pre>');
