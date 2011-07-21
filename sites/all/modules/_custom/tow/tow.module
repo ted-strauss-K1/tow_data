@@ -4,6 +4,7 @@
  * @file
  * Custom code for tow.
  */
+// when apachesolr modules updated, run sql command UPDATE system SET weight = 1 WHERE LOCATE('apachesolr', name)
 
 $module_path = drupal_get_path('module', 'tow');
 include_once('./' . $module_path . '/tow_table_filter.inc');
@@ -21,6 +22,8 @@ include_once('./' . $module_path . '/tow_invite.inc');
 include_once('./' . $module_path . '/tow_register.inc');
 include_once('./' . $module_path . '/tow_import.inc');
 include_once('./' . $module_path . '/tow_search.inc');
+include_once('./' . $module_path . '/tow_search_outer.inc');
+include_once('./' . $module_path . '/tow_search_inner.inc');
 
 include_once('./' . $module_path . '/tests/tow_tests.inc');
 
@@ -246,6 +249,7 @@ function tow_data() {
 function tow_nodeapi(&$node, $op) {
   // Delete all records that have ref to the table being deleted
   // Delete all tables that have ref to the dataset being deleted
+  // x($op);
   if ($op == 'delete') {    
     $children_type = _tow_children_type($node->type);
     if ($children_type) {
@@ -263,7 +267,8 @@ function tow_nodeapi(&$node, $op) {
   }
  
   if ($node->type == 'dataset' && $op == 'view') {
-	tow_statistics_dataset_extract($node->nid);
+	tow_dataset_hide_hash($node);
+    tow_statistics_dataset_extract($node->nid);
     tow_dataset_summary($node);
     tow_statistics_dataset_update($node);
   }
@@ -276,7 +281,8 @@ function tow_nodeapi(&$node, $op) {
   }
   
   // Redirect from node/[record-nid] to node/[record-nid]/edit
-  if  ($node->type == 'record' && $op == 'view')
+  // Redirection is not performed if it is the solr who tries to access the page
+  if  ($node->type == 'record' && $op == 'view'  && !tow_access_bypass_solr())
     drupal_goto('node/' . $node->nid . '/edit', NULL, NULL, 301);
 
   if ($op == 'load' && $node->type == 'dataset')
@@ -353,6 +359,9 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
     case 'user_register':
       tow_register_form_alter($form, $form_state);
       break;
+    case 'search_form':
+	  tow_search_apachesolr_search_form($form, $form_state);
+	  break;
   }
   
   if ($form_id == 'node_delete_confirm' || $form_id == 'tow_table_truncate_confirm') {
@@ -427,6 +436,13 @@ function tow_maintanance_mode($status, $nid, $type) {
       $function($node);
       node_save($node);
     }
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function tow_cron() {
+  tow_search_cron();
 }
 
 /**
