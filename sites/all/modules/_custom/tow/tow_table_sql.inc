@@ -5,9 +5,10 @@
  * Construct a query for record data extraction from the database.
  * @param $node node with data
  * $display_options ('sort' => array('sort_index', 'sort_order'),
- 'filter' => array('filter_column_index', 'filter_operator_key', 'filter_value') ,
- 'limits' => array('first_elem_no', 'total_elements') ,
- 'paged_view' => boolean, determines whether returned query will be used in db_query() or paged_query() );
+ * 'filter' => array('filter_column_index', 'filter_operator_key', 'filter_value') ,
+ * 'limits' => array('first_elem_no', 'total_elements') ,
+ * 'paged_view' => boolean, determines whether returned query will be used in db_query() or paged_query() );
+ * 'record_nids' => array of record_nid, which are to be displayed, this overrides  'first_elem_no' option);
  *
  * @Return array(
  *    'query' => "query string, contains replacement operators",
@@ -105,7 +106,7 @@ function tow_construct_table_query($node, $display_options = '') {
       }
       // part of query, responsible for filtering
       if (($display_options['filter']) && ($display_options['filter']['filter_column_index'] == $column_index)) {
-        $filter_query_part = "AND " . $column_info['alias'] . ".field_" . $column_info['type']. "_value ";
+        $filter_query_part = $column_info['alias'] . ".field_" . $column_info['type']. "_value ";
 
         $filter_query_part = $filter_query_part . "%s" . " ";
         $argmts[] = tow_table_filter_translate_operator($display_options['filter']['filter_operator_key']);
@@ -134,16 +135,22 @@ function tow_construct_table_query($node, $display_options = '') {
     // 4. Concatenation fo two query parts (SELECT and FROM parts)
     $query = $query . $query_part2;
 
-    // 5. Add WHERE part
-    /*   WHERE `rec`.nid
-    IN (
-    SELECT nid
-    FROM {content_type_record}
-    WHERE field_table_value =  %d
-    )
-    */
-    //  5.2 Choose only records included in this table ( field_table_value == table_nid )
-    //$query = $query . "WHERE `rec`.nid\n IN (\n ";
+    // 5. Add WHERE part if record_nids are determined
+    if ($display_options['record_nids']) {
+      //   WHERE `rec`.nid = value1 OR `rec`.nid = value2 ...
+      
+      //  5.1 Choose only records included in this table ( field_table_value == table_nid )
+      
+      $query = $query . "WHERE (";
+      foreach ($display_options['record_nids'] as $record_nid) {
+        
+        $query .= "`rec`.`nid` = %d OR ";
+        $argmts[] = $record_nid;
+      }
+      $query = substr($query, 0, -4);
+      $query .= ")\n";
+    }
+    
   }
   else {
   // This part of query is added even if the table is empty, i. e. $aux_array is not filled in in section 1.2 and reemains unset
@@ -155,7 +162,12 @@ function tow_construct_table_query($node, $display_options = '') {
 
     //  5.2 Filter results
     if ($display_options['filter']) {
-      $query .= $filter_query_part;
+      if ($display_options['record_nids']) {
+        $query .= "AND " . $filter_query_part;
+      }
+      else {
+        $query .= "WHERE " . $filter_query_part;
+      }
     }
   }
   // 6. Add ORDER  part

@@ -248,12 +248,17 @@ function tow_data() {
  */
 function tow_nodeapi(&$node, $op) {
   // Delete all records that have ref to the table being deleted
-  // Delete all tables that have ref to the dataset being deleted
+  // Delete all tables and saved searches that have ref to the dataset being deleted
   // x($op);
   if ($op == 'delete') {    
-    $children_type = _tow_children_type($node->type);
-    if ($children_type) {
-      $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_value = %d", $children_type, $node->type, $node->nid);
+    $children_types = _tow_children_type($node->type);
+    foreach($children_types as $children_type) {
+      if ($children_type = 'saved_search') {
+        $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_nid_value` = %d", $children_type, $node->type, $node->nid);
+      }
+      else {
+        $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_value = %d", $children_type, $node->type, $node->nid);
+      }
       while($node_to_delete = db_fetch_object($res))
         node_delete($node_to_delete->nid);
     }
@@ -282,9 +287,13 @@ function tow_nodeapi(&$node, $op) {
   
   // Redirect from node/[record-nid] to node/[record-nid]/edit
   // Redirection is not performed if it is the solr who tries to access the page
-  if  ($node->type == 'record' && $op == 'view'  && !tow_access_bypass_solr())
-    drupal_goto('node/' . $node->nid . '/edit', NULL, NULL, 301);
-
+  if  ($node->type == 'record' && $op == 'view') {
+    if (!tow_access_bypass_solr())
+      drupal_goto('node/' . $node->nid . '/edit', NULL, NULL, 301);
+    else 
+      tow_record_format_for_search_indexing($node);
+  }
+  
   if ($op == 'load' && $node->type == 'dataset')
     tow_access_dataset($node);
 
@@ -348,13 +357,13 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
   
   switch ($form_id) {
     case 'dataset_node_form':
-      tow_dataset_form_alter(&$form, &$form_state);
+      tow_dataset_form_alter($form, $form_state);
       break;
     case 'table_node_form':
-      tow_table_form_alter(&$form, &$form_state);
+      tow_table_form_alter($form, $form_state);
       break;
     case 'record_node_form':
-      tow_record_form_alter(&$form, &$form_state);
+      tow_record_form_alter($form, $form_state);
       break;
     case 'user_register':
       tow_register_form_alter($form, $form_state);
@@ -420,22 +429,32 @@ function tow_maintanance_mode($status, $nid, $type) {
   elseif ($status == 0)
     $function = 'node_unpublish_action';
   
-  $children_type = _tow_children_type($type);
-  $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_nid = %d", $children_type, $type, $nid);
+  $children_types = _tow_children_type($type);
   
-  if ($type == 'dataset')
-    while($node = db_fetch_object($res)) {
-      $node = node_load($node->nid);
-      $function($node);
-      node_save($node);
-      tow_maintanance_mode($status, $node->nid, 'table');
+  foreach ($children_types as $children_type) {
+    
+    if ($children_type = 'saved_search') {
+      $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_nid_value` = %d", $children_type, $type, $nid);
     }
-  elseif ($type == 'table')
-    while($node = db_fetch_object($res)) {
-      $node = node_load($node->nid);
-      $function($node);
-      node_save($node);
+    else {
+      $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_value` = %d", $children_type, $type, $nid);
     }
+ 
+    if ($type == 'dataset')
+      while($node = db_fetch_object($res)) {
+        $node = node_load($node->nid);
+        $function($node);
+        node_save($node);
+        tow_maintanance_mode($status, $node->nid, $children_type);
+      }
+    else {
+      while($node = db_fetch_object($res)) {
+        $node = node_load($node->nid);
+        $function($node);
+        node_save($node);
+      }
+    }
+  }
 }
 
 /**
@@ -452,10 +471,10 @@ function tow_cron() {
 function _tow_children_type($type) {
   switch ($type) {
     case 'table':
-      $children_type = 'record';
+      $children_type = array('record');
       break;
     case 'dataset':
-      $children_type = 'table';
+      $children_type = array('table', 'saved_search');
       break;
   }
   return $children_type;

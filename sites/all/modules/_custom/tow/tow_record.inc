@@ -181,3 +181,39 @@ function tow_record_submit_values($form, &$form_state) {
     $form_state['values']['field_' . $type][$delta]['value'] = $value['value'];
   }
 }
+
+/**
+ * Formats node content to be displayed on the record view page, which indexed by apachesolr
+ */
+function tow_record_format_for_search_indexing(&$node) {
+  //x($node->field_bool);
+  $table_nid = $node->field_table[0]['value'];
+   
+  // Adding enum field value 
+  unset($node->content['field_enum']);
+  foreach ($node->field_enum as $delta => $value) {
+    $enum_options = unserialize(db_result(db_query("SELECT `field_enum_options_value` 
+                                                    FROM {content_field_enum_options}
+                                                    WHERE `nid` = %d 
+                                                      AND `vid` = %d
+                                                      AND `delta` = %d", 
+                                                      $table_nid, $table_nid, $delta)));
+    $node->content[]['#value'] .= $enum_options[$value['value']] . ' ';
+  }
+  
+  // Formating boolean field values
+  unset($node->content['field_bool']);
+  foreach ($node->field_bool as $delta => $value) {
+    if (isset($value['value'])) {
+      $node->content[]['#value'] .= _tow_format_bool($value['value']) . ' ';
+    }
+  }
+  
+  // Substitute table_nid by table title
+  unset($node->content['field_table']);
+  $node->content[]['#value'] = db_result(db_query("SELECT `title`
+                                                   FROM {node}
+                                                   WHERE `nid` = %d 
+                                                   AND `vid` = %d", 
+                                                   $table_nid, $table_nid));
+}

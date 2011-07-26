@@ -238,10 +238,16 @@ function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_
 } 
 
 
-function tow_search_get_saved_searches($nid) {
-  
-  $saved_searches = array('aaa', 'bbb', 'ccc');
-  
+function tow_search_get_saved_searches($dataset_nid) {
+  $saved_search_res = db_query("SELECT `ctd`.`nid`, `n`.`title`
+                                FROM content_type_saved_search `ctss`
+                                LEFT JOIN node `n`
+                                  ON `n`.`nid` = `ctss`.`nid`
+                                WHERE `ctss`.`field_dataset_nid_value` = %d" , $dataset_nid);
+  // TODO: pass saved search nids (?)
+  while ($saved_search = db_fetch_array($saved_search_res)) {
+    $saved_searches[] = $saved_search['title'];
+  }
   return $saved_searches;
 }
 
