@@ -273,7 +273,8 @@ function _test($hash, $filename, $to) {
 
   // File to be imported
   $imported_file_name = 'sites/default/files/import/' . $hash;
-
+  $info = pathinfo($filename);
+    
   // TODO: dataset nid
   $dataset_nid = $to['dataset']->nid;
 
@@ -303,11 +304,21 @@ function _test($hash, $filename, $to) {
   error_reporting(E_ALL);
 
   // 2.1 Reading files
-  // Automatically detect filetype and load it into the $objPHPExcel object
-  $objReader = PHPExcel_IOFactory::createReaderForFile("$imported_file_name");
+  // 2.1.1 Automatically detect filetype and load it into the $objPHPExcel object
+  // 2.1.1.1 Detect filetype
+  
+  $inputFileType = PHPExcel_IOFactory::identify("$imported_file_name");
+  // 2.1.1.2 Create reader of detected type
+  $objReader = PHPExcel_IOFactory::createReader("$inputFileType");
+  // 2.1.1.3 Set properties of Reader object depending on its type    
   if (method_exists($objReader, 'setReadDataOnly')) {
     $objReader->setReadDataOnly(true);
   }
+  if (($inputFileType == 'CSV') && (strtolower($info['extension']) == "txt")) {
+    $objReader->setDelimiter("\t");
+    $objReader->setEnclosure('');
+  }
+    
   $objPHPExcel = $objReader->load("$imported_file_name");
 
   // Working with active sheet
@@ -329,14 +340,15 @@ function _test($hash, $filename, $to) {
     //$data_read = false;
     $row_index = 0;
     foreach ($worksheet->getRowIterator() as $row) {
-
+	  $cellIterator = $row->getCellIterator();
+      $cellIterator->setIterateOnlyExistingCells(false); // loop through empty cells as well
       if ( ($row->getRowIndex() == 1)  && ($import_action == 'create')) {
-        foreach ($row->getCellIterator() as $cell) {
+        foreach ($cellIterator as $cell) {
           $data['table_data'][$worksheet_index]['column_titles'][] =  $cell->getValue();
         }
       }
       else {
-        foreach ($row->getCellIterator() as $cell) {
+        foreach ($cellIterator as $cell) {
           $data['table_data'][$worksheet_index]['str_value'][$row_index][] = $cell->getValue();
         }
 
@@ -369,7 +381,6 @@ function _test($hash, $filename, $to) {
   // 2.2 Extracting table name from file name
   tow_import_progress_set($hash, $stage, $progress_indicator++);
 
-  $info = pathinfo($filename);
   if (!in_array($info['extension'], array('xls', 'xlsx'))) {
     $data['table_data'][0]['table_title'] =  trim($info['filename']);
   }
@@ -447,7 +458,7 @@ function _test($hash, $filename, $to) {
         // trimmming current element in the array
         $column_title = trim($column_title);
 
-        if (is_numeric($column_title) || (strtotime($column_title) !== false) || (strtolower($column_title) === "null")) {
+        if (is_numeric($column_title) || (strtolower($column_title) === "null")) {
           $consider_column_titles_as_data = true;
           break;
         }
@@ -472,6 +483,14 @@ function _test($hash, $filename, $to) {
       }
       $warning_messages[] = "No column titles found in data file, using default column titles";
     }
+  	else {
+      // Set empty column titles to default name
+      foreach  ($table['column_titles'] as $key => &$column_title) {
+        if ($column_title == '') {
+          $column_title = $default_column_title . $key;
+        }
+      } // foreach
+    } // else
   }
   // End of titles validation
 
@@ -519,24 +538,28 @@ function _test($hash, $filename, $to) {
         $invalid_types = false;
         foreach ($table['type'] as $record_index => $record_types) {
           foreach ($record_types as $col_index => $cell_type) {
-            if (!$record_index) {
-              $data['table_data'][$table_index]['col_type'][$col_index] = $cell_type;
+            if (!$record_index) { 
+              // first record in the table, its types will be used as first type option 
+              $table['col_type'][$col_index] = $cell_type;
             }
-            elseif ($cell_type != $data['table_data'][$table_index]['col_type'][$col_index]) {
+            // determine and set as column type the 'greatest common' type for previous records 
+            // and one consequent record
+            elseif (!( $table['col_type'][$col_index] = _tow_common_type($cell_type, $table['col_type'][$col_index]))) {
+              // if does not exist, set error, stop iterations
               $invalid_types = true;
-              break;
+              break;              
             }
           } // cell loop
           if ($invalid_types) {
             $warning_messages[] = "The types of values in different rows in the table " . $data['table_data'][$table_index]['table_title'] .
               " do not match each other. Table will not be created.";
-            unset( $data['table_data'][$table_index] );
+            unset( $table );
             $data['table_qty']--;
             break;
           }
         } // row loop
       }
-      else {
+      else { // no rows case ( == no records in the table) 
         $data['table_data'][$table_index]['col_type'] = array();
       } // if
     } // create case
@@ -593,8 +616,6 @@ function _test($hash, $filename, $to) {
     tow_import_progress_set($hash, $stage, -1);
     $progress_indicator = -100;
   }
-
-
 
   // Creating content
   $stage = 3;
@@ -731,7 +752,12 @@ function _test($hash, $filename, $to) {
       $new_record->uid = $uid;
       // 4.2 data
       for ($col_index = 0; $col_index <= $table['titles_cols_qty'] - 1; $col_index++) {
-        $new_record->{"field_" .  $table['col_type'][$col_index]}[]['value'] = $table['value'][$record_index][$col_index];
+        if (isset($table['value'][$record_index][$col_index])) {
+          $new_record->{"field_" .  $table['col_type'][$col_index]}[$col_index]['value'] = $table['value'][$record_index][$col_index];
+        }
+        else {
+          $new_record->{"field_" .  $table['col_type'][$col_index]}[$col_index]['value'] = '<not set>';
+        }
       }
       //drupal_set_message('<pre>' . print_r($new_record, true) . '</pre>');
       $new_record->field_table[0]['value'] = $table_nid;
@@ -800,6 +826,12 @@ function _test($hash, $filename, $to) {
   }
 }
 
+/**
+ * Detects the type of input value.
+ * @param string $str_value
+ * @return array('type' => 'bool', 'int', float', 'null', 'date' or 'text',
+ * 				 'value' => formatted value)	
+ */
 function _tow_import_detect_type($str_value)
 {
   $value = strtolower(trim($str_value));
@@ -844,3 +876,56 @@ function _tow_import_detect_type($str_value)
   }
   return $res;
 }
+
+/**
+ * 
+ * Determines the 'greatest common' type of two input types
+ * @param string $type1, $type2
+ * @return string ('bool', 'int', float', 'null', 'date' or 'text') or 0 if no common type for 
+ * input values exists   
+ */
+function _tow_common_type($type1, $type2) {
+  $in_type1 = strtolower(trim($type1));
+  $in_type2 = strtolower(trim($type2));
+  if ($in_type1 === $in_type2) {
+    return $in_type1;
+  };
+  
+  $common_types = array('bool'=> array('int'=> 'text',
+  								   'float'=> 'text',
+                                   'null'=> 'bool',
+  									'date'=> 'text',
+  									'text'=> 'text',),
+                       'int'=> array('bool'=> 'text',
+  								   'float'=> 'float',
+                                   'null'=> 'int',
+  									'date'=> 'text',
+  									'text'=> 'text',),
+                      'float'=> array('bool'=> 'text',
+                                   'int'=> 'float',
+                                   'null'=> 'float',
+  									'date'=> 'text',
+  									'text'=> 'text',),
+                      'null'=> array('bool'=> 'bool',
+                                   'int'=> 'int',
+  								   'float'=> 'float',
+  									'date'=> 'date',
+  									'text'=> 'text',),
+                      'date'=> array('bool'=> 'text',
+                                   'int'=> 'text',
+  								   'float'=> 'text',
+                                   'null'=> 'date',
+  									'text'=> 'text',),
+                      'text'=> array('bool'=> 'text',
+                                   'int'=> 'text',
+  								   'float'=> 'text',
+                                   'null'=> 'text',
+  									'date'=> 'text',),
+                  );
+  if (isset($common_types[$in_type1][$in_type2])) {
+    return $common_types[$in_type1][$in_type2];
+  }
+  else {
+    return 0;
+  }
+}  
