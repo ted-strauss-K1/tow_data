@@ -22,6 +22,7 @@ include_once('./' . $module_path . '/tow_invite.inc');
 include_once('./' . $module_path . '/tow_register.inc');
 include_once('./' . $module_path . '/tow_import.inc');
 include_once('./' . $module_path . '/tow_search.inc');
+include_once('./' . $module_path . '/tow_search_apachesolr.inc');
 include_once('./' . $module_path . '/tow_search_outer.inc');
 include_once('./' . $module_path . '/tow_search_inner.inc');
 
@@ -252,15 +253,17 @@ function tow_nodeapi(&$node, $op) {
   // x($op);
   if ($op == 'delete') {    
     $children_types = _tow_children_type($node->type);
-    foreach($children_types as $children_type) {
-      if ($children_type = 'saved_search') {
-        $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_nid_value` = %d", $children_type, $node->type, $node->nid);
+    if ($children_types) {
+      foreach ($children_types as $children_type) {
+        if ($children_type == 'saved_search') {
+          $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_nid_value` = %d", $children_type, $node->type, $node->nid);
+        }
+        else {
+          $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_value = %d", $children_type, $node->type, $node->nid);
+        }
+        while($node_to_delete = db_fetch_object($res))
+          node_delete($node_to_delete->nid);
       }
-      else {
-        $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_value = %d", $children_type, $node->type, $node->nid);
-      }
-      while($node_to_delete = db_fetch_object($res))
-        node_delete($node_to_delete->nid);
     }
   }
 
@@ -430,30 +433,31 @@ function tow_maintanance_mode($status, $nid, $type) {
     $function = 'node_unpublish_action';
   
   $children_types = _tow_children_type($type);
-  
-  foreach ($children_types as $children_type) {
-    
-    if ($children_type = 'saved_search') {
-      $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_nid_value` = %d", $children_type, $type, $nid);
-    }
-    else {
-      $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_value` = %d", $children_type, $type, $nid);
-    }
- 
-    if ($type == 'dataset')
-      while($node = db_fetch_object($res)) {
-        $node = node_load($node->nid);
-        $function($node);
-        node_save($node);
-        tow_maintanance_mode($status, $node->nid, $children_type);
+  if ($children_types) {
+    foreach ($children_types as $children_type) {
+      
+      if ($children_type == 'saved_search') {
+        $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_nid_value` = %d", $children_type, $type, $nid);
       }
-    else {
-      while($node = db_fetch_object($res)) {
-        $node = node_load($node->nid);
-        $function($node);
-        node_save($node);
+      else {
+        $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_value` = %d", $children_type, $type, $nid);
       }
-    }
+   
+      if ($type == 'dataset')
+        while($node = db_fetch_object($res)) {
+          $node = node_load($node->nid);
+          $function($node);
+          node_save($node);
+          tow_maintanance_mode($status, $node->nid, $children_type);
+        }
+      else {
+        while($node = db_fetch_object($res)) {
+          $node = node_load($node->nid);
+          $function($node);
+          node_save($node);
+        }
+      }
+    } // foreach  
   }
 }
 
