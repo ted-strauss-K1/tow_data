@@ -19,45 +19,19 @@ function tow_search_outer_filter_taxonomy() {
 
 }
 
-/** 
- * Alters apachesolr search form. 
- * Two varians possible depending on URL parameters: one for search-for-datasets, second for
- * search-within-datasets (after submitting simple search).
+/**
+ * Creates form elements for the search_datasets page
  */
-function tow_search_apachesolr_search_form(&$form, &$form_state) {
-  // x($form); 
-  $filters = $_GET['filters'];
- // x($form);
- // x($form_state);
-//	x($filters);
-	
-	//x($form);
-	
-  // Calls search_within_dataset_altering_form function in case if redirecton to the apachesolr search page 
-  // was made by simple search_within_dataset 
-  if (strpos($filters, 'type:record') !== FALSE) {
-	
-	$matches_qty = preg_match('/(?<=dataset_nid:)\d{1,}$/', $filters, $dataset_nids);
-	if ($matches_qty) {
-		$dataset_nid = $dataset_nids[0];
-		tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_nid);
-		return $form;
-	}
-	
-	else {
-	// TODO: GOTO 404 page 
-	}
-  }
-  else {
- 
-	  $form['subjects'] = array(
+function tow_search_datasets_altering_form(&$form) {
+  $form['subjects'] = array(
 		'#type' => 'select',
 		'#options' => tow_search_outer_filter_taxonomy(),
 		'#title' => t('Subjects')
 	  );
-	  $form['subjects']['#default_value'] = _tow_search_outer_default_subject(array_keys($form['subjects']['#options']), $filters); 
+	
+  $form['subjects']['#default_value'] = _tow_search_outer_default_subject(array_keys($form['subjects']['#options']), $filters); 
 
-	  $form['size'] = array(
+	$form['size'] = array(
 		'#type' => 'select',
 		'#options' => array(
 		  t('Any'),
@@ -69,7 +43,7 @@ function tow_search_apachesolr_search_form(&$form, &$form_state) {
 		'#title' => t('Size of data set')
 	  );
 	  
-	  $form['saved_searches'] = array(
+	$form['saved_searches'] = array(
 		'#type' => 'select',
 		'#options' => array(
 		  t('Any'),
@@ -80,7 +54,7 @@ function tow_search_apachesolr_search_form(&$form, &$form_state) {
 		'#title' => t('Saved searches')
 	  );
 	  
-	  $form['post_date'] = array(
+	$form['post_date'] = array(
 		'#type' => 'select',
 		'#options' => array(
 		  t('Any'),
@@ -89,10 +63,10 @@ function tow_search_apachesolr_search_form(&$form, &$form_state) {
 		  t('One month ago'),
 		  t('6 months ago')
 		),
-		'#title' => t('Post date (up to)')
+		'#title' => t('Post date (up to)'),
 	  );
 	  
-	  $form['access_status'] = array(
+	$form['access_status'] = array(
 		'#type' => 'select',
 		'#options' => array(
 		  t('Any'),
@@ -100,10 +74,10 @@ function tow_search_apachesolr_search_form(&$form, &$form_state) {
 		  t('By request'),
 		  t('Private')
 		),
-		'#title' => t('Access status')
+		'#title' => t('Access status'),
 	  );
 	  
-	  $form['popularity'] = array(
+	$form['popularity'] = array(
 		'#type' => 'select',
 		'#options' => array(
 		  t('Any'),
@@ -111,16 +85,12 @@ function tow_search_apachesolr_search_form(&$form, &$form_state) {
 		  t('Moderate'),
 		  t('High')
 		),
-		'#title' => t('popularity (# views)')
+		'#title' => t('popularity (# views)'),
 	  );
   
-		$form['#submit'] = array('tow_search_outer_filter_form_submit');
-	// x($_GET); 
-	}
-	
-	return $form;
-	
+	$form['#submit'] = array('tow_search_outer_filter_form_submit');
 }
+
 /**
  * Composes an URL upon submission of search-datasets form
  * URL is understandable by apachesolr and contains all the search parameters
@@ -144,8 +114,6 @@ function tow_search_outer_filter_form_submit($form, &$form_state) {
     $query .= ' ' . 'tid:' . $form_state['values']['subjects'];
   }
     
-  
-  
   if ($query == 'filters=')
     $query = NULL;
   //x($path);
@@ -153,116 +121,74 @@ function tow_search_outer_filter_form_submit($form, &$form_state) {
   drupal_goto($path, $query);
 }
 
-/**
- * Implementation of hook__apachesolr_process_results()
- * @param: $results - non-empty array of search results 
- */
-function tow_apachesolr_process_results(&$results) {
-  // x('tow_apachesolr_process_results');
-  // x($results);
+function tow_search_get_saved_searches($dataset_nid) {
+  $saved_search_res = db_query("SELECT `ctss`.`nid`, `n`.`title`
+                                     FROM content_type_saved_search `ctss`
+                                     LEFT JOIN node `n`
+                                       ON `n`.`nid` = `ctss`.`nid`
+                                     WHERE `ctss`.`field_dataset_nid_value` = %d" , $dataset_nid);
+  // TODO: pass saved search nids (?)
+  while ($saved_search = db_fetch_array($saved_search_res)) {
+    $saved_searches[] = $saved_search['title'];
+  }
+  if ($saved_searches) {
+    return $saved_searches;
+  }
+  else 
+    return array();
+}
+
+function _tow_search_get_filter_element($fields) {
+
+  $element = array(
+    '#tree' => TRUE,
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+    'remove' => array(
+      '#value' => t('Remove'),
+      '#prefix' => '<div class="remove-filter">',
+      '#suffix' => '</div>'
+    ),
+    'field' => array(
+      '#type' => 'select',
+      '#options' => $fields,
+      '#title' => t('Field'),
+    ),
+    'operator' => array(
+      '#type' => 'select',
+      '#options' => tow_search_get_operators(),
+      '#title' => t('operator'),
+    ),
+    'value' => array(
+      '#type' => 'textfield',
+      '#title' => t('Value'),
+      '#prefix' => '<div class="value-field">',
+      '#suffix' => '</div>',
+    )
+  );
   
-  if ($results[0]['node']->type == 'dataset') { // if search was made for datasets
-    foreach ($results as $key => $result) {
-      $results[$key]['amount_tables'] = $result['node']->sis_tow_amount_tables . t(' tables');
-      $results[$key]['amount_records'] = $result['node']->sis_tow_amount_records . t(' records');
-      //$results[$key]['amount_views'] = $result['node']->sis_tow_amount_views . t(' views');
-    }
+  return $element;
+}
+
+function tow_search_get_fields($nid) {
+  
+  $possible_fields = tow_possible_fields();
+  $res = db_query("SELECT nid FROM {content_type_table} WHERE field_dataset_value = %d", $nid);
+  
+  while ($node = db_fetch_object($res)) {
+    $node = node_load($node->nid);
+    foreach ($possible_fields as $field) {
+      foreach ($node->{'field_title_' . $field} as $value) {
+        if ($value['value'])
+          $fields[] = $value['value'];
       }
-  else { // search for records option
-    foreach ($results as $key => $result) {
-      // add record_nid to the display data, first index of this array corresponds 
-      // to the table_nid of added record
-      $displayed_rows[$result['node']->sis_tow_field_table][] = $result['node']->nid;
-      unset($results[$key]);
-      
-    }  
-    //x($displayed_rows);
-    //  Display each table
-    foreach ($displayed_rows as $table_nid => $record_nids) {
-    
-      // TODO: Specify, which records to extract
-      $first_record_id = 0;
-      $display_options['sort'] = array ('sort_index' => 'nid', 'sort_order' => 'ASC');
-      $display_options['record_nids'] = $record_nids;
-      
-      //$display_options['limits'] = array ('first_elem_no' => $first_record_id, 'total_elements' => 1);
-
-      $table_node = node_load($table_nid);
-        
-      $tables_to_display[] = array(
-        'table_nid' => $result['node'],
-        'title' => l($table_node->title, 'table/' . $table_nid) . t(' table'),
-        'table' => tow_table($table_node, $display_options),
-      ); 
-           
-      
     }
-    
-    $results = $tables_to_display;
   }
-  
-  
-  //print 'Search results';
+  return $fields;
 }
 
-function tow_apachesolr_modify_query(&$query, &$params) { 
-  //x(tow_apachesolr_modify_query);
-  // x($query);
-  // x($params);
-  
-  // TODO: Add this only for datasets 
-  $params['fl'] .= ',sis_tow_amount_tables';
-  $params['fl'] .= ',sis_tow_amount_records';
-  $params['fl'] .= ',sis_tow_amount_saved_searches';
-  $params['fl'] .= ',sis_tow_count_views';
-  $params['fl'] .= ',sis_cck_field_access_type';
-  // TODO:bookmarks 
-	
-  // TODO: add this only to records
-  $params['fl'] .= ',sis_tow_field_table';
-}
-
-/** 
- * Implementation of hook_apachesolr_update_index(). 
- **/ 
-function tow_apachesolr_update_index(&$document, $node) {
-  
-  if ($node->type == 'dataset') {
-	  $document->sis_tow_amount_tables = db_result(db_query("
-		SELECT COUNT(*) FROM {content_type_table} WHERE field_dataset_value = %d
-	  ", $node->nid));
-	  
-	  $document->sis_tow_amount_records = db_result(db_query("
-		SELECT COUNT(*) AS qty
-		FROM {content_type_record} r 
-		INNER JOIN {content_type_table} t
-		  ON r.field_table_value = t.nid
-		  AND t.field_dataset_value = %d",
-		$node->nid));
-	  
-	  $document->sis_tow_amount_saved_searches = db_result(db_query("SELECT COUNT(*)
-                                                                   FROM {content_type_saved_search} `ss`
-                                                                   WHERE field_dataset_nid_value = %d",
-                                                                   $node->nid));
-		
-	  $document->sis_tow_count_views = db_result(db_query("
-		SELECT count FROM {tow_dataset_counter} WHERE nid = %d
-	  ", $node->nid));
-	  
-	  // TODO:bookmarks
-  }
-	
-	// Add dataset_nid field and table_nid field to be indexed by apachesolr
-  if ($node->type == 'record') {
-    $document->sis_tow_dataset_nid = db_result(db_query("
-      SELECT `ctt`.`field_dataset_value` AS `dataset_nid`
-      FROM {content_type_table} `ctt`
-      LEFT JOIN {content_type_record} `ctr`
-        ON `ctr`.`field_table_value` = `ctt`.`nid`
-      WHERE `ctr`.`nid` = %d", $node->nid));   
-    $document->sis_tow_field_table = $node->field_table[0]['value'];	
-  }
-  
+function tow_search_get_operators() {
+  return array('>', '<', '=');
 }
 
 function _tow_search_outer_default_subject($tids, $filters) {
