@@ -7,7 +7,7 @@
  * $display_options ('sort' => array('sort_index', 'sort_order'),
  * 'filter' => array('filter_column_index', 'filter_operator_key', 'filter_value') ,
  * 'limits' => array('first_elem_no', 'total_elements') ,
- * 'paged_view' => boolean, determines whether returned query will be used in db_query() or paged_query() );
+ * 'paged_view' => boolean, determines whether returned query will be used in db_query() or paged_query()
  * 'record_nids' => array of record_nid, which are to be displayed, this overrides  'first_elem_no' option);
  *
  * @Return array(
