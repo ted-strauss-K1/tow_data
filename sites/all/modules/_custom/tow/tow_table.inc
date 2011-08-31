@@ -918,3 +918,34 @@ function tow_table_field_add_form_submit($form, &$form_state) {
   _tow_field_description_save($node->nid, count($indexes)-1, $description);
   drupal_set_message('Field has been added');
 }
+
+function _tow_get_table_fields($table_node){
+  $aux_array = array();
+  
+  // 1.1 Weights responsible for the column order
+  $weights_array = unserialize($table_node->field_weights[0]['value']);
+  $indexes = unserialize($table_node->field_indexes[0]['value']);
+  
+  // 1.2 Extracting all data needed for query construction into auxiliary array
+  $index = 0;
+  foreach (tow_possible_fields() as $field_type) {
+    $delta = 0;
+    if (!is_array($table_node->{'field_title_' . $field_type}))
+      continue;
+    foreach($table_node->{'field_title_' . $field_type} as $title_value) {
+      if ($title_value['value']) {
+        $aux_array[$weights_array[$index]]['title'] = $title_value['value'];
+        $aux_array[$weights_array[$index]]['delta'] = $delta;
+        $aux_array[$weights_array[$index]]['type'] = $field_type;
+        $aux_array[$weights_array[$index]]['index'] = $indexes[$index];
+
+        $index++;
+        $delta++;
+      }
+    }
+  }
+
+  if ($aux_array)
+    ksort($aux_array);
+ return $aux_array;
+}

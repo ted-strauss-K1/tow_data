@@ -26,7 +26,14 @@ function tow_construct_table_query($node, $display_options = '') {
 
   // 1.0.1 first returned argument - node id
   $argmts[] = $current_table->nid;
+  
+  $aux_array = _tow_get_table_fields($current_table);
 
+  foreach ($aux_array as $index => &$field) {
+    $field['alias'] = "`" . $field['type'] . $field['delta'] . "`";
+  }
+
+/*
   // 1.1 Weights responsible for the column order
   $weights_array = unserialize($current_table->field_weights[0]['value']);
 
@@ -51,7 +58,7 @@ function tow_construct_table_query($node, $display_options = '') {
 
   if ($aux_array)
   ksort($aux_array);
-
+*/
   // 2. Query construction
   //   Query is constructed of two parts. Both parts are recorded in one foreach cycle, and then concatenated.
 

@@ -19,6 +19,25 @@ function tow_search_outer_filter_taxonomy() {
 
 }
 
+function _tow_search_outer_default_subject($tids, $filters) {
+  if ($filters) {
+    $start = strpos($filters, 'tid:');
+    if ($start !== FALSE) {
+      $end = strpos($filters, ' ', $start + 4);
+      
+      if ($end === FALSE) {
+        $tid = substr($filters, $start + 4);
+      }else{
+        $tid = substr($filters, $start + 4, $end - $start - 4);
+      }
+    }
+    if (in_array($tid, $tids)) {
+      return $tid;
+    }
+  }
+  return 0;  
+}
+
 /**
  * Creates form elements for the search_datasets page
  */

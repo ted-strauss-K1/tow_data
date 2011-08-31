@@ -156,7 +156,7 @@ function tow_export_form_submit($form, &$form_state) {
     $query_options['click_sortable'] = false;     
     // TODO: set ascending sort order
     // 1.1.2 Construct SQL query   
-    $user_table = tow_construct_table_query($table_node, $display_options);
+    $user_table = tow_construct_table_query($table_node, $query_options);
     // 1.1.3 Receive data
     
     // Column titles

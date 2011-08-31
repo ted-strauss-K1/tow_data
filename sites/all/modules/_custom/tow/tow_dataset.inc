@@ -76,6 +76,17 @@ function tow_dataset_form_alter(&$form, &$form_state) {
 }
 
 /**
+ * When node is viewed by user, hide dataset hash. Don't hide it for solr
+ */
+function tow_dataset_hide_hash(&$node) {
+  
+  if (tow_access_bypass_solr())
+    return;
+  else
+    unset($node->content['field_hash']);
+}
+
+/**
  * Extracts and prepares info for dataset summary page
  * @param $node dataset node
  */
@@ -172,7 +183,7 @@ function _tow_dataset_admin_tasks($node) {
     $maintenance = t('Now this data set is in maintenance mode. ' . l('Publish it', 'dataset/' . $node->nid . '/maintenance')); 
     
   $admin_tasks = array(
-    'create' => l('Create', 'node/add/table', array('query' => 'dataset=' . $node->nid)) . t(' or ') . l('import', 'import') . t(' a new table'),
+    'create' => l('Create', 'node/add/table', array('query' => 'dataset=' . $node->nid)) . t(' or ') . l('import', 'import/' . $node->nid) . t(' a new table'),
     'manage' => l('Manage tables',  'dataset/' . $node->nid),
     'access' => drupal_get_form('tow_access_type_form'),
   );
