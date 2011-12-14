@@ -7,9 +7,9 @@
  * $display_options ('sort' => array('sort_index', 'sort_order'),
  * 'filter' => array('filter_column_index', 'filter_operator_key', 'filter_value') ,
  * 'limits' => array('first_elem_no', 'total_elements') ,
- * 'paged_view' => boolean, determines whether returned query will be used in db_query() or paged_query()
+ * 'paged_view' => boolean, determines whether returned query will be used in db_query() or paged_query() 
  * 'record_nids' => array of record_nid, which are to be displayed, this overrides  'first_elem_no' option);
- *
+ 
  * @Return array(
  *    'query' => "query string, contains replacement operators",
  *      'arguments' => "array of arguments for db_query",
@@ -26,7 +26,7 @@ function tow_construct_table_query($node, $display_options = '') {
 
   // 1.0.1 first returned argument - node id
   $argmts[] = $current_table->nid;
-  
+
   $aux_array = _tow_get_table_fields($current_table);
 
   foreach ($aux_array as $index => &$field) {
@@ -113,6 +113,7 @@ function tow_construct_table_query($node, $display_options = '') {
       }
       // part of query, responsible for filtering
       if (($display_options['filter']) && ($display_options['filter']['filter_column_index'] == $column_index)) {
+        //$filter_query_part = "AND " . $column_info['alias'] . ".field_" . $column_info['type']. "_value ";
         $filter_query_part = $column_info['alias'] . ".field_" . $column_info['type']. "_value ";
 
         $filter_query_part = $filter_query_part . "%s" . " ";
@@ -218,6 +219,8 @@ function tow_construct_table_query($node, $display_options = '') {
   $result['query'] = $query;
   $result['arguments'] = $argmts;
   
+  //x($query);
+  //x($result);
   return $result;
 
 /* The whole query (example):

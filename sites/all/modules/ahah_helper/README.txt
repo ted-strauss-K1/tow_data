@@ -1,4 +1,3 @@
-$Id: README.txt,v 1.1 2008/08/29 18:58:21 wimleers Exp $
 
 Description
 -----------
@@ -34,9 +33,8 @@ This module simplifies that. It allows you to:
    as well. Because the same code is used when JavaScript is disabled (through
    the buttons) or enabled (through AHAH callbacks), just press the buttons in
    your tests and you'll be fine!
-4) skip form validation for form items that exist in the form for the first
-   time (i.e. that are added dynamically). Check if the #first_time property
-   exists in your validate callbacks.
+4) skip form validation for all AHAH updates that do not call validate or
+   submit callbacks.
 5) have new AHAH-powered form items added in an AHAH callback (previously not
    supported).
 

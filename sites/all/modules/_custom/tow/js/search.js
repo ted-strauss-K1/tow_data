@@ -7,15 +7,15 @@
  */
 function tow_display_filter_operator(type) {
 	$(
-			'#edit-filters-filter-items-wrapper-filter-items-operator option:[value*="' + type + '"]')
-			.show();
+			'#edit-filters-filter-items-wrapper-filter-items-operator option:[value*="'
+					+ type + '"]').show();
 	$(
-			'#edit-filters-filter-items-wrapper-filter-items-operator option:not([value*="' + type + '"])')
-			.hide();
+			'#edit-filters-filter-items-wrapper-filter-items-operator option:not([value*="'
+					+ type + '"])').hide();
 
 	operator_value = $(
-			'#edit-filters-filter-items-wrapper-filter-items-operator option:[value*="' + type + '"]')
-			.val();
+			'#edit-filters-filter-items-wrapper-filter-items-operator option:[value*="'
+					+ type + '"]').val();
 
 	$('#edit-filters-filter-items-wrapper-filter-items-operator').val(
 			operator_value);
@@ -157,27 +157,22 @@ function tow_change_operator_values(field_value) {
 Drupal.behaviors.Search = function(context) {
 
 	/*
-	  // Hide tables and fields to be chosen for display 
-	  $("#edit-tables-select option").each(function() { 
-	  // hide tables to be displayed 
-	  id = "#edit-fields-select-tables-" + $(this).val() + "-wrapper"; 
-	  $(id).hide(); 
-	  // hide fields to be displayed 
-	  id = 'div[id*="t' + $(this).val() + '"]';
-	  $(id).hide(); 
-	  // hide constraint fields 
-	  id = 'option[value*="t' +  $(this).val() + '"]'; 
-	  $(id).hide(); }); 
-	  // Hide all operators
-	  $('#edit-filters-filter-items-wrapper-filter-items-operator option').hide();
+	 * // Hide tables and fields to be chosen for display $("#edit-tables-select
+	 * option").each(function() { // hide tables to be displayed id =
+	 * "#edit-fields-select-tables-" + $(this).val() + "-wrapper"; $(id).hide(); //
+	 * hide fields to be displayed id = 'div[id*="t' + $(this).val() + '"]';
+	 * $(id).hide(); // hide constraint fields id = 'option[value*="t' +
+	 * $(this).val() + '"]'; $(id).hide(); });
+	 *  // Hide all operators
+	 * $('#edit-filters-filter-items-wrapper-filter-items-operator
+	 * option').hide();
 	 */
-	
 	// -------- Filters Block ---------
 	// Remove filter block
 	$('.remove-filter').click(function() {
 		$(this).parent().hide();
-		// $(this).parent().children('.value-field').children('div').children('input').val('4mpWbjErTjPdVwao');
-		});
+	});
+
 	// When changing filter field:
 	$('#edit-filters-filter-items-wrapper-filter-items-field').change(
 			function() {
@@ -187,44 +182,69 @@ Drupal.behaviors.Search = function(context) {
 	// Clear form button
 	$('.clear-form div').click(function() {
 		$('input.form-text').val('');
-		$(' input.form-checkbox').attr('checked', false);
+		$('input.form-checkbox').attr('checked', false);
 		$('option:selected').removeAttr('selected');
-
 		$('#filter-items-wrapper').children().slice(1).hide();
 	});
 
 	// Behavior on searched table select: show only selected tables and
 	// corresponding fields
 	// in display block and filters block
-	$('#edit-tables-select').change(function() {
-		var str = "";
-		var id = "";
-		// alert($(this).text());
+	$('#edit-tables-select')
+			.change(
+					function() {
+						var str = "";
+						var id = "";
+						// alert($(this).text());
 
-			$("#edit-tables-select option").each(function() {
-				// hide tables to be displayed
-					id = "#edit-fields-select-tables-" + $(this).val()
-							+ "-wrapper";
-					$(id).hide();
-					// hide fields to be displayed
-					id = 'div[id*="t' + $(this).val() + '"]';
-					$(id).hide();
-					// hide constraint fields
-					id = 'option[value*="t' + $(this).val() + '"]';
-					$(id).hide();
-				});
-			$("#edit-tables-select option:selected").each(function() {
-				// show tables to be displayed
-					id = "#edit-fields-select-tables-" + $(this).val()
-							+ "-wrapper";
-					$(id).show();
-					// show fields to be displayed
-					id = 'div[id*="t' + $(this).val() + '"]';
-					$(id).show();
-					// show constraint fields
-					id = 'option[value*="t' + $(this).val() + '"]';
-					$(id).show();
+						$("#edit-tables-select option").each(
+								function() {
+									// hide tables to be displayed
+									id = "#edit-fields-select-tables-"
+											+ $(this).val() + "-wrapper";
+									$(id).hide();
+									// hide fields to be displayed
+									id = 'div[id*="t' + $(this).val() + '"]';
+									$(id).hide();
+									// hide constraint fields
+									id = 'option[value*="t' + $(this).val()
+											+ '"]';
+									$(id).hide();
 
-				});
-		});
+								});
+						$("#edit-tables-select option:selected")
+								.each(
+										function() {
+											// show tables to be displayed
+											id = "#edit-fields-select-tables-"
+													+ $(this).val()
+													+ "-wrapper";
+											$(id).show();
+											// show fields to be displayed
+											id = 'div[id*="t' + $(this).val()
+													+ '"]';
+											$(id).show();
+											// show constraint fields
+											id = 'option[value*="t'
+													+ $(this).val() + '"]';
+											$(id).show();
+											// set first field value
+											$(
+													'#edit-filters-filter-items-wrapper-filter-items-field')
+													.val($(id).val());
+											// set correct operator
+											tow_change_operator_values($(
+													'#edit-filters-filter-items-wrapper-filter-items-field')
+													.val());
+										});
+						// $("div").text(str);
+						// $('#edit-fields-select-tables-3-wrapper').hide();
+						// $('div.form-checkboxes').hide();
+					});
+
+	// When changing operator:
+	$('#edit-filters-filter-items-wrapper-filter-items-operator').change(
+			function() {
+				tow_display_input_fields_for_operator($(this).val());
+			});
 };

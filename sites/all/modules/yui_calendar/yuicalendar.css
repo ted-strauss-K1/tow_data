@@ -1,0 +1,55 @@
+.yuicalendar-wrapper {
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.yuicalendar-icon {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  margin: 0 6px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent url(calendar.png) no-repeat center top;
+  display: inline;
+}
+
+.yui-calcontainer {
+	position: relative;
+	background-image: none;
+  z-index: 999999999;
+}
+
+.yui-calcontainer table {
+	position: relative;
+	background-image: none;
+  z-index: 999999999;
+  width: auto;
+}
+
+div.yuicalendar-date, .yuicalendar-date .form-item {
+  display: inline;
+  width: 14em;
+}
+
+.yuicalendar-date-initialized {
+  display: none;
+}
+
+.yuicalendar-date .form-item input {
+  width: auto;
+  display: inline;
+}
+
+.yui-skin-sam .yui-ac {
+  position: absolute;
+  margin-top: 0;
+}
+
+html.js fieldset.collapsible {
+  position: inherit;
+}
+
+html.js fieldset.collapsible .fieldset-wrapper {
+  overflow: inherit;
+}

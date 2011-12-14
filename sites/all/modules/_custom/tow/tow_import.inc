@@ -167,10 +167,41 @@ function tow_import_progress_get($hash, $stage) {
   return drupal_json(array('status' => TRUE, 'response' => $response));
 }
 
+function tow_import_progress($hash, $stage, $action = 'increase', $total_stages = 10) {
+  static $state;
+  static $update_step;
+  switch ($action) {
+    case 'set': 
+      if ($state >= 0) {
+        $state = 0;
+        $update_step = 10 / $total_stages;
+      }
+      break;
+    case 'increase':
+      $state += $update_step;
+      break;
+    case 'finish':
+      if ($state >= 0) {
+        $state = 10;
+        $update_step = 0;
+      }      
+       break;
+    case 'fail':
+      $state = -1;
+      $update_step = 0;
+      break;
+    case 'message':
+      tow_import_progress_set($hash, $stage, $total_stages);    
+      return;
+  }
+  tow_import_progress_set($hash, $stage, round($state));
+}
+
 function tow_import_progress_delete($hash) {
   global $user;
   db_query("DELETE FROM {tow_import_progress} WHERE sid='%s' AND hash = %d", $user->sid, $hash);
 }
+
 
 ####### FILE TRANSFER INTERFACE ######
 
@@ -274,7 +305,7 @@ function _test($hash, $filename, $to) {
   // File to be imported
   $imported_file_name = 'sites/default/files/import/' . $hash;
   $info = pathinfo($filename);
-    
+  
   // TODO: dataset nid
   $dataset_nid = $to['dataset']->nid;
 
@@ -297,8 +328,8 @@ function _test($hash, $filename, $to) {
 
   // 2. Data reading and validating
   $stage = 2;
-  $progress_indicator = 1;
-  tow_import_progress_set($hash, $stage, $progress_indicator++);
+   
+  tow_import_progress($hash, $stage, 'set', 5);
 
   /* PHPExcel_IOFactory data reading engine */
   error_reporting(E_ALL);
@@ -311,16 +342,37 @@ function _test($hash, $filename, $to) {
   // 2.1.1.2 Create reader of detected type
   $objReader = PHPExcel_IOFactory::createReader("$inputFileType");
   // 2.1.1.3 Set properties of Reader object depending on its type    
+  // Read no formatting 
   if (method_exists($objReader, 'setReadDataOnly')) {
     $objReader->setReadDataOnly(true);
   }
+  // txt-file. Value delimiter may be tab or comma. 
   if (($inputFileType == 'CSV') && (strtolower($info['extension']) == "txt")) {
-    $objReader->setDelimiter("\t");
+    
+    // read first line
+    $file = fopen($imported_file_name, 'r');
+    $first_row = fgets($file);
+    fclose($file);
+    // Determine value delimiter
+    if (!strpos($first_row, ',')) {
+      $objReader->setDelimiter("\t");  
+    }
+    elseif (!strpos($first_row, "\t")) {
+      $objReader->setDelimiter(",");
+    }
+    else {
+      // default value
+      $objReader->setDelimiter("\t");
+    }
+    
+    // Set value enclosure 
     $objReader->setEnclosure('');
   }
-    
   $objPHPExcel = $objReader->load("$imported_file_name");
-
+  
+  // check, if first row contains more than 
+  
+  
   // Working with active sheet
   $worksheet_index = 0;
   $data = array();
@@ -340,7 +392,7 @@ function _test($hash, $filename, $to) {
     //$data_read = false;
     $row_index = 0;
     foreach ($worksheet->getRowIterator() as $row) {
-	  $cellIterator = $row->getCellIterator();
+      $cellIterator = $row->getCellIterator();
       $cellIterator->setIterateOnlyExistingCells(false); // loop through empty cells as well
       if ( ($row->getRowIndex() == 1)  && ($import_action == 'create')) {
         foreach ($cellIterator as $cell) {
@@ -379,14 +431,14 @@ function _test($hash, $filename, $to) {
   file_delete('sites/default/files/import/' . $hash);
 
   // 2.2 Extracting table name from file name
-  tow_import_progress_set($hash, $stage, $progress_indicator++);
+  tow_import_progress($hash, $stage);
 
   if (!in_array($info['extension'], array('xls', 'xlsx'))) {
     $data['table_data'][0]['table_title'] =  trim($info['filename']);
   }
 
   // 2.3 Check whether a table with this titles already exists in the present dataset.
-  tow_import_progress_set($hash, $stage, $progress_indicator++);
+  tow_import_progress($hash, $stage);
 
   if ($import_action == 'create') {
     $existing_table_titles_res = db_query("
@@ -425,7 +477,7 @@ function _test($hash, $filename, $to) {
   $types_id = array_flip($types);
 
   // 2.4 Titles validation
-  tow_import_progress_set($hash, $stage, $progress_indicator++);
+  tow_import_progress($hash, $stage);
 
   foreach ($data['table_data'] as $table_index => &$table) {
 
@@ -440,8 +492,7 @@ function _test($hash, $filename, $to) {
     elseif ((!$table['rows_qty']) && ($import_action == 'append')) {
       // No data, table to be appended case
       $warning_messages[] = "No data found in the imported file. Nothing will be appended.";
-      tow_import_progress_set($hash, $stage, -1);
-      $progress_indicator = -100;
+      tow_import_progress($hash, $stage, 'fail');
       $data['table_qty']--;
       unset($data['table_data'][$table_index]);
       break;
@@ -458,6 +509,9 @@ function _test($hash, $filename, $to) {
         // trimmming current element in the array
         $column_title = trim($column_title);
 
+        // old condition, includes taboo on column titles being a date
+        // works bad, because values like 'y' are treated as date  
+        // if (is_numeric($column_title) || (strtotime($column_title) !== false) || (strtolower($column_title) === "null")) {
         if (is_numeric($column_title) || (strtolower($column_title) === "null")) {
           $consider_column_titles_as_data = true;
           break;
@@ -483,7 +537,7 @@ function _test($hash, $filename, $to) {
       }
       $warning_messages[] = "No column titles found in data file, using default column titles";
     }
-  	else {
+    else {
       // Set empty column titles to default name
       foreach  ($table['column_titles'] as $key => &$column_title) {
         if ($column_title == '') {
@@ -495,7 +549,7 @@ function _test($hash, $filename, $to) {
   // End of titles validation
 
   // 2.5 Data validation
-  tow_import_progress_set($hash, $stage, $progress_indicator++);
+  tow_import_progress($hash, $stage);
 
   foreach ($data['table_data'] as $table_index => &$table) {
     // detect type and count no of columns for each record
@@ -538,6 +592,13 @@ function _test($hash, $filename, $to) {
         $invalid_types = false;
         foreach ($table['type'] as $record_index => $record_types) {
           foreach ($record_types as $col_index => $cell_type) {
+            /*if (!$record_index) { 
+              $data['table_data'][$table_index]['col_type'][$col_index] = $cell_type;
+            }
+            elseif ($cell_type != $data['table_data'][$table_index]['col_type'][$col_index]) {
+              $invalid_types = true;
+              break;
+            }*/
             if (!$record_index) { 
               // first record in the table, its types will be used as first type option 
               $table['col_type'][$col_index] = $cell_type;
@@ -559,7 +620,7 @@ function _test($hash, $filename, $to) {
           }
         } // row loop
       }
-      else { // no rows case ( == no records in the table) 
+      else { // now rows case ( == no records in the table) 
         $data['table_data'][$table_index]['col_type'] = array();
       } // if
     } // create case
@@ -607,20 +668,22 @@ function _test($hash, $filename, $to) {
 
   // End of data validation
 
-
   if ($data['table_qty']) {
-    tow_import_progress_set($hash, $stage, 10);
+    tow_import_progress($hash, $stage, 'finish');
     $progress_indicator = 1;
   }
   else {
-    tow_import_progress_set($hash, $stage, -1);
-    $progress_indicator = -100;
+    tow_import_progress($hash, $stage, 'fail');
   }
-
+  
   // Creating content
   $stage = 3;
-
-  tow_import_progress_set($hash, $stage, $progress_indicator++);
+  // Count total rows qty for progress indicator updating  
+  $total_rows = 0;
+  foreach ($data['table_data'] as $table) {
+    $total_rows += $table['rows_qty'];
+  }
+  tow_import_progress($hash, $stage, 'set', $total_rows + 1);
 
   if ($import_action == 'create') {
     // reading key titles from other tables
@@ -658,7 +721,7 @@ function _test($hash, $filename, $to) {
     unset($existing_table_nids_res, $rs, $table_node, $weights_array, $indexes_array);
   }
 
-  tow_import_progress_set($hash, $stage, $progress_indicator++);
+  tow_import_progress($hash, $stage);
   // $tables
 
   $created_table_titles = array();
@@ -762,13 +825,14 @@ function _test($hash, $filename, $to) {
       //drupal_set_message('<pre>' . print_r($new_record, true) . '</pre>');
       $new_record->field_table[0]['value'] = $table_nid;
       node_save($new_record);
+      tow_import_progress($hash, $stage);
     } // end of records
 
     unset($new_table);
     unset($table_nid);
   }
 
-  tow_import_progress_set($hash, $stage, 10);
+  tow_import_progress($hash, $stage, 'finish');
 
   if ($warning_messages) {
     foreach  ($warning_messages as $value) {
@@ -777,11 +841,11 @@ function _test($hash, $filename, $to) {
     $warning = substr($warning, 0, -2);
     // TODO:  make a list of warnings to be displayed
     // $warning = theme_item_list($warning_messages, NULL, 'ul');
-    tow_import_progress_set($hash, 4, $warning);
+    tow_import_progress($hash, 4, 'message', $warning);
   }
   else
-  tow_import_progress_set($hash, 4, -1);
-  //tow_import_progress_set($hash, 4, $warning);
+    tow_import_progress($hash, 4, 'fail');
+  //tow_import_progress($hash, 4, $warning);
 
   if ($found_key_titles) {
     foreach  ($found_key_titles as $value) {
@@ -790,13 +854,13 @@ function _test($hash, $filename, $to) {
     $found_keys = substr($found_keys, 0, -2);
     // TODO:  make a list of warnings to be displayed
     // $warning = theme_item_list($warning_messages, NULL, 'ul');
-    tow_import_progress_set($hash, 5, 'we found ' . count($found_key_titles) . ' key fields (' . $found_keys . ')');
+    tow_import_progress($hash, 5, 'message', 'we found ' . count($found_key_titles) . ' key fields (' . $found_keys . ')');
   }
   elseif (($progress_indicator < 0) || ($import_action == 'append')) {
-    tow_import_progress_set($hash, 5, -1);
+    tow_import_progress($hash, 5, 'fail');
   }
   else {
-    tow_import_progress_set($hash, 5, "we found no key fields");
+    tow_import_progress($hash, 5, 'message', "we found no key fields");
   }
 
   if ($import_action == 'create') {
@@ -811,18 +875,18 @@ function _test($hash, $filename, $to) {
       $created_tables = substr($created_tables, 0, -2);
       // TODO:  make a list of warnings to be displayed
       // $warning = theme_item_list($warning_messages, NULL, 'ul');
-      tow_import_progress_set($hash, 6, $created_tables . ' created./ ' . $created_tables_spaced . '/ ' . $created_nids_spaced);
+      tow_import_progress($hash, 6, 'message', $created_tables . ' created./ ' . $created_tables_spaced . '/ ' . $created_nids_spaced);
     }
     else {
-      tow_import_progress_set($hash, 6, "no tables created");
+      tow_import_progress($hash, 6, 'message', "no tables created");
     }
   }
   else {
     if (($progress_indicator >= 0)) {
-      tow_import_progress_set($hash, 6, $table_node_to_be_updated->title . ' updated./ ' . $table_node_to_be_updated->title . '/ ' . $table_node_to_be_updated->nid);
+      tow_import_progress($hash, 6, 'message', $table_node_to_be_updated->title . ' updated./ ' . $table_node_to_be_updated->title . '/ ' . $table_node_to_be_updated->nid);
     }
     else
-    tow_import_progress_set($hash, 6, "No data was appended.");
+    tow_import_progress($hash, 6, 'message', "No data was appended.");
   }
 }
 
@@ -929,3 +993,4 @@ function _tow_common_type($type1, $type2) {
     return 0;
   }
 }  
+

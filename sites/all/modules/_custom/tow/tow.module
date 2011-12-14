@@ -4,7 +4,7 @@
  * @file
  * Custom code for tow.
  */
-// when apachesolr modules updated, run sql command UPDATE system SET weight = 1 WHERE LOCATE('apachesolr', name)
+// when apachesolr modules updated, run sql command UPDATE system SET weight = 1 WHERE LOCATE('apachesolr', name) 
 
 $module_path = drupal_get_path('module', 'tow');
 include_once('./' . $module_path . '/tow_table_filter.inc');
@@ -219,11 +219,11 @@ function tow_menu() {
     'type' => MENU_CALLBACK,
   );
   
-  $items['search_dataset/%'] = array(
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('tow_search_form', 1),
+  $items['search_dataset'] = array(
+    'page callback' => 'tow_search_within_dataset_callback',
+    'page arguments' => array(1),
     'access arguments' => array('access content'),
-    'file' => 'tow_search.inc',
+    'file' => 'tow_search_inner.inc',
     'type' => MENU_CALLBACK,
   );
   
@@ -250,7 +250,7 @@ function tow_data() {
 function tow_nodeapi(&$node, $op) {
   // Delete all records that have ref to the table being deleted
   // Delete all tables and saved searches that have ref to the dataset being deleted
-  // x($op);
+  //x($op);
   if ($op == 'delete') {    
     $children_types = _tow_children_type($node->type);
     if ($children_types) {
@@ -328,6 +328,8 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['pma_menu']['info'] = t('PhpMyAdmin menu');
     $blocks['dataset_badge']['info'] = t('Dataset badge');
     $blocks['dataset_stats']['info'] = t('Dataset statistics');
+    $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
+    //$blocks['search_outer_filter']['info'] = t('Search outer filter');
     return $blocks;
   }
   elseif($op == 'view') {
@@ -344,6 +346,12 @@ function tow_block($op = 'list', $delta = 0) {
       if ($delta == 'dataset_stats') {
 	    return tow_dataset_stats_block();
       }
+      if ($delta == 'table_display_switch') {
+      	return tow_table_display_switch_block();
+      }
+      /*if ($delta == 'search_outer_filter') {
+	    return tow_search_outer_filter_block();
+      }*/
     }
   }
   
@@ -353,27 +361,30 @@ function tow_block($op = 'list', $delta = 0) {
  * Implementation of hook_form_alter().
  */
 function tow_form_alter(&$form, &$form_state, $form_id) {  
-    
+ // x('form_alter_called');
+  //x($form_id);
+  //x($form);
+  
   if ($form_id == 'dataset_node_form' || $form_id == 'table_node_form') {
     $form['#submit'][] = 'tow_submit_maintanance_mode';
   }
   
   switch ($form_id) {
     case 'dataset_node_form':
-      tow_dataset_form_alter($form, $form_state);
+      tow_dataset_form_alter(&$form, $form_state);
       break;
     case 'table_node_form':
-      tow_table_form_alter($form, $form_state);
+      tow_table_form_alter(&$form, $form_state);
       break;
     case 'record_node_form':
-      tow_record_form_alter($form, $form_state);
+      tow_record_form_alter(&$form, $form_state);
       break;
     case 'user_register':
       tow_register_form_alter($form, $form_state);
       break;
     case 'search_form':
-	  tow_search_apachesolr_search_form($form, $form_state);
-	  break;
+	    tow_search_apachesolr_search_form($form, $form_state);
+		break;  
   }
   
   if ($form_id == 'node_delete_confirm' || $form_id == 'tow_table_truncate_confirm') {
@@ -460,7 +471,6 @@ function tow_maintanance_mode($status, $nid, $type) {
     } // foreach  
   }
 }
-
 /**
  * Implementation of hook_cron().
  */

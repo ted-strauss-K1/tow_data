@@ -1,0 +1,147 @@
+<?php
+// $Id: gigya.install,v 1.6 2010/08/27 13:19:45 azinck Exp $
+
+/**
+ * @file
+ * Update and uninstall functions for the Gigya module.
+ */
+ 
+/**
+ * Imlementation of hook_install().
+ */
+function gigya_install() {
+  // Set our module weight heavier than content profile registration.
+  db_query("UPDATE {system} SET weight = 5 WHERE name = 'gigya'");
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function gigya_uninstall() {
+  $key = variable_get('gigya_APIKey', '');
+  $secret = variable_get('gigya_SecretKey', '');
+
+  // Delete variables.
+  $variables = db_query("SELECT name FROM {variable} WHERE name LIKE 'gigya%%'");
+  while ($variable = db_fetch_object($variables)) {
+    variable_del($variable->name);
+  }
+
+  // Delete actions.
+  $actions = db_query("SELECT aid FROM {actions} WHERE callback LIKE 'gigya%%'");
+  while ($action = db_fetch_array($actions)) {
+    actions_delete($action['aid']);
+  }
+}
+
+/**
+ * Implementation of hook_requirements
+ */
+function gigya_requirements($phase) {
+  if($phase == 'install'){
+    if(!function_exists('hash_hmac')){
+      return array(
+        array(
+          'title' => 'Gigya requires the PHP Hash extension',
+          'description' => 'The <a href="http://us2.php.net/manual/en/book.hash.php">PHP Hash extension</a> is required for the Gigya module to function properly',
+          'severity' => REQUIREMENT_ERROR
+        )
+      );
+    }
+  }
+}
+
+/**
+ * Update to change Gigya UID field.
+ */
+function gigya_update_6003() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      if (db_version() < '5.0.3') {
+        db_change_field($ret, 'gigya', 'gigya_uid', 'gigya_uid', array('type' => 'text', 'not null' => TRUE, 'default' => ''));
+        return $ret;
+      }
+  }
+  // If we weren't caught by the mysql < 5.0.3, change the field to varchar.
+  db_change_field($ret, 'gigya', 'gigya_uid', 'gigya_uid', array('type' => 'varchar', 'length' => 950, 'not null' => TRUE, 'default' => ''));
+  return $ret;
+}
+
+/**
+ * Update to swap picture/avatar fields.
+ */
+function gigya_update_6004() {
+  db_drop_field($ret, 'gigya', 'userpicture');
+  db_add_field($ret, 'gigya', 'avatar_timestamp', array('type' => 'int', 'unsigned' => TRUE, 'not null' => FALSE));
+  return $ret;
+}
+
+/**
+ * Update to notify site admin to validate for REST API changes.
+ */
+function gigya_update_6005() {
+  // We cannot do a REST API change, so we need to tell the user to visit
+  // the Gigya page to update it.
+  drupal_set_message(t('You must visit the !configuration in order to validate and enable gigya', array('!configuration' => l('gigya configuration page', 'admin/settings/gigya'))));
+  return array(array('success' => TRUE, 'query' => 'Updated Gigya service validation settings.'));
+}
+
+/**
+ * Update to remove the gigya table.
+ */
+function gigya_update_6200() {
+  db_drop_table($ret, 'gigya');
+  return $ret;
+}
+
+/**
+ * Update to modify module weight and migrate existing variables.
+ */
+function gigya_update_6201() {
+  $items = array();
+
+  // Set weight to content profile registration + 1.
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+    case 'pqsql':
+      $items[] = update_sql("UPDATE {system} SET weight = 2 WHERE name = 'gigya'");
+      break;
+  }
+
+  // Migrate existing mapping variables to the new variables
+  if (module_exists('profile')) {
+    $result = _profile_get_fields($category, TRUE);
+    $weight = 1;
+    $fields = array();
+    while ($field = db_fetch_object($result)) {
+      $bio_assoc = variable_get('gigya_profile_' . $field->name, '');
+      if (!empty($bio_assoc)) {
+        variable_set('gigya_bio_' . $bio_assoc, $arr_name);
+      }
+    }
+  }
+
+  $items[] = array('success' => TRUE, 'query' => 'Migrated mapping variables of core profile fields.');
+  return $items;
+}
+
+/**
+ * Update to remove all old Gigya actions.
+ */
+function gigya_update_6202() {
+  $actions = db_query("SELECT aid FROM {actions} WHERE callback LIKE 'gigya_shareUI_action'");
+  while ($action = db_fetch_array($actions)) {
+    actions_delete($action['aid']);
+  }
+}
+
+/**
+ * Update to weight Gigya heavier than Content Profile Registration.
+ */
+function gigya_update_6301() {
+  $ret = array();
+  $ret[] = update_sql("UPDATE {system} SET weight = 5 WHERE name = 'gigya'");
+  return $ret;
+}

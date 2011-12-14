@@ -1,0 +1,8 @@
+<?php
+/** 
+  * Implementation of hook_install(). 
+  */
+function yuicalendar_install() {  
+  //set a high weight so yuicalendar is called after all other hook_form_alters which may add yuicalendar to various forms  
+  db_query("UPDATE {system} SET weight = 10 WHERE name = 'yuicalendar'");
+}

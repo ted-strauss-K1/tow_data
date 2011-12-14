@@ -1,0 +1,12 @@
+; $Id: yui.info,v 1.2.2.3 2008/09/25 17:37:27 bakyildiz Exp $
+name = YUI
+description = YUI Module Common paramerets
+package = "Yahoo YUI"
+core = "6.x"
+
+; Information added by drupal.org packaging script on 2010-09-20
+version = "6.x-1.3"
+core = "6.x"
+project = "yui"
+datestamp = "1285011364"
+

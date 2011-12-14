@@ -73,7 +73,7 @@ function tow_field_delete_confirm_submit($form, &$form_state) {
   unset($table->{'field_title_' . $type}[$delta]);
   if ($type = 'enum')
     unset($table->field_enum_options[$delta]);
-  
+
   $weights = unserialize($table->field_weights[0]['value']);
   $current_weight = $weights[$field_index];  
   unset($weights[$field_index]);
@@ -82,10 +82,14 @@ function tow_field_delete_confirm_submit($form, &$form_state) {
       $weights[$i] --;
   $table->field_weights[0]['value'] = serialize(array_values($weights));
   
+  // modify indexes array
   $indexes = unserialize($table->field_indexes[0]['value']);
   unset($indexes[$field_index]);
   $table->field_indexes[0]['value'] = serialize($indexes);
   
+  //modify unit values
+  unset($table->field_units[$field_index]);
+    
   node_save($table);
     
   drupal_set_message('The field has been deleted');
@@ -139,6 +143,12 @@ function tow_field_edit_form($form_state, $table_nid, $type, $delta, $index) {
     '#default_value' => array_search($type, $possible_fields)
   );
   
+   $form['unit'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Unit'),
+    '#default_value' => $table->field_units[$index]['value'],
+  );
+  
   // Read field description from database  
   $description_res = db_query('SELECT `description` FROM {tow_field_info} WHERE `nid` = %d AND `index` = %d', $table_nid, $index);
   $description = '';
@@ -148,6 +158,7 @@ function tow_field_edit_form($form_state, $table_nid, $type, $delta, $index) {
     '#type' => 'value',
     '#value' => $description
   );
+  
   $form['description'] = array(
     '#type' => 'textarea',
     '#title' => t('Description'),
@@ -184,12 +195,19 @@ function tow_field_edit_form_submit($form, &$form_state) {
   // Update index array of the table
   $index_array = unserialize($table->field_indexes[0]['value']);
   $index_array[$form_state['values']['field_index']] = $form_state['values']['index'];
-
   $new_indexes = serialize($index_array);
   if ($new_indexes != $table->field_indexes[0]['value']) {
     $node_save = TRUE;
-    $table->field_indexes[0]['value'] = serialize($index_array);
+    $table->field_indexes[0]['value'] = $new_indexes;
   }
+  
+  // Update unit values of the table
+  $new_units_array = $table->field_units;
+  $new_units_array[$form_state['values']['field_index']]['value'] = $form_state['values']['unit'];
+  if ($new_units_array != $table->field_units) {
+    $node_save = TRUE;
+    $table->field_unts = $new_units_array;
+  } 
   
   if ($table->{'field_title_' . $field_type}[$delta]['value'] != $form_state['values']['title']) {
     $table->{'field_title_' . $field_type}[$delta]['value'] = $form_state['values']['title'];

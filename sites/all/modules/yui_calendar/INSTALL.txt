@@ -1,0 +1,11 @@
+Installation instructions:
+
+This module depends on the yui module so you need the yui module installed.
+
+1- Download the module to your modules directory sites/all/modules/
+
+2- Enable the module from admin/build/modules
+
+3- Go to the module settings page on admin/settings/yui_editor and modify your settings appropriately
+
+That's it, have fun :)

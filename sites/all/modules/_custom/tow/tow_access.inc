@@ -31,6 +31,8 @@ function tow_access_dataset($node) {
     $access_type = $node->field_access_type[0]['value'];
     if ($access_type == 0) {
       if ($user->uid == 0) {
+        if (tow_access_bypass_solr())
+          return;
         if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
           global $grey_pma_menu;
           $grey_pma_menu = TRUE;
@@ -50,15 +52,15 @@ function tow_access_dataset($node) {
           $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
         }
         if ($status != 1 && !user_access('edit any dataset content')) {
+          if (tow_access_bypass_solr())
+            return;
           global $grey_pma_menu;
           $grey_pma_menu = TRUE;
         }
         return;
       }      
     }
-    // search page
-#    if ($args[0] == 'search')
-#      return;
+
     if ($user->uid) {
       $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
     }
@@ -68,6 +70,8 @@ function tow_access_dataset($node) {
         return;
       }
       // from dataset summary perform redirect to dataset structure to avoid eternal cycling
+      if (tow_access_bypass_solr())
+        return;
       if ($args[0] == 'node' && $args[1] == $node->nid)
         drupal_goto('dataset/' . $node->nid);
       drupal_access_denied();
@@ -75,6 +79,31 @@ function tow_access_dataset($node) {
     }
   }
   
+}
+
+/**
+ * Check if http request is performed from local machine
+ */
+function tow_access_bypass_solr() {
+  static $bypass_solr;
+  
+  if (isset($bypass_solr)) {
+    
+    if ($bypass_solr)
+      return TRUE;    
+    else
+      return FALSE;
+
+  }
+  
+  if (ip_address() == $_SERVER['HTTP_HOST']) {
+    $bypass_solr = TRUE;
+    return TRUE;
+  }
+  else {
+    $bypass_solr = FALSE;
+    return FALSE;
+  }
 }
 
 /**

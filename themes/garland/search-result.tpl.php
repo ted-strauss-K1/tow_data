@@ -40,11 +40,13 @@ if ($result['node']->type == 'dataset') {
 else {
 ?>
   <dd>
-    <div class="found-table">
-      <?php
-        print($result['title']); 
-        print($result['table']); 
-      ?>
+    <div class="found-tables">
+      <div class="found-table">
+        <?php
+          print($result['title']); 
+          print($result['table']); 
+        ?>
+      </div>
     </div>
   </dd>
 <?php  

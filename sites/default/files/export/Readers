@@ -1,0 +1,20 @@
+SET SQL_MODE="NO_AUTO_VALUE_ON_ZERO";
+
+CREATE TABLE IF NOT EXISTS `Readers` (
+  `id` int(11) DEFAULT NULL, 
+  `first_name` varchar(255) DEFAULT NULL, 
+  `last_name` varchar(255) DEFAULT NULL, 
+  `gender` varchar(255) DEFAULT NULL, 
+  `address` varchar(255) DEFAULT NULL, 
+  `year_of_birth` int(11) DEFAULT NULL, 
+  `biography` longtext, 
+  KEY `first_name` (`first_name`),
+  KEY `first_name` (`first_name`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+INSERT INTO `Readers` (`id`, `first_name`, `last_name`, `gender`, `address`, `year_of_birth`, `biography`) VALUES
+(4, 'Stephen', 'Turner', 'male', 'New York', NULL, NULL),
+(3, 'Mike', 'Jameson', NULL, NULL, NULL, NULL),
+(2, 'Jessica', 'Brown', 'female', 'Chicago', 1983, 'Jessica Brown was born in Chicago in 1983.'),
+(1, 'John', 'Smith', 'male', 'Boston', 1980, 'John Smith was born in 1980 in Boston.');
+

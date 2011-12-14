@@ -74,6 +74,7 @@ function db_connect($url) {
 
   $connection = mysqli_init();
   @mysqli_real_connect($connection, $url['host'], $url['user'], $url['pass'], substr($url['path'], 1), $url['port'], NULL, MYSQLI_CLIENT_FOUND_ROWS);
+//drupal_set_message("<pre>" . print_r(get_defined_vars(), FALSE) . "</pre>");
 
   if (mysqli_connect_errno() > 0) {
     _db_error_page(mysqli_connect_error());

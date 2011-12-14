@@ -1,0 +1,172 @@
+
+
+
+ /* header top menu */ 
+ 
+
+#header-top-wrapper h2.title{
+	visibility: hidden;
+ }
+
+#header-top-wrapper{
+margin-top: -25px;
+}
+  
+#header-top-inner{
+  height: 30px;
+  }
+
+  
+#block-menu-primary-links  li.leaf{
+	list-style: none;
+	float: left;
+	font-size: 120%;
+	font-weight: 550;
+	padding-right: 30px;
+ }
+ 
+ul.menu li.leaf a{
+	margin-left: -12px;
+}
+
+ 	/* style of header menu bottons*/
+#block-menu-primary-links a:hover{
+	border-top: 3px solid black;
+}
+
+#header-site-info{
+margin-bottom: 30px;
+}
+
+   /* Breadcramp menu style*/
+   
+   #header-group-inner #breadcrumbs{
+    width: 945px;
+	border-bottom: 1px solid black;
+    background-color: #cccccc;
+	font-size: 260%;
+	padding-bottom: 30px;
+	margin-left: 5px;
+	}
+  #header-group-wrapper, #header-group-inner{
+  height: 141px;
+  }
+#breadcrumbs {
+margin-bottom: 0px;
+ }
+
+	
+/* list style*/
+  li.leaf, li.collapsed {
+  	list-style: none;
+  }
+  
+a:active{
+	color: #717171;
+	font-weight: bold;
+}
+a:visited{
+	color: #717171;
+	font-weight: bold;
+}
+a:link{
+	color: #717171;
+	font-weight: bold;
+}
+	/* bold style of all menus bottons*/
+a:hover{
+    text-decoration: none;
+	color: black;
+	/*font-weight: bold;*/
+}
+
+
+  /*php my admin menu in datasets (overview, browse .etc...*/
+  
+  
+  
+#block-tow-pma_menu li.first{
+float: left;
+font-size: 130%;
+list-style: none;
+padding-right: 40px;
+}
+#preface-top-wrapper{
+height: 30px;
+}
+#block-tow-pma_menu div.content{
+border-bottom: 4px solid black;
+}
+#block-tow-pma_menu li.first a {
+	margin-left: -19px;
+}
+
+
+  /*tables style of dataset*/
+th.views-field{
+	border-bottom: 1px solid black;
+	background: #cccccc;
+	padding-left: 5px;
+}
+
+tr.odd td{
+	background: white;
+}
+tr.even td{
+	background: white;
+}
+
+div.view-content{
+	border-bottom: 2px solid black;
+}
+
+	/* posted by block   */
+	
+#content-group{
+	width: 700px;
+}
+
+#sidebar-last-inner{
+	width: 250px;
+}
+
+div.badge{
+	line-height: 3px;
+	width: 125px;
+}
+#block-tow-dataset_badge{
+	width: 250px;
+}
+
+#block-tow-dataset_badge div.badge{
+	float:left;
+	margin-right: 5px;
+	width: 130px;
+}
+
+div.badge p:first-child{
+	line-height: 15px;
+	font-size: 109%;
+	font-weight: bold;
+	margin-top: 0px;
+	margin-left: 40px;
+}
+
+a[href^="/43_tow_local/user"]{
+	margin-top: 100px;
+}
+
+#block-tow-dataset_badge div.picture{
+	margin-left: 150px;
+}
+
+
+
+/* create table block edit*/
+#block-tow-create_table{
+	width: 678px;
+}
+
+
+
+

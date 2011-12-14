@@ -1,26 +1,133 @@
 <?php
 /**
+ * Menu callback
+ */
+function tow_search_within_dataset_callback($nid) {
+  x('tow_search_within_dataset_callback called');
+  x($_GET);
+  // x($_POST);
+  $output = '';
+  
+  // 0 Check URL 
+  // 0.1 if nid belongs to dataset 
+  $node = node_load($nid);
+  if (!$node || $node->type != 'dataset') {
+    drupal_not_found();
+    die();
+  }
+  
+/*  global $dataset;
+  global $table;
+  global $user;
+  */
+  //$dataset = node_load($nid);
+  //$dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title, 'uid' => $dataset->uid);
+  //$table = $node;
+    
+  /*$output = $node->teaser;
+  if ($user->uid == $dataset->uid || user_access('edit any table content'))
+    $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
+  */
+
+  // 0.2 Check search parameters
+  foreach ($_GET as $param => $value) {
+    
+  }  
+  
+  
+  //http://43_tow_local/search_dataset/1?scan_tables=3,4&disp_tables=3,4&disp_fields=t3-char-2,t3-enum-3,t3-char-4,t3-int-5,t4-char-1&save=&ssname=&ovwr=
+  $search_parameters = array (
+    'scan_tables' => explode($_GET['scan_tables'], ','),
+  	'disp_tables' => explode($_GET['disp_tables'], ','),
+  	'disp_fields' => explode($_GET['disp_fields'], ','),
+    'save_search' => $_GET['save'],
+    'ss_name' => $_GET['ssname'],
+    'overwrite' => $_GET['ovwr'],
+    
+  );
+  
+  // 1 Add search form
+  // 1.1 Add empty form
+ // $output .= drupal_get_form('tow_search_form', $nid);
+  
+  // 1.2 Fill in the form with search parameters
+  
+  
+  
+  //$search_options = tow_search_within_dataset_options();
+  
+  /*
+  $display_options['sort'] = array ('sort_index' => 2, 'sort_order' => 'ASC');
+  $display_options['filter'] = array ('filter_column_index' => 3, 'filter_operator_key' => 0, 'filter_value' => 2004);
+  $display_options['limits'] = array ('first_elem_no' => 0, 'total_elements' => 10);
+  $display_options['paged_view'] = true;
+  
+  $display_options['paged_view'] = TRUE;
+  $display_options['limits']['total_elements'] = 10;                   
+  $display_options['click_sortable'] = TRUE;
+  */
+  //$output .= tow_search_within_dataset($node, $search_options);
+  
+  /*if ($user->uid == $dataset->uid)
+    $output .= _tow_table_actions_list($node->nid, 'edit');
+  */
+  return $output;
+}
+/*
+/**
+ * Build form for simple search.
+ 
+function tow_search_within_dataset_simple() {
+  $form['dataset_nid'] = array(
+    '#type' => 'value',
+    '#value' => $dataset_nid,
+  );
+  $form['simple_search'] = array(
+    '#tree' => TRUE,
+    'textfield' => array(
+      '#type' => 'textfield',
+      '#title' => t('Simple search'),
+	  '#default_value' => $form['basic']['inline']['keys']['#default_value'],
+  ),
+    'submit' => array(
+      '#type' => 'submit',
+      '#value' => t('Go'),
+	  //'#submit' => array('tow_search_within_dataset_simple_submit'),
+  //'file' => 'tow_search_inner.inc',
+    )
+  );
+  return $form;
+}
+
+/**
+ * Build form for advanced search.
+ 
+function tow_search_within_dataset_advanced() {
+ 
+}
+*/
+
+/**
  * Creates form elements for the search_within_dataset page
  */
 function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_nid) {
 
   global $dataset;
   $dataset = node_load($dataset_nid);
-
   if ($dataset->type != 'dataset') {
     drupal_access_denied();
     die();
   }
 
   drupal_add_js(drupal_get_path('module', 'tow') . '/js/search.js');
-
+ 
   drupal_set_title($dataset->title);
 
   $form['dataset_nid'] = array(
     '#type' => 'value',
     '#value' => $dataset_nid,
-  );
-
+  ); 
+  
   $form['simple_search'] = array(
     '#tree' => TRUE,
     'textfield' => array(
@@ -121,11 +228,13 @@ function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_
       $form['filters']['existing_enum_options'] = array(
       '#type' => 'value',
       '#value' => tow_search_get_enum_options($dataset_nid), 
+      //'#attributes' => array('class' => 'filters-inactive'),
       );
       $form['filters']['existing_operators'] = array(
       '#type' => 'value',
       '#value' => tow_search_get_operators(),
       );
+
     }
 
     $form['filters']['add_more'] = array(
@@ -139,18 +248,18 @@ function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_
       'wrapper' => 'filter-items-wrapper',
       'effect' => 'fade',
       'event' => 'click',
-      'method' => 'append'
-      ),
-      );
+      'method' => 'append',
+        ),
+        );
 
-      $form['filters']['filter-items-wrapper'] = array(
+        $form['filters']['filter-items-wrapper'] = array(
     '#prefix' => '<div id="filter-items-wrapper">',
     '#suffix' => '</div>',
-      //
+        //'filter-items' => _tow_search_get_filter_element($form['filters']['existing_fields']['#value'], $form['filters']['existing_operators']['#value'])
     'filter-items' => _tow_search_get_filter_element($form['filters']['existing_fields']['#value'], $form['filters']['existing_enum_options']['#value']),
-      );
+        );
 
-      $form['fields'] = array(
+        $form['fields'] = array(
     '#tree' => TRUE,
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -159,15 +268,16 @@ function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_
       '#type' => 'checkboxes',
       '#options' => $form['tables']['select']['#options'],
       '#title' => t('Tables')
-      ),
+        ),
     'select_fields' => array(
       '#type' => 'checkboxes',
       '#options' => $form['filters']['existing_fields']['#value'],
       '#title' => t('Fields'),
-      )
-      );
+        //'#disabled' => true,
+        )
+        );
 
-      $form['agsp'] = array(
+        $form['agsp'] = array(
     '#tree' => TRUE,
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -176,25 +286,25 @@ function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_
       '#type' => 'select',
       '#options' => array('Individual results', 'Group by'),
       '#title' => t('Result type')
-      ),
+        ),
     'sort_by' => array(
       '#type' => 'select',
       '#options' => $form['filters']['existing_fields']['#value'],
       '#title' => t('Sort by')
-      ),
+        ),
     'filter_null' => array(
       '#type' => 'checkbox',
       '#title' => t('Filter out rows that have one or more null records')
-      ),
+        ),
     'limit' => array(
       '#type' => 'select',
       '#prefix' => '<span class="display-amount">' . t('Display') . '</span>',
       '#suffix' => '<span>' . t('results per page') . '</span>',
       '#options' => array(25, 50, 100, 250) 
-      ),
-      );
+        ),
+        );
 
-      $form['save_search'] = array(
+        $form['save_search'] = array(
     '#tree' => TRUE,
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
@@ -202,44 +312,44 @@ function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_
     'save' => array(
       '#type' => 'checkbox',
       '#title' => t('Save this search')
-      ),
+        ),
     'textfield' => array(
       '#type' => 'textfield',
       '#description' => t('Name this search something descriptive'),
-      ),
+        ),
     'overwrite' => array(
       '#type' => 'checkbox',
       '#title' => t('Overwrite an existing saved search with this name (only allowed if you created original)')
-      ),
+        ),
     'note' => array(
       '#type' => 'item',
       '#value' => t('Note: the administrator of this data set can remove your saved search if they decided to')
-      )
-      );
+        )
+        );
 
-      $form['clear2'] = $form['clear'];
-      $form['submit2'] = $form['submit'];
+        $form['clear2'] = $form['clear'];
+        $form['submit2'] = $form['submit'];
 
-      // Turn off apachesolr form features, if they are set
-      if (isset($form['basic'])) {
-        unset($form['basic']);
-      }
-      if (isset($form['#submit'])) {
-        unset($form['#submit']);
-      }
-      if (isset($form['#validate'])) {
-        unset($form['#validate']);
-      }
-      if (isset($form['#action'])) {
-        unset($form['#action']);
-      }
-      // x($form);
-      return $form;
+        // Turn off apachesolr form features, if they are set
+        if (isset($form['basic'])) {
+          unset($form['basic']);
+        }
+        if (isset($form['#submit'])) {
+          unset($form['#submit']);
+        }
+        if (isset($form['#validate'])) {
+          unset($form['#validate']);
+        }
+        if (isset($form['#action'])) {
+          unset($form['#action']);
+        }
+        // x($form);
+        return $form;
 
 }
 
 /**
- * Returns list of sevad searches, connected with dataset
+ * Returns list of saved searches, connected with dataset
  */
 function tow_search_get_saved_searches($dataset_nid) {
   $saved_search_res = db_query("SELECT `ctss`.`nid`, `n`.`title`
@@ -273,64 +383,64 @@ function _tow_search_get_filter_element($fields, $enum_options) {
       '#value' => t('Remove'),
       '#prefix' => '<div class="remove-filter">',
       '#suffix' => '</div>',
-      '#weight' => 0,
-  ),
+  	  '#weight' => 0,	  
+      ),
     'field' => array(
       '#type' => 'select',
-  //'#attributes' => array('style' => 'display:none'),
+      //'#attributes' => array('style' => 'display:none'),
       '#options' => $fields,
       '#title' => t('Field'),
       '#weight' => 1,
-  ),
+      ),
     'operator' => array(
       '#type' => 'select',
       '#options' => tow_search_get_operators(),
       '#title' => t('operator'),
       '#weight' => 2,
-  ),
+      ),
     'value_1' => array(
       '#type' => 'textfield',
       '#title' => t('Value 1'),
       '#prefix' => '<div class="gen-value-field-1">',
       '#suffix' => '</div>',
       '#weight' => 3,
-  ),
+      ),
     'value_2' => array(
       '#type' => 'textfield',
       '#title' => t('Value 2'),
       '#prefix' => '<div class="gen-value-field-2">',
       '#suffix' => '</div>',
       '#weight' => 4,
-  ),
+      ),
     'date-within' => array(
   		'#type' => 'select',
       	'#options' => tow_search_get_date_within_operators(),
       	'#title' => t('Date within'),
         '#weight' => 5,
-  ),
+      ),
     'date_value_1' => array(
   		'#type' => 'textfield',
   		'#title' => 'Date value',
       	'#weight' => 6,
-  ),
+      ),
     'date_value_2' => array(
   		'#type' => 'textfield',
   		'#title' => 'Second date value',
       	'#weight' => 8,
-  ),
+      ),
     'enum_list' => array(
   		'#type' => 'select',
       	'#options' => $enum_options,
       	'#title' => t('Enum options'),
         '#multiple' => true,
         '#weight' => 10,
-  ),
+      ),
 
-  );
-  // nice date element
-  yuicalendar_build_form($element, 'date_value_1', time(), 7, NULL, TRUE);
-  yuicalendar_build_form($element, 'date_value_2', time(), 9, NULL, TRUE);
-  return $element;
+      );
+      // nice date element
+      yuicalendar_build_form($element, 'date_value_1', time(), 7, NULL, TRUE);
+      yuicalendar_build_form($element, 'date_value_2', time(), 9, NULL, TRUE);
+      return $element;
 }
 
 /**
@@ -527,48 +637,98 @@ function tow_search_within_dataset_submit_simple($form, &$form_state) {
 
 }
 
+/**
+ * Composes URL with all the search parameters and redirects user to it
+ */
 function tow_search_within_dataset_submit($form, &$form_state) {
+  x($form_state);
+  // query example
+  /*$query .= 'filter=' . $form_state['values']['field'] . '&op=' . $form_state['values']['operator'] . '&value=' . $form_state['values']['value'];
+  drupal_goto('table/' . $table->nid, $query);
+  */
+  
+  $query = '';
+  // dataset nid
+  //$query .= 'dataset=' . $form_state['values']['dataset_nid'];
+  
+  // scanned tables
+  $query .= 'scan_tables=';
+  foreach ($form_state['values']['tables']['select'] as $value) {
+       $query .= $value . ','; 
+  }
+   $query = substr($query, 0, -1);
+  
+  // tables to be displayed
+  $query .= '&disp_tables=';
+  $selected_tables = array_keys($form_state['values']['fields']['select_tables'], true);
+  foreach ($selected_tables as $table_nid) {
+     $query .= $table_nid . ','; 
+  }
+  $query = substr($query, 0, -1);
+    
+  // fields to be displayed
+  $query .= '&disp_fields=';
+  $selected_tables = array_keys($form_state['values']['fields']['select_fields'], true);
+  foreach ($selected_tables as $table_nid) {
+     $query .= $table_nid . ','; 
+  }
+  $query = substr($query, 0, -1);
+  
+  // save search?
+  if ($form_state['values']['save_search']['save']) {
+    $query .= '&save=' . $form_state['values']['save_search']['save'];  
+    $query .= '&ssname=' . $form_state['values']['save_search']['textfield'];
+    // TODO: do not add if false 
+    $query .= '&ovwr=' . $form_state['values']['save_search']['overwrite'];
+  
+  }
+  
+  
+  
+  
+  drupal_goto('search_dataset/' . $form_state['values']['dataset_nid'], $query);
+  
   //x('tow_search_submit called');
   //x($form_state['values']['dataset_nid']);
-  // Save search
-  if ($form_state['values']['save_search']['save']) {
+  // Save search 
+  /*if ($form_state['values']['save_search']['save']) {
     $new_ss = new stdClass();
-    // common node parameters
+    // common node parameters 
     $new_ss->type = 'saved_search';
     // TODO:
-    //$new_ss->uid =
+    //$new_ss->uid = 
     $new_ss->title = $form_state['values']['save_search']['textfield'];
     // nid field, if saved search with the same name exists and we are overwriting it
     // TODO:
     if (in_array($form_state['values']['save_search']['textfield'], $form_state['values']['saved_searches']) &&
-    $form_state['values']['save_search']['overwrite']) {
-      // TODO: $new_ss->nid =
-      //        $new_ss->title = $form_state['values']['save_search']['textfield'];
-    }
-     
+      $form_state['values']['save_search']['overwrite']) {
+        // TODO: $new_ss->nid = 
+//        $new_ss->title = $form_state['values']['save_search']['textfield'];
+      }
+   
     // searched tables field
     foreach($form_state['values']['tables']['select'] as $value) {
-      $new_ss->field_scanned_tables[]['value'] = $value;
-    }
-    // dataset field
+      $new_ss->field_scanned_tables[]['value'] = $value; 
+    }   
+    // dataset field 
     $new_ss->field_dataset_nid[0]['value'] = $form_state['values']['dataset_nid'];
     // displayed tables
     $selected_tables = array_keys($form_state['values']['fields']['select_tables'], 1);
     foreach ($selected_tables as $table_nid) {
-      $new_ss->field_displayed_tables[]['value'] = $table_nid;
-    }
+      $new_ss->field_displayed_tables[]['value'] = $table_nid;   
+    }  
     // displayed fields
     $selected_fields = array_keys($form_state['values']['fields']['select_fields'], 1);
-    $new_ss->field_displayed_fields[0]['value'] = serialize($selected_fields);
+    $new_ss->field_displayed_fields[0]['value'] = serialize($selected_fields); 
 
-    // search constraints
+    // search constraints 
     $new_ss->field_search_constraints[0]['value'] = serialize($form_state['values']['filters']['filter-items-wrapper']['filter-items']);
-
+    
   }
-
-
+  
+  
   //x($form_state);
   // TODO: add number of results
-  //
-  node_save($new_ss);
+  // 
+  node_save($new_ss);*/
 }

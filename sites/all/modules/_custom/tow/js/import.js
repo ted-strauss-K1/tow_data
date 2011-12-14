@@ -63,7 +63,7 @@ Drupal.behaviors.Import = function(context) {
   var lpStart = function(hash, stage, cycle) {
 	
     cycle++;
-    if (cycle > 100)
+    if (cycle > 2000)
       return;
 	
     $.ajax({
@@ -111,7 +111,7 @@ Drupal.behaviors.Import = function(context) {
       if (stage >= 4 && stage <= 5){
 	  
         if (response != false) {	    
-		
+        	
           if (response !== '-1') {
             $('.progress-table tr.' + stage + ' td.message').text(response);
             $('.progress-table tr.' + stage).show();
@@ -119,15 +119,35 @@ Drupal.behaviors.Import = function(context) {
           nextStage++;
         }
       }
-	
+    
       else {
-	  
         if (response != false) {
-          $('.progress-table tr.6 td.message').text(response);
+
+          var ind = response.indexOf("/"),
+              message = response.slice(0, ind) + ' ',
+              tables = response.slice(ind+1);
+
+          ind = tables.indexOf("/");
+
+          var nids = tables.slice(ind+1);
+          tables = tables.slice(0, ind);
+            
+          nids = explode(' ', trim(nids));
+          tables = explode(' ', trim(tables));
+            
+          for(var n=0; n<tables.length; n++) {
+            if (nids[n])
+        	  message += '<a href="' + location.protocol + '//' + location.host + '/table/' + nids[n] + '">' + tables[n] + '</a>' + '; ';
+          }
+          
+          message = rtrim(message);
+          message = rtrim(message, ';');
+          $('.progress-table tr.6 td.message').html(message);
           $('.progress-table tr.6 td.status').text('ok');
           $('.progress-table tr.6 td.status').addClass('ok');
           $('.progress-table tr.6').show();
           $('.progress-table tr.7').show();
+        
           return;
         }
       }
@@ -214,4 +234,55 @@ Drupal.behaviors.Import = function(context) {
     return true;
   }
   
+  function explode( delimiter, string ) { // Split a string by string
+	  	    //
+	  	    // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+	  	    // +   improved by: kenneth
+	  	    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+	  	 
+	  	    var emptyArray = { 0: '' };
+	  	 
+	  	    if ( arguments.length != 2
+	  	        || typeof arguments[0] == 'undefined'
+	  	        || typeof arguments[1] == 'undefined' )
+	  	    {
+	  	        return null;
+	  	    }
+	  	 
+	  	    if ( delimiter === ''
+	  	        || delimiter === false
+	  	        || delimiter === null )
+	  	    {
+	  	        return false;
+	  	    }
+	  	 
+	  	    if ( typeof delimiter == 'function'
+	  	        || typeof delimiter == 'object'
+	  	        || typeof string == 'function'
+	  	        || typeof string == 'object' )
+	  	    {
+	  	        return emptyArray;
+	  	    }
+	  	 
+	  	    if ( delimiter === true ) {
+	  	        delimiter = '1';
+	  	    }
+	  	 
+	  return string.toString().split ( delimiter.toString() );
+	  }
+  
+  function trim(str, chars) { 
+		return ltrim(rtrim(str, chars), chars); 
+	} 
+	 
+	function ltrim(str, chars) { 
+		chars = chars || "\\s"; 
+		return str.replace(new RegExp("^[" + chars + "]+", "g"), ""); 
+	} 
+	 
+	function rtrim(str, chars) { 
+		chars = chars || "\\s"; 
+		return str.replace(new RegExp("[" + chars + "]+$", "g"), ""); 
+	}
+
 };

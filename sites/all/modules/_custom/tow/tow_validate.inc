@@ -311,3 +311,9 @@ function tow_user_register_validate($form, &$form_state) {
   }
   _tow_show_validation_error($error, $err_field_names, $err_msgs);
 }
+/**
+ * Validate form submit when performing advanced search 
+ */
+function tow_search_advanced_search_validate($form, &$form_state) {
+  
+}

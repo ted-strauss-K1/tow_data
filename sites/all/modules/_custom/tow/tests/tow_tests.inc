@@ -51,6 +51,7 @@ function tow_tests_menu() {
     'menu_name' => 'menu-tests',
     'file' => '/tests/tow_tests_fk.inc',
   );
+  
   return $items;
 }
 
@@ -115,3 +116,4 @@ function tow_timer_show_results($timer_name) {
 
 function x($variable) {
   drupal_set_message('<pre>' . print_r($variable, TRUE) . '</pre>');
+} 

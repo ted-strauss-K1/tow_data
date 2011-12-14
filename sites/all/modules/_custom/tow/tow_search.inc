@@ -7,7 +7,7 @@ define('TOW_CRON_HASH_SLEEP', 0);
  * Called by drupal_get_form function, assigned to the specified link (see hook_menu).
 */
 function tow_search_form(&$form_state, $dataset_nid) {
-  //x('tow_search_form called');
+//  x('tow_search_form called');
 	
   $form = array();
 	// Add form elements
@@ -40,8 +40,8 @@ function tow_search_apachesolr_search_form(&$form, &$form_state) {
   }
   else {
     tow_search_datasets_altering_form($form);
-	}
-	return $form;
+  }
+  return $form;
 }
 
 function tow_search_cron() {
