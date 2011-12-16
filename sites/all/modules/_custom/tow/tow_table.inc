@@ -121,13 +121,13 @@ function tow_table($node, $display_options = array()) {
   if ($display_options['click_sortable']) {
     array_unshift($headers['data'], "");
   }
-/*
+///*
   $headers = $user_table['titles']['values'];
   
   if ($display_options['click_sortable']) {
     array_unshift($headers, "");
   }
-*/  
+//*/  
   $query =  $user_table['query'];
   $args = $user_table['arguments'];
 
@@ -198,7 +198,7 @@ function tow_table($node, $display_options = array()) {
  * Part of hook_form_alter implementation.
  */
 function tow_table_form_alter(&$form, &$form_state) {
-  
+	//dpm($form);
   ## DEFAULT
   // unset unneeded elements
   unset($form['menu']);
@@ -394,6 +394,7 @@ function tow_table_form_alter(&$form, &$form_state) {
     
     $form['buttons']['submit']['#value'] = t('Create table');
     
+    $form['fields']['header']['#value'][] = 'Unit';
     $form['fields']['header']['#value'][] = 'Enum options';
     $form['fields']['header']['#value'][] = 'Description';
     $form['fields']['header']['#value'][] = 'Index';
@@ -409,7 +410,7 @@ function tow_table_form_alter(&$form, &$form_state) {
         '#options' => tow_possible_fields(),
       );
       // unit - editable     
-      $form['fields']['data'][$key]['unit'] = array(
+      $form['fields']['data'][$i]['unit'] = array(
         '#type' => 'textfield',
         '#size' => 8,
       );

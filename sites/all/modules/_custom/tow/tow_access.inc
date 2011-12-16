@@ -96,7 +96,7 @@ function tow_access_bypass_solr() {
 
   }
   
-  if (ip_address() == $_SERVER['HTTP_HOST']) {
+  if (ip_address() == '127.0.0.1') {
     $bypass_solr = TRUE;
     return TRUE;
   }
