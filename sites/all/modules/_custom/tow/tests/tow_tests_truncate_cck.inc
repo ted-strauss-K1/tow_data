@@ -24,6 +24,11 @@ function tow_tests_truncate_cck_form_submit($form, &$form_state){
     $tables[] = 'content_field_title_' . $field_type;
   }
   $tables[] = 'content_field_enum_options';
+  
+  $tables[] = 'content_field_displayed_tables';
+  $tables[] = 'content_field_scanned_tables';
+  $tables[] = 'content_field_units';
+ 
   foreach ($tables as $table) {
     db_query('TRUNCATE TABLE {%s}', $table);
     $output .= "<p> TRUNCATE TABLE " . $table . "</p>"; 

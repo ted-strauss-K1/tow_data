@@ -28,13 +28,15 @@ function tow_tests_truncate_nodes_form_submit($form, &$form_state){
     'node_comment_statistics',
     'node_counter',
     'node_revisions',
-    'term_data',
-    'term_hierarchy',
     'term_node',
     'tow_dataset_counter',
     'tow_access_requests',
+    'tow_field_info',
+	'tow_invites',
+	'tow_table_counter',
+	'content_type_saved_search',
   );
-  
+//dataset tags are not  deleted
   foreach ($tables as $table) {
     db_query('TRUNCATE TABLE {%s}', $table);
     $output .= "<p> TRUNCATE TABLE " . $table . "</p>"; 
