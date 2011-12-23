@@ -121,13 +121,13 @@ function tow_table($node, $display_options = array()) {
   if ($display_options['click_sortable']) {
     array_unshift($headers['data'], "");
   }
-///*
+/*
   $headers = $user_table['titles']['values'];
   
   if ($display_options['click_sortable']) {
     array_unshift($headers, "");
   }
-//*/  
+*/  
   $query =  $user_table['query'];
   $args = $user_table['arguments'];
 

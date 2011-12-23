@@ -206,7 +206,7 @@ function tow_field_edit_form_submit($form, &$form_state) {
   $new_units_array[$form_state['values']['field_index']]['value'] = $form_state['values']['unit'];
   if ($new_units_array != $table->field_units) {
     $node_save = TRUE;
-    $table->field_unts = $new_units_array;
+    $table->field_units = $new_units_array;
   } 
   
   if ($table->{'field_title_' . $field_type}[$delta]['value'] != $form_state['values']['title']) {
