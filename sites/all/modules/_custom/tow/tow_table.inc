@@ -289,7 +289,7 @@ function tow_table_form_alter(&$form, &$form_state) {
       // unit - editable     
       $form['fields']['data'][$key]['unit'] = array(
         '#type' => 'textfield',
-        '#default_value' => $units_array[$key]['value'],
+        '#default_value' => _tow_units_remove_fake($units_array[$key]['value']),
         '#size' => 5,
       );
       // index - yes/no
@@ -543,8 +543,9 @@ function tow_table_submit_indexes($form, &$form_state) {
  * Modify the field unit values for the table
  */
 function tow_table_submit_units($form, &$form_state) {
-  foreach ($form_state['values']['fields']['data'] as $field)
-    $units[] = $field['unit'];
+  foreach ($form_state['values']['fields']['data'] as $field){
+	$units[] = _tow_units_insert_fake($field['unit']);
+  }
   
   if ($form_state['values']['field_add']['title'])
     $units[] = $form_state['values']['field_add']['unit'];
@@ -596,7 +597,7 @@ function tow_table_submit_create($form, &$form_state) {
   global $descriptions;
   foreach ($form_state['values']['fields']['data'] as $field) {
     $indexes[] = $field['index'];
-    $units[] = array('value' => $field['unit']);
+    $units[] = array('value' => _tow_units_insert_fake($field['unit']));
     // Preparing descriptions to be saved after node creation
     $descriptions[] = trim($field['description']);
   
@@ -676,7 +677,7 @@ function tow_table_structure(&$node) {
             . l('edit', 'field_edit/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]);
           $rows[$weights_array[$index]]['value'] = $title_value['value'];
           $rows[$weights_array[$index]]['type'] = $field_type;
-          $rows[$weights_array[$index]]['unit'] = $units_array[$weights_array[$index]]['value'];
+          $rows[$weights_array[$index]]['unit'] = _tow_units_remove_fake($units_array[$weights_array[$index]]['value']);
           $rows[$weights_array[$index]]['index'] = $index_array[$weights_array[$index]] ? t('Yes') : t('No');
           $rows[$weights_array[$index]]['blanks'] = tow_table_structure_blanks($node->nid, $delta, $field_type);
           if ($field_type == 'enum') {
@@ -928,7 +929,7 @@ function tow_table_field_add_form_submit($form, &$form_state) {
   $title = $form_state['values']['field_add']['title'];
   $possible_fields = tow_possible_fields();
   $type = $possible_fields[$form_state['values']['field_add']['type']];
-  $unit = $form_state['values']['field_add']['unit'];
+  $unit = _tow_units_insert_fake($form_state['values']['field_add']['unit']);
   
   $weights = unserialize($node->field_weights[0]['value']);
   if ($weights) {
@@ -995,7 +996,7 @@ function _tow_get_table_fields($table_node){
   // 1.1.2 Indexes, responsible for the connection of the tables with each other 
   $indexes = unserialize($table_node->field_indexes[0]['value']);
   // 1.1.3 Units of the columns
-  $units =  $table_node->field_units;
+  $units =  _tow_units_remove_fake($table_node->field_units);
   
   // 1.2 Extracting all data needed for query construction into auxiliary array
   $index = 0;

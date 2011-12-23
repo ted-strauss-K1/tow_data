@@ -146,7 +146,7 @@ function tow_field_edit_form($form_state, $table_nid, $type, $delta, $index) {
    $form['unit'] = array(
     '#type' => 'textfield',
     '#title' => t('Unit'),
-    '#default_value' => $table->field_units[$index]['value'],
+    '#default_value' => _tow_units_remove_fake($table->field_units[$index]['value']),
   );
   
   // Read field description from database  
@@ -203,7 +203,7 @@ function tow_field_edit_form_submit($form, &$form_state) {
   
   // Update unit values of the table
   $new_units_array = $table->field_units;
-  $new_units_array[$form_state['values']['field_index']]['value'] = $form_state['values']['unit'];
+  $new_units_array[$form_state['values']['field_index']]['value'] = _tow_units_insert_fake($form_state['values']['unit']);
   if ($new_units_array != $table->field_units) {
     $node_save = TRUE;
     $table->field_units = $new_units_array;
@@ -287,4 +287,12 @@ function _tow_field_description_save($table_nid, $index, $description, $is_new =
       db_query("INSERT INTO {tow_field_info} (`nid`, `index`, `description`) VALUES ('%d', '%d', '%s');", 
         $table_nid, $index, $description);
   } 
+}
+
+function _tow_units_insert_fake($unit) {
+	return ($unit=='')?'-':$unit;
+}
+
+function _tow_units_remove_fake($unit) {
+	return ($unit=='-')?'':$unit;
 }
