@@ -23,13 +23,13 @@ function theme_tabular_form($form) {
  * Theme callback.
  */
 function theme_sortable_table($header, $rows, $nid, $uid = NULL, $attributes = array(), $caption = NULL) {
-  
-  $active = tow_table_headers($header, $nid);
+
+  $active = tow_table_headers($header, $nid); 
 
   // hide first column for all users except table owner 
   global $user;
   if ($user->uid == $uid || user_access('edit any table content')) {
-    $header[0] = 'Action';
+    $header[0]['data'] = 'Action';
   
     foreach($rows as $key => $value) {
       $record_nid = $rows[$key]['data'][0]['data'];
@@ -63,6 +63,7 @@ function theme_sortable_table($header, $rows, $nid, $uid = NULL, $attributes = a
     // HTML requires that the thead tag has tr tags in it followed by tbody
     // tags. Using ternary operator to check and see if we have any rows.
     $output .= (count($rows) ? ' <thead><tr>' : ' <tr>');
+
     foreach ($header as $cell) {
       //$cell = tablesort_header($cell, $header, $ts);
       $output .= _theme_table_cell($cell, TRUE);
@@ -133,7 +134,7 @@ function tow_table_headers(&$headers, $nid) {
       $offset++;
       continue;
     }
-    $headers[$field] = l($header, 'table/' . $nid, array(
+    $headers[$field]['data'] = l($header['data'], 'table/' . $nid, array(
       //'html' => TRUE, 
       'query' => 'order=' . $count . '&sort=asc'
     ));
@@ -144,10 +145,10 @@ function tow_table_headers(&$headers, $nid) {
     $order = $_GET['order'];
     $active = $order + $offset;
     if ($_GET['sort'] == 'asc'){
-      $headers[$active] = l($titles[$active], 'table/' . $nid, array('query' => 'order=' . $order . '&sort=desc')) . '<img width="13" height="13" title="sort descending" alt="sort icon" src="/misc/arrow-desc.png">';
+      $headers[$active]['data'] = l($titles[$active]['data'], 'table/' . $nid, array('query' => 'order=' . $order . '&sort=desc')) . '<img width="13" height="13" title="sort descending" alt="sort icon" src="/misc/arrow-desc.png">';
     }  
     elseif ($_GET['sort'] == 'desc'){
-      $headers[$active] = l($titles[$active], 'table/' . $nid, array('query' => 'order=' . $order . '&sort=asc')) . '<img width="13" height="13" title="sort descending" alt="sort icon" src="/misc/arrow-asc.png">';
+      $headers[$active]['data'] = l($titles[$active]['data'], 'table/' . $nid, array('query' => 'order=' . $order . '&sort=asc')) . '<img width="13" height="13" title="sort descending" alt="sort icon" src="/misc/arrow-asc.png">';
     }
     return $active;
   }

@@ -288,11 +288,16 @@ function _tow_field_description_save($table_nid, $index, $description, $is_new =
         $table_nid, $index, $description);
   } 
 }
-
+/**
+ *	Checks whether unit string is empty and chages it by '-' if so
+ */
 function _tow_units_insert_fake($unit) {
 	return ($unit=='')?'-':$unit;
 }
 
+/**
+ *	Checks whether unit string is '-' and chages it by empty string if so
+ */
 function _tow_units_remove_fake($unit) {
 	return ($unit=='-')?'':$unit;
 }

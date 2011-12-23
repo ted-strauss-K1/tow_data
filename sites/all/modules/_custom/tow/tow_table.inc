@@ -108,26 +108,21 @@ function tow_table($node, $display_options = array()) {
   if (($paged_view) && (isset($display_options['limits']['total_elements'])))
     $total_elements = $display_options['limits']['total_elements'];
   else 
-    $total_elements = 10; 
+    $total_elements = 10;
   
   $headers = $rows = array();
 
   // Creating query
   $user_table = tow_construct_table_query($node, $display_options);
 
-  
-  $headers['data'] = $user_table['titles']['values'];
-  
-  if ($display_options['click_sortable']) {
-    array_unshift($headers['data'], "");
+  foreach ($user_table['titles']['values'] as $key=>$value) {
+	$headers[$key]=array('data'=>$value);
   }
-/*
-  $headers = $user_table['titles']['values'];
-  
+
   if ($display_options['click_sortable']) {
     array_unshift($headers, "");
   }
-*/  
+
   $query =  $user_table['query'];
   $args = $user_table['arguments'];
 
