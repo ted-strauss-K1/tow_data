@@ -56,11 +56,11 @@ function tow_tests_generate_data_form(){
 
 function _tow_tests_get_random_string($str_len){
   global $data;
-  global $data_index;
-  $res = substr($data, $data_index++, $str_len);
-  $pattern = '/[\n\r ]/';
-  $replacement = '';
-  $res = preg_replace($pattern, $replacement, $res);
+  global $spaces;
+  global $spaces_count;
+  $len=mt_rand(1,$str_len);
+  $data_index=mt_rand(0, $spaces_count-1-$len);
+  $res = substr($data, $spaces[$data_index]+1, $spaces[$data_index+$len]-$spaces[$data_index]-1);
   return $res;
 } 
 
@@ -69,9 +69,17 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
   
   // Reading text file with data for filling the database 
   global $data;
-  global $data_index;
+  global $spaces;
+  global $spaces_count;
   $data = file_get_contents('./' . drupal_get_path('module', 'tow') . '/tests/data.txt');
-  $data_index = mt_rand(0, 10000);
+  $pos=0;
+  do {
+	$spaces[]=$pos;
+  } while ($pos=strpos($data,' ',$pos+1));
+  $spaces[]=strlen($data);
+  
+  
+  $spaces_count = count($spaces);
 
   // User defined parameters
   $qty = array( 'users' => $form_state['values']['user_qty'], 
@@ -83,9 +91,11 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
   // Other parameters
   $max_terms = 5; 
   $max_requesting_users = 10;
-  $max_leng = array( 'dataset_title' => 10, 'table_title' => 10,
-  	'body' => 32, 'teaser' => 15, 'column_title' => 9, 'user_name' => 7, 'user_pass' => 5,
-  	'enum_option' => 6, 'char_field_data' => 15, 'taxonomy_term' => 8);
+  
+  // here the length means number of words
+  $max_leng = array( 'dataset_title' => 4, 'table_title' => 4,
+  	'body' => 20, 'teaser' => 10, 'column_title' => 2, 'user_name' => 2, 'user_pass' => 1,
+  	'enum_option' => 2, 'char_field_data' => 5, 'taxonomy_term' => 2);
     
   // Get possible types for columns
   $types = tow_possible_fields();
@@ -216,7 +226,9 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
           $column_type[$col_index]['type'] = $types[$type_id];
           // 3.4 column titles
           $new_table->{$field_type}[]['value'] = _tow_tests_get_random_string($max_leng['column_title']);
-           // 3.5 enum options if needed
+           // 3.4a column unit
+		   $new_table->field_units[]['value'] = _tow_tests_get_random_string(1);
+		   // 3.5 enum options if needed
           if ($field_type == "field_title_enum") {
             $new_table->{field_enum_options}[]['value']= 
               serialize(array(_tow_tests_get_random_string($max_leng['enum_option'] ),
@@ -270,7 +282,7 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
                  $value = date('d M Y', mt_rand(1000000, 3000000));
                  break;
                case 'datetime':
-                 $value =  date('d M Y H:i:s', mt_rand(1000000, 3000000));  ;
+                 $value =  date('Y-m-d H:i:s', mt_rand(1000000, 3000000));
                  break;
                case 'timestamp':
                  $value = time() - mt_rand(0, pow(10, 6));
