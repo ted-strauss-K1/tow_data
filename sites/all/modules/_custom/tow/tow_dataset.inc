@@ -286,11 +286,10 @@ function _tow_dataset_admin_tasks($node) {
     'access' => drupal_get_form('tow_access_type_form'),
   );
 
-  if ($node->field_access_type[0]['value'])
-  $admin_tasks['invite'] = l('Invite people', 'invite/' . $node->nid) . ' ' . t('to access your data set');
-
-  if ($node->field_access_type[0]['value'] == 1)
-  $admin_tasks['access_requests'] = tow_access_requests($node->nid);
+  if ($node->field_access_type[0]['value']){
+	$admin_tasks['invite'] = l('Invite people', 'invite/' . $node->nid) . ' ' . t('to access your data set');
+    $admin_tasks['access_requests'] = tow_access_requests($node->nid);
+  }
 
   $admin_tasks = array_merge($admin_tasks, array(
     'current_status' => t('Currently a normal user (free), with ') . $count['tables'] . t(' tables, ') . $count['records'] . t(' rows.'),

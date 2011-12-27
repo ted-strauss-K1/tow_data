@@ -133,9 +133,13 @@ function tow_access_type_form() {
  * Submission callback
  */
 function tow_access_type_form_submit($form, &$form_state) {
-  global $dataset;
-  $dataset->field_access_type[0]['value'] = $form_state['values']['access_type'];
-  node_save($dataset);
+	global $dataset;
+	if ($dataset->field_access_type[0]['value'] && ($form_state['values']['access_type'] == 0) ) {
+		drupal_goto('access/open/' . $dataset->nid);
+	} else {
+		$dataset->field_access_type[0]['value'] = $form_state['values']['access_type'];
+		node_save($dataset);
+	}
 }
 
 /**
@@ -226,9 +230,11 @@ function tow_access_requests($nid) {
   }
   
   if ($rows) {
-    $headers = array(t('user'), t('request date'), t('current access'), t('action'));
-    return theme('table', $headers, $rows);
-  }
+	$title = 'List of access requests and accepted invitations<br>';
+    $headers = array(t('user'), t('request/invitation date'), t('current access'), t('action'));
+    return $title.theme('table', $headers, $rows);
+  } 
+  return 'There are no access requests and accepted invitations for this dataset.';
 }
 
 /**
@@ -272,6 +278,33 @@ function tow_access_confirm($form_state, $action, $nid, $uid) {
       );
       
     }
+    if (($action == 'open')  && is_numeric($nid)) {
+      
+	  $title='Open access for <i>' . $dataset->title . '</i>';
+	  $description = 'This will clear all information on granting and denial access to this dataset for other users.';
+	  
+      $form = array();
+	  
+	  $form['action'] = array(
+        '#type' => 'value',
+        '#value' => $action
+      );
+      
+      $form['nid'] = array(
+        '#type' => 'value',
+        '#value' => $nid
+      );
+
+  
+      return confirm_form($form,
+        $title,  
+        'node/'. $nid,
+        $description,
+        t('Confirm'),
+        t('Cancel')
+      );
+      
+    }
   }
   drupal_access_denied();
   die();  
@@ -282,11 +315,20 @@ function tow_access_confirm($form_state, $action, $nid, $uid) {
  */
 function tow_access_confirm_submit($form, &$form_state) {
   
-  if ($form_state['values']['action'] == 'grant')
-    $status = 1;
-  else
-    $status = -1;
-    
-  db_query("UPDATE {tow_access_requests} SET status = %d WHERE nid = %d AND uid = %d", $status, $form_state['values']['nid'], $form_state['values']['uid']);
+  if ($form_state['values']['action'] == 'open') {
+	global $dataset;
+	$dataset->field_access_type[0]['value'] = 0;
+	node_save($dataset);
+
+	db_query("DELETE FROM {tow_access_requests} WHERE nid = %d", $form_state['values']['nid']);
+
+	} else {
+	  if ($form_state['values']['action'] == 'grant')
+		$status = 1;
+	  else
+		$status = -1;
+		
+	  db_query("UPDATE {tow_access_requests} SET status = %d WHERE nid = %d AND uid = %d", $status, $form_state['values']['nid'], $form_state['values']['uid']);
+  }
   $form_state['redirect'] = 'node/' . $form_state['values']['nid'];  
 }
