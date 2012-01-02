@@ -61,7 +61,7 @@ function tow_table_callback($nid) {
   if ($user->uid == $dataset->uid || user_access('edit any table content'))
     $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
   
-  $output .= drupal_get_form('tow_table_filter');
+  //$output .= drupal_get_form('tow_table_filter'); filtering is left to datatables
   
   $display_options = tow_table_display_options($node);
   
@@ -71,12 +71,12 @@ function tow_table_callback($nid) {
   $display_options['limits'] = array ('first_elem_no' => 0, 'total_elements' => 10);
   $display_options['paged_view'] = true;
   */
-  $display_options['paged_view'] = TRUE;
-  $display_options['limits']['total_elements'] = 10;                   
-  $display_options['click_sortable'] = TRUE;
+  $display_options['paged_view'] = FALSE;
+  //$display_options['limits']['total_elements'] = 10;                   
+  $display_options['click_sortable'] = FALSE;
 
   $output .= tow_table($node, $display_options);
-  
+  $output .= '<br />';
   if ($user->uid == $dataset->uid)
     $output .= _tow_table_actions_list($node->nid, 'edit');
 
@@ -101,9 +101,9 @@ function tow_table_callback($nid) {
  * 
  * @return array of table rows. Each row is array of cells. 
  */
-function tow_table($node, $display_options = array()) {
+function tow_table($node, $display_options = array()) {xdebug_break();
   
-  $paged_view = isset($display_options['paged_view']);
+  $paged_view = ($display_options['paged_view'] === TRUE);
   
   if (($paged_view) && (isset($display_options['limits']['total_elements'])))
     $total_elements = $display_options['limits']['total_elements'];
@@ -120,7 +120,7 @@ function tow_table($node, $display_options = array()) {
   }
 
   if ($display_options['click_sortable']) {
-    array_unshift($headers, "");
+    //array_unshift($headers, "");
   }
 
   $query =  $user_table['query'];
@@ -171,12 +171,27 @@ function tow_table($node, $display_options = array()) {
     'bInfo'     => false,
   );
   
+  // Display parameters for datatable theme
+  $parameters1['datatable_options'] = array(
+    // 'bAutoWidth' => TRUE,
+  	'bLengthChange' => FALSE,
+     'bPaginate' => FALSE,      
+  	'bFilter'   => FALSE,  
+    'bSort' => TRUE,
+    'bInfo'     => TRUE,
+	 'sScrollX'	=> '100%',
+	 'sScrollY'	=> '500',
+	 'bScrollCollapse' => true,
+	// 'sScrollXInner' => '330',
+  );
+  
   if ($display_options['click_sortable']) {
-    $output =  theme('sortable_table', $headers, $rows, $node->nid, $node->uid, array('id' => 'main-table'));
+    //$output =  theme('sortable_table', $headers, $rows, $node->nid, $node->uid, array('id' => 'main-table'));
+    $output =  theme('datatable', $headers, $rows, $parameters1);
   }else {
-    $output =  theme('datatable', $headers, $rows, $parameters);
+    $output =  theme('datatable', $headers, $rows, $parameters1);
   }
-    
+  
   if  ($paged_view) {
     $output .= theme('pager', NULL, $total_elements);
     global $bc_attachment;
@@ -640,7 +655,7 @@ function tow_table_structure(&$node) {
   global $table;
   global $bc_attachment;
   global $user;
-  
+  dpm($node);
   $bc_attachment = ' (' . t('table structure') . ')';
   
   $dataset = node_load($node->field_dataset['0']['value']);

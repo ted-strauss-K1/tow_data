@@ -39,7 +39,7 @@ function apachesolr_settings() {
     '#description' => t('Path that identifies the Solr request handler to be used.'),
   );
 
-  $numbers = drupal_map_assoc(array(1, 5, 10, 20, 50, 100, 200));
+  $numbers = drupal_map_assoc(array(0, 1, 5, 10, 20, 50, 100, 200));
   $default_cron_limit = variable_get('apachesolr_cron_limit', 50);
   // apachesolr_cron_limit may be overridden in settings.php. If its current
   // value is not among the default set of options, add it.

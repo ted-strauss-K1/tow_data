@@ -46,11 +46,11 @@ function tow_search_apachesolr_search_form(&$form, &$form_state) {
 
 function tow_search_cron() {
   
-  $res = db_query("SELECT nid FROM {node} WHERE type='dataset'");
+/*   $res = db_query("SELECT nid FROM {node} WHERE type='dataset'");
   while ($node = db_fetch_object($res)) {
     sleep(TOW_CRON_HASH_SLEEP);
     db_query("CALL dataset_hash_update(%d)", $node->nid);
     db_query("DELETE FROM {cache_content} WHERE cid = 'content:%s:%s'", $node->nid, $node->nid);
   }
-  
+ */  
 }
