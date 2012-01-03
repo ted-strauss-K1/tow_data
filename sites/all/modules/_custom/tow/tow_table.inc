@@ -57,7 +57,8 @@ function tow_table_callback($nid) {
   $dataset = (object)array('nid' => $dataset->nid, 'title' => $dataset->title, 'uid' => $dataset->uid);
   $table = $node;
   
-  $output = $node->teaser;
+  $output = "<div>" . $node->title . "</div>";
+  $output .= $node->teaser;
   if ($user->uid == $dataset->uid || user_access('edit any table content'))
     $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
   
@@ -74,6 +75,7 @@ function tow_table_callback($nid) {
   $display_options['paged_view'] = FALSE;
   //$display_options['limits']['total_elements'] = 10;                   
   $display_options['click_sortable'] = FALSE;
+  $display_options['full_view'] = TRUE;
 
   $output .= tow_table($node, $display_options);
   $output .= '<br />';
@@ -101,9 +103,10 @@ function tow_table_callback($nid) {
  * 
  * @return array of table rows. Each row is array of cells. 
  */
-function tow_table($node, $display_options = array()) {xdebug_break();
+function tow_table($node, $display_options = array()) {
   
   $paged_view = ($display_options['paged_view'] === TRUE);
+  $full_view = ($display_options['full_view'] === TRUE);
   
   if (($paged_view) && (isset($display_options['limits']['total_elements'])))
     $total_elements = $display_options['limits']['total_elements'];
@@ -119,10 +122,14 @@ function tow_table($node, $display_options = array()) {xdebug_break();
 	$headers[$key]=array('data'=>$value);
   }
 
-  if ($display_options['click_sortable']) {
-    //array_unshift($headers, "");
-  }
-
+  global $user;
+  $show_actions = ($full_view && ($user->uid == $uid || user_access('edit any table content')));
+  if ($show_actions)
+    array_unshift($headers,array(
+		'data'=>'Action',
+		'datatable_options' => array('bSortable' => FALSE),
+	));
+ 
   $query =  $user_table['query'];
   $args = $user_table['arguments'];
 
@@ -155,41 +162,45 @@ function tow_table($node, $display_options = array()) {xdebug_break();
         $row[] = array('data' => $value);
       }
     }
-	if (!$display_options['click_sortable']) {
-       array_shift($row); 
-     }
+	if ($show_actions){
+		$record_nid = $row[0]['data'];
+		$row[0]['data'] = l('edit', 'node/' . $record_nid . '/edit', array('query' => 'destination=table/' . $nid));
+		$row[0]['data'] .= ' ' . l('delete', 'node/' . $record_nid . '/delete', array('query' => 'destination=table/' . $nid));
+	}else{
+		array_shift($row); 
+	}
     $rows[] = array('data' => $row);
   }
   
   // Display parameters for datatable theme
   $parameters['datatable_options'] = array(
-    'bAutoWidth' => TRUE,
-  	'bLengthChange' => false,
-    'bPagination' => false,      
-  	'bFilter'   => FALSE,  
-    'bSort' => false,
-    'bInfo'     => false,
+	'bLengthChange' => FALSE,
+	'bPaginate' 	=> FALSE,      
+	'bFilter'		=> FALSE,  
+	'bSort' 		=> FALSE,
+	'bInfo'	    	=> FALSE,
+	'sScrollX'		=> '100%',
+//	'sScrollY'		=> '500',
+//	'bScrollCollapse' => true,
   );
   
   // Display parameters for datatable theme
-  $parameters1['datatable_options'] = array(
-    // 'bAutoWidth' => TRUE,
-  	'bLengthChange' => FALSE,
-     'bPaginate' => FALSE,      
-  	'bFilter'   => FALSE,  
-    'bSort' => TRUE,
-    'bInfo'     => TRUE,
-	 'sScrollX'	=> '100%',
-	 'sScrollY'	=> '500',
-	 'bScrollCollapse' => true,
-	// 'sScrollXInner' => '330',
+  $parameters_full['datatable_options'] = array(
+	'bLengthChange' => FALSE,
+	'bPaginate' 	=> FALSE,      
+	'bFilter'		=> TRUE,  
+	'bSort' 		=> TRUE,
+	'bInfo'	    	=> FALSE,
+	'sScrollX'		=> '100%',
+	'sScrollY'		=> '300',
+	'bScrollCollapse' => true,
   );
-  
-  if ($display_options['click_sortable']) {
-    //$output =  theme('sortable_table', $headers, $rows, $node->nid, $node->uid, array('id' => 'main-table'));
-    $output =  theme('datatable', $headers, $rows, $parameters1);
-  }else {
-    $output =  theme('datatable', $headers, $rows, $parameters1);
+
+			
+  if ($full_view) {
+    $output =  theme('datatable', $headers, $rows, $parameters_full);
+  } else {
+    $output =  theme('datatable', $headers, $rows, $parameters);
   }
   
   if  ($paged_view) {
@@ -208,7 +219,7 @@ function tow_table($node, $display_options = array()) {xdebug_break();
  * Part of hook_form_alter implementation.
  */
 function tow_table_form_alter(&$form, &$form_state) {
-	//dpm($form);
+
   ## DEFAULT
   // unset unneeded elements
   unset($form['menu']);
@@ -655,7 +666,7 @@ function tow_table_structure(&$node) {
   global $table;
   global $bc_attachment;
   global $user;
-  dpm($node);
+
   $bc_attachment = ' (' . t('table structure') . ')';
   
   $dataset = node_load($node->field_dataset['0']['value']);

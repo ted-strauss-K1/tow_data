@@ -206,7 +206,13 @@ Drupal.behaviors.Import = function(context) {
     
     var fileName = file.name,
         fileSize = file.size,
-        fileData = file.getAsBinary(), // works on TEXT data ONLY.
+//        fileData = file.getAsBinary(), // works on TEXT data ONLY.
+		
+		fileread = new FileReader();
+		
+		
+		fileData = fileread.readAsBinaryString(file);
+		
         boundary = "xxxxxxxxx",
         uri = 'upload_selected/' + hash + '/' + dataset + '/' + getChosenTable(),    
         xhr = new XMLHttpRequest();

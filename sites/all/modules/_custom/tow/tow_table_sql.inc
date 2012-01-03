@@ -205,12 +205,12 @@ function tow_construct_table_query($node, $display_options = '') {
   // 7. Add LIMIT part
   // LIMIT %n , %n
 
-/*   if (!($display_options['paged_view']) && ($display_options['limits'])) {
+  if (!($display_options['paged_view']) && ($display_options['limits'])) {
     $query = $query . "LIMIT " . "%d"       . " , " . "%d";
 
     $argmts[] = $display_options['limits']['first_elem_no'];
     $argmts[] = $display_options['limits']['total_elements'];
-  } */
+  }
 
   // 8. Output
   if (!$result['titles']['values'])
