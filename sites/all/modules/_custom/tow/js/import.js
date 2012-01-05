@@ -15,7 +15,7 @@ Drupal.behaviors.Import = function(context) {
   //hide progress bar
   $('.progress-bar').hide();
   
-  var hash = Math.round(Math.random()*1000000),
+  var hash = Math.round(Math.random()*1000000), 
       dataset = location.pathname.replace(/\import/g, "").replace(/\//g, ""),
       lock = false;
   
@@ -205,38 +205,17 @@ Drupal.behaviors.Import = function(context) {
   function fileUpload(hash, file) {	    
     
     var fileName = file.name,
-        fileSize = file.size,
-//        fileData = file.getAsBinary(), // works on TEXT data ONLY.
-		
-		fileread = new FileReader();
-		
-		
-		fileData = fileread.readAsBinaryString(file);
-		
-        boundary = "xxxxxxxxx",
         uri = 'upload_selected/' + hash + '/' + dataset + '/' + getChosenTable(),    
-        xhr = new XMLHttpRequest();
+        xhr = new XMLHttpRequest()
+		fData = new FormData();
     
     xhr.open("POST", uri, true);
-    xhr.setRequestHeader("Content-Type", "multipart/form-data, boundary="+boundary); // simulate a file MIME POST request.
-    xhr.setRequestHeader("Content-Length", fileSize);
+			$('.progress-bar').show();
+			lpStart(hash, 1, 0);
 
-    xhr.onreadystatechange = function() {
-      
-      if (xhr.readyState == 1) {
-        $('.progress-bar').show();
-        lpStart(hash, 1, 0);
-      }
-    };    
-    
-    var body = "--" + boundary + "\r\n";
-    body += "Content-Disposition: form-data; name='files'; filename='" + fileName + "'\r\n";
-    body += "Content-Type: application/octet-stream\r\n\r\n";
-    body += fileData + "\r\n";
-    body += "--" + boundary + "--";
-
-    xhr.send(body);
-    
+	fData.append(fileName, file);
+    xhr.send(fData);
+	
     return true;
   }
   
