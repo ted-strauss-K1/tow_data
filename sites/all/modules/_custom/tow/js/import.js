@@ -1,6 +1,9 @@
-// Copyright Theory on Wheels
-
 // User interface adjustment for import page
+// Copyright Theory on Wheels
+//**
+//	Drupal.behaviors.Import
+//**
+	
 Drupal.behaviors.Import = function(context) {
 	
   // hide and show table select dependently on user choice (whether import to dataset or to table)
@@ -15,27 +18,44 @@ Drupal.behaviors.Import = function(context) {
   //hide progress bar
   $('.progress-bar').hide();
   
-  var hash = Math.round(Math.random()*1000000), 
+  // hide submit button
+  //$('#edit-submit').hide();
+  var hash, 
       dataset = location.pathname.replace(/\import/g, "").replace(/\//g, ""),
       lock = false;
-  
+
+  if ($('#edit-hash').val() != '0') {
+	$(document).ready(function(){
+		hash = $('#edit-hash').val();
+		fileUploaded(hash);
+		return;
+	});
+  } else {
+	hash = Math.round(Math.random()*1000000);
+	$('#edit-hash').val(hash);
+  }
+  	  
   // For Firefox >= 3.6 add drag&drop feature 
   if ($.browser.mozilla == true && parseInt($.browser.version.replace(/\./g, "")) > 19200)
     dragFile(hash);
   else
     $('#edit-upload-wrapper div.description').hide();
   
+  
   $('#edit-upload').change(function(){
 	  
     if (lock)
       return;
     lock = true;
-	  
-    var files = this.files; 
-    if (files.length != 1)
-      return;
-    fileUpload(hash, files[0]);
-    
+	
+	var files = this.files; 
+    if (files != undefined) {
+		if (files.length != 1)
+			return;
+		fileUpload(hash, files[0]);
+    } else {
+		  //$('#edit-submit').show();
+	}
   });
   
   $('.get-it').click(function(){
@@ -60,22 +80,23 @@ Drupal.behaviors.Import = function(context) {
     
   });
   
+  
   var lpStart = function(hash, stage, cycle) {
 	
-    cycle++;
-    if (cycle > 2000)
-      return;
-	
-    $.ajax({
-      url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
-      dataType: 'json',
-      success: function (data, textStatus) {
-        lpOnComplete(hash, stage, data.response, cycle);
-      }
-    });
+		cycle++;
+		if (cycle > 2000)
+		  return;
+		
+		$.ajax({
+		  url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
+		  dataType: 'json',
+		  success: function (data, textStatus) {
+			lpOnComplete(hash, stage, data.response, cycle);
+		  }
+		});
   };
   
-  var lpOnComplete = function(hash, stage, response, cycle) {
+   var lpOnComplete = function(hash, stage, response, cycle) {
 
     var dots,
       nextStage = stage;
@@ -206,17 +227,60 @@ Drupal.behaviors.Import = function(context) {
     
     var fileName = file.name,
         uri = 'upload_selected/' + hash + '/' + dataset + '/' + getChosenTable(),    
-        xhr = new XMLHttpRequest()
-		fData = new FormData();
+        xhr = new XMLHttpRequest();
     
     xhr.open("POST", uri, true);
-			$('.progress-bar').show();
-			lpStart(hash, 1, 0);
+	$('.progress-bar').show();
+	lpStart(hash, 1, 0);
 
-	fData.append(fileName, file);
-    xhr.send(fData);
+	//fData.append('files', file);
+    //xhr.send(fData);
 	
+	if (typeof FormData != 'undefined'){//XHR2
+		var fData = new FormData();
+		fData.append('files', file);
+		xhr.send(fData);
+	} else if (xhr.sendAsBinary){
+		var fReader = new FileReader();
+		fReader.addEventListener('load', function(){
+			var boundaryString = 'xxxxxxxxxxxx',
+				boundary = '--' + boundaryString,
+				requestbody = '';
+
+			requestbody += boundary + '\r\n'
+					+ 'Content-Disposition: form-data; name="files"; filename="' + file.name + '"' + '\r\n' // parameter name — upfile
+					+ 'Content-Type: application/octet-stream' + '\r\n'
+					+ '\r\n'
+					+ fReader.result // binary file content
+					+ '\r\n'
+					+ boundary;
+
+			xhr.setRequestHeader("Content-type", 'multipart/form-data; boundary="' + boundaryString + '"');
+			xhr.setRequestHeader("Connection", "close");
+			xhr.setRequestHeader("Content-length", requestbody.length);
+			xhr.sendAsBinary(requestbody);
+		}, false);
+		fReader.readAsBinaryString(file);
+	} else {
+		//$('#edit-submit').show();
+	}
+
     return true;
+  }
+  cycle=0;
+  function fileUploaded(hash) {
+	$('.progress-bar').show();
+    var stage=1,
+		cycle=0;
+	
+	$.ajax({
+	  url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
+	  dataType: 'json',
+	  success: function (data, textStatus) {
+		lpOnComplete(hash, stage, data.response, cycle);
+	  }
+	});
+	return true;
   }
   
   function explode( delimiter, string ) { // Split a string by string
@@ -269,5 +333,4 @@ Drupal.behaviors.Import = function(context) {
 		chars = chars || "\\s"; 
 		return str.replace(new RegExp("[" + chars + "]+$", "g"), ""); 
 	}
-
 };

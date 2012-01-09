@@ -476,6 +476,7 @@ function tow_maintanance_mode($status, $nid, $type) {
  */
 function tow_cron() {
   tow_search_cron();
+  tow_import_cron();
 }
 
 /**

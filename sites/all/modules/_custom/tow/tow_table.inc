@@ -123,7 +123,8 @@ function tow_table($node, $display_options = array()) {
   }
 
   global $user;
-  $show_actions = ($full_view && ($user->uid == $uid || user_access('edit any table content')));
+  $dataset = node_load($node->field_dataset['0']['value']);
+  $show_actions = ($full_view && ($user->uid == $dataset->uid || user_access('edit any table content')));
   if ($show_actions)
     array_unshift($headers,array(
 		'data'=>'Action',
@@ -694,8 +695,12 @@ function tow_table_structure(&$node) {
         continue;
       foreach($node->{'field_title_' . $field_type} as $title_value)
         if ($title_value['value']) {
-          $rows[$weights_array[$index]]['action'] = l('delete', 'field_delete/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]) . ' '
-            . l('edit', 'field_edit/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]);
+           if ($user->uid == $node->uid || user_access('edit any table content')) {
+				$rows[$weights_array[$index]]['action'] = l('delete', 'field_delete/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]) . ' '
+					. l('edit', 'field_edit/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]);
+			} else {
+				$rows[$weights_array[$index]]['action'] = '';
+			}
           $rows[$weights_array[$index]]['value'] = $title_value['value'];
           $rows[$weights_array[$index]]['type'] = $field_type;
           $rows[$weights_array[$index]]['unit'] = _tow_units_remove_fake($units_array[$weights_array[$index]]['value']);

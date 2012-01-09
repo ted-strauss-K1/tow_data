@@ -2,6 +2,15 @@
 // $Id: tow_import.inc,v 1.0.0.0 2011/02/28 23:42:15 tow Exp $
 
 /**
+ * 
+ * Part of impelementation of hook_cron. Clears old data from database table tow_import_progress.
+ */
+
+function tow_import_cron() {
+	db_query("DELETE FROM {tow_import_progress} WHERE NOW() > ADDTIME(`timestamp`, '1:00:00')");
+}
+
+/**
  * @file
  * Functions for import
  */
@@ -9,7 +18,7 @@
 ######### FORM #########
 
 function tow_import_form($form_state, $nid) {
-  
+
   global $dataset;
   $dataset = node_load($nid);
   if ($dataset->type !== 'dataset') {
@@ -25,6 +34,16 @@ function tow_import_form($form_state, $nid) {
   $form['#attributes'] = array('enctype' => "multipart/form-data");
   $directory_path = file_directory_path();
   $d= file_check_directory($directory_path, FILE_CREATE_DIRECTORY, 'file_directory_path');
+
+  $form['dataset'] = array(
+    '#type' => 'hidden',
+    '#value' => $nid,
+  );
+
+  $form['hash'] = array(
+    '#type' => 'hidden',
+    '#value' => (isset($form_state['values']['hash'])?$form_state['values']['hash']:(isset($form_state['post']['hash'])?$form_state['post']['hash']:0)),
+  );
 
   // way
   $form['to'] = array(
@@ -124,9 +143,19 @@ function tow_import_form_validate($form, &$form_state) {
 }
 
 function tow_import_form_submit($form, &$form_state) {
+  watchdog('import','tow_import_form_submit'); 
   $file = file_save_upload('upload');
-  if ($file = file_save_upload('upload')) {
-    time();
+  if ($file) {
+	$hash = $form_state['values']['hash'];
+	$form_state['rebuild'] = TRUE;
+	$table_nid = ($form_state['values']['to']['way'] == '0') ? 'false' : $form_state['values']['to']['table'];
+	$dataset_nid = $form_state['values']['dataset'];
+	$to = tow_import_check_request($hash, $dataset_nid, $table_nid);
+	$filename = $file->filename;
+	$copied = file_copy($file, 'import/' . $hash);
+
+	tow_import_progress_init($hash, $copied, $filename, $to);
+    watchdog('import','tow_import_form_submit done'); 
   }
 }
 
@@ -147,7 +176,7 @@ function tow_import_progress_init($hash, $copied, $filename, $to) {
   }
 
   sleep(10);
-  tow_import_progress_delete($hash);
+  //tow_import_progress_delete($hash);
 
 }
 
@@ -242,11 +271,8 @@ function tow_import_grab($hash, $dataset_nid, $table_nid) {
 }
 
 function tow_import_upload($hash, $to) {
-  foreach ($_FILES as $key => $value)
-	$files=$value;
-  $_FILES=array();
   
-  foreach ($files as $key => $value)
+  foreach ($_FILES['files'] as $key => $value)
     $_FILES['files'][$key] = array('upload' => $value);
 
   $file = file_save_upload('upload');
@@ -670,7 +696,7 @@ function _test($hash, $filename, $to) {
 
     }
   } // table loop
-
+  unset($table);
   // End of data validation
 
   if ($data['table_qty']) {
