@@ -143,7 +143,6 @@ function tow_import_form_validate($form, &$form_state) {
 }
 
 function tow_import_form_submit($form, &$form_state) {
-  watchdog('import','tow_import_form_submit'); 
   $file = file_save_upload('upload');
   if ($file) {
 	$hash = $form_state['values']['hash'];
@@ -155,7 +154,6 @@ function tow_import_form_submit($form, &$form_state) {
 	$copied = file_copy($file, 'import/' . $hash);
 
 	tow_import_progress_init($hash, $copied, $filename, $to);
-    watchdog('import','tow_import_form_submit done'); 
   }
 }
 
@@ -398,8 +396,14 @@ function _test($hash, $filename, $to) {
     
     // Set value enclosure 
     $objReader->setEnclosure('');
-  }
-  $objPHPExcel = $objReader->load("$imported_file_name");
+
+	$objPHPExcel = $objReader->load("$imported_file_name");
+
+	} else {
+		$objPHPExcel = PHPExcel_IOFactory::load("$imported_file_name");
+	}
+  
+
   
   // check, if first row contains more than 
   
@@ -427,12 +431,26 @@ function _test($hash, $filename, $to) {
       $cellIterator->setIterateOnlyExistingCells(false); // loop through empty cells as well
       if ( ($row->getRowIndex() == 1)  && ($import_action == 'create')) {
         foreach ($cellIterator as $cell) {
-          $data['table_data'][$worksheet_index]['column_titles'][] =  $cell->getValue();
+			$isDateTime=PHPExcel_Shared_Date::isDateTime($cell);
+			if ($isDateTime) {  
+				$timestamp = PHPExcel_Shared_Date::ExcelToPHP($cell->getValue());
+				echo $cellvalue = date("Y-m-d H:i:s",$timestamp - date('Z', $timestamp));
+			} else {
+				echo $cellvalue = $cell->getValue();
+			}
+          $data['table_data'][$worksheet_index]['column_titles'][] =  $cellvalue;
         }
       }
       else {
         foreach ($cellIterator as $cell) {
-          $data['table_data'][$worksheet_index]['str_value'][$row_index][] = $cell->getValue();
+			$isDateTime=PHPExcel_Shared_Date::isDateTime($cell);
+			if ($isDateTime) {  
+				$timestamp = PHPExcel_Shared_Date::ExcelToPHP($cell->getValue());
+				echo $cellvalue = date("Y-m-d H:i:s",$timestamp - date('Z', $timestamp));
+			} else {
+				echo $cellvalue = $cell->getValue();
+			}
+          $data['table_data'][$worksheet_index]['str_value'][$row_index][] = $cellvalue;
         }
 
         $data['table_data'][$worksheet_index]['record_cols_qty'][$row_index] =
@@ -957,9 +975,17 @@ function _tow_import_detect_type($str_value)
     }
   }
   // date
-  elseif (strtotime($value)) {
-    $res['value'] = $value;
-    $res['type'] = "date";
+  elseif ($timestamp=strtotime($value)) {
+	if (abs($timestamp - time()) <= 86400) {//24*60*60
+		$res['value'] = date("H:i:s",$timestamp);
+		$res['type'] = "time";
+	} elseif (date('His',$timestamp) == '000000') {
+		$res['value'] = date("Y-m-d",$timestamp);
+		$res['type'] = "date";
+	} else {
+		$res['value'] = date("Y-m-d H:i:s",$timestamp);
+		$res['type'] = "datetime";
+	}
   }
   elseif ($value === "null") {
     $res['type'] = "null";
@@ -976,7 +1002,7 @@ function _tow_import_detect_type($str_value)
  * 
  * Determines the 'greatest common' type of two input types
  * @param string $type1, $type2
- * @return string ('bool', 'int', float', 'null', 'date' or 'text') or 0 if no common type for 
+ * @return string ('bool', 'int', float', 'null', 'date', 'time', 'datetime' or 'text') or 0 if no common type for 
  * input values exists   
  */
 function _tow_common_type($type1, $type2) {
@@ -990,32 +1016,58 @@ function _tow_common_type($type1, $type2) {
   								   'float'=> 'text',
                                    'null'=> 'bool',
   									'date'=> 'text',
+  									'time'=> 'text',
+  									'datetime'=> 'text',
   									'text'=> 'text',),
                        'int'=> array('bool'=> 'text',
   								   'float'=> 'float',
                                    'null'=> 'int',
   									'date'=> 'text',
+  									'time'=> 'text',
+  									'datetime'=> 'text',
   									'text'=> 'text',),
                       'float'=> array('bool'=> 'text',
                                    'int'=> 'float',
                                    'null'=> 'float',
   									'date'=> 'text',
+  									'time'=> 'text',
+  									'datetime'=> 'text',
   									'text'=> 'text',),
                       'null'=> array('bool'=> 'bool',
                                    'int'=> 'int',
   								   'float'=> 'float',
   									'date'=> 'date',
+  									'time'=> 'time',
+  									'datetime'=> 'datetime',
   									'text'=> 'text',),
                       'date'=> array('bool'=> 'text',
                                    'int'=> 'text',
   								   'float'=> 'text',
                                    'null'=> 'date',
+  									'time'=> 'datetime',
+  									'datetime'=> 'datetime',
+  									'text'=> 'text',),
+                      'time'=> array('bool'=> 'text',
+                                   'int'=> 'text',
+  								   'float'=> 'text',
+                                   'null'=> 'date',
+  									'date'=> 'datetime',
+  									'datetime'=> 'datetime',
+  									'text'=> 'text',),
+                      'datetime'=> array('bool'=> 'text',
+                                   'int'=> 'text',
+  								   'float'=> 'text',
+                                   'null'=> 'date',
+  									'time'=> 'datetime',
+  									'date'=> 'datetime',
   									'text'=> 'text',),
                       'text'=> array('bool'=> 'text',
                                    'int'=> 'text',
   								   'float'=> 'text',
                                    'null'=> 'text',
-  									'date'=> 'text',),
+  									'date'=> 'text',
+  									'time'=> 'text',
+  									'datetime'=> 'text',),
                   );
   if (isset($common_types[$in_type1][$in_type2])) {
     return $common_types[$in_type1][$in_type2];

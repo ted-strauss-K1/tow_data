@@ -453,7 +453,7 @@ function apachesolr_index_nodes($rows, $namespace = '', $callback = 'apachesolr_
       // Chunk the adds by 20s
       $docs_chunk = array_chunk($documents, 20);
       foreach ($docs_chunk as $docs) {watchdog('apachesolr',print_r($docs,TRUE));
-        $solr->addDocuments($docs);watchdog('apachesolr','done');
+        $solr->addDocuments($docs);
       }
       // Set the timestamp to indicate an index update.
       apachesolr_index_updated(time());

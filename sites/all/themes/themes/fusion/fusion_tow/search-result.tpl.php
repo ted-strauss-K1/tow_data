@@ -1,7 +1,7 @@
 <pre>
 <?php
 //if ($id == 10) 
-  print_r(get_defined_vars());
+//  print_r(get_defined_vars());
 ?>
 </pre>
 
