@@ -106,15 +106,25 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
   
   // Get Vocabulary ID
   $vid_res = db_query("SELECT `vid` FROM {vocabulary} WHERE `name`='Dataset categories'");
-  $vid = db_fetch_array($vid_res);
-  $vid = $vid['vid']; 
+  $vid_category = db_fetch_array($vid_res);
+  $vid_category = $vid_category['vid']; 
+  
+  $vid_res = db_query("SELECT `vid` FROM {vocabulary} WHERE `name`='Dataset tags'");
+  $vid_tag = db_fetch_array($vid_res);
+  $vid_tag = $vid_tag['vid']; 
   
   // Get list of taxonomy terms
-  $term_res = db_query("SELECT `tid`, `name`, `vid`, `description`, `weight` FROM {term_data} WHERE `vid`=%d", $vid);
-  $term_qty = 0;
-  while ($term = db_fetch_array($term_res)){
-    $terms[] = $term;
-    $term_qty++; 
+  $term_res_category = db_query("SELECT `tid`, `name`, `vid`, `description`, `weight` FROM {term_data} WHERE `vid`=%d", $vid_category);
+  $term_res_tag = db_query("SELECT `tid`, `name`, `vid`, `description`, `weight` FROM {term_data} WHERE `vid`=%d", $vid_tag);
+  $term_qty_category = 0;
+  $term_qty_tag = 0;
+  while ($term = db_fetch_array($term_res_category)){
+    $terms_category[] = $term;
+    $term_qty_category++; 
+  }
+  while ($term = db_fetch_array($term_res_category)){
+    $terms_tag[] = $term;
+    $term_qty_tag++; 
   }
   
   // Creating users
@@ -155,30 +165,38 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
       $new_dataset->field_access_type[0]['value'] = rand(0, 2);
       
       // Generate terms for dataset  
+
+		$term_id = mt_rand(0, $term_qty_category-1);
+		$new_dataset->taxonomy[$terms_category[$term_id]['tid']] = new stdClass();
+        foreach ($terms_category[$term_id] as $key => $value) {
+           $new_dataset->taxonomy[$terms_category[$term_id]['tid']]->{$key} = $value;
+        }
+
       $dataset_term_qty = mt_rand(1, $max_terms);
       
       for ($term_index = 1; $term_index <= $dataset_term_qty; $term_index++ ) {
-        $term_id = mt_rand(0, $term_qty);
+        $term_id = mt_rand(0, $term_qty_tag);
 
         // check if new taxonomy term should be created
-        if ($term_id == $term_qty) {
+        if ($term_id == $term_qty_tag) {
           // create if needed
           unset($term);
           $term = array(
-    		'vid' => $vid, // Voacabulary ID
+    		'vid' => $vid_tag, // Voacabulary ID
     		'name' => _tow_tests_get_random_string($max_leng['taxonomy_term']), // Term Name
+    		'description' => _tow_tests_get_random_string($max_leng['teaser']), // Term Name
           );
           // add new term to the Vocabulary
           taxonomy_save_term($term);
           // add new term to the term list 
-          $terms[$term_id]['tid'] = $term['tid'];
-          $terms[$term_id]['name'] = $term['name'];
-          $term_qty++;
+          $terms_tag[$term_id]['tid'] = $term['tid'];
+          $terms_tag[$term_id]['name'] = $term['name'];
+          $term_qty_tag++;
         }  
 //      add term to the dataset  
-        $new_dataset->taxonomy[$terms[$term_id]['tid']] = new stdClass();
-        foreach ($terms[$term_id] as $key => $value) {
-           $new_dataset->taxonomy[$terms[$term_id]['tid']]->{$key} = $value;
+        $new_dataset->taxonomy[$terms_tag[$term_id]['tid']] = new stdClass();
+        foreach ($terms_tag[$term_id] as $key => $value) {
+           $new_dataset->taxonomy[$terms_tag[$term_id]['tid']]->{$key} = $value;
         }
       }
   // 2.2 node_save, get dataset nid 
@@ -276,10 +294,10 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
                  $value = mt_rand(0, 1);
                  break;
                case 'time':
-                 $value = mt_rand(0, 10000);
+                 $value =  date('H:i:s', mt_rand(0, 84600));
                  break;
                case 'date':
-                 $value = date('d M Y', mt_rand(1000000, 3000000));
+                 $value = date('Y-m-d', mt_rand(1000000, 3000000));
                  break;
                case 'datetime':
                  $value =  date('Y-m-d H:i:s', mt_rand(1000000, 3000000));
