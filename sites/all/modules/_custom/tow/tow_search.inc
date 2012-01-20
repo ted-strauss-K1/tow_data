@@ -39,18 +39,19 @@ function tow_search_apachesolr_search_form(&$form, &$form_state) {
 	  }
   }
   else {
-    tow_search_datasets_altering_form($form);
+    //tow_search_datasets_altering_form($form);
   }
   return $form;
 }
 
 function tow_search_cron() {
   
-/*   $res = db_query("SELECT nid FROM {node} WHERE type='dataset'");
-  while ($node = db_fetch_object($res)) {
+   $res = db_query("SELECT nid FROM {node} WHERE type='dataset'");
+  while ($node = db_fetch_object($res)) {//watchdog('search',$node->nid);
     sleep(TOW_CRON_HASH_SLEEP);
-    db_query("CALL dataset_hash_update(%d)", $node->nid);
-    db_query("DELETE FROM {cache_content} WHERE cid = 'content:%s:%s'", $node->nid, $node->nid);
+    $res1=db_query("CALL dataset_hash_update(%d)", $node->nid);//watchdog('search',($res1==FALSE?'Failed':'Success'));
+    $res1=db_query("DELETE FROM {cache_content} WHERE cid = 'content:%s:%s'", $node->nid, $node->nid);//watchdog('search',($res1==FALSE?'Failed':'Success'));
   }
- */  
+  //watchdog('search','Datasets\' hash is updated');
+   
 }

@@ -48,13 +48,13 @@ function tow_search_within_dataset_callback($nid) {
   
   // 1 Add search form
   // 1.1 Add empty form
- // $output .= drupal_get_form('tow_search_form', $nid);
+  $output .= drupal_get_form('tow_search_form', $nid);
   
   // 1.2 Fill in the form with search parameters
   
   
   
-  //$search_options = tow_search_within_dataset_options();
+//  $search_options = tow_search_within_dataset_options();
   
   /*
   $display_options['sort'] = array ('sort_index' => 2, 'sort_order' => 'ASC');
@@ -66,7 +66,7 @@ function tow_search_within_dataset_callback($nid) {
   $display_options['limits']['total_elements'] = 10;                   
   $display_options['click_sortable'] = TRUE;
   */
-  //$output .= tow_search_within_dataset($node, $search_options);
+//  $output .= tow_search_within_dataset($node, $search_options);
   
   /*if ($user->uid == $dataset->uid)
     $output .= _tow_table_actions_list($node->nid, 'edit');
@@ -110,7 +110,7 @@ function tow_search_within_dataset_advanced() {
 /**
  * Creates form elements for the search_within_dataset page
  */
-function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_nid) {
+function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_nid) {watchdog('search','tow_search_within_dataset_altering_form');
 
   global $dataset;
   $dataset = node_load($dataset_nid);

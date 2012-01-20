@@ -233,6 +233,12 @@ function tow_menu() {
     'access arguments' => array('edit own dataset content'),
     'file' => 'tow_export.inc',
     'type' => MENU_CALLBACK,
+  );  
+  
+  $items['newest'] = array(
+    'page callback' => 'tow_outer_search_view',
+    'access arguments' => array('search content'),
+    'type' => MENU_CALLBACK,
   );
   
   $items = array_merge($items, tow_tests_menu());
@@ -329,7 +335,18 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['dataset_badge']['info'] = t('Dataset badge');
     $blocks['dataset_stats']['info'] = t('Dataset statistics');
     $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
-    //$blocks['search_outer_filter']['info'] = t('Search outer filter');
+    $blocks['search_outer_filter']['info'] = t('Search outer filter');
+	
+	//search filter blocks
+	
+ 	$enabled_facets = apachesolr_get_enabled_facets('tow');
+	$facets = tow_apachesolr_facets();
+	// Add the blocks
+	foreach ($enabled_facets as $delta => $facet_field) {
+		if (isset($facets[$delta])) {
+			$blocks[$delta] = $facets[$delta] + array('cache' => BLOCK_CACHE_PER_PAGE,);
+		}
+	}	 
     return $blocks;
   }
   elseif($op == 'view') {
@@ -349,11 +366,28 @@ function tow_block($op = 'list', $delta = 0) {
       if ($delta == 'table_display_switch') {
       	return tow_table_display_switch_block();
       }
-      /*if ($delta == 'search_outer_filter') {
+      if ($delta == 'search_outer_filter') {
 	    return tow_search_outer_filter_block();
-      }*/
-    }
-  }
+      }
+      if ($delta == 'sis_tow_amount_tables') {
+	    return tow_sis_tow_amount_tables_block();
+      }
+    } 
+  } 
+  elseif($op == 'configure') {
+		if (user_access('access content')) {
+		  if ($delta == 'sis_tow_amount_tables') {
+			return apachesolr_facetcount_form('sis_tow_amount_tables', $delta);
+		  }
+		}
+  } 
+  elseif($op == 'save') {
+		if (user_access('access content')) {
+		  if ($delta == 'sis_tow_amount_tables') {
+			return apachesolr_facetcount_save($edit);
+		  }
+		}
+	}
   
 }
 
@@ -383,8 +417,9 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
       tow_register_form_alter($form, $form_state);
       break;
     case 'search_form':
-	    tow_search_apachesolr_search_form($form, $form_state);
-		break;  
+	    //tow_search_apachesolr_search_form($form, $form_state);
+		//$form['#action'] = 'newest';
+	break;  
   }
   
   if ($form_id == 'node_delete_confirm' || $form_id == 'tow_table_truncate_confirm') {
@@ -538,3 +573,50 @@ function tow_table_list($nid) {
   
   return $tables;
 }
+
+/**
+ * Implementation of hook_search().
+ */
+function tow_search($op = 'search', $keys = NULL) {
+
+  switch ($op) {
+	case 'name':
+	  return t('Search');
+
+	case 'reset':
+	  apachesolr_clear_last_index('apachesolr_search');
+	  return;
+
+	case 'status':
+	  return apachesolr_index_status('apachesolr_search');
+
+	case 'search':
+	  $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
+	  $solrsort = isset($_GET['solrsort']) ? $_GET['solrsort'] : '';
+	  $page = isset($_GET['page']) ? $_GET['page'] : 0;
+	  try {
+		$results = apachesolr_search_execute($keys, 
+		$filters, 
+		$solrsort, 
+		'newest', $page);
+		return $results;
+	  }
+	  catch (Exception $e) {
+		watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
+		apachesolr_failure(t('Solr search'), $keys);
+	  }
+	  break;
+  } // switch
+} 
+
+
+ /**
+ * Implementation of hook_menu_alter().
+ */
+// function tow_menu_alter(&$menu) {
+  // if (isset($menu['search/apachesolr_search/%menu_tail'])) {
+    // $menu['search']['page callback'] = 'tow_outer_search_view';
+    // $menu['search/apachesolr_search/%menu_tail']['page callback'] = 'tow_outer_search_view';
+  // }  
+ // } 
+ 

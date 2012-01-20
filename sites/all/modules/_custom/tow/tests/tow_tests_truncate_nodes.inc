@@ -44,6 +44,13 @@ function tow_tests_truncate_nodes_form_submit($form, &$form_state){
   
   drupal_set_message($output);
   
+  $vid_res = db_query("SELECT `vid` FROM {vocabulary} WHERE `name`='Dataset tags'");
+  $vid_tag = db_fetch_array($vid_res);
+  $vid_tag = $vid_tag['vid']; 
+  db_query('DELETE FROM {term_data} WHERE `vid`=%s', $vid_tag);
+  
+  drupal_set_message('Terms from Dataset tags vocabulary are deleted.');
+  
   $array = array();
   tow_tests_truncate_cck_form_submit(array(), $array);
   

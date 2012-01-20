@@ -94,7 +94,7 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
   
   // here the length means number of words
   $max_leng = array( 'dataset_title' => 4, 'table_title' => 4,
-  	'body' => 20, 'teaser' => 10, 'column_title' => 2, 'user_name' => 2, 'user_pass' => 1,
+  	'body' => 500, 'teaser' => 10, 'column_title' => 2, 'user_name' => 2, 'user_pass' => 1,
   	'enum_option' => 2, 'char_field_data' => 5, 'taxonomy_term' => 2);
     
   // Get possible types for columns
@@ -161,9 +161,10 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
       $new_dataset->uid = $uid;
       $new_dataset->name = $user_name;
       $new_dataset->body = _tow_tests_get_random_string($max_leng['body']);
-      $new_dataset->teaser = _tow_tests_get_random_string($max_leng['teaser']);
+      //$new_dataset->teaser = $new_dataset->body;
       $new_dataset->field_access_type[0]['value'] = rand(0, 2);
-      
+      $new_dataset->created = mt_rand(strtotime('2011-01-01 00:00:00'), strtotime('2011-12-31 24:59:59'));
+      $new_dataset->changed = $new_dataset->created + mt_rand(0, 1036800);
       // Generate terms for dataset  
 
 		$term_id = mt_rand(0, $term_qty_category-1);
