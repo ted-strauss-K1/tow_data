@@ -336,7 +336,7 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['dataset_stats']['info'] = t('Dataset statistics');
     $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
     $blocks['search_outer_filter']['info'] = t('Search outer filter');
-	
+	$blocks['search_outer_number_of_results']['info'] = t('Number of results for outer search');
 	//search filter blocks
 	
  	$enabled_facets = apachesolr_get_enabled_facets('tow');
@@ -368,6 +368,9 @@ function tow_block($op = 'list', $delta = 0) {
       }
       if ($delta == 'search_outer_filter') {
 	    return tow_search_outer_filter_block();
+      }      
+	  if ($delta == 'search_outer_number_of_results') {
+	    return tow_search_outer_number_of_results_block();
       }
       if ($delta == 'sis_tow_amount_tables') {
 	    return tow_sis_tow_amount_tables_block();

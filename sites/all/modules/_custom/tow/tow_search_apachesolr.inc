@@ -69,7 +69,7 @@ function tow_apachesolr_process_results(&$results) {
   //print 'Search results';
 }
 
-function tow_apachesolr_modify_query(&$query, &$params) { 
+function tow_apachesolr_modify_query(&$query, &$params) {
   //x(tow_apachesolr_modify_query);
   //x($query);
   //x($params);
@@ -146,6 +146,17 @@ function tow_apachesolr_facets() {
     'info' => t('Amount of tables'),
     'facet_field' => 'sis_tow_amount_tables',
   );
+  
+  $facets['sis_tow_amount_records'] = array(
+    'info' => t('Amount of rows'),
+    'facet_field' => 'sis_tow_amount_records',
+  );
+  
+  $facets['sis_tow_amount_saved_searches'] = array(
+    'info' => t('Amount of saved searches'),
+    'facet_field' => 'sis_tow_amount_saved_searches',
+  );  
+  
   return $facets;
 }
 
@@ -156,4 +167,165 @@ function tow_apachesolr_facets() {
 */
 function tow_apachesolr_prepare_query(&$query, &$params, $caller) {
 
+}
+
+/**
+ *  Helper function for retrieving number of results for facetted-like menus.
+ *	Uses analyse of single solr request.
+ *	Arguments:
+ *	$facet_field -- facet field
+ *	$values -- array of options of drop-down menu in form $key => $value, where $key is value of filter. 
+ *		Array should has accending sorting on keys
+ *  $is_range -- if TRUE,  search is done through range [value TO *], strict value is searched otherwise
+ */
+
+function tow_facet_menu($facet_field, $values, $is_range = FALSE) {
+	$saved_response = apachesolr_static_response_cache();
+	$saved_query = apachesolr_current_query();
+	$query = clone $saved_query;
+	
+	$do_new_search = FALSE;
+	if ($facet_field == 'im_vid_2') {
+		foreach (tow_search_outer_filter_taxonomy() as $tid => $term) {
+			if ($query->has_filter('tid', $tid)) {
+				$query->remove_filter('tid', $tid);
+				$do_new_search = TRUE;
+			}
+		}
+	} else {
+		$query->remove_filter($facet_field);
+		foreach($query->get_filters() as $set_filter) {
+			if ($set_filter['#name'] == $facet_field)
+				$do_new_search = TRUE;
+		}
+	}
+		
+	if ($do_new_search) {
+		$params = apachesolr_search_basic_params($query);
+		apachesolr_search_add_facet_params($params, $query);
+		apachesolr_search_add_boost_params($params, $query, apachesolr_get_solr());
+		list($final_query, $response) = apachesolr_do_query('apachesolr_search', $query, $params);
+		if (empty($response)) {
+		  return;
+		}
+
+		apachesolr_static_response_cache($saved_response);
+		apachesolr_current_query($saved_query);	
+		
+	} else {	
+		$response = clone $saved_response;
+	}
+	
+	if ($is_range) {
+		$sorted_keys = array_flip($values);
+			
+		$facet_counts = (array) $response->facet_counts->facet_fields->$facet_field;
+		if (!empty($facet_counts)) {
+			$current_key = array_pop($sorted_keys);
+			
+			krsort($facet_counts);
+			
+			$counts = 0;
+
+			foreach ($facet_counts as $facet_value => $facet_count) {
+				while ($current_key > $facet_value) {
+					$values[$current_key] .= ' (' . $counts . ')';
+					$current_key = array_pop($sorted_keys);
+				}
+				$counts += $facet_count;
+			}
+			
+			while (!empty($sorted_keys)) {
+				$values[$current_key] .= ' (' . $counts . ')';
+				$current_key = array_pop($sorted_keys);
+			}
+
+			$values[$current_key] .= ' (' . $counts . ')';
+			
+		} else { // no results
+			foreach ($values as $key => $value) {
+				$values[$key] .= ' (0)';
+			}		
+		}
+	} else {
+		foreach ($values as $key => $value) {
+			if ($key === 'any') {
+				$num = $response->response->numFound;
+			} else {
+				$num = $response->facet_counts->facet_fields->$facet_field->$key;
+			}
+			if (!isset($num))
+				$num = 0;
+			$values[$key] .= ' (' . $num . ')';
+		}
+	}
+
+	return $values;
+}
+
+/**
+ *  Helper function for retrieving number of results for facetted-like menus by .
+ *	Uses solr requests for each facet value.
+ *	Arguments:
+ *	$facet_field -- facet field
+ *	$values -- array of options of drop-down menu in form $key => $value, where $key is value of filter
+ */
+
+function tow_facet_menu_solr($facet_field, $values) {
+	foreach ($values as $key => $value) {
+		if ($key === 'any') {
+			$num = tow_facet_menu_item($facet_field, '[* TO *]');
+		} else {
+			$num = tow_facet_menu_item($facet_field, $key);
+		}
+		if (!isset($num)) {
+			$num = 0;
+		}
+		$values[$key] .= ' (' . $num . ')';
+	}
+	return $values;
+}
+
+/**
+ *  Helper function for retrieving number of results for facetted-like menus for range of values.
+ *	Uses solr requests for each facet value.
+ *	Arguments:
+ *	$facet_field -- facet field
+ *	$values -- array of options of drop-down menu in form $key => $value, where $key is value of filter
+ */
+
+function tow_facet_menu_solr_range($facet_field, $values) {
+	foreach ($values as $key => $value) {
+		$num = tow_facet_menu_item($facet_field, '[' . $key . ' TO *]');
+		if (!isset($num)) {
+			$num = 0;
+		}
+		$values[$key] .= ' (' . $num . ')';
+	}
+	return $values;
+}
+
+function tow_facet_menu_item($facet_field, $value) {
+	$saved_response = apachesolr_static_response_cache();
+	$saved_query = apachesolr_current_query();
+
+	$query = clone $saved_query;
+	
+	$query->remove_filter($facet_field);
+		
+	$query->add_filter($facet_field,$value);
+
+	$params = apachesolr_search_basic_params($query);
+	apachesolr_search_add_facet_params($params, $query);
+	apachesolr_search_add_boost_params($params, $query, apachesolr_get_solr());
+	list($final_query, $response) = apachesolr_do_query('apachesolr_search', $query, $params);
+	if (empty($response)) {
+	  return;
+	}
+//	dpm($response->facet_counts->facet_fields->$facet_field);
+
+	apachesolr_static_response_cache($saved_response);
+	apachesolr_current_query($saved_query);	
+	
+	return $response->response->numFound;
 }

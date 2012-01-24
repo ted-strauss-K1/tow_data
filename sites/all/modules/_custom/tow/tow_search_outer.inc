@@ -10,12 +10,9 @@ function tow_outer_search_view($type = 'apachesolr_search') {
   // We did not redirect, so run the search if needed.
   $results = '';
   $filters = '';
-//  if (!isset($_GET['filters'])) {
-//	$_GET['filters'] = 'type:dataset';
-// }
+
   $filters = trim($_GET['filters']);
-  // Only perform search if there is non-whitespace search term or filters:
-  if ($keys || $filters) {
+  
 	// Log the search keys:
 	$log = $keys;
 	if ($filters) {
@@ -26,14 +23,13 @@ function tow_outer_search_view($type = 'apachesolr_search') {
 	// Collect the search results:
 	$results = search_data($keys, 'tow');
 
-
 	if ($results) {
 	  $results = theme('box', t('Search results'), $results);
 	}
 	else {
 	  $results = theme('box', t('Your search yielded no results'), variable_get('apachesolr_search_noresults', apachesolr_search_noresults()));
 	}
-  }
+
   return $results;
 } 
 
@@ -52,6 +48,29 @@ function tow_get_keys() {
   return $return;
 }
 
+/**
+ * Block displaying number of results found
+ */
+
+function tow_search_outer_number_of_results_block() {
+	$response = apachesolr_static_response_cache();
+	$total = $response->response->numFound;
+	
+	if ($number_of_results == 1) {
+		$content =  $total . ' ' . t('dataset');
+	} else {
+		$content =  $total . ' ' . t('datasets');
+	}
+
+	$block = array();
+
+	$block['title'] = NULL;
+	$block['content'] = $content;
+
+	return $block;  
+
+}
+ 
 /**
  * Home page search block
  */
@@ -82,19 +101,21 @@ function tow_search_outer_filter_form($form_state) {
 	if ($nopost && $keys = trim(tow_get_keys())) 
 		$form['keywords']['#value'] = $keys;
 
-	
+//	$start = microtime(TRUE);
 	$form['size'] = array(
 		'#type' => 'select',
-		'#options' => array(
+		'#options' => tow_facet_menu('sis_tow_amount_records', array(
 			'0' => t('any'),
 			'10' => t('10+'),
 			'100' => t('100+'),
 			'500' => t('500+'),
 			'1000' => t('1000+'),
 			'5000' => t('5000+'),
-		),
+		), TRUE),
 		'#title' => t('# rows'),  
 	);
+//	$end = microtime(TRUE);
+//	dpm($end-$start);
 		
 	if ($nopost && preg_match('/(?<=sis_tow_amount_records:\[)\d{1,}/', $filters, $n)) 
 		$form['size']['#value'] = $n[0];
@@ -102,14 +123,14 @@ function tow_search_outer_filter_form($form_state) {
 	
 	$form['saved_searches'] = array(
 		'#type' => 'select',
-		'#options' => array(
+		'#options' => tow_facet_menu('sis_tow_amount_saved_searches', array(
 			'0' => t('any'),
 			'1' => t('1+'),
 			'5' => t('5+'),
 			'10' => t('10+'),
 			'20' => t('20+'),
 			'50' => t('50+'),
-		),
+		), TRUE),
 		'#title' => t('# searches'),
 	);
 	if ($nopost && preg_match('/(?<=sis_tow_amount_saved_searches:\[)\d{1,}/', $filters, $n))
@@ -117,13 +138,16 @@ function tow_search_outer_filter_form($form_state) {
 		
 	$form['access_status'] = array(
 		'#type' => 'select',
-		'#options' => array(
-			'-1' => t('any'),
+		'#options' => tow_facet_menu('sis_cck_field_access_type', array(
+			'any' => t('any'),
 			'0' => t('open'),
 			'1' => t('by request'),
-		),
+			'2' => t('private'),
+		)),
 		'#title' => t('access'),
 	);
+
+
 	if ($nopost && preg_match('/(?<=sis_cck_field_access_type:)\d{1}/', $filters, $n))
 		$form['access_status']['#value'] = $n[0];
 		
@@ -145,7 +169,7 @@ function tow_search_outer_filter_form($form_state) {
 
 	$form['categories'] = array(
 		'#type' => 'select',
-		'#options' => tow_search_outer_filter_taxonomy(),
+		'#options' => tow_facet_menu('im_vid_2', tow_search_outer_filter_taxonomy()),
 		'#title' => t('categories'),
 	);
 	$matches_qty = preg_match_all('/(?<=tid:)\d{1,}/', $filters, $n);
@@ -174,11 +198,13 @@ function tow_search_outer_filter_form($form_state) {
 		$query = apachesolr_current_query();
 
 		$vid1_block = apachesolr_search_taxonomy_facet_block($response, $query,'im_vid_1');
-		$form['tags'] = array(
-			'#type' => 'item',
-			'#title' => 'tags',
-			'#value' => $vid1_block['content'],
-		);
+		if ($tags = $vid1_block['content']) {
+			$form['tags'] = array(
+				'#type' => 'item',
+				'#title' => 'tags',
+				'#value' => $tags,
+			);
+		}
 		drupal_add_js(drupal_get_path('module', 'tow') . '/js/outer_search.js');
 	}
 	return $form;
@@ -214,14 +240,21 @@ function tow_search_outer_filter_form_submit($form, &$form_state) {
 		$query .= ' ' . 'sis_tow_amount_saved_searches:[' . $form_state['values']['saved_searches'] . ' TO *]';
 	}	
 
-	if ($form_state['values']['access_status'] !== '-1') {
+	if ($form_state['values']['access_status'] !== 'any') {
 		$query .= ' ' . 'sis_cck_field_access_type:' . $form_state['values']['access_status'];
 	}
 
-	if ($form_state['values']['categories']) {
+	if ($form_state['values']['categories'] !== 'any') {
 		$query .= ' ' . 'tid:' . $form_state['values']['categories'];
 	}
-
+	
+	$matches_qty = preg_match_all('/(?<=tid:)\d{1,}/', $_GET['filters'], $n);
+	foreach ($n[0] as $tid) {
+		if (!in_array($tid, array_flip(tow_search_outer_filter_taxonomy()))) {
+			$query .= ' ' . 'tid:' . $tid;
+		}
+	}
+	
 	if ($query == 'filters=') $query = NULL;
 
 	drupal_goto($path, $query);
@@ -232,7 +265,7 @@ function tow_search_outer_filter_form_submit($form, &$form_state) {
  */
 function tow_search_outer_filter_taxonomy() {
  
-  $terms = array('0' => t('Any'));
+  $terms = array('any' => t('any'));
   
   $res = db_query("SELECT tid, name FROM {term_data} WHERE vid = 2 ORDER BY name ASC");
   while ($term = db_fetch_array($res))

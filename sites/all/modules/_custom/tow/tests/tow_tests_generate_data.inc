@@ -91,6 +91,7 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
   // Other parameters
   $max_terms = 5; 
   $max_requesting_users = 10;
+  $min_records = 5; 
   
   // here the length means number of words
   $max_leng = array( 'dataset_title' => 4, 'table_title' => 4,
@@ -270,7 +271,8 @@ function tow_tests_generate_data_form_submit($form, &$form_state){
         $table_nid = $new_table->nid;
 
 // 4. For each table create records
-        for ($rid = 1; $rid <= $qty['records']; $rid++) {
+		$qty_records = mt_rand($min_records, $qty['records']);
+        for ($rid = 1; $rid <= $qty_records; $rid++) {
 // 4.1 type, 
           $new_record = new stdClass();
           $new_record->type = 'record'; 
