@@ -184,7 +184,7 @@ function tow_facet_menu($facet_field, $values, $is_range = FALSE) {
 	$saved_query = apachesolr_current_query();
 	$query = clone $saved_query;
 	
-	$do_new_search = FALSE;
+	$do_new_search = TRUE;xdebug_break();
 	if ($facet_field == 'im_vid_2') {
 		foreach (tow_search_outer_filter_taxonomy() as $tid => $term) {
 			if ($query->has_filter('tid', $tid)) {
@@ -193,10 +193,11 @@ function tow_facet_menu($facet_field, $values, $is_range = FALSE) {
 			}
 		}
 	} else {
-		$query->remove_filter($facet_field);
 		foreach($query->get_filters() as $set_filter) {
-			if ($set_filter['#name'] == $facet_field)
+			if ($set_filter['#name'] == $facet_field) {
+				$query->remove_filter($facet_field);
 				$do_new_search = TRUE;
+			}
 		}
 	}
 		
@@ -328,4 +329,31 @@ function tow_facet_menu_item($facet_field, $value) {
 	apachesolr_current_query($saved_query);	
 	
 	return $response->response->numFound;
+}
+
+/*
+*	
+*Implementation of hook_apachesolr_ajax_settings
+*
+*/
+function tow_apachesolr_ajax_settings() {
+  $settings = array(
+    'content' => '#content-inner-inner',
+    'regions' => array(
+      'sidebar_last' => '.sidebar-last',
+    ),
+  );
+
+  $modules = apachesolr_ajax_modules();
+  foreach ($modules as $module) {
+    if (module_exists($module)) {
+      if ($list = module_invoke($module, 'block', 'list')) {
+        foreach (array_keys($list) as $delta) {
+          $settings['blocks'][$module .'_'. $delta] = '#block-'. $module .'-'. $delta;
+        }
+      }
+    }
+  }
+  //dpm($settings);
+  return $settings;
 }

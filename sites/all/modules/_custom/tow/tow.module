@@ -238,6 +238,14 @@ function tow_menu() {
   $items['newest'] = array(
     'page callback' => 'tow_outer_search_view',
     'access arguments' => array('search content'),
+    'file' => 'tow_search_outer.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['search_outer_ajax'] = array(
+    'page callback' => 'tow_search_outer_ajax',
+    'access arguments' => array('search content'),
+    'file' => 'tow_search_outer.inc',
     'type' => MENU_CALLBACK,
   );
   

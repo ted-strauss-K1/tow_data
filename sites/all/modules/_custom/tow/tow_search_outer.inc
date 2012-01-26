@@ -34,6 +34,21 @@ function tow_outer_search_view($type = 'apachesolr_search') {
 } 
 
 /**
+ * Proxy for outer search using AJAX.
+ */
+function tow_search_outer_ajax() {xdebug_break();
+	$_GET['q'] = str_replace('search_outer_ajax/', '', $_GET['q']);
+	$results = tow_outer_search_view();
+	$form = drupal_get_form('tow_search_outer_filter_form');
+	$number_block = tow_search_outer_number_of_results_block();
+	return drupal_json(array(
+		'results' => $results,
+		'form' => $form, 
+		'number' => $number_block['content'], 
+	));
+} 
+
+/**
  *   Modification of search_get_keys()
  */
 function tow_get_keys() {
@@ -174,14 +189,26 @@ function tow_search_outer_filter_form($form_state) {
 	);
 	$matches_qty = preg_match_all('/(?<=tid:)\d{1,}/', $filters, $n);
 	$category = '';
+	$tags_query = '';
 	foreach ($n[0] as $tid) {
 		if (in_array($tid, array_flip(tow_search_outer_filter_taxonomy()))) {
 			$category = $tid;
-			break;
+		} else {
+			$tags_query .= ' ' . 'tid:' . $tid;
 		}
 	}
 	if ($nopost && $matches_qty)
 		$form['categories']['#value'] = $category;
+
+	$form['tags_query'] = array(
+		'#type' => 'hidden',
+		'#value' => $tags_query,
+	); 
+
+	$form['search_placeholder'] = array(
+		'#type' => 'hidden',
+		'#value' => t('Searching...'),
+	); 
 
 	$form['submit'] = array(
 		'#type' => 'submit',
@@ -205,8 +232,9 @@ function tow_search_outer_filter_form($form_state) {
 				'#value' => $tags,
 			);
 		}
-		drupal_add_js(drupal_get_path('module', 'tow') . '/js/outer_search.js');
+		
 	}
+	drupal_add_js(drupal_get_path('module', 'tow') . '/js/outer_search.js');
 	return $form;
 }
 
