@@ -89,8 +89,19 @@ function tow_apachesolr_modify_query(&$query, &$params) {
   // TODO: add this only to records
   $params['fl'] .= ',sis_tow_field_table';
 
-  $query->add_filter('type', 'dataset');  
-  $query->set_solrsort('created', 'desc');
+  $query->add_filter('type', 'dataset');  //dpm($query->get_available_sorts());
+  switch (tow_get_homepage_tab()) {
+	case 'newest':
+		$query->set_solrsort('created', 'desc');
+	break;
+	
+	case 'popular':
+		$query->set_solrsort('sort_title', 'asc');
+	break;
+	
+	default:
+	break;
+  }
 }
 
 /** 
@@ -216,7 +227,14 @@ function tow_facet_menu($facet_field, $values, $is_range = FALSE) {
 	} else {	
 		$response = clone $saved_response;
 	}
-	
+		if ($facet_field == 'sis_tow_amount_records') {
+			dpm($params);
+			dpm($query);
+			dpm($response);
+			dpm(((array) $response->facet_counts->facet_fields->$facet_field));
+			dpm(array_sum((array) $response->facet_counts->facet_fields->$facet_field));
+			dpm($response->response->numFound);
+		}
 	if ($is_range) {
 		$sorted_keys = array_flip($values);
 			
@@ -225,7 +243,7 @@ function tow_facet_menu($facet_field, $values, $is_range = FALSE) {
 			$current_key = array_pop($sorted_keys);
 			
 			krsort($facet_counts);
-			
+//			dpm(array_sum($facet_counts));
 			$counts = 0;
 
 			foreach ($facet_counts as $facet_value => $facet_count) {

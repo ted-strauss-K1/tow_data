@@ -112,7 +112,7 @@ function tow_construct_table_query($node, $display_options = '') {
           ".delta = " . $column_info['delta'] . "\n";
       }
       // part of query, responsible for filtering
-      if (($display_options['filter']) && ($display_options['filter']['filter_column_index'] == $column_index)) {
+      if ((isset($display_options['filter'])) && ($display_options['filter']) && ($display_options['filter']['filter_column_index'] == $column_index)) {
         //$filter_query_part = "AND " . $column_info['alias'] . ".field_" . $column_info['type']. "_value ";
         $filter_query_part = $column_info['alias'] . ".field_" . $column_info['type']. "_value ";
 
@@ -169,7 +169,7 @@ function tow_construct_table_query($node, $display_options = '') {
     //$query .="\n)";
 
     //  5.2 Filter results
-    if ($display_options['filter']) {
+    if (isset($display_options['filter']) && $display_options['filter']) {
       if ($display_options['record_nids']) {
         $query .= "AND " . $filter_query_part;
       }

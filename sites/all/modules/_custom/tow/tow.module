@@ -234,7 +234,7 @@ function tow_menu() {
     'file' => 'tow_export.inc',
     'type' => MENU_CALLBACK,
   );  
-  
+   
   $items['newest'] = array(
     'page callback' => 'tow_outer_search_view',
     'access arguments' => array('search content'),
@@ -242,6 +242,14 @@ function tow_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  
+  $items['popular'] = array(
+    'page callback' => 'tow_outer_search_view',
+    'access arguments' => array('search content'),
+    'file' => 'tow_search_outer.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
   $items['search_outer_ajax'] = array(
     'page callback' => 'tow_search_outer_ajax',
     'access arguments' => array('search content'),
@@ -345,6 +353,7 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
     $blocks['search_outer_filter']['info'] = t('Search outer filter');
 	$blocks['search_outer_number_of_results']['info'] = t('Number of results for outer search');
+	$blocks['search_outer_tabs']['info'] = t('Tabs for outer search');
 	//search filter blocks
 	
  	$enabled_facets = apachesolr_get_enabled_facets('tow');
@@ -379,6 +388,9 @@ function tow_block($op = 'list', $delta = 0) {
       }      
 	  if ($delta == 'search_outer_number_of_results') {
 	    return tow_search_outer_number_of_results_block();
+      }
+	  if ($delta == 'search_outer_tabs') {
+	    return tow_search_outer_tabs_block();
       }
       if ($delta == 'sis_tow_amount_tables') {
 	    return tow_sis_tow_amount_tables_block();
@@ -609,7 +621,7 @@ function tow_search($op = 'search', $keys = NULL) {
 		$results = apachesolr_search_execute($keys, 
 		$filters, 
 		$solrsort, 
-		'newest', $page);
+		tow_get_homepage_tab(), $page);
 		return $results;
 	  }
 	  catch (Exception $e) {

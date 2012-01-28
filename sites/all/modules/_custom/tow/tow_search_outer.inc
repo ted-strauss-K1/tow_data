@@ -30,7 +30,7 @@ function tow_outer_search_view($type = 'apachesolr_search') {
 	  $results = theme('box', t('Your search yielded no results'), variable_get('apachesolr_search_noresults', apachesolr_search_noresults()));
 	}
 
-  return $results;
+	return $results;
 } 
 
 /**
@@ -41,10 +41,13 @@ function tow_search_outer_ajax() {xdebug_break();
 	$results = tow_outer_search_view();
 	$form = drupal_get_form('tow_search_outer_filter_form');
 	$number_block = tow_search_outer_number_of_results_block();
+	$tabs_block = tow_search_outer_tabs_block();
 	return drupal_json(array(
 		'results' => $results,
 		'form' => $form, 
 		'number' => $number_block['content'], 
+		'tabs' => $tabs_block['content'], 
+		
 	));
 } 
 
@@ -63,27 +66,153 @@ function tow_get_keys() {
   return $return;
 }
 
+
+/**
+ *   Returns tab for homepage (featured, newest, popular, debated)
+ */
+function tow_get_homepage_tab() {
+  static $tab;
+  if (!isset($tab)) {
+	// Extract keys as remainder of path
+	// Note: support old GET format of searches for existing links.
+	$path = explode('/', $_GET['q'], 2);
+	$tab = $path[0];
+	if (!in_array($tab, array('featured', 'newest', 'popular', 'debated')))
+		$tab = FALSE;
+  }
+  return $tab;
+}
+
+/**
+ *   Returns values for oter search filters retrieved from $_GET array
+ */
+function tow_get_search_outer_filters() {
+	static $values;
+	if (!isset($values)) {
+		$filters = $_GET['filters'];	
+		$values = array();
+		if (preg_match('/(?<=sis_tow_amount_records:\[)\d{1,}/', $filters, $n)) 
+			$values['size'] = $n[0];
+		else
+			$values['size'] = FALSE;
+
+		if (preg_match('/(?<=sis_tow_amount_saved_searches:\[)\d{1,}/', $filters, $n))
+			$values['saved_searches'] = $n[0];
+		else
+			$values['saved_searches'] = FALSE;
+
+		if (preg_match('/(?<=sis_cck_field_access_type:)\d{1}/', $filters, $n))
+			$values['access_status'] = $n[0];			
+		else
+			$values['access_status'] = FALSE;			
+			
+		$matches_qty = preg_match_all('/(?<=tid:)\d{1,}/', $filters, $n);
+
+		$values['categories'] = '';
+		$values['tags_query'] = '';
+		$values['tags'] = array();
+
+		$outer_tids = array_flip(tow_search_outer_filter_taxonomy());
+		foreach ($n[0] as $tid) {
+			if (in_array($tid, $outer_tids)) {
+				$values['categories'] = $tid;
+			} else {
+				$values['tags_query'] .= ' ' . 'tid:' . $tid;
+				$values['tags'][] = $tid;
+			}
+		}
+
+	}
+	return $values;
+}
+
+
+
 /**
  * Block displaying number of results found
  */
 
 function tow_search_outer_number_of_results_block() {
-	$response = apachesolr_static_response_cache();
-	$total = $response->response->numFound;
-	
-	if ($number_of_results == 1) {
-		$content =  $total . ' ' . t('dataset');
-	} else {
-		$content =  $total . ' ' . t('datasets');
+	if (apachesolr_has_searched()) {
+		$response = apachesolr_static_response_cache();
+		$total = $response->response->numFound;
+		
+		if ($number_of_results == 1) {
+			$content =  $total . ' ' . t('dataset');
+		} else {
+			$content =  $total . ' ' . t('datasets');
+		}
+		
+		$keys = trim(tow_get_keys());
+		$values = tow_get_search_outer_filters();
+		
+		$filters = '';
+		
+		if ($keys)
+			$filters[] = 'keywords: ' . $keys;
+			
+		if ($value = $values['size'])
+			$filters[] = $value . '+ rows';
+			
+		if ($value = $values['saved_searches'])
+			$filters[] = $value . '+ searches';
+			
+		if ($values['access_status'] !== FALSE)
+			$filters[] = 'access: ' . tow_get_access_status($values['access_status']);
+			
+		if ($value = $values['categories']) 
+			$filters[] = 'category: ' . taxonomy_get_term($value)->name;
+			
+		foreach ($values['tags'] as $tid) {
+			$filters[] = 'tag: ' . taxonomy_get_term($tid)->name;
+		}
+			
+		$block = array();
+
+		$block['title'] = NULL;
+		$block['content'] = $content . theme_item_list($filters);
+
+		return $block;  
 	}
+	return NULL;
+}
 
-	$block = array();
+/**
+ * Block displaying tabs at home page
+ */
 
-	$block['title'] = NULL;
-	$block['content'] = $content;
+function tow_search_outer_tabs_block() {
+	$tab = tow_get_homepage_tab();
+	if ($tab) {
+		$content = '';
+		$disabled = array('attributes' => array('disabled' => 'true'));
 
-	return $block;  
+		$content .= tow_tab_link($tab, 'Featured', 'featured', TRUE);
+		$content .= ' | ' . tow_tab_link($tab, 'Newest', 'newest');
+		$content .= ' | ' . tow_tab_link($tab, 'Popular', 'popular');
+		$content .= ' | ' . tow_tab_link($tab, 'Debated', 'debated', TRUE);
+		$content .= ' | ' . l('Create new dataset','node/add/dataset');
 
+		$block = array();
+		$block['title'] = NULL;
+		$block['content'] =  $content;
+
+		return $block;
+	}
+	return NULL;
+}
+
+/**
+ * Returns link to homepage tab
+ */
+
+function tow_tab_link($current_tab, $title, $tab, $disable = FALSE) {
+	if ($disable)
+		return $title;
+	elseif ($current_tab == $tab)
+		return '<b>' . $title . '</b>';
+	else 
+		return l($title, $tab, array('attributes' => array('class' => 'tow-search-outer-tab')));
 }
  
 /**
@@ -94,7 +223,7 @@ function tow_search_outer_filter_block() {
   $block = array();
   
   $block['title'] = 'Filters';
-  $block['content'] = drupal_get_form('tow_search_outer_filter_form');
+  $block['content'] = tow_get_homepage_tab() ? drupal_get_form('tow_search_outer_filter_form') : NULL;
   
   return $block;
  
@@ -105,7 +234,8 @@ function tow_search_outer_filter_block() {
  */
 function tow_search_outer_filter_form($form_state) {
 
-	$filters = $_GET['filters'];
+//	dpm($_GET);
+	$values = tow_get_search_outer_filters();
 	
 	$nopost = (count($form_state['post']) == 0);
 
@@ -113,18 +243,26 @@ function tow_search_outer_filter_form($form_state) {
 		'#type' => 'textfield',
 		'#title' => t('keywords'),
 	); 
+
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#title' => t('Search'),
+		'#value' => t('Search'),
+	); 
+
 	if ($nopost && $keys = trim(tow_get_keys())) 
 		$form['keywords']['#value'] = $keys;
 
 //	$start = microtime(TRUE);
 	$form['size'] = array(
 		'#type' => 'select',
-		'#options' => tow_facet_menu('sis_tow_amount_records', array(
+		'#options' => tow_facet_menu_solr_range('sis_tow_amount_records', array(
 			'0' => t('any'),
 			'10' => t('10+'),
 			'100' => t('100+'),
 			'500' => t('500+'),
 			'1000' => t('1000+'),
+			'2000' => t('2000+'),
 			'5000' => t('5000+'),
 		), TRUE),
 		'#title' => t('# rows'),  
@@ -132,13 +270,13 @@ function tow_search_outer_filter_form($form_state) {
 //	$end = microtime(TRUE);
 //	dpm($end-$start);
 		
-	if ($nopost && preg_match('/(?<=sis_tow_amount_records:\[)\d{1,}/', $filters, $n)) 
-		$form['size']['#value'] = $n[0];
+	if ($nopost && $value = $values['size']) 
+		$form['size']['#value'] = $value;
 	  
 	
 	$form['saved_searches'] = array(
 		'#type' => 'select',
-		'#options' => tow_facet_menu('sis_tow_amount_saved_searches', array(
+		'#options' => tow_facet_menu_solr_range('sis_tow_amount_saved_searches', array(
 			'0' => t('any'),
 			'1' => t('1+'),
 			'5' => t('5+'),
@@ -148,8 +286,8 @@ function tow_search_outer_filter_form($form_state) {
 		), TRUE),
 		'#title' => t('# searches'),
 	);
-	if ($nopost && preg_match('/(?<=sis_tow_amount_saved_searches:\[)\d{1,}/', $filters, $n))
-		$form['saved_searches']['#value'] = $n[0];
+	if ($nopost && $value = $values['saved_searches'])
+		$form['saved_searches']['#value'] = $value;
 		
 	$form['access_status'] = array(
 		'#type' => 'select',
@@ -163,8 +301,8 @@ function tow_search_outer_filter_form($form_state) {
 	);
 
 
-	if ($nopost && preg_match('/(?<=sis_cck_field_access_type:)\d{1}/', $filters, $n))
-		$form['access_status']['#value'] = $n[0];
+	if ($nopost && $values['access_status'] !== FALSE)
+		$form['access_status']['#value'] = $values['access_status'];
 		
 	$form['forum'] = array(
 		'#type' => 'select',
@@ -187,22 +325,13 @@ function tow_search_outer_filter_form($form_state) {
 		'#options' => tow_facet_menu('im_vid_2', tow_search_outer_filter_taxonomy()),
 		'#title' => t('categories'),
 	);
-	$matches_qty = preg_match_all('/(?<=tid:)\d{1,}/', $filters, $n);
-	$category = '';
-	$tags_query = '';
-	foreach ($n[0] as $tid) {
-		if (in_array($tid, array_flip(tow_search_outer_filter_taxonomy()))) {
-			$category = $tid;
-		} else {
-			$tags_query .= ' ' . 'tid:' . $tid;
-		}
-	}
-	if ($nopost && $matches_qty)
-		$form['categories']['#value'] = $category;
+
+	if ($nopost && $value = $values['categories'])
+		$form['categories']['#value'] = $value;
 
 	$form['tags_query'] = array(
 		'#type' => 'hidden',
-		'#value' => $tags_query,
+		'#value' => $values['tags_query'],
 	); 
 
 	$form['search_placeholder'] = array(
@@ -210,12 +339,16 @@ function tow_search_outer_filter_form($form_state) {
 		'#value' => t('Searching...'),
 	); 
 
-	$form['submit'] = array(
-		'#type' => 'submit',
-		'#title' => t('Search'),
-		'#value' => t('Search'),
+	$form['current_tab'] = array(
+		'#type' => 'hidden',
+		'#value' => tow_get_homepage_tab(),
 	); 
-	  
+	
+	$form['current_url'] = array(
+		'#type' => 'hidden',
+		'#value' => $_GET['q'] . ($_GET['filters'] ? '?filters=' . $_GET['filters'] : ''),
+	); 
+	
 	if (apachesolr_has_searched()) {
 
 		$response = apachesolr_static_response_cache();
@@ -234,7 +367,9 @@ function tow_search_outer_filter_form($form_state) {
 		}
 		
 	}
+//	drupal_add_js(drupal_get_path('module', 'tow') . '/js/jquery.ba-hashchange.min.js');
 	drupal_add_js(drupal_get_path('module', 'tow') . '/js/outer_search.js');
+	
 	return $form;
 }
 
@@ -255,7 +390,7 @@ function tow_search_outer_filter_form_submit($form, &$form_state) {
 
 	$fv = $form_state['values'];
 
-	$path = 'newest/' . $fv['keywords'];
+	$path = tow_get_homepage_tab() . '/' . $fv['keywords'];
 	$query = 'filters=';
 
 	// subjects
@@ -316,4 +451,5 @@ function tow_sis_tow_amount_tables_block() {
 		$delta = 'sis_tow_amount_tables';
 		return apachesolr_facet_block($response, $query, 'sis_tow_amount_tables', $delta, $delta, t('Filter by Amount of tables'), 'Amount of tables');
 	}  
+	return NULL;
 }

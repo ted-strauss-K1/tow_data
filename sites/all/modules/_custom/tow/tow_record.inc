@@ -198,22 +198,22 @@ function tow_record_format_for_search_indexing(&$node) {
                                                       AND `vid` = %d
                                                       AND `delta` = %d", 
                                                       $table_nid, $table_nid, $delta)));
-    $node->content[]['#value'] .= $enum_options[$value['value']] . ' ';
+	$node->content[] = array('#value' => $enum_options[$value['value']] . ' ');
   }
   
   // Formating boolean field values
   unset($node->content['field_bool']);
   foreach ($node->field_bool as $delta => $value) {
     if (isset($value['value'])) {
-      $node->content[]['#value'] .= _tow_format_bool($value['value']) . ' ';
+      $node->content[] = array('#value' => _tow_format_bool($value['value']) . ' ');
     }
   }
   
   // Substitute table_nid by table title
   unset($node->content['field_table']);
-  $node->content[]['#value'] = db_result(db_query("SELECT `title`
+  $node->content[] = array('#value' => db_result(db_query("SELECT `title`
                                                    FROM {node}
                                                    WHERE `nid` = %d 
                                                    AND `vid` = %d", 
-                                                   $table_nid, $table_nid));
+                                                   $table_nid, $table_nid)));
 }

@@ -332,3 +332,24 @@ function tow_access_confirm_submit($form, &$form_state) {
   }
   $form_state['redirect'] = 'node/' . $form_state['values']['nid'];  
 }
+
+/**
+ *   Returns access status string ('open', 'by request', 'private') corresponding to number notation
+ */
+function tow_get_access_status($code) {
+	switch ($code) {	
+		case 0: 
+			return 'open';
+		break;
+		case 1: 
+			return 'by request';
+		break;
+		case 2: 
+			return 'private';
+		break;
+		default:
+			return FALSE;
+		break;
+	}
+}
+
