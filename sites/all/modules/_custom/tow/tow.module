@@ -235,6 +235,13 @@ function tow_menu() {
     'type' => MENU_CALLBACK,
   );  
    
+  $items['home'] = array(
+    'page callback' => 'tow_outer_search_view',
+    'access arguments' => array('search content'),
+    'file' => 'tow_search_outer.inc',
+    'type' => MENU_CALLBACK,
+  );
+
   $items['newest'] = array(
     'page callback' => 'tow_outer_search_view',
     'access arguments' => array('search content'),
@@ -351,9 +358,10 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['dataset_badge']['info'] = t('Dataset badge');
     $blocks['dataset_stats']['info'] = t('Dataset statistics');
     $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
-    $blocks['search_outer_filter']['info'] = t('Search outer filter');
-	$blocks['search_outer_number_of_results']['info'] = t('Number of results for outer search');
-	$blocks['search_outer_tabs']['info'] = t('Tabs for outer search');
+	$blocks['search_outer_results']['info'] = t('Outer search: Results');
+    $blocks['search_outer_filter']['info'] = t('Outer search: Filters');
+	$blocks['search_outer_number_of_results']['info'] = t('Outer search: Number of results');
+	$blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
 	//search filter blocks
 	
  	$enabled_facets = apachesolr_get_enabled_facets('tow');
@@ -391,6 +399,9 @@ function tow_block($op = 'list', $delta = 0) {
       }
 	  if ($delta == 'search_outer_tabs') {
 	    return tow_search_outer_tabs_block();
+      }
+	  if ($delta == 'search_outer_results') {
+	    return tow_search_outer_results_block();
       }
       if ($delta == 'sis_tow_amount_tables') {
 	    return tow_sis_tow_amount_tables_block();

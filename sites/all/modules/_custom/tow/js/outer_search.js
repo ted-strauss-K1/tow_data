@@ -1,4 +1,6 @@
 Drupal.behaviors.outer_search = function(context) {
+	var default_tab = '#newest';
+	
 	// hide hidden facets
 	$('.apachesolr-hidden-facet', context).hide();
 	
@@ -15,34 +17,40 @@ Drupal.behaviors.outer_search = function(context) {
 	return false;
 	}).appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
 
-//	changing of search form
-	$('#block-tow-search_outer_filter').change(function(){
-		var url = build_query();
-		do_search(url);
+
+	// run search on hash change (links). uses hashchangeevent plugin
+	$(window).hashchange(function(){
+		hash = location.hash;
+		if (!hash) {
+			hash = default_tab;
+			location.hash = hash;
+		}
+		if (!do_not_search)	{
+			url = 'http://' + location.host + '/search_outer_ajax/' + hash;
+			do_search(url, hash);
+		}
+		do_not_search = false;
 	});
-//	disabling page reload on submit
+  
+	//	run search on changing search form
+//	$('#block-tow-search_outer_filter').change(function(){
+	$('#edit-keywords, #edit-size, #edit-saved-searches, #edit-access-status, #edit-forum, #edit-docs, #edit-categories').change(function(){
+		build_query_and_search();
+	});
+	
+	//	disabling page reload on submit
 	$('#edit-submit').live('click', function(e) {
 		if (e.button == 0) {
 			e.preventDefault();
 			$(this).attr('disabled','true');
-			var url = build_query();
-			do_search(url);
+			build_query_and_search();
 		}
 	});
 	
-//	disabling tag links
-	$('.apachesolr-facet, .apachesolr-unclick, .active, .tow-search-outer-tab').live('click', function(e) {
-		if (e.button == 0) {
-			e.preventDefault();
-			var url = 'http://' + location.host + '/search_outer_ajax' + $(this).attr('href');
-			do_search(url);
-		}
-	});	
-	
-//	building search query from form
-	var build_query = function () {
-		var path = '/' + $('#edit-keywords').val();
-		var query = 'filters=';
+	//	building search query from form
+	var build_query_and_search = function () {
+		path = '/' + $('#edit-keywords').val();
+		query = 'filters=';
 
 		// subjects
 		// each consequent search option should be separated from previous by whitespace
@@ -70,24 +78,30 @@ Drupal.behaviors.outer_search = function(context) {
 			query = '';
 		}
 		
-		var tab = $('#edit-current-tab').val();
+		tab = $('#edit-current-tab').val();
 		
-		return 'http://' + location.host + '/search_outer_ajax/' + tab + path + '?' + query;
-	
+		hash = tab + path + (query ? '?' + query : '');
+		
+		location.hash = hash;
+//		url = 'http://' + location.host + '/search_outer_ajax/' + tab + path + '?' + query;
+//		do_search(url, hash);
 	}
 	
-//	search and associated actions
-	var do_search = function (url) {
+	//	search request and associated actions
+	var do_search = function (url, hash) {
 		$('#content-content').html($('#edit-search-placeholder').val());
 		url = url.replace('#', '');
 		$.ajax({
 			url: url,
 			success: function(data) {
 				$('#content-content').html(data.results);
-				$('#tow-search-outer-filter-form').html(data.form);
+				$('#block-tow-search_outer_filter > .inner > .content').html(data.form);
 				$('#block-tow-search_outer_number_of_results > .inner > .content').html(data.number);
 				$('#block-tow-search_outer_tabs > .inner > .content').html(data.tabs);
 				
+				$('#edit-keywords, #edit-size, #edit-saved-searches, #edit-access-status, #edit-forum, #edit-docs, #edit-categories').change(function(){
+					build_query_and_search();
+				});
 				
 				$('.apachesolr-hidden-facet', context).hide();
 				
@@ -101,12 +115,41 @@ Drupal.behaviors.outer_search = function(context) {
 					$(this).text(Drupal.t('Show more'));
 				}
 				return false;
-				}).appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));	
+				}).appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
 
-//				location.hash = 'searched';
+				$('a.active, a.apachesolr-facet, a.apachesolr-hidden-facet, a.apachesolr-unclick, a.tow-search-outer-tab').each(function() {
+					var href = $(this).attr('href');
+					href = '/#' + href.substring(1);
+					$(this).attr('href', href);
+				});
 			},
 			dataType: 'json'
 		});	  
 	}
 	
+	var links_to_hash = function () {
+		$('a.active, a.apachesolr-facet, a.apachesolr-hidden-facet, a.apachesolr-unclick, a.tow-search-outer-tab').each(function() {
+			var href = $(this).attr('href');
+			href = '/#' + href.substring(1);
+			$(this).attr('href', href);
+		});
+
+	}
+
+	var setFavicon = function () {
+	  var link = $('link[type=image/x-icon]').remove().attr("href");
+	  $('<link href="'+ link +'" rel="shortcut icon" type="image/x-icon" />').appendTo('head');
+	}	
+
+	// trigger the first search
+	do_not_search = false;
+	if (location.hash !== '' && location.hash !== default_tab && location.hash !== default_tab + '/') {
+		$(window).hashchange();
+	} else {
+		do_not_search = true;
+		location.hash = default_tab;
+		links_to_hash();
+		setFavicon();
+//		do_not_search = false;
+	}
 }
