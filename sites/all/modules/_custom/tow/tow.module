@@ -570,7 +570,7 @@ function _tow_children_type($type) {
 function _tow_format_bool($value) {
   if ($value)
     return 'true';
-  if ($value === '0')
+  if (!$value)
     return 'false';
 }
 
@@ -641,16 +641,4 @@ function tow_search($op = 'search', $keys = NULL) {
 	  }
 	  break;
   } // switch
-} 
-
-
- /**
- * Implementation of hook_menu_alter().
- */
-// function tow_menu_alter(&$menu) {
-  // if (isset($menu['search/apachesolr_search/%menu_tail'])) {
-    // $menu['search']['page callback'] = 'tow_outer_search_view';
-    // $menu['search/apachesolr_search/%menu_tail']['page callback'] = 'tow_outer_search_view';
-  // }  
- // } 
- 
+}

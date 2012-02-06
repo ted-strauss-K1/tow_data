@@ -3,8 +3,34 @@
  * Menu callback
  */
 function tow_search_within_dataset_callback($nid) {
-  x('tow_search_within_dataset_callback called');
-  x($_GET);
+//  x('tow_search_within_dataset_callback called');
+//  x($_GET);
+	
+  $type = 'apachesolr_search';
+  $keys = '';//trim(tow_get_keys());
+
+  // We did not redirect, so run the search if needed.
+  $results = '';
+
+  $filters = trim($_GET['filters']);
+/* 	$filters = tow_get_search_outer_filters();
+	$filters = $filters['query'];
+	$_GET['filters'] = $filters;
+ */	
+	// Log the search keys:
+	$log = $keys;
+	if ($filters) {
+	  $log .= 'filters='. $filters;
+	}
+	watchdog('search', '%keys (@type).', array('%keys' => $log, '@type' => t('Search')), WATCHDOG_NOTICE, l(t('results'), 'search/'. $type .'/'. $keys));
+
+	// Collect the search results:
+	$results = search_data($keys, 'tow_inner_search');
+	return $results;
+	
+	////////////////////////////
+	
+	
   // x($_POST);
   $output = '';
   
@@ -110,7 +136,7 @@ function tow_search_within_dataset_advanced() {
 /**
  * Creates form elements for the search_within_dataset page
  */
-function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_nid) {xdebug_break();
+function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_nid) {
 
   global $dataset;
   $dataset = node_load($dataset_nid);
@@ -731,4 +757,13 @@ function tow_search_within_dataset_submit($form, &$form_state) {
   // TODO: add number of results
   // 
   node_save($new_ss);*/
+}
+
+/**
+ * Retrieves table nid from GET[q] search_dataset/nid -> nid
+ */
+function tow_search_inner_get_nid() {
+	$path = explode('/', $_GET['q'], 2);
+	$return = count($path) == 2 ? $path[1] : FALSE;
+	return $return;
 }

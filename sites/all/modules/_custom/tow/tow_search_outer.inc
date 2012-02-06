@@ -81,7 +81,7 @@ function tow_get_homepage_tab() {
 	// Note: support old GET format of searches for existing links.
 	$path = explode('/', $_GET['q'], 2);
 	$tab = $path[0];
-	if (!in_array($tab, array('featured', 'newest', 'popular', 'debated')))
+	if (!in_array($tab, array('featured', 'newest', 'popular', 'debated', 'search_dataset')))
 		$tab = tow_get_search_outer_default_tab();
   }
   return $tab;
@@ -139,11 +139,13 @@ function tow_get_search_outer_filters() {
 		foreach ($n[0] as $tid) {
 			if (in_array($tid, $outer_tids)) {
 				$values['categories'] = $tid;
+				$values['query'] .= 'tid:' . $tid . ' ';
 			} else {
 				$values['tags_query'] .= ' ' . 'tid:' . $tid;
 				$values['tags'][] = $tid;
+				$values['query'] .= 'tid:' . $tid . ' ';
 			}
-			$values['query'] .= 'tid:' . $n[0] . ' ';
+			
 		}
 
 	}

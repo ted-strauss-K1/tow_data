@@ -11,105 +11,171 @@ function tow_apachesolr_process_results(&$results) {
   if ($results[0]['node']->type == 'dataset') { // if search was made for datasets
     foreach ($results as $key => $result) {
 
-		$results[$key]['amount_tables'] = $result['node']->sis_tow_amount_tables . t(' tables');
-		$results[$key]['amount_records'] = $result['node']->sis_tow_amount_records . t(' records');
-		$results[$key]['posted_date'] = t('posted ') . date('M d, Y', $result['node']->created);
+			$results[$key]['amount_tables'] = $result['node']->sis_tow_amount_tables . t(' tables');
+			$results[$key]['amount_records'] = $result['node']->sis_tow_amount_records . t(' records');
+			$results[$key]['posted_date'] = t('posted ') . date('M d, Y', $result['node']->created);
 
-		$account = new stdClass;
-		$account->uid = $result['node']->uid;
-		$account->name = $result['node']->name;
-		$account->picture = $result['node']->ss_picture;
-		$results[$key]['picture'] = theme('user_picture', $account);
+			$account = new stdClass;
+			$account->uid = $result['node']->uid;
+			$account->name = $result['node']->name;
+			$account->picture = $result['node']->ss_picture;
+			$results[$key]['picture'] = theme('user_picture', $account);
 
-		$results[$key]['teaser'] = $result['node']->ss_teaser;
+			$results[$key]['teaser'] = $result['node']->ss_teaser;
 
-		$tid = $result['fields']['im_vid_2']['0'];
-		$results[$key]['category'] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
-	  
-		foreach ($result['fields']['im_vid_1'] as $tid) {
-			$results[$key]['tags'][] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
-		}
-		//$results[$key]['amount_views'] = $result['node']->sis_tow_amount_views . t(' views');
+			$tid = $result['fields']['im_vid_2']['0'];
+			$results[$key]['category'] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
+			
+			foreach ($result['fields']['im_vid_1'] as $tid) {
+				$results[$key]['tags'][] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
+			}
+			//$results[$key]['amount_views'] = $result['node']->sis_tow_amount_views . t(' views');
     }
   }
-  else { // search for records option
-    foreach ($results as $key => $result) {
-      // add record_nid to the display data, first index of this array corresponds 
-      // to the table_nid of added record
-      $displayed_rows[$result['node']->sis_tow_field_table][] = $result['node']->nid;
-      unset($results[$key]);
-      
-    }  
-    //x($displayed_rows);
-    //  Display each table
-    foreach ($displayed_rows as $table_nid => $record_nids) {
-    
-      // TODO: Specify, which records to extract
-      $first_record_id = 0;
-      $display_options['sort'] = array ('sort_index' => 'nid', 'sort_order' => 'ASC');
-      $display_options['record_nids'] = $record_nids;
-      
-      //$display_options['limits'] = array ('first_elem_no' => $first_record_id, 'total_elements' => 1);
-
-      $table_node = node_load($table_nid);
-        
-      $tables_to_display[] = array(
-        'table_nid' => $result['node'],
-        'title' => l($table_node->title, 'table/' . $table_nid) . t(' table'),
-        'table' => tow_table($table_node, $display_options),
-      ); 
-           
-      
+  else {dpm($results); // search for records option
+		if (isset($results[0]))
+			$table_nid = $results[0]['node']->sis_tow_field_table;
+		
+		$table_node = node_load($table_nid);dpm($table_node);
+		$weights_array = unserialize($table_node->field_weights[0]['value']);
+		$rows = array();
+		$headers = array();
+		foreach ($results as $key => $result) {xdebug_break();
+			$index = 0;
+			$row = array();
+			foreach (tow_possible_fields() as $field_type) {
+				$delta = 0;
+				$apachesolr_field_type = tow_apachesolr_field_type($field_type);
+				if (!is_array($table_node->{'field_title_' . $field_type}))
+					continue;
+				foreach($table_node->{'field_title_' . $field_type} as $title_value) {
+					if ($title_value['value']) {
+						$apachesolr_field_name = $apachesolr_field_type . '_tow_field_' . $field_type . '_' . $delta;	
+						$value = $result['node']->$apachesolr_field_name;
+						switch ($field_type) {
+							case 'bool':
+							 $value = _tow_format_bool($value);
+							 break;
+							case 'date':
+								$value = str_replace('T', ' ', $value);
+								$value = str_replace('Z', '', $value);
+								$value = date('Y-m-d', strtotime($value));
+								break;
+							case 'time':
+								$value = str_replace('T', ' ', $value);
+								$value = str_replace('Z', '', $value);
+								$value = date('H:i:s', strtotime($value));
+								break;
+							case 'datetime':
+								$value = str_replace('T', ' ', $value);
+								$value = str_replace('Z', '', $value);
+								$value = date('Y-m-d H:i:s', strtotime($value));
+								break;
+							case 'timestamp':
+								$value = date('Y-m-d H:i:s', $value);
+								break;
+							case 'enum':
+								// $title_enum = $table_node['titles']['values'][$key];
+								// foreach($node->field_title_enum as $enum_delta => $enum_value) {
+									// if ($enum_value['value'] == $title_enum) {
+										// unset($node->field_title_enum[$enum_delta]);
+										// break;
+									// }
+								// }
+								$enum_options = unserialize($table_node->field_enum_options[$delta]['value']);
+								$value = $enum_options[$value];
+							default:
+							 break;
+						}
+						$row[$weights_array[$index]] = array('data' => $value);
+						$headers[$weights_array[$index]] = array('data' => $title_value['value']);
+						$index++;
+						$delta++;
+					}
+				}
+			}
+			if ($row)
+				ksort($row);
+			$rows[$key] = array('data' => $row);
     }
-    
-    $results = $tables_to_display;
+		if ($headers)
+			ksort($headers);		
+		$results['headers'] = $headers;
+		$results['rows'] = $rows;
+		
+//		dpm($results);
   }
-  
-  
-  //print 'Search results';
 }
 
-function tow_apachesolr_modify_query(&$query, &$params) {
-  //x(tow_apachesolr_modify_query);
-  //x($query);
-  //x($params);
-  // Adding fields to field list (fl)
-  
-  // TODO: Add this only for datasets
-  $params['fl'] .= ',sis_tow_amount_tables';
-  $params['fl'] .= ',sis_tow_amount_records';
-  $params['fl'] .= ',sis_tow_amount_saved_searches';
-  $params['fl'] .= ',sis_tow_count_views';
-  $params['fl'] .= ',sis_cck_field_access_type';
-  $params['fl'] .= ',im_vid_1';
-  $params['fl'] .= ',im_vid_2';
-  $params['fl'] .= ',ss_teaser';
-  // TODO:bookmarks 
-
+function tow_apachesolr_modify_query(&$query, &$params) {xdebug_break();
+  $current_tab = tow_get_homepage_tab();
+	if ($current_tab == 'search_dataset') {
+	// Inner search
   // TODO: add this only to records
-  $params['fl'] .= ',sis_tow_field_table';
+//		dpm(get_class_methods(get_class($query)));
+		$nid = tow_search_inner_get_nid();
+		$table_node = node_load($nid);
+		if ($table_node->type == 'table') {
+			$params['fl'] .= ',sis_tow_field_table';
+			$query->add_filter('sis_tow_field_table', $nid);
+//			dpm($table_node);
+			
+			$possible_types = tow_possible_fields();
+			foreach ($possible_types as $field_type) {
+				$field_name = 'field_' . $field_type;
+				$field_title_name = 'field_title_' . $field_type;
+				$apachesolr_field_type = tow_apachesolr_field_type($field_type);			
+				foreach ($table_node->$field_title_name as $delta => $field_title) {
+					if ($field_title != NULL) {
+						$apachesolr_field_name = $apachesolr_field_type . '_tow_' . $field_name . '_' . $delta;	
+						$params['fl'] .= ',' . $apachesolr_field_name;
+					}
+				}
+			}
 
-  $query->add_filter('type', 'dataset');  
-  $query->add_filter('-sis_cck_field_access_type', '2');  
-  switch (tow_get_homepage_tab()) {
-	case 'newest':
-		$query->set_solrsort('created', 'desc');
-	break;
-	
-	case 'popular':
-		$query->set_solrsort('sort_title', 'asc');
-	break;
-	
-	default:
-	break;
-  }
+			$query->add_filter('type', 'record');  
+			$params['rows'] = 10000000;
+//			dpm($params);
+//			dpm($query);
+		}
+	} else {
+		// Outer search
+		
+		// TODO: Add this only for datasets
+		// Adding fields to field list (fl)
+		$params['fl'] .= ',sis_tow_amount_tables';
+		$params['fl'] .= ',sis_tow_amount_records';
+		$params['fl'] .= ',sis_tow_amount_saved_searches';
+		$params['fl'] .= ',sis_tow_count_views';
+		$params['fl'] .= ',sis_cck_field_access_type';
+		$params['fl'] .= ',im_vid_1';
+		$params['fl'] .= ',im_vid_2';
+		$params['fl'] .= ',ss_teaser';
+		
+		$query->add_filter('type', 'dataset');  
+		$query->add_filter('-sis_cck_field_access_type', '2');  
+		
+		switch ($current_tab) {
+			case 'newest':
+				$query->set_solrsort('created', 'desc');
+			break;
+			
+			case 'popular':
+				$query->set_solrsort('sort_title', 'asc');
+			break;
+			
+			default:
+			break;
+		}
+	}
+  // TODO:bookmarks 
 }
 
 /** 
  * Implementation of hook_apachesolr_update_index(). 
  **/ 
 function tow_apachesolr_update_index(&$document, $node) {
-  
+//  watchdog('apachesolr', 'tow_apachesolr_update_index');
   if ($node->type == 'dataset') {
 	  $document->sis_tow_amount_tables = db_result(db_query("
 		SELECT COUNT(*) FROM {content_type_table} WHERE field_dataset_value = %d
@@ -141,6 +207,7 @@ function tow_apachesolr_update_index(&$document, $node) {
 	
 	// Add dataset_nid field and table_nid field to be indexed by apachesolr
 	if ($node->type == 'record') {
+		watchdog('inner_search', 'node: <pre>' . print_r($node, TRUE) . '</pre>');
     $document->sis_tow_dataset_nid = db_result(db_query("
       SELECT `ctt`.`field_dataset_value` AS `dataset_nid`
       FROM {content_type_table} `ctt`
@@ -148,11 +215,78 @@ function tow_apachesolr_update_index(&$document, $node) {
         ON `ctr`.`field_table_value` = `ctt`.`nid`
       WHERE `ctr`.`nid` = %d", $node->nid));   
     $document->sis_tow_field_table = $node->field_table[0]['value'];
-    
+		
+		$possible_fields = tow_possible_fields();
+		foreach ($possible_fields as $field_type) {
+			$field_name = 'field_' . $field_type;
+			$apachesolr_field_type = tow_apachesolr_field_type($field_type);
+			$pos = 0;
+			foreach ($node->$field_name as $field) {
+				if (isset($field['value'])) {
+					$apachesolr_field_name = $apachesolr_field_type . '_tow_' . $field_name . '_' . $pos;
+					switch ($field_type) {
+						case 'time':
+							$value = '0001-01-01T' . date('H:i:s',strtotime($field['value'])) .'Z';
+							break;
+						case 'date':
+							$value = date('Y-m-d', strtotime($field['value'])) .'T00:00:00Z';
+							break;
+						case 'datetime':
+							$value = date('Y-m-d', strtotime($field['value'])) . 'T' . date('H:i:s', strtotime($field['value'])) .'Z';
+							break;
+						default:
+							$value = $field['value'];
+							break;
+					}
+					$document->$apachesolr_field_name = $value;
+					$pos++;
+					watchdog('inner_search', $apachesolr_field_name . ' => ' . $document->$apachesolr_field_name);
+				}
+			}
+		}
+		watchdog('inner_search', 'doc: <pre>' . print_r($document, TRUE) . '</pre>');
   }
   
 }
 
+/** 
+ * Returns prefix of ApacheSolr dynamic single-valued field 
+ * corresponding to ToW field of table record.
+ **/ 
+function tow_apachesolr_field_type($type) {
+	switch ($type) {
+		case 'int': 
+		case 'timestamp': 
+			return 'is'; //integer
+
+		case 'char': 
+		case 'code': 
+			return 'ss'; //string
+
+		case 'float': 
+			return 'fs'; //sfloat
+
+		case 'bool': 
+			return 'bs'; //boolean
+			break;
+
+		case 'enum': 
+			return 'tis'; //tint
+
+		case 'date': 
+		case 'datetime': 
+		case 'time': 
+			return 'ds'; //date
+
+		case 'text': 
+		default: 
+			return 'ts'; //text
+	}
+}
+
+/** 
+ *
+ **/ 
 function tow_apachesolr_facets() {
   $facets['sis_tow_amount_tables'] = array(
     'info' => t('Amount of tables'),

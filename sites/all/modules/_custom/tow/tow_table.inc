@@ -149,7 +149,7 @@ function tow_table($node, $display_options = array()) {
       }elseif ($table_types_key == 'date') {
         $row[] = array('data' => substr($value, 0, 10));
       }elseif ($table_types_key == 'timestamp') {
-        $row[] = array('data' => date('d M Y H:i:s', $value));  
+        $row[] = array('data' => date('Y-m-d H:i:s', $value));  
       }elseif ($table_types_key == 'enum') {
         $title_enum = $user_table['titles']['values'][$key];
         foreach($node->field_title_enum as $enum_delta => $enum_value) {
@@ -1049,7 +1049,8 @@ function _tow_get_table_fields($table_node){
     ksort($aux_array);
   // 3 Add units and indexes to the fields
   // TODO: 
-  return $aux_array;
+//  dpm($aux_array);
+	return $aux_array;
 }
 
 function tow_table_display_switch_block() {
