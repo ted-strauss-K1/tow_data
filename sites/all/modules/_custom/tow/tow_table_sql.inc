@@ -200,7 +200,7 @@ function tow_construct_table_query($node, $display_options = '') {
   if (!isset($display_options['sort']['sort_order'])) {
     $display_options['sort']['sort_order'] = "DESC";
   }
-  $argmts[] = $display_options['sort']['sort_order'];xdebug_break();
+  $argmts[] = $display_options['sort']['sort_order'];
 
   // 7. Add LIMIT part
   // LIMIT %n , %n

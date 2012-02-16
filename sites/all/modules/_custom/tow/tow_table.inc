@@ -1066,6 +1066,7 @@ function tow_table_display_switch_block() {
   
   //$items[] = l('Structure', 'node/' . $table->nid . '/edit', array('query' => 'destination=table/' . $dataset->nid));
   $items[] = l('Structure', 'node/' . $table->nid);
+  $items[] = l('Search', 'search_dataset/' . $table->nid);
   
   $block['content'] = theme_item_list($items, NULL, 'ul');
   

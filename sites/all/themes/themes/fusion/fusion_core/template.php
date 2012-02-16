@@ -27,7 +27,6 @@ function fusion_core_preprocess_maintenance_page(&$vars) {
  */
 function fusion_core_preprocess_page(&$vars) {
   global $language, $theme_key, $theme_info, $user;
- //dpm($vars);
   // Remove sidebars if disabled e.g., for Panels
   if (!$vars['show_blocks']) {
     $vars['sidebar_first'] = '';

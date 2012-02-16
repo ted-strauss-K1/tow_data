@@ -89,6 +89,18 @@ function tow_theme() {
       ),
       'template' => 'templates/tow_theme_dataset_attachment',
     ),
+		    /**
+     * Returns a link for a facet term, with the number (count) of results for that term
+     */
+    'tow_search_inner_facet_link' => array(
+      'arguments' => array('facet_text' => NULL, 'path' => NULL, 'options' => NULL, 'count' => NULL, 'active' => FALSE, 'num_found' => NULL),
+    ),
+    /**
+     * Returns a link to remove a facet filter from the current search.
+     */
+    'tow_search_inner_unclick_link' => array(
+      'arguments' => array('facet_text' => NULL, 'path' => NULL, 'options' => NULL, 'count' => NULL, 'active' => FALSE, 'num_found' => NULL),
+    ),
   );
 }
 
@@ -358,23 +370,23 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['dataset_badge']['info'] = t('Dataset badge');
     $blocks['dataset_stats']['info'] = t('Dataset statistics');
     $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
-	$blocks['search_outer_results']['info'] = t('Outer search: Results');
+		$blocks['search_outer_results']['info'] = t('Outer search: Results');
     $blocks['search_outer_filter']['info'] = t('Outer search: Filters');
-	$blocks['search_outer_number_of_results']['info'] = t('Outer search: Number of results');
-	$blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
-	//search filter blocks
+		$blocks['search_outer_number_of_results']['info'] = t('Outer search: Number of results');
+		$blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
+		$blocks['search_inner_facets']['info'] = t('Inner search: facets block');
+		//search filter blocks
 	
- 	$enabled_facets = apachesolr_get_enabled_facets('tow');
-	$facets = tow_apachesolr_facets();
-	// Add the blocks
-	foreach ($enabled_facets as $delta => $facet_field) {
-		if (isset($facets[$delta])) {
-			$blocks[$delta] = $facets[$delta] + array('cache' => BLOCK_CACHE_PER_PAGE,);
-		}
-	}	 
+		$enabled_facets = apachesolr_get_enabled_facets('tow');
+		$facets = tow_apachesolr_facets();
+		// Add the blocks
+		foreach ($enabled_facets as $delta => $facet_field) {
+			if (isset($facets[$delta])) {
+				$blocks[$delta] = $facets[$delta] + array('cache' => BLOCK_CACHE_PER_PAGE,);
+			}
+		}	 
     return $blocks;
-  }
-  elseif($op == 'view') {
+  } elseif($op == 'view') {
     if (user_access('access content')) {
       if($delta == 'create_table') { 
 	    return tow_dataset_create_table_block();
@@ -394,35 +406,35 @@ function tow_block($op = 'list', $delta = 0) {
       if ($delta == 'search_outer_filter') {
 	    return tow_search_outer_filter_block();
       }      
-	  if ($delta == 'search_outer_number_of_results') {
-	    return tow_search_outer_number_of_results_block();
+			if ($delta == 'search_outer_number_of_results') {
+				return tow_search_outer_number_of_results_block();
+				}
+			if ($delta == 'search_outer_tabs') {
+				return tow_search_outer_tabs_block();
+				}
+			if ($delta == 'search_outer_results') {
+				return tow_search_outer_results_block();
       }
-	  if ($delta == 'search_outer_tabs') {
-	    return tow_search_outer_tabs_block();
-      }
-	  if ($delta == 'search_outer_results') {
-	    return tow_search_outer_results_block();
+			if ($delta == 'search_inner_facets') {
+				return tow_search_inner_facets_block();
       }
       if ($delta == 'sis_tow_amount_tables') {
-	    return tow_sis_tow_amount_tables_block();
+				return tow_sis_tow_amount_tables_block();
       }
     } 
-  } 
-  elseif($op == 'configure') {
+  } elseif($op == 'configure') {
 		if (user_access('access content')) {
 		  if ($delta == 'sis_tow_amount_tables') {
 			return apachesolr_facetcount_form('sis_tow_amount_tables', $delta);
 		  }
 		}
-  } 
-  elseif($op == 'save') {
+  } elseif($op == 'save') {
 		if (user_access('access content')) {
 		  if ($delta == 'sis_tow_amount_tables') {
 			return apachesolr_facetcount_save($edit);
 		  }
 		}
 	}
-  
 }
 
 /**

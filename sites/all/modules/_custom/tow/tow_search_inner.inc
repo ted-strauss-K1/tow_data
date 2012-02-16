@@ -1,5 +1,311 @@
 <?php
 /**
+ * Home page search block
+ */
+function tow_search_inner_facets_block() {
+  
+  $block = array();
+  
+  $block['title'] = 'Filters';
+  $block['content'] = '';
+
+	$response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+//	dpm($response->stats);
+	if (isset($response->response->docs[0]))
+		$table_nid = $response->response->docs[0]->sis_tow_field_table;
+	else 
+		return;
+	
+	$table_node = node_load($table_nid);
+	$weights_array = unserialize($table_node->field_weights[0]['value']);
+	$index = 0;
+
+	$saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+	$saved_query = apachesolr_current_query(NULL, 'tow_inner_search');
+	$query = clone $saved_query;
+	$params = apachesolr_search_basic_params($query);
+	
+	foreach (tow_possible_fields() as $field_type) {
+		$delta = 0;
+		$apachesolr_field_type = tow_apachesolr_field_type($field_type);
+		if (!is_array($table_node->{'field_title_' . $field_type}))
+			continue;
+		foreach($table_node->{'field_title_' . $field_type} as $title_value) {
+			if ($title_value['value']) {
+				$apachesolr_field_name = $apachesolr_field_type . '_tow_field_' . $field_type . '_' . $delta;	
+				$stats = isset($response->stats->stats_fields->$apachesolr_field_name) ? $response->stats->stats_fields->$apachesolr_field_name : NULL;
+				//building solr query for facets for each field
+				tow_search_inner_facet_query($params, $apachesolr_field_name, $field_type, $stats);
+
+				$index++;
+				$delta++;
+			}
+		}
+	}
+	//TODO: request to solr using request built
+	$params['rows'] = 10;
+	$params['facet'] = 'true';
+	list($final_query, $response) = apachesolr_do_query('tow_inner_search', $query, $params);
+	if (empty($response))
+		return;
+	apachesolr_static_response_cache($saved_response, 'tow_inner_search');
+	apachesolr_current_query($saved_query, 'tow_inner_search');	
+
+	//TODO: creating facet for each field
+//	dpm($response->facet_counts);
+
+	foreach (tow_possible_fields() as $field_type) {
+		$delta = 0;
+		$apachesolr_field_type = tow_apachesolr_field_type($field_type);
+		if (!is_array($table_node->{'field_title_' . $field_type}))
+			continue;
+		foreach($table_node->{'field_title_' . $field_type} as $title_value) {
+			if ($title_value['value']) {
+				//for enum fields
+				global $tow_search_inner_field_delta;
+				$tow_search_inner_field_delta = $delta;
+				
+				$apachesolr_field_name = $apachesolr_field_type . '_tow_field_' . $field_type . '_' . $delta;	
+				// $block['content'] .= 'count: ' . $response->stats->stats_fields->$apachesolr_field_name->count . '<br />';
+				// $block['content'] .= 'empty: ' . $response->stats->stats_fields->$apachesolr_field_name->missing . '<br />';
+				$field_filters = $query->get_filters('{!tag=' . $apachesolr_field_name . '}' . $apachesolr_field_name);
+				foreach ($field_filters as $field_filter) {
+					$query->remove_filter('{!tag=' . $apachesolr_field_name . '}' . $apachesolr_field_name, $field_filter['#value']);
+					$query->add_filter($apachesolr_field_name, $field_filter['#value']);
+				}			
+
+				$block['content'] .= '<div><b>' . $title_value['value'] . '</b><br />' . tow_search_inner_facet($apachesolr_field_name, $field_type, $response->facet_counts, $response, $query) . '</div>';
+				
+				$index++;
+				$delta++;
+			}
+		}
+	}
+//	dpm($query->get_filters());
+
+
+	return $block;
+ 
+}
+
+/**
+ * Builds part of solr query for getting facet numbers for table field
+ */
+function tow_search_inner_facet_query(&$params, $field, $type, $stats) {
+	switch ($type) {
+		case 'int':
+			$min = $stats->min;
+			$max = $stats->max;
+			$interval = $max - $min;
+			$gap = ceil($interval/10);
+			$corrected_interval = 10 * $gap;
+			$diff = $corrected_interval - $interval;
+			$corrected_min = $min;
+			$corrected_max = $corrected_min + $corrected_interval;
+			if (!isset($params['facet.range']) || !in_array($field, $params['facet.range']))
+				$params['facet.range'][] = $field; //'(!ex=' . $field . ')' .
+			$params['f.' . $field . '.facet.range.start'] = $corrected_min;
+			$params['f.' . $field . '.facet.range.end'] = $corrected_max;
+			$params['f.' . $field . '.facet.range.gap'] = $gap;
+			
+			break;
+		case 'timestamp': 
+			return NULL;
+		case 'char': 
+			return NULL;
+		case 'code': 
+			return NULL;
+		case 'float': 
+			$min = $stats->min;
+			$max = $stats->max;
+			$interval = $max - $min;
+			$gap = $interval/10;
+			$corrected_min = $min;
+			$corrected_max = $max + $gap/2;
+			if (!isset($params['facet.range']) || !in_array($field, $params['facet.range']))
+				$params['facet.range'][] = $field;
+			$params['f.' . $field . '.facet.range.start'] = $corrected_min;
+			$params['f.' . $field . '.facet.range.end'] = $corrected_max;
+			$params['f.' . $field . '.facet.range.gap'] = $gap;
+			break;
+		case 'bool': 
+		case 'enum': 
+			$params['facet.field'][] = '{!ex=' . $field . '}' . $field; // 
+			break;
+		case 'date': 
+			return NULL;
+		case 'datetime': 
+			return NULL;
+		case 'time': 
+			$params['facet.date'][] = $field;
+			$params['f.'. $field .'.facet.date.start'] = '0001-01-01T00:00:00Z';
+			$params['f.'. $field .'.facet.date.end'] = '0001-01-01T23:59:59Z';
+			$params['f.'. $field .'.facet.date.gap'] = '+1HOUR';
+			break;
+		case 'text': 
+			return NULL;
+		default: 
+			return NULL;
+	}
+}
+
+/**
+ * Builds part of inner search facets block for specific field
+ */
+function tow_search_inner_facet($field, $type, $facet_counts, $response, $query) {
+	switch ($type) {
+		case 'int':
+			$facets_list = array();
+			$gap = $facet_counts->facet_ranges->$field->gap;
+			$start =  $facet_counts->facet_ranges->$field->start;
+			$end =  $facet_counts->facet_ranges->$field->end;
+			$group_start = $start;
+			$counts = $facet_counts->facet_ranges->$field->counts;
+			while ($group_start < $end) {
+				$interval = $group_start . ' ... ' . ($group_start + $gap -1);
+				if (isset($counts->$group_start)) 
+					$group_counts = $counts->$group_start; 
+				else
+					$group_counts = 0;
+				$facets_list[] = $interval . ': ' . $group_counts;
+				$group_start += $gap;
+			}
+			array_pop($facets_list);
+			array_push($facets_list, ($group_start - $gap) . ' ... ' . $group_start . ': ' . $group_counts);
+			$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start, $group_start);
+			return theme('item_list', $facets_list) . $form;
+		case 'timestamp': 
+			return NULL;
+		case 'char': 
+			return NULL;
+		case 'code': 
+			return NULL;
+		case 'float': return NULL;
+			$facets_list = array();
+			$gap = $facet_counts->facet_ranges->$field->gap;
+			$start =  $facet_counts->facet_ranges->$field->start;
+			$end =  $facet_counts->facet_ranges->$field->end;
+			$group_start = $start;
+			$counts = (array) $facet_counts->facet_ranges->$field->counts;
+			
+			$count_in_bin = array();
+			foreach ($counts as $group_start => $count) {
+				$number_of_bin = round(($group_start - $start)/$gap);
+				$count_in_bin[$number_of_bin] = $count;
+			}
+			$ii = 10;
+			while (isset($count_in_bin[$ii])) {
+				$count_in_bin[9] += $count_in_bin[$ii];
+				$ii++;
+			}
+				
+			for ($ii=0; $ii<10; $ii++){
+				$group_start = $start + $ii * $gap;
+				$group_end = $start + ($ii + 1) * $gap;
+				$interval = $group_start . ' ... ' . $group_end;
+				if (isset($count_in_bin[$ii])) 
+					$group_counts = $count_in_bin[$ii];
+				else
+					$group_counts = 0;
+				$facets_list[] = $interval . ': ' . $group_counts;
+			}
+			$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start, $group_end);
+			return theme('item_list', $facets_list) . $form;
+		case 'bool': 
+			$facets_list = tow_search_inner_facet_block($response, $query, 'tow_inner_search', $field, $field, '');
+			return $facets_list['content'];
+		case 'enum': 
+			$facets_list = tow_search_inner_facet_block($response, $query, 'tow_inner_search', $field, $field, '', 'tow_search_facet_enum_option');
+			return $facets_list['content'];
+		case 'date': 
+			return NULL;
+		case 'datetime': 
+			return NULL;
+		case 'time': 
+			$facets_list = array();
+			$counts = $facet_counts->facet_dates->$field;
+//			dpm($counts);
+			for ($ii=0; $ii<24; $ii++) {
+				$interval = $ii . ' ... ' . ($ii+1) . 'h';
+				$solr_time = '0001-01-01T' . ($ii<10 ? '0' : '') . $ii . ':00:00Z';
+//				dpm($solr_time);
+				if (isset($counts->$solr_time)) 
+					$group_counts = $counts->$solr_time;
+				else
+					$group_counts = 0;
+				$facets_list[] = $interval . ': ' . $group_counts;
+			}
+			$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, '00:00:00', '23:59:59', 'time');
+			return theme('item_list', $facets_list) . $form;
+		case 'text': 
+			return NULL;
+		default: 
+			return NULL;
+	}
+}
+
+function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $fieldtype = 'int') {
+	$form = array();
+
+	$saved_query = apachesolr_current_query(NULL, 'tow_inner_search');
+	$query = clone $saved_query;
+	$query->remove_filter($field);
+	$query->add_filter($field, $field . '_placeholder');
+	$filters = $query->get_url_queryvalues();
+	$url = $_GET['q'] . '?filters=' . $filters['filters'];
+	
+	$form['url'] = array(
+		'#type' => 'hidden',
+		'#value' => $url,
+	); 
+
+	$form['field'] = array(
+		'#type' => 'hidden',
+		'#value' => $field,
+	); 
+
+	$form['fieldtype'] = array(
+		'#type' => 'hidden',
+		'#value' => $fieldtype,
+	); 
+
+	$form['min'] = array(
+		'#type' => 'textfield',
+		'#title' => t('from'),
+		'#value' => $min,
+	); 
+	
+	$form['max'] = array(
+		'#type' => 'textfield',
+		'#title' => t('to'),
+		'#value' => $max,
+	); 
+
+	$form['search'] = array(
+		'#type' => 'button',
+		'#title' => t('Search'),
+		'#value' => t('Search'),
+		'#attributes' => array('onclick' => 'return false;'),
+	); 	
+	
+	return $form;
+}
+
+function tow_search_facet_enum_option($facet, $options){
+	global $tow_search_inner_field_delta;
+
+	$response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+//	dpm($response->stats);
+	if (isset($response->response->docs[0]))
+		$table_nid = $response->response->docs[0]->sis_tow_field_table;
+
+	$table_node = node_load($table_nid);
+
+	$enum_options = unserialize($table_node->field_enum_options[$tow_search_inner_field_delta]['value']);
+	return $enum_options[$facet];
+}
+
+/**
  * Menu callback
  */
 function tow_search_within_dataset_callback($nid) {
@@ -26,6 +332,9 @@ function tow_search_within_dataset_callback($nid) {
 
 	// Collect the search results:
 	$results = search_data($keys, 'tow_inner_search');
+	drupal_add_js(drupal_get_path('module', 'tow') . '/js/jquery.ba-hashchange.min.js');
+	drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
+
 	return $results;
 	
 	////////////////////////////
@@ -99,6 +408,137 @@ function tow_search_within_dataset_callback($nid) {
   */
   return $output;
 }
+
+
+/**
+ * Helper function for displaying a facet block.
+ */
+function tow_search_inner_facet_block($response, $query, $module, $delta, $facet_field, $filter_by, $facet_callback = FALSE) {
+  if (!empty($response->facet_counts->facet_fields->$facet_field)) {
+    $contains_active = FALSE;
+    $items = array();
+    foreach ($response->facet_counts->facet_fields->$facet_field as $facet => $count) {
+      $options = array();
+      $exclude = FALSE;
+
+      // Solr sends this back if it's empty.
+      if ($facet == '_empty_') {
+        $exclude = TRUE;
+        $facet = '[* TO *]';
+        $options['html'] = TRUE;
+      }
+
+      if ($facet_callback && function_exists($facet_callback)) {
+        $facet_text = $facet_callback($facet, $options);
+      }
+      elseif ($exclude) {
+        $facet_text = theme('placeholder', t('Missing this field'));
+      }
+      else {
+        $facet_text = $facet;
+      }
+
+      $active = $query->has_filter($facet_field, $facet);
+
+      if ($active) {
+        // '*' sorts before all numbers.
+        $sortpre = '*';
+      }
+      elseif ($exclude) {
+        // '-' sorts before all numbers, but after '*'.
+        $sortpre = '-';
+      }
+      else {
+        $sortpre = 1000000 - $count;
+      }
+
+      $new_query = clone $query;
+      if ($active) {
+        $contains_active = TRUE;
+        $new_query->remove_filter($facet_field, $facet);
+        $options['query'] = $new_query->get_url_queryvalues();
+        $link = theme('tow_search_inner_unclick_link', $facet_text, $new_query->get_path(), $options, $count, FALSE, $response->response->numFound);
+      }
+      else {
+        $new_query->add_filter($facet_field, $facet, $exclude);
+        $options['query'] = $new_query->get_url_queryvalues();
+        $link = theme('tow_search_inner_facet_link', $facet_text, $new_query->get_path(), $options, $count, FALSE, $response->response->numFound);
+      }
+
+      if ($count || $active) {
+        $items[$sortpre . '*' . $facet_text] = $link;
+      }
+    }
+    // Unless a facet is active only display 2 or more.
+    if ($items && ($response->response->numFound > 1 || $contains_active)) {
+      ksort($items, SORT_STRING);
+      // Get information needed by the rest of the blocks about limits.
+      $initial_limits = variable_get('apachesolr_facet_query_initial_limits', array());
+      $limit = isset($initial_limits[$module][$delta]) ? $initial_limits[$module][$delta] : variable_get('apachesolr_facet_query_initial_limit_default', 10);
+      $output = theme('apachesolr_facet_list', $items, $limit);
+      return array('subject' => $filter_by, 'content' => $output);
+    }
+  }
+  return NULL;
+}
+
+function theme_tow_search_inner_unclick_link($facet_text, $path, $options = array(), $count = 0, $active = FALSE, $num_found = NULL) {
+  if (empty($options['html'])) {
+    $facet_text = check_plain(html_entity_decode($facet_text));
+  }
+  else {
+    // Don't pass this option as TRUE into apachesolr_l().
+    unset($options['html']);
+  }
+  $options['attributes']['class'] = 'tow-inner-search-selected';
+  return tow_search_inner_l($facet_text ." ($count)", $path, $options);
+}
+
+
+function theme_tow_search_inner_facet_link($facet_text, $path, $options = array(), $count, $active = FALSE, $num_found = NULL) {
+  $options['attributes']['class'][] = 'apachesolr-facet';
+  if ($active) {
+    $options['attributes']['class'][] = 'active';
+  }
+  $options['attributes']['class'] = implode(' ', $options['attributes']['class']);
+	$link = tow_search_inner_l($facet_text ." ($count)",  $path, $options);
+  return $link;
+}
+
+/**
+ * A replacement for l()
+ *  - doesn't add the 'active' class
+ *  - retains all $_GET parameters that ApacheSolr may not be aware of
+ *  - if set, $options['query'] MUST be an array
+ *
+ * @see http://api.drupal.org/api/function/l/6 for parameters and options.
+ *
+ * @return
+ *   an HTML string containing a link to the given path.
+ */
+function tow_search_inner_l($text, $path, $options = array()) {
+  // Merge in defaults.
+  $options += array(
+    'attributes' => array(),
+    'html' => FALSE,
+    'query' => array(),
+  );
+
+  // Don't need this, and just to be safe.
+  unset($options['attributes']['title']);
+  // Double encode + characters for clean URL Apache quirks.
+  if (variable_get('clean_url', '0')) {
+    $path = str_replace('+', '%2B', $path);
+  }
+
+  // Retain GET parameters that ApacheSolr knows nothing about.
+  $query = apachesolr_current_query(NULL, 'tow_inner_search');
+  $get = array_diff_key($_GET, array('q' => 1, 'page' => 1), $options['query'], $query->get_url_queryvalues());
+  $options['query'] += $get;
+
+  return '<a href="'. check_url(url($path, $options)) .'"'. drupal_attributes($options['attributes']) .'>'. ($options['html'] ? $text : check_plain(html_entity_decode($text))) .'</a>';
+}
+
 /*
 /**
  * Build form for simple search.

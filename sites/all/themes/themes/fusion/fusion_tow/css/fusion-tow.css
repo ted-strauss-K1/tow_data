@@ -167,6 +167,10 @@ a[href^="/43_tow_local/user"]{
 	width: 678px;
 }
 
-
+a.tow-inner-search-selected{
+	color: white;
+	background-color: black;
+	
+}
 
 
