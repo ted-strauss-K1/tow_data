@@ -54,6 +54,8 @@ function tow_apachesolr_record_process_results(&$results) {
 	//$response->facet_counts->facet_fields->$facet_field->$key;
 	if (isset($results[0]))
 		$table_nid = $results[0]['node']->sis_tow_field_table;
+	else
+		return NULL;
 	
 	$table_node = node_load($table_nid);
 	$weights_array = unserialize($table_node->field_weights[0]['value']);
@@ -73,7 +75,7 @@ function tow_apachesolr_record_process_results(&$results) {
 					$value = $result['node']->$apachesolr_field_name;
 					switch ($field_type) {
 						case 'bool':
-						 $value = _tow_format_bool($value);
+						 $value = _tow_solr_to_bool($value);
 						 break;
 						case 'date':
 							_tow_solr_to_date($value);
@@ -146,7 +148,19 @@ function _tow_solr_to_datetime(&$value) {
 function _tow_solr_to_timestamp(&$value) {
 	$value = date('Y-m-d H:i:s', $value);
 }
-
+/**
+ * Helper function converting timestamp from solr datetime format yyyy-mm-ddThh:mm:ssZ 
+ * to usual int timestamp
+ */
+function _tow_solr_to_bool(&$value) {
+	if ($value == '1')
+		return 'true';
+	if ($value == '0')
+		return 'false';
+	else
+		return NULL;
+	
+}
 /**
  * Implementation of hook_apachesolr_modify_query()
  */
@@ -218,17 +232,21 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
 				if ($field_title['value'] != NULL) {//dpm($field_title);
 					$apachesolr_field_name = $apachesolr_field_type . '_tow_' . $field_name . '_' . $delta;	
 					$params['fl'] .= ',' . $apachesolr_field_name;
-					if ($field_type != 'bool' && $field_type != 'text')	
+					if ($field_type != 'bool' && $field_type != 'text')	{
 						$params['stats.field'][] = $apachesolr_field_name;
-						
+					}	
 					$field_filters = $query->get_filters($apachesolr_field_name);
-					$field_values = array();
 
 					$subquery = apachesolr_drupal_query();
 					foreach ($field_filters as $field_filter) {
-							$field_values[] = $field_filter['#value'];
-							$query->remove_filter($field_filter['#name'], $field_filter['#value']);
-							$subquery->add_filter($apachesolr_field_name, $field_filter['#value']);
+/* 						if (in_array($field_type, array('char', 'text', 'code'))) {
+							$field_filter['#value'] = preg_replace('/(?<!\\\\)-/', '\\ ', $field_filter['#value']);
+							$field_filter['#value'] = preg_replace('/\\\\-/', '-', $field_filter['#value']);
+							dpm($field_filter['#value']);
+						} */
+						xdebug_break();
+						$query->remove_filter($field_filter['#name'], $field_filter['#value'], $field_filter['#exclude']);
+						$subquery->add_filter($apachesolr_field_name, $field_filter['#value'], $field_filter['#exclude']);
 					}
 					$query->add_subquery($subquery, 'OR');					
 				}
@@ -336,6 +354,13 @@ function _tow_datetime_to_solr(&$value) {
 	$value = date('Y-m-d', $int_time) . 'T' . date('H:i:s', $int_time) .'Z';
 }
 
+/**
+ * Helper function converting timestamp from usual format yyyy-mm-dd hh:mm:ss
+ * to solr datetime format yyyy-mm-ddThh:mm:ssZ 
+ */
+function _tow_timestamp_to_solr(&$value) {
+	$value = date('Y-m-d', $value) . 'T' . date('H:i:s', $value) .'Z';
+}
 
 /** 
  * Returns prefix of ApacheSolr dynamic single-valued field 
@@ -437,6 +462,8 @@ function tow_facet_menu($facet_field, $values, $is_range = FALSE) {
 		$params = apachesolr_search_basic_params($query);
 		apachesolr_search_add_facet_params($params, $query);
 		apachesolr_search_add_boost_params($params, $query, apachesolr_get_solr());
+		
+		$params['facet.limit'] = 100;
 		list($final_query, $response) = apachesolr_do_query('apachesolr_search', $query, $params);
 		if (empty($response)) {
 		  return;

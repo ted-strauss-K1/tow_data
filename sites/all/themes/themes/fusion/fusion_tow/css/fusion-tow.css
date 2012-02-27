@@ -173,4 +173,13 @@ a.tow-inner-search-selected{
 	
 }
 
+div.tow-inner-search-widget{
+	padding-top: 10px;
+	padding-bottom: 10px;
+	border-bottom-width: 1px;
+	border-bottom-style: dotted;
+}
 
+div.tow-inner-search-highcharts-container{
+	height: 160px;
+}

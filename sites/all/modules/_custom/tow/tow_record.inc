@@ -98,8 +98,8 @@ function tow_record_form_alter(&$form, &$form_state) {
           $input_type = 'textarea';
           break;
         case 'bool':
-          $value['value'] = _tow_format_bool($value['value']);
-          $input_type = 'textfield';
+          $value['value'] = $value['value'] === NULL ? '-1' : $value['value'];
+          $input_type = 'select';
           break;
         case 'enum':
           $input_type = 'select';
@@ -123,7 +123,12 @@ function tow_record_form_alter(&$form, &$form_state) {
           foreach($enum_options as $option)
             $form['fields']['data'][$key]['value']['#options'][] = $option;
       }
-            
+
+      
+      if ($value['type'] == 'bool') {
+        $form['fields']['data'][$key]['value']['#options'] = array('-1' => '-----', '1' => 'true', '0' => 'false'); 
+      }
+			
       $form['delta'][$key] = array(
         '#type' => 'value',
         '#value' => $value['delta']

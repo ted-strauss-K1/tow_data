@@ -375,6 +375,7 @@ function tow_block($op = 'list', $delta = 0) {
 		$blocks['search_outer_number_of_results']['info'] = t('Outer search: Number of results');
 		$blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
 		$blocks['search_inner_facets']['info'] = t('Inner search: facets block');
+		$blocks['search_inner_simple_search']['info'] = t('Inner search: simple search block');
 		//search filter blocks
 	
 		$enabled_facets = apachesolr_get_enabled_facets('tow');
@@ -389,34 +390,37 @@ function tow_block($op = 'list', $delta = 0) {
   } elseif($op == 'view') {
     if (user_access('access content')) {
       if($delta == 'create_table') { 
-	    return tow_dataset_create_table_block();
+				return tow_dataset_create_table_block();
       }
       if ($delta == 'pma_menu') {
-	    return tow_pma_menu_block();
+				return tow_pma_menu_block();
       }
       if ($delta == 'dataset_badge') {
-	    return tow_dataset_badge_block();
+				return tow_dataset_badge_block();
       }
       if ($delta == 'dataset_stats') {
-	    return tow_dataset_stats_block();
+				return tow_dataset_stats_block();
       }
       if ($delta == 'table_display_switch') {
       	return tow_table_display_switch_block();
       }
       if ($delta == 'search_outer_filter') {
-	    return tow_search_outer_filter_block();
+				return tow_search_outer_filter_block();
       }      
 			if ($delta == 'search_outer_number_of_results') {
 				return tow_search_outer_number_of_results_block();
-				}
+			}
 			if ($delta == 'search_outer_tabs') {
 				return tow_search_outer_tabs_block();
-				}
+			}
 			if ($delta == 'search_outer_results') {
 				return tow_search_outer_results_block();
       }
 			if ($delta == 'search_inner_facets') {
 				return tow_search_inner_facets_block();
+      }
+			if ($delta == 'search_inner_simple_search') {
+				return tow_search_inner_simple_search_block();
       }
       if ($delta == 'sis_tow_amount_tables') {
 				return tow_sis_tow_amount_tables_block();
@@ -582,19 +586,23 @@ function _tow_children_type($type) {
 function _tow_format_bool($value) {
   if ($value)
     return 'true';
-  if (!$value)
+  if ($value === '0')
     return 'false';
+		
+	return NULL;
 }
 
 /**
  * For @param $value return 1 if it is "true" or 1. Not case-sensitive 
  */
 function _tow_bool_to_int($value) {
-  if (strtolower($value) == 'true')
+  if (strtolower($value) == 'true' || strtolower($value) == 'yes' || $value == 1)
     return 1;
-  if ($value == 1)
-    return 1;
-  return 0;
+
+  if (strtolower($value) == 'false' || strtolower($value) == 'no' || $value == 0)
+    return 0;
+
+		return NULL;
 }
 
 /**

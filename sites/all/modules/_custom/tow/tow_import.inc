@@ -188,7 +188,7 @@ function tow_import_progress_get($hash, $stage) {
   global $user;
 
   $response = db_result(db_query("SELECT SQL_NO_CACHE stage%s FROM {tow_import_progress} WHERE sid='%s' AND hash=%d", $stage, $user->sid, $hash));
-  watchdog('import','Stage ' . $stage . ' get: ' . $value . '(hash ' . $hash . ')');
+  watchdog('import','Stage ' . $stage . ' get: ' . $response . '(hash ' . $hash . ')');
 
   if ($stage == 6)
     tow_import_progress_delete($hash);
@@ -273,9 +273,11 @@ function tow_import_upload($hash, $to) {
   foreach ($_FILES['files'] as $key => $value)
     $_FILES['files'][$key] = array('upload' => $value);
 
-  $file = file_save_upload('upload');
+  $file = file_save_upload('upload'); 
   $filename = $file->filename;
+	watchdog('import','File ' . $filename. ' uploaded');
   $copied = file_copy($file, 'import/' . $hash);
+	watchdog('import','File ' . $filename. ' copied with result:' . $copied);
 
   tow_import_progress_init($hash, $copied, $filename, $to);
 }

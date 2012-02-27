@@ -262,6 +262,8 @@ function tow_tab_link($current_tab, $title, $tab, $disable = FALSE) {
  * Home page search block
  */
 function tow_search_outer_filter_block() {
+	dpm(apachesolr_static_response_cache()->response);
+	dpm(apachesolr_current_query()->get_filters());
   
   $block = array();
   
