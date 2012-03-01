@@ -289,7 +289,7 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
     // number) parameter strings to just multiple foo=bar strings. This regex
     // should always work since '=' will be urlencoded anywhere else the
     // regex isn't expecting it.
-    $queryString = preg_replace('/%5B(?:[0-9]|[1-9][0-9]+)%5D=/', '=', $queryString);
+    $queryString = preg_replace('/%5B(?:[0-9]|[1-9][0-9]+)%5D=/', '=', $queryString);dpm(explode('&', $queryString));
 
     // Check string length of the query string, change method to POST
     // if longer than 4000 characters.

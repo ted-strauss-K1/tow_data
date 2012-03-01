@@ -182,4 +182,23 @@ div.tow-inner-search-widget{
 
 div.tow-inner-search-highcharts-container{
 	height: 160px;
+	position: relative;
+}
+
+div.tow-highcharts-navigator{
+	background-color: LightGrey; 
+	position: absolute; 
+	z-index: 9; 
+	opacity: 0.4; 
+	border-style: solid; 
+	border-width: 0px;
+}
+div.tow-highcharts-handle{
+	background-color: white; 
+	position: absolute; 
+	z-index: 10; 
+	opacity: 1; 
+	border-style: solid; 
+	border-width: 1px;
+	cursor: e-resize;
 }

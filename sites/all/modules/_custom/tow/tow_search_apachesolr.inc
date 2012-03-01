@@ -233,7 +233,11 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
 					$apachesolr_field_name = $apachesolr_field_type . '_tow_' . $field_name . '_' . $delta;	
 					$params['fl'] .= ',' . $apachesolr_field_name;
 					if ($field_type != 'bool' && $field_type != 'text')	{
-						$params['stats.field'][] = $apachesolr_field_name;
+						if ($field_type = 'int')	{
+							$params['stats.field'][] = $apachesolr_field_name;
+						} else {
+							$params['stats.field'][] = $apachesolr_field_name;
+						}
 					}	
 					$field_filters = $query->get_filters($apachesolr_field_name);
 
