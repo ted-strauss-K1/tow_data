@@ -64,7 +64,7 @@ Drupal.behaviors.outer_search = function(context) {
 				query = option.replace('_', text);
 				to_str = query;
 				url = url.replace(from_str, to_str);
-				window.location.href = 'http://' + location.host + '/' + url;
+				window.location.href = 'http://' + location.host + url;
 			}
 		}
 	});
@@ -75,7 +75,7 @@ Drupal.behaviors.outer_search = function(context) {
 		if (e.button == 0) {
 			var url = $(this).parent().parent().parent().children('[name="include_empty_url"]').val();
 			if (url) 
-				window.location.href = 'http://' + location.host + '/' + url;
+				window.location.href = 'http://' + location.host + url;
 		}
 	});
 	
@@ -108,6 +108,24 @@ Drupal.behaviors.outer_search = function(context) {
 		chart = plot_chart(id, data, axistype, fieldtype, parseFloat(min), parseFloat(max));
 	});
 	
+$('div.tow-inner-search-highcharts-bar-container').each(function(index){
+		var id = $(this).attr('id');
+		var datastring = $(this).parent().children('form').children('div').children('[name="data"]').val();
+		var namestring = $(this).parent().children('form').children('div').children('[name="tooltips"]').val();
+		var fieldtype = $(this).parent().children('form').children('div').children('[name="fieldtype"]').val();
+		datastring = datastring.substring(2, datastring.length - 2);
+		datastring = datastring.split(', ');//$(this).text(id);
+		namestring = namestring.substring(3, namestring.length - 3);
+		var names = namestring.split('", "');//$(this).text(id);
+		var data = [];
+		for (var key in datastring) {
+			var val = datastring[key];
+			data[key] = parseInt(val);
+		}
+		chart = plot_barchart(id, names, data);
+	});
+
+
 	////////////////////
 	
 	var isMouseDown = false;
@@ -163,6 +181,12 @@ Drupal.behaviors.outer_search = function(context) {
 				.css('width', nav_width[index] + 'px')
 				.css('left', nav_left[index] + 'px')
 				.css('top', chart_top + 'px');
+				
+			// if (index) 			
+				// $('#' + nav_id).css('background-color', 'red');
+			// else
+				// $('#' + nav_id).css('background-color', 'blue');
+
 			
 			$('#' + handle_id)
 				.css('height', handle_height + 'px')
@@ -187,6 +211,7 @@ Drupal.behaviors.outer_search = function(context) {
 		}
 		
 		$('#' + container_id).parent().mousemove(function(e){
+//		$(window).mousemove(function(e){
 			if (isMouseDown) {
 				var span = e.clientX - lastMousePos,
 					handleLeft = lastHandleLeft + span,
@@ -214,6 +239,10 @@ Drupal.behaviors.outer_search = function(context) {
 							navWidth = 0;
 							handleLeft = chart_left - handle_width/2;
 						}
+						if (navWidth > chart_width) {
+							navWidth = chart_width;
+							handleLeft = chart_right - handle_width/2;
+						}
 
 						lastMousePos = e.clientX;
 						lastHandleLeft = handleLeft;
@@ -233,7 +262,6 @@ Drupal.behaviors.outer_search = function(context) {
 						$('#' + currentContainer + '-navigator-0').css('width', (navBorder - chart_left) + 'px');
 						$('#' + currentContainer + '-handle-0').css('left', (navBorder - lastNavLeft - lastNavWidth + lastHandleLeft) + 'px');
 						currentSide = 1;
-
 						navLeft = chart_left + lastNavWidth + span;
 						navWidth = chart_right - navLeft;
 						if (navWidth < 0) {
@@ -241,14 +269,18 @@ Drupal.behaviors.outer_search = function(context) {
 							navWidth = 0;
 							handleLeft = chart_right - handle_width/2;
 						}
-						
+						if (navWidth > chart_width) {
+							navLeft = chart_left;
+							navWidth = chart_width;
+							handleLeft = chart_left - handle_width/2;
+						}						
 						lastMousePos = e.clientX;
 						lastHandleLeft = handleLeft;
 						lastNavWidth = navWidth;
 						lastNavLeft = navLeft;
 					}
 				}
-
+				
 				$('#' + currentContainer + '-navigator-' + currentSide).css('left', navLeft + 'px');
 				$('#' + currentContainer + '-navigator-' + currentSide).css('width', navWidth + 'px');
 				$('#' + currentContainer + '-handle-' + currentSide).css('left', handleLeft + 'px');
@@ -260,11 +292,10 @@ Drupal.behaviors.outer_search = function(context) {
 			if (currentContainer && chart.container.id == currentContainer) {
 				var x_min = $('#' + currentContainer + '-navigator-0').width(),
 					x_max = chart_width - $('#' + currentContainer + '-navigator-1').width();
-										
-				
+
 				var min = chart.xAxis[0].translate(x_min, true);
 				var	max = chart.xAxis[0].translate(x_max, true);
-			
+
 //				alert(currentContainer + ': [' + min + ' TO ' + max + ']');
 				display_summary(currentContainer, min, max);
 
@@ -276,6 +307,7 @@ Drupal.behaviors.outer_search = function(context) {
 				lastMousePos = null;
 				lastNavWidth = null;
 			}
+			currentContainer = null;
 		});
 	}	
 	
@@ -359,6 +391,80 @@ Drupal.behaviors.outer_search = function(context) {
 			var nav = new towHighchartsNavigator(chart, min, max);
 		});
 	}
+	
+	
+	function plot_barchart(id, categories, data) {
+		return new Highcharts.Chart({
+			chart: {
+				renderTo: id,
+				type: 'column',
+				spacingLeft: 0,
+				spacingRight: 0,
+			},
+			title: {
+				text: ''
+			},
+			subtitle: {
+				text: ''
+			},
+			 plotOptions: {
+			 column: {
+				pointWidth: 15
+			 },
+			 series: {
+            allowPointSelect: true
+        }
+				// series: {
+					// marker: {
+						// enabled: false,
+						// states: {
+							// hover: {
+								// enabled: true
+							// }
+						// }
+					// },
+					// lineWidth: 1
+				// }
+			 },
+			xAxis: {
+				title: {
+					text: null
+				},
+				categories: categories
+			},
+			yAxis: {
+				min: 0,
+				title: {
+					text: null,
+				},
+				labels: {
+					x: 0,
+					y: -2
+				}
+			},
+			tooltip: {
+				// formatter: function() {
+					// tooltip = this.point.name;
+					// tooltip = tooltip.replace(/\\\\n/g,'<br/>');
+					// return tooltip;
+				// },
+				// crosshairs: true,
+				// style: {
+					// fontSize: '7pt'
+				// }
+			},
+			legend: {
+				enabled: false
+			},
+			credits: {
+				enabled: false
+			},
+			series: [{
+				name: '',
+				data: data
+			}]
+		});
+	}
 }
 
 function display_summary(container, min, max){//alert(container);
@@ -418,4 +524,8 @@ function time(timestamp){
 	var minutes = ('0' + date.getUTCMinutes()).slice(-2);
 	var seconds = ('0' + date.getUTCSeconds()).slice(-2);
 	return hours + ':' + minutes + ':' + seconds;
+}
+
+function dpm(message){
+	$('#content-messages-inner').before(message + ' | ');
 }

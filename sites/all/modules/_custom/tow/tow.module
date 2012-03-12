@@ -417,7 +417,7 @@ function tow_block($op = 'list', $delta = 0) {
 				return tow_search_outer_results_block();
       }
 			if ($delta == 'search_inner_facets') {
-				return tow_search_inner_facets_block();
+				return tow_search_inner_widgets_block();
       }
 			if ($delta == 'search_inner_simple_search') {
 				return tow_search_inner_simple_search_block();

@@ -217,47 +217,34 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
  // TODO: add this only to records
 //		dpm(get_class_methods(get_class($query)));
 	$nid = tow_search_inner_get_nid();
-	$table_node = node_load($nid);
-	if ($table_node->type == 'table') {
-		$params['fl'] .= ',sis_tow_field_table';
-		$query->add_filter('sis_tow_field_table', $nid);
-		
-		$possible_types = tow_possible_fields();
-		$params['stats'] = 'true';
-		foreach ($possible_types as $field_type) {
-			$field_name = 'field_' . $field_type;
-			$field_title_name = 'field_title_' . $field_type;
-			$apachesolr_field_type = tow_apachesolr_field_type($field_type);	
-			foreach ($table_node->$field_title_name as $delta => $field_title) {
-				if ($field_title['value'] != NULL) {//dpm($field_title);
-					$apachesolr_field_name = $apachesolr_field_type . '_tow_' . $field_name . '_' . $delta;	
-					$params['fl'] .= ',' . $apachesolr_field_name;
-					if ($field_type != 'bool' && $field_type != 'text')	{
-						if ($field_type = 'int')	{
-							$params['stats.field'][] = $apachesolr_field_name;
-						} else {
-							$params['stats.field'][] = $apachesolr_field_name;
-						}
-					}	
-					$field_filters = $query->get_filters($apachesolr_field_name);
+	$table_fields = tow_apachesolr_table_fields($nid);
 
-					$subquery = apachesolr_drupal_query();
-					foreach ($field_filters as $field_filter) {
-/* 						if (in_array($field_type, array('char', 'text', 'code'))) {
-							$field_filter['#value'] = preg_replace('/(?<!\\\\)-/', '\\ ', $field_filter['#value']);
-							$field_filter['#value'] = preg_replace('/\\\\-/', '-', $field_filter['#value']);
-							dpm($field_filter['#value']);
-						} */
-						xdebug_break();
-						$query->remove_filter($field_filter['#name'], $field_filter['#value'], $field_filter['#exclude']);
-						$subquery->add_filter($apachesolr_field_name, $field_filter['#value'], $field_filter['#exclude']);
-					}
-					$query->add_subquery($subquery, 'OR');					
-				}
-			}
+	$params['fl'] .= ',sis_tow_field_table';
+	$query->add_filter('type', 'record');  
+	$params['rows'] = 10000000;
+	$query->add_filter('sis_tow_field_table', $nid);
+	
+	$params['stats'] = 'true';
+	$params['facet.limit'] = 10;
+	$params['facet.missing'] = 'true';
+	foreach ($table_fields as $index=>$field){
+		$params['fl'] .= ',' . $field['name'];
+		$params['facet.field'][] = '{!ex=' . $field['name'] . '}' . $field['name'];
+		//add stats
+		if ($field['type'] != 'bool' && $field['type'] != 'text')	{
+			$params['stats.field'][] = $field['name'];
 		}
-		$query->add_filter('type', 'record');  
-		$params['rows'] = 10000000;
+		
+		$field_filters = $query->get_filters($field['name']);
+		$subquery = apachesolr_drupal_query();
+		foreach ($field_filters as $field_filter) {
+			$query->remove_filter($field_filter['#name'], $field_filter['#value'], $field_filter['#exclude']);
+			if ($field['type'] == 'enum') {//wrap in quotes
+				$field_filter['#value'] = '"' . $field_filter['#value'] . '"';
+			}
+			$subquery->add_filter($field['name'], $field_filter['#value'], $field_filter['#exclude']);
+		}
+		$query->add_subquery($subquery, 'OR');					
 	}
 }
 /** 
@@ -359,11 +346,11 @@ function _tow_datetime_to_solr(&$value) {
 }
 
 /**
- * Helper function converting timestamp from usual format yyyy-mm-dd hh:mm:ss
+ * Helper function converting timestamp from timestamp 
  * to solr datetime format yyyy-mm-ddThh:mm:ssZ 
  */
 function _tow_timestamp_to_solr(&$value) {
-	$value = date('Y-m-d', $value) . 'T' . date('H:i:s', $value) .'Z';
+	$value = gmdate('Y-m-d', $value) . 'T' . gmdate('H:i:s', $value) .'Z';
 }
 
 /** 
@@ -614,4 +601,38 @@ function tow_apachesolr_ajax_settings() {
     }
   }
   return $settings;
+}
+
+/*
+ * Returns array of fields of table with given nid
+ * name, type, title, delta
+ */
+function tow_apachesolr_table_fields($nid) {
+	static $current_nid = NULL;
+	static $fields = array();
+	if ($nid != $current_nid || empty($fields)) {
+		$current_nid = $nid;
+		$table_node = node_load($nid);
+		if ($table_node->type == 'table') {
+			foreach (tow_possible_fields() as $field_type) {
+				$field_name = 'field_' . $field_type;
+				$field_title_name = 'field_title_' . $field_type;
+				$apachesolr_field_type = tow_apachesolr_field_type($field_type);	
+				foreach ($table_node->$field_title_name as $delta => $field_title) {
+					if ($field_title['value'] != NULL) {
+						$apachesolr_field_name = $apachesolr_field_type . '_tow_' . $field_name . '_' . $delta;	
+						$fields[] = array(
+							'name' => $apachesolr_field_name, 
+							'type' => $field_type, 
+							'title' => $field_title['value'], 
+							'delta' => $delta,
+						);
+					}
+				}
+			}
+		} else {
+			drupal_not_found();
+		}
+	}
+	return $fields;
 }
