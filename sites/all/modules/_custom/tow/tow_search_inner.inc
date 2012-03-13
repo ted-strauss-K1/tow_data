@@ -154,7 +154,7 @@ function tow_search_inner_facet_query(&$params, $field, $type, $stats, $barchart
 				$corrected_min = $min;
 				$corrected_max = $max + $gap/2;
 				if (!isset($params['facet.range']) || !in_array($field, $params['facet.range']))
-					$params['facet.range'][] = $field;
+					$params['facet.range'][] = '{!ex=' . $field . '}' . $field;
 				$params['f.' . $field . '.facet.range.start'] = $corrected_min;
 				$params['f.' . $field . '.facet.range.end'] = $corrected_max;
 				$params['f.' . $field . '.facet.range.gap'] = $gap;
@@ -183,7 +183,7 @@ function tow_search_inner_facet_query(&$params, $field, $type, $stats, $barchart
 					_tow_timestamp_to_solr($corrected_min);
 					_tow_timestamp_to_solr($corrected_max);
 					if (!isset($params['facet.range']) || !in_array($field, $params['facet.range']))
-						$params['facet.range'][] = $field; //'(!ex=' . $field . ')' .
+						$params['facet.range'][] = '{!ex=' . $field . '}' . $field; //'(!ex=' . $field . ')' .
 					$params['f.' . $field . '.facet.range.start'] = $corrected_min;
 					$params['f.' . $field . '.facet.range.end'] = $corrected_max;
 					$params['f.' . $field . '.facet.range.gap'] = '+' . $gap . 'SECOND';
@@ -221,183 +221,12 @@ function tow_search_inner_widget($field, $type, $response, $query) {
 		case 'time':
 		case 'timestamp':
 			return tow_search_inner_graph_widget($field, $type, $response->facet_counts, $empty);
-/* 			
-			if (isset($range)) {
-				$facets_list = array();
-				$gap = $facet_counts->facet_ranges->$field->gap;
-				$start =  $facet_counts->facet_ranges->$field->start;
-				$end =  $facet_counts->facet_ranges->$field->end;
-				$group_start = $start;
-				$counts = $facet_counts->facet_ranges->$field->counts;
-				$data = array();
-				while ($group_start < $end) {
-					$interval = $group_start . '...' . ($group_start + $gap -1);
-					if (isset($counts->$group_start)) 
-						$group_counts = $counts->$group_start; 
-					else
-						$group_counts = 0;
-					$facets_list[] = $interval . ':\n ' . $group_counts . ' results';
-					$data[] = array($group_start + ($gap-1)/2,  $group_counts);
-					$group_start += $gap;
-				}
-				array_pop($facets_list);
-				array_push($facets_list, ($group_start - $gap) . '...' . $group_start . ':\n' . $group_counts . ' results');
-				$data = drupal_to_js($data);
-				$facets_list = drupal_to_js($facets_list);
-				
-				$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start, $group_start, $empty, $selection_limits['min'], $selection_limits['max'], $data, $facets_list);
-				$container = '<div class="tow-inner-search-highcharts-container" id="' . $field . '_highchart"></div>';
-				return $container . $form;
-			} else {
-				tow_search_inner_bar_widget($field, $type, $facet_counts->facet_fields->$field, $empty);
-			}
-		case 'timestamp': 
-			$facets_list = array();
-			$gap = $facet_counts->facet_ranges->$field->gap;
-			$start =  $facet_counts->facet_ranges->$field->start;
-			$end =  $facet_counts->facet_ranges->$field->end;
-			$group_start = $start;
-			$counts = $facet_counts->facet_ranges->$field->counts;
-			$data = array();
-			while ($group_start < $end) {
-				$interval = date('Y-m-d H:i:s', $group_start) . '...\n' . date('Y-m-d H:i:s', ($group_start + $gap -1));
-				if (isset($counts->$group_start)) 
-					$group_counts = $counts->$group_start; 
-				else
-					$group_counts = 0;
-				$facets_list[] = $interval . ':\n ' . $group_counts . ' results'; // 
-				$data[] = array(($group_start + ($gap-1)/2)*1000,  $group_counts);
-				$group_start += $gap;
-			}
-			array_pop($facets_list);
-			array_push($facets_list,  date('Y-m-d H:i:s', ($group_start - $gap)) . '...\n' . date('Y-m-d H:i:s', $group_start) . ':\n' . $group_counts . ' results'); //
-			$data = drupal_to_js($data);
-			$facets_list = drupal_to_js($facets_list);
-			if ($selection_limits['min']) $selection_limits['min'] *=1000;
-			if ($selection_limits['max']) $selection_limits['max'] *=1000;
-			$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start*1000, $group_start*1000, $empty, $selection_limits['min'], $selection_limits['max'], $data, $facets_list, 'timestamp');
-			$container = '<div class="tow-inner-search-highcharts-container" id="' . $field . '_highchart"></div>';
-			return $container . $form;			
-		case 'float': 
-			if (isset($facet_counts->facet_ranges->$field)) {
-				$facets_list = array();
-				$gap = $facet_counts->facet_ranges->$field->gap;
-				$start =  $facet_counts->facet_ranges->$field->start;
-				$end =  $facet_counts->facet_ranges->$field->end;
-				$group_start = $start;
-				$counts = (array) $facet_counts->facet_ranges->$field->counts;
-				
-				$count_in_bin = array();
-				foreach ($counts as $group_start => $count) {
-					$number_of_bin = round(($group_start - $start)/$gap);
-					$count_in_bin[$number_of_bin] = $count;
-				}
-				
-				$n = tow_search_inner_zoom($field);
-
-				$ii = $n;
-				while (isset($count_in_bin[$ii])) {
-					$count_in_bin[$n - 1] += $count_in_bin[$ii];
-					$ii++;
-				}
-				$data = array();
-				for ($ii=0; $ii<$n; $ii++){
-					$group_start = $start + $ii * $gap;
-					$group_end = $start + ($ii + 1) * $gap;
-					$interval = $group_start . '...' . $group_end;
-					if (isset($count_in_bin[$ii])) 
-						$group_counts = $count_in_bin[$ii];
-					else
-						$group_counts = 0;
-					$facets_list[] = $interval . ':\n ' . $group_counts . ' results';
-					$data[] = array(($group_start + $group_end)/2, $group_counts);
-				}
-				$data = drupal_to_js($data);
-				$facets_list = drupal_to_js($facets_list);
-				$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start, $group_end, $empty, $selection_limits['min'], $selection_limits['max'], $data, $facets_list, 'float');
-				$container = '<div class="tow-inner-search-highcharts-container" id="' . $field . '_highchart"></div>';
-				return $container . $form;
-			} else {
-				tow_search_inner_bar_widget($field, $type, $facet_counts->facet_fields->$field, $empty);
-			}	 */
 		case 'bool': 
 			$facets_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $field, $field, '');
 			return $facets_list['content'];
 		case 'enum': 
 			$facets_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $field, $field, '', 'tow_search_facet_enum_option');
 			return $facets_list['content'];
-/* 		case 'date': //dpm($facet_counts); xdebug_break();
-		case 'datetime': 
-			$facets_list = array();
-			$gap = $facet_counts->facet_dates->$field->gap;
-			$start =  $facet_counts->facet_dates->$field->start;
-			$end =  $facet_counts->facet_dates->$field->end;
-			_tow_solr_to_datetime($start);
-			_tow_solr_to_datetime($end);
-			$start = strtotime($start);
-			$end = strtotime($end);
-			$gap = preg_replace('/\D/', '', $gap);
-			$group_start = $start;
-			$counts = $facet_counts->facet_dates->$field;
-			$data = array();
-			while ($group_start < $end) { 
-				$interval = date('Y-m-d H:i:s', $group_start) . '... \n ' . date('Y-m-d H:i:s', ($group_start + $gap -1));
-				$solr_group_start = $group_start;
-				_tow_timestamp_to_solr($solr_group_start);
-				if (isset($counts->$solr_group_start)) 
-					$group_counts = $counts->$solr_group_start; 
-				else
-					$group_counts = 0;
-				$facets_list[] = $interval . ':\n ' . $group_counts . ' results';
-				$data[] = array(($group_start + ($gap)/2) * 1000,  $group_counts);
-				$group_start += $gap;
-			}
-			//array_pop($facets_list);
-			//array_push($facets_list, ($group_start - $gap) . '...' . $group_start . ': ' . $group_counts);
-			$data = drupal_to_js($data);
-			$facets_list = drupal_to_js($facets_list);
-			if ($selection_limits['min']) 
-				$selection_limits['min'] = _tow_solr_to_js_timestamp($selection_limits['min']);
-			if ($selection_limits['max']) 
-				$selection_limits['max'] = _tow_solr_to_js_timestamp($selection_limits['max']);
-			
-			$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start * 1000, $group_start * 1000, $empty, $selection_limits['min'], $selection_limits['max'], $data, $facets_list, $type);
-			$container = '<div class="tow-inner-search-highcharts-container" id="' . $field . '_highchart"></div>';
-			return $container . $form;
-		case 'time': 
-			$facets_list = array();
-			$data = array();
-			$counts = $facet_counts->facet_dates->$field;
-			dpm($counts);
-			$n = tow_search_inner_timezoom($field);
-			$gap = 1440/$n; //minutes
-			$itime = '00:00';
-			for ($ii=0; $ii<$n; $ii++) {
-				$ftime = gmdate('H:i', ($ii + 1)*$gap*60);
-				$interval = $itime . '...' . $ftime;
-				$solr_time = '0001-01-01T' . $itime . ':00Z';
-
-				if (isset($counts->$solr_time)) 
-					$group_counts = $counts->$solr_time;
-				else
-					$group_counts = 0;
-				$facets_list[] = $interval . ':\n' . $group_counts . ' results';
-				$data[] = array(($ii+0.5)*$gap*60*1000, $group_counts);
-				$itime = $ftime;
-			}
-			$data = drupal_to_js($data);
-			$facets_list = drupal_to_js($facets_list);
-			if ($selection_limits['min'] !== FALSE) {
-				_tow_solr_to_time($selection_limits['min']);
-				$selection_limits['min'] = strtotime('1970-01-01 ' . $selection_limits['min'] . 'Z') * 1000;
-			}
-			if ($selection_limits['max'] !== FALSE) {
-				_tow_solr_to_time($selection_limits['max']);
-				$selection_limits['max'] = strtotime('1970-01-01 ' . $selection_limits['max'] . 'Z') * 1000;
-			}
-			$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, 0, 24*60*60*1000-1, $empty, $selection_limits['min'], $selection_limits['max'], $data, $facets_list, 'time');
-			$container = '<div class="tow-inner-search-highcharts-container" id="' . $field . '_highchart"></div>';
-			return $container . $form; */
 		case 'char': 
 		case 'code': 
 		case 'text': 
@@ -439,6 +268,7 @@ function tow_search_inner_chart_widget($field, $field_type, $facet_counts, $empt
 	$counts = $facet_counts->counts;
 	$data = array();
 	$sum = 0;
+	$max_count = 0;
 	if ($field_type == 'float'){
 		$counts = (array) $counts;
 		
@@ -460,31 +290,36 @@ function tow_search_inner_chart_widget($field, $field_type, $facet_counts, $empt
 			$group_start = $start + $ii * $gap;
 			$group_end = $start + ($ii + 1) * $gap;
 			$interval = $group_start . '...' . $group_end;
-			if (isset($count_in_bin[$ii])) 
+			if (isset($count_in_bin[$ii])) {
 				$group_counts = $count_in_bin[$ii];
-			else
+				if ($group_counts > $max_count)
+					$max_count = $group_counts;
+			} else
 				$group_counts = 0;
+			
 			$facets_list[] = $interval . ':\n ' . $group_counts . ' results';
 			$data[] = array(($group_start + $group_end)/2, $group_counts);
 			$sum += $group_counts;
 		}
 	} else {
 		while ($group_start < $end) {
-			$interval_start = $group_start;
-			$interval_end = $group_start + $gap -1;
+			$interval_start = _tow_js_to_solr($field_type, $group_start);
+			$interval_end = _tow_js_to_solr($field_type, $group_start + $gap - 1);
 			$function = '_tow_solr_to_' . $field_type;
 			if (function_exists($function)) { //turn date and time to displayed view
 				$function($interval_start);
 				$function($interval_end);
 			}
-			$interval = $interval_start . '...' . $interval_end;
+			$interval = $interval_start . '...\n' . $interval_end;
 			
 			//turn group start to solr format
 			$solr_group_start = _tow_js_to_solr($field_type, $group_start);
 
-			if (isset($counts->$solr_group_start)) 
+			if (isset($counts->$solr_group_start)) {
 				$group_counts = $counts->$solr_group_start; 
-			else
+				if ($group_counts > $max_count)
+					$max_count = $group_counts;
+			} else
 				$group_counts = 0;
 				
 			$facets_list[] = $interval . ':\n ' . $group_counts . ' results';
@@ -497,21 +332,21 @@ function tow_search_inner_chart_widget($field, $field_type, $facet_counts, $empt
 //	dpm(array_sum((array)$counts));
 	//include end value to last point
 	array_pop($facets_list);
-	$interval_start = $group_start - $gap;
-	$interval_end = $group_start;
+	$interval_start = _tow_js_to_solr($field_type, $group_start - $gap);
+	$interval_end = _tow_js_to_solr($field_type, $group_start);
 	$function = '_tow_solr_to_' . $field_type;
 	if (function_exists($function)) { //turn date and time to displayed view
 		$function($interval_start);
 		$function($interval_end);
 	}
-	$interval = $interval_start . '...' . $interval_end;	
+	$interval = $interval_start . '...\n' . $interval_end;	
 	array_push($facets_list, $interval . ':\n' . $group_counts . ' results');
 	
 	
 	$data = drupal_to_js($data);
 	$facets_list = drupal_to_js($facets_list);
 	
-	$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start, $end, $empty, $selection_limits['min'], $selection_limits['max'], $data, $facets_list, $field_type);
+	$form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start, $end, $empty, $selection_limits['min'], $selection_limits['max'], $data, $facets_list, $field_type, $max_count);
 	$container = '<div class="tow-inner-search-highcharts-container" id="' . $field . '_highchart"></div>';
 	return $container . $form;
 }
@@ -612,7 +447,7 @@ function tow_search_inner_bar_widget($field, $field_type, $facet_counts, $empty)
 }
 
 
-function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $empty, $selection_min, $selection_max, $data = NULL, $tooltips = NULL, $fieldtype = 'int') {
+function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $empty, $selection_min, $selection_max, $data = NULL, $tooltips = NULL, $fieldtype = 'int', $max_count = 0) {
 	$form = array();
 
 	$saved_query = apachesolr_current_query(NULL, 'tow_inner_search');
@@ -680,6 +515,11 @@ function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $e
 		'#value' => $tooltips,
 	); 
 	
+	$form['max_count'] = array(
+		'#type' => 'hidden',
+		'#value' => $max_count,
+	);
+
 	$form['url'] = array(
 		'#type' => 'hidden',
 		'#value' => $url,
@@ -1850,7 +1690,7 @@ function tow_search_inner_timezoom_points($zoom) {
 	return isset($num_of_points[$zoom]) ? $num_of_points[$zoom] : FALSE;
 }
 
-function tow_search_inner_changezoom($current_field, $increase) {xdebug_break();
+function tow_search_inner_changezoom($current_field, $increase) {
 	$new_zoom_array = array();
 	$active = FALSE;
 

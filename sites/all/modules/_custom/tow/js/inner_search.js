@@ -1,6 +1,12 @@
-var chart;
-
 Drupal.behaviors.outer_search = function(context) {
+	var handleHeight = 15,
+		handleWidth = 6,
+		handleBorder = 1,
+		visibleHandleHeight = 4,
+		visibleHandleWidth = 5,
+		visibleHandleBorder = 1,
+		visibleHandleOffset = 2,
+		visibleBoxBorder = 1;
 
 	// hide hidden facets
 	$('.apachesolr-hidden-facet', context).hide();
@@ -86,6 +92,9 @@ Drupal.behaviors.outer_search = function(context) {
 		var fieldtype = $(this).parent().children('form').children('div').children('[name="fieldtype"]').val();
 		var min = $(this).parent().find('[name="global_min"]').val();
 		var max = $(this).parent().find('[name="global_max"]').val();
+		var selection_min = $(this).parent().find('[name="selection_min"]').val();
+		var selection_max = $(this).parent().find('[name="selection_max"]').val();
+		var yMax = $(this).parent().find('[name="max_count"]').val();
 		datastring = datastring.substring(4, datastring.length - 4);
 		datastring = datastring.split(' ], [ ');//$(this).text(id);
 		namestring = namestring.substring(3, namestring.length - 3);
@@ -105,8 +114,526 @@ Drupal.behaviors.outer_search = function(context) {
 			axistype = 'linear';
 		else
 			axistype = 'datetime';
-		chart = plot_chart(id, data, axistype, fieldtype, parseFloat(min), parseFloat(max));
+		plotChart(id, data, axistype, fieldtype, parseFloat(min), parseFloat(max), parseFloat(yMax) * 1.1, parseFloat(selection_min), parseFloat(selection_max));
 	});
+	
+	
+	function plotChart(id, data, axistype, fieldtype, globalMin, globalMax, yMax, selectionMin, selectionMax) {
+		var masterChart,
+			detailChart;
+		
+		var visible_min = globalMin,
+			visible_max = globalMax;
+		
+		var isMouseDown = false,
+			currentIndex,
+			lastMousePos,
+			lastPos,
+			currentHandle,
+			currentObj,
+			detailBorder,
+			ratio;
+			
+		var screenSelRange = {min: null, max: null},
+			plotSelRange = {min: null, max: null};
+			
+		var	detailLeft,
+			detailRight;
+
+		var $container = $('#' + id)
+			.css('position', 'relative');
+
+		var $detailContainer = $('<div id="' + id + '-detail">')
+			.css({ position: 'absolute', top: 0, height: 160, width: '100%'})
+			.appendTo($container);
+
+		var $masterContainer = $('<div id="' + id + '-master">')
+			.css({ position: 'absolute', top: 160, height: 40, width: '100%'})
+			.appendTo($container);
+		
+		// create master and in its callback, create the detail chart
+		createMaster();
+
+		$container
+			.before('<div class="tow-highcharts-summary" id="' + id + '-summary"></div>'); 
+		displaySummary();
+		
+    // create the master chart
+
+		function createMaster() {
+        masterChart = new Highcharts.Chart({
+            chart: {
+                renderTo: id + '-master',
+                zoomType: 'x',
+								borderWidth: 0,
+								marginTop: 3,
+								marginLeft: 25,
+								marginRight: 10,
+                events: {
+								
+										mousedown: function(e){
+												isMouseDown = true;
+												currentObj = 'master';
+												lastMousePos = e.clientX;
+										},
+
+                    // listen to the selection event on the master chart to update the
+                    // extremes of the detail chart
+                    selection: function(event) {
+                        var extremesObject = event.xAxis[0],
+                            min = extremesObject.min,
+                            max = extremesObject.max;
+												
+												newVisibleBox(min, max);
+												
+                        return false;
+                    }
+                }
+            },
+            title: {
+                text: null
+            },
+            xAxis: {
+                type: axistype,
+                showLastLabel: false,
+								showFirstLabel: false,
+								gridLineWidth: 0,
+								tickLength: 0,
+								min: globalMin,
+								max: globalMax,
+                title: {
+                    text: null
+                },
+								labels: {
+									enabled: false
+								}
+            },
+            yAxis: {
+                gridLineWidth: 0,
+                labels: {
+                    enabled: false
+                },
+                title: {
+                    text: null
+                },
+                min: 0,
+								max: yMax,
+                showFirstLabel: false,
+								endOnTick: false,
+            },
+            tooltip: {
+                formatter: function() {
+                    return false;
+                }
+            },
+            legend: {
+                enabled: false
+            },
+            credits: {
+                enabled: false
+            },
+            plotOptions: {
+                series: {
+                    fillColor: {
+                        linearGradient: [0, 0, 0, 70],
+                        stops: [
+                            [0, '#4572A7'],
+                            [1, 'rgba(0,0,0,0)']
+                        ]
+                    },
+                    lineWidth: 1,
+                    marker: {
+                        enabled: false
+                    },
+                    shadow: false,
+                    states: {
+                        hover: {
+                            lineWidth: 1
+                        }
+                    },
+                    enableMouseTracking: false
+                }
+            },
+
+            series: [{
+                type: 'area',
+                data: data
+            }]
+
+        }, function(masterChart) {
+						masterChart.xAxis[0].minRange = 5 * (globalMax - globalMin) / $('#' + masterChart.container.id).width();
+						$('#' + masterChart.container.id).after('<div id="' + masterChart.container.id + '-visible"></div>');
+						var yExtremes = masterChart.yAxis[0].getExtremes(),
+							left = masterChart.xAxis[0].translate(globalMin, false) + masterChart.plotLeft,
+							width = masterChart.plotWidth,
+							top = masterChart.plotTop - visibleBoxBorder,
+							height = masterChart.plotHeight;
+						$('#' + masterChart.container.id + '-visible')
+							.css('position', 'absolute')
+							.css('border-style', 'solid')
+							.css('border-width', visibleBoxBorder)
+							.css('left', left)
+							.css('width', width)
+							.css('top', top)
+							.css('height', height)
+							.css('pointer-events', 'none')
+							.hide()
+							.append('<div id="' + masterChart.container.id + '-visible-handle' + '">');
+
+							$('<div>')
+							.css('position', 'absolute')
+							.css('border-style', 'solid')
+							.css('border-color', 'grey')
+							.css('border-width', visibleBoxBorder)
+							.css('left', masterChart.plotLeft - 2)
+							.css('width', masterChart.plotWidth + 3)
+							.css('top', masterChart.plotTop - 2)
+							.css('height', masterChart.plotHeight + 3)
+							.css('pointer-events', 'none')
+							.appendTo('#' + masterChart.container.id);
+							
+						$('#' + masterChart.container.id + '-visible-handle')
+							.css('position', 'absolute')
+							.css('border-style', 'solid')
+							.css('border-width', visibleHandleBorder)
+							.css('background-color', 'white')
+							.css('right', width - visibleHandleOffset)
+							.css('width', visibleHandleWidth)
+							.css('top', height - visibleHandleHeight/2 - visibleHandleBorder)
+							.css('height', visibleHandleHeight)
+							.css('pointer-events', 'visible')
+							.css('cursor', 'e-resize')
+							.mousedown(function(e){
+								isMouseDown = true;
+								currentObj = 'box';
+								lastMousePos = e.clientX;
+								var zero = masterChart.xAxis[0].translate(0, true),
+									one =  masterChart.xAxis[0].translate(1, true),
+									extremes = detailChart.xAxis[0].getExtremes();
+								ratio = one - zero;
+								return false;
+							})
+							.dblclick(function(e){
+								newVisibleBox(globalMin, globalMax);
+							});
+							
+            createDetail(masterChart);
+						
+        });
+    };
+
+    // create the detail chart
+    function createDetail(masterChart) {
+
+        // create a detail chart referenced by a global variable
+        detailChart = new Highcharts.Chart({
+            chart: {
+                renderTo: id + '-detail',
+                style: {
+                    position: 'absolute'
+                },
+								spacingTop: 5,
+								spacingRight: 10,
+								spacingBottom: 3,
+								spacingLeft: 0,
+								marginLeft: 25,
+								marginRight: 10
+            },
+            credits: {
+                enabled: false
+            },
+            title: {
+                text: null
+            },
+            subtitle: {
+                text: null
+            },
+            xAxis: {
+                type: axistype,
+								min: globalMin,
+								max: globalMax,
+								tickPixelInterval: 50,
+            },
+            yAxis: {
+                title: {
+                    text: null
+                },
+								min: 0,
+								max: yMax,
+ 								labels: {
+									x: -1,
+									y: 4
+								},
+								endOnTick: false,
+						},
+            tooltip: {
+							formatter: function() {
+								tooltip = this.point.name;
+								tooltip = tooltip.replace(/\\\\n/g,'<br/>');
+								return tooltip;
+							},
+							crosshairs: true,
+							style: {
+								fontSize: '7pt'
+							}
+            },
+            legend: {
+                enabled: false
+            },
+            plotOptions: {
+                series: {
+                    marker: {
+                        enabled: false,
+                        states: {
+                            hover: {
+                                enabled: true
+                            }
+                        }
+                    },
+										states: {
+												hover: {
+														lineWidth: 2
+												}
+										}
+                }
+            },
+            series: [{
+//                pointStart: detailStart,
+                data: data
+            }]
+        }, function(detailChart){
+					$('#' + detailChart.container.id).mousedown(function(e){
+						isMouseDown = true;
+						currentObj = 'detail';
+						lastMousePos = e.clientX;
+						var zero = detailChart.xAxis[0].translate(0, true),
+							one =  detailChart.xAxis[0].translate(1, true),
+							extremes = detailChart.xAxis[0].getExtremes();
+						ratio = one - zero;
+						visible_min = extremes.min;
+						visible_max = extremes.max;
+					});
+					towHighchartsNavigator(detailChart, masterChart);
+				});
+    };
+		
+		
+		function towHighchartsNavigator(detailChart, masterChart){
+			add_mask(masterChart);
+			add_mask(detailChart);
+			
+			detailLeft = detailChart.xAxis[0].translate(visible_min, false) + detailChart.plotLeft;
+			detailRight = detailChart.xAxis[0].translate(visible_max, false) + detailChart.plotLeft;
+			
+			screenSelRange = {
+				min: detailChart.xAxis[0].translate(selectionMin, false) + detailChart.plotLeft, 
+				max: detailChart.xAxis[0].translate(selectionMax, false) + detailChart.plotLeft
+			};
+
+			plotSelRange = {
+				min: selectionMin, 
+				max: selectionMax
+			};
+
+			draw_handle(0, screenSelRange.min);
+			draw_handle(1, screenSelRange.max);
+			
+			function add_mask(chart){
+				changeMask(chart, 0, selectionMin);
+				changeMask(chart, 1, selectionMax);
+			}
+			
+			function draw_handle(index, x){
+				var top = $('#' + detailChart.container.id).height(),
+					handle_id = detailChart.container.id + '-handle-' + index;
+				top = (top - handleHeight)/2;
+				$('#' + detailChart.container.id).after('<div id="' + handle_id + '">');
+				$('#' + handle_id)
+					.css('position', 'absolute')	
+					.css('top', top)	
+					.css('left', x - handleWidth/2)	
+					.css('height', handleHeight)	
+					.css('width', handleWidth)
+					.css('z-index', 0)
+					.css('background-color', 'white')
+					.css('border-style', 'solid')
+					.css('border-width', '1px')
+					.css('cursor', 'e-resize')
+					.mousedown(function(e){
+						isMouseDown = true;
+						currentIndex = index;
+						lastMousePos = e.clientX;
+						currentObj = 'handle';
+						if (index) {
+							detailBorder = screenSelRange.min;
+							lastPos = screenSelRange.max;
+						} else {
+							detailBorder = screenSelRange.max;
+							lastPos = screenSelRange.min;
+						}
+						return false;
+					});
+			}
+		};
+		
+
+		$(document).mousemove(function(e){
+			if (isMouseDown) {
+				switch (currentObj){
+					case 'handle':
+						var span = e.clientX - lastMousePos;
+						var newPos = lastPos + span;
+						correctedPos = newHandlePos(newPos);
+						moveHandle(correctedPos);
+						break;
+					case 'box':
+						var span = e.clientX - lastMousePos,
+							min = visible_min + ratio * span,
+							max = visible_max + ratio * span;
+						
+						lastMousePos = e.clientX;
+						newVisibleBox(min, max);
+						return false;
+					case 'detail':
+						var span = e.clientX - lastMousePos,
+							min = visible_min - ratio * span,
+							max = visible_max - ratio * span;
+						
+						lastMousePos = e.clientX;
+						newVisibleBox(min, max);
+						break;
+					case 'master':
+						break;
+					default:
+				}
+			}
+			return false;
+		});
+		
+		$(document).mouseup(function(e){
+			isMouseDown = false;
+		});
+		
+		function newVisibleBox(min, max){
+			var rangewidth = max - min;
+			if (min < globalMin){
+				min = globalMin;
+				max = globalMin + rangewidth;
+			}
+			if (max > globalMax){
+				max = globalMax;
+				min = globalMax - rangewidth;
+			}
+			// move visible box on master
+			var left = masterChart.xAxis[0].translate(min, false) + masterChart.plotLeft,
+				width = masterChart.xAxis[0].translate(max, false) + masterChart.plotLeft - left;
+			left = left - visibleHandleBorder;
+			$('#' + masterChart.container.id + '-visible')
+				.show()
+				.css('left', left)
+				.css('width', width);
+			$('#' + masterChart.container.id + '-visible-handle')
+				.css('right', visibleHandleOffset);			
+			if (min == globalMin && max == globalMax)
+				$('#' + masterChart.container.id + '-visible').hide();
+									
+			// setting extremes on master
+			detailChart.xAxis[0].setExtremes(min, max, true, false);
+			
+			// setting constants
+			visible_min = min;
+			visible_max = max;
+
+			detailLeft = detailChart.xAxis[0].translate(min, false) + detailChart.plotLeft;
+			detailRight = detailChart.xAxis[0].translate(max, false) + detailChart.plotLeft;
+			
+			//redraw handles
+			currentIndex = 0;
+			moveHandle(detailChart.xAxis[0].translate(plotSelRange.min, false) + detailChart.plotLeft);
+			currentIndex = 1;
+			moveHandle(detailChart.xAxis[0].translate(plotSelRange.max, false) + detailChart.plotLeft);
+			
+		}
+		
+		function newHandlePos(newPos){
+			if (newPos > detailRight)
+					return detailRight;
+			if (newPos < detailLeft)
+					return detailLeft;
+			if (currentIndex){
+				if (newPos < detailBorder) {
+					moveHandle(detailBorder);
+					currentIndex = 0;
+					return newHandlePos(newPos);
+				}
+			} else {
+				if (newPos > detailBorder) {
+					moveHandle(detailBorder);
+					currentIndex = 1;
+					return newHandlePos(newPos);
+				}
+			}
+			return newPos;
+		};
+		
+		// moves handle defined by currentIndex to screen position screenX, 
+		// and also moves masks on both charts
+		function moveHandle(screenX){
+			var handle_id = detailChart.container.id + '-handle-' + currentIndex;
+			$('#' + handle_id).css('left', screenX - handleWidth/2);
+			plotX = detailChart.xAxis[0].translate(screenX - detailChart.plotLeft, true);
+			changeMask(detailChart, currentIndex, plotX);
+			changeMask(masterChart, currentIndex, plotX);
+			if (currentIndex) {
+				screenSelRange.max = screenX;
+				plotSelRange.max = plotX;
+			} else {
+				screenSelRange.min = screenX;
+				plotSelRange.min = plotX;
+			}
+			displaySummary();
+			if (screenX < detailLeft - 1  || screenX > detailRight + 1){
+				$('#' + handle_id).hide();}
+			else
+				$('#' + handle_id).show();
+		};
+		
+		function displaySummary(){
+			var new_min = limit2display(fieldtype, plotSelRange.min);
+			var new_max = limit2display(fieldtype, plotSelRange.max);
+			var summary = '(from ' + new_min + ' to ' + new_max + ')';
+
+			$('#' + id).siblings('div#' + id + '-summary"').html(summary);
+
+			$('#' + id).parent().find('[name="selection_min"]').val(plotSelRange.min);
+			$('#' + id).parent().find('[name="selection_max"]').val(plotSelRange.max);
+
+			$('#' + id).parent().find('[name="min"]').val(new_min);
+			$('#' + id).parent().find('[name="max"]').val(new_max);
+
+		};
+		
+		function changeMask(chart,index,x){
+			var maskId = 'mask-' + index,
+			from,
+			to;
+			if (index){
+				from = x;
+				to = globalMax;
+			} else {
+				from = globalMin;
+				to = x;
+			}
+			chart.xAxis[0].removePlotBand(maskId);
+			chart.xAxis[0].addPlotBand({
+			id: maskId,
+			from: from,
+			to: to,
+			color: 'rgba(0, 0, 0, 0.2)',
+			});
+		}
+
+	}
 	
 $('div.tow-inner-search-highcharts-bar-container').each(function(index){
 		var id = $(this).attr('id');
@@ -122,278 +649,11 @@ $('div.tow-inner-search-highcharts-bar-container').each(function(index){
 			var val = datastring[key];
 			data[key] = parseInt(val);
 		}
-		chart = plot_barchart(id, names, data);
+		chart = plotBarchart(id, names, data);
 	});
 
 
-	////////////////////
-	
-	var isMouseDown = false;
-	var	currentHandle = null,
-		currentNavigator = null,
-		currentSide = null,
-		lastHandleLeft = null,
-		lastNavLeft = null,
-		lastMousePos = null,
-		lastNavWidth = null,
-		currentContainer = null;
-			
-	function towHighchartsNavigator(chart, min, max) {
-
-		var x_min = chart.xAxis[0].translate(min, false) + chart.plotLeft,
-				x_max = chart.xAxis[0].translate(max, false) + chart.plotLeft;
-
-		var container_id = chart.container.id;
-
-		var chart_height = chart.plotSizeY,
-				chart_width = chart.plotSizeX,
-				chart_top = chart.plotTop,
-				chart_left = chart.plotLeft,
-				chart_right = chart.plotLeft + chart_width;
-
-		var nav_width = [x_min - chart_left, chart_right - x_max];
-		if (nav_width[0] < 0) nav_width[0] = 0;
-		if (nav_width[1] < 0) nav_width[1] = 0;
-			
-		var nav_left = [chart_left, chart_right - nav_width[1]];
-		
-		var handle_width = 4,
-				handle_height = 20,
-				handle_top = chart_top + chart_height/2 - handle_height/2,
-				handle_left = [nav_left[0] + nav_width[0] - handle_width/2, nav_left[1] - handle_width/2];
-
-		$('#' + container_id).parent()
-				.before('<div class="tow-highcharts-summary" id="' + container_id + '-summary"></div>')
-		display_summary(container_id, min, max);
-		drawNavigator(0);
-		drawNavigator(1);
-
-		function drawNavigator (index) {
-			var nav_id = container_id + '-navigator-' + index,
-					handle_id = container_id + '-handle-' + index;
-			
-			$('#' + container_id)
-				.after('<div class="tow-highcharts-navigator" id="' + nav_id + '"></div>')
-				.after('<div class="tow-highcharts-handle" id="' + handle_id + '"></div>');
-			
-			$('#' + nav_id)
-				.css('height', chart_height + 'px')
-				.css('width', nav_width[index] + 'px')
-				.css('left', nav_left[index] + 'px')
-				.css('top', chart_top + 'px');
-				
-			// if (index) 			
-				// $('#' + nav_id).css('background-color', 'red');
-			// else
-				// $('#' + nav_id).css('background-color', 'blue');
-
-			
-			$('#' + handle_id)
-				.css('height', handle_height + 'px')
-				.css('width', handle_width + 'px')
-				.css('left', handle_left[index] + 'px')
-				.css('top', handle_top + 'px')
-				.mousedown(function(e) {
-					isMouseDown = true;
-
-	//				currentHandle = $(this).attr('id');
-	//				currentNavigator = $(this).next('.tow-highcharts-navigator').attr('id');
-					currentContainer = container_id;
-					currentSide = index;
-
-					lastMousePos = e.clientX;
-					lastHandleLeft = $(this).position().left;
-					lastNavLeft = $(this).next('.tow-highcharts-navigator').position().left;
-					lastNavWidth = $(this).next('.tow-highcharts-navigator').width();
-					
-					return false;
-				});
-		}
-		
-		$('#' + container_id).parent().mousemove(function(e){
-//		$(window).mousemove(function(e){
-			if (isMouseDown) {
-				var span = e.clientX - lastMousePos,
-					handleLeft = lastHandleLeft + span,
-					navLeft,
-					navWidth;
-				if (currentSide) {//right navigator active
-					navLeft = lastNavLeft + span;
-					navWidth = lastNavWidth - span;
-					if (navWidth < 0) {
-						navLeft = chart_right;
-						navWidth = 0;
-						handleLeft = chart_right - handle_width/2;
-					}
-					var navLeftWidth = $('#' + currentContainer + '-navigator-0').width(),
-						navBorder = chart_left + navLeftWidth;
-					if (navBorder >= navLeft){
-						$('#' + currentContainer + '-navigator-1').css('left', navBorder + 'px');
-						$('#' + currentContainer + '-navigator-1').css('width', (chart_width - navLeftWidth) + 'px');
-						$('#' + currentContainer + '-handle-1').css('left', (navBorder - lastNavLeft + lastHandleLeft) + 'px');
-						currentSide = 0;
-
-						navLeft = chart_left;
-						navWidth = lastNavLeft + span - chart_left;
-						if (navWidth < 0) {
-							navWidth = 0;
-							handleLeft = chart_left - handle_width/2;
-						}
-						if (navWidth > chart_width) {
-							navWidth = chart_width;
-							handleLeft = chart_right - handle_width/2;
-						}
-
-						lastMousePos = e.clientX;
-						lastHandleLeft = handleLeft;
-						lastNavWidth = navWidth;
-						lastNavLeft = navLeft;
-					} 
-				} else {
-					navLeft = lastNavLeft;
-					navWidth = lastNavWidth + span;
-					if (navWidth < 0) {
-						navWidth = 0;
-						handleLeft = chart_left - handle_width/2;;
-					}
-					var navRightWidth = $('#' + currentContainer + '-navigator-1').width(),
-						navBorder = chart_right - navRightWidth;
-					if (navBorder <= navLeft + navWidth){
-						$('#' + currentContainer + '-navigator-0').css('width', (navBorder - chart_left) + 'px');
-						$('#' + currentContainer + '-handle-0').css('left', (navBorder - lastNavLeft - lastNavWidth + lastHandleLeft) + 'px');
-						currentSide = 1;
-						navLeft = chart_left + lastNavWidth + span;
-						navWidth = chart_right - navLeft;
-						if (navWidth < 0) {
-							navLeft = chart_right;
-							navWidth = 0;
-							handleLeft = chart_right - handle_width/2;
-						}
-						if (navWidth > chart_width) {
-							navLeft = chart_left;
-							navWidth = chart_width;
-							handleLeft = chart_left - handle_width/2;
-						}						
-						lastMousePos = e.clientX;
-						lastHandleLeft = handleLeft;
-						lastNavWidth = navWidth;
-						lastNavLeft = navLeft;
-					}
-				}
-				
-				$('#' + currentContainer + '-navigator-' + currentSide).css('left', navLeft + 'px');
-				$('#' + currentContainer + '-navigator-' + currentSide).css('width', navWidth + 'px');
-				$('#' + currentContainer + '-handle-' + currentSide).css('left', handleLeft + 'px');
-			}
-			return false;
-		});
-		$(document).mouseup(function(e){
-			isMouseDown = false;
-			if (currentContainer && chart.container.id == currentContainer) {
-				var x_min = $('#' + currentContainer + '-navigator-0').width(),
-					x_max = chart_width - $('#' + currentContainer + '-navigator-1').width();
-
-				var min = chart.xAxis[0].translate(x_min, true);
-				var	max = chart.xAxis[0].translate(x_max, true);
-
-//				alert(currentContainer + ': [' + min + ' TO ' + max + ']');
-				display_summary(currentContainer, min, max);
-
-				currentHandle = null;
-				currentNavigator = null;
-				currentSide = null;
-				lastHandleLeft = null;
-				lastNavLeft = null;
-				lastMousePos = null;
-				lastNavWidth = null;
-			}
-			currentContainer = null;
-		});
-	}	
-	
-	
-	////////////////////
-	
-	function plot_chart(id, data, axistype, fieldtype, global_min, global_max) {
-		return new Highcharts.Chart({
-			chart: {
-				renderTo: id,
-				type: 'line',
-				spacingLeft: 0,
-				spacingRight: 0,
-			},
-			title: {
-				text: ''
-			},
-			subtitle: {
-				text: ''
-			},
-			plotOptions: {
-				series: {
-					marker: {
-						enabled: false,
-						states: {
-							hover: {
-								enabled: true
-							}
-						}
-					},
-					lineWidth: 1
-				}
-			},
-			xAxis: {
-				title: {
-					text: null
-				},
-				min: global_min,
-				max: global_max,
-//				endOnTick: false,
-				tickPixelInterval: 50,
-//				minPadding: 0.05,
-//        maxPadding: 0.05,
-				type: axistype,
-			},
-			yAxis: {
-				min: 0,
-				title: {
-					text: null,
-				},
-				labels: {
-					x: 0,
-					y: -2
-				}
-			},
-			tooltip: {
-				formatter: function() {
-					tooltip = this.point.name;
-					tooltip = tooltip.replace(/\\\\n/g,'<br/>');
-					return tooltip;
-				},
-				crosshairs: true,
-				style: {
-					fontSize: '7pt'
-				}
-			},
-			legend: {
-				enabled: false
-			},
-			credits: {
-				enabled: false
-			},
-			series: [{
-				name: '',
-				data: data
-			}]
-		},
-		function(chart){
-			var min = $('#' + chart.container.id).parent().parent().find('[name="selection_min"]').val();
-			var max = $('#' + chart.container.id).parent().parent().find('[name="selection_max"]').val();
-			var nav = new towHighchartsNavigator(chart, min, max);
-		});
-	}
-	
-	
-	function plot_barchart(id, categories, data) {
+	function plotBarchart(id, categories, data) {
 		return new Highcharts.Chart({
 			chart: {
 				renderTo: id,
@@ -467,24 +727,9 @@ $('div.tow-inner-search-highcharts-bar-container').each(function(index){
 	}
 }
 
-function display_summary(container, min, max){//alert(container);
-	var new_min = limit2display(container, min);
-	var new_max = limit2display(container, max);
-	var summary = '(from ' + new_min + ' to ' + new_max + ')';
 
-	$('#' + container).parent()
-				.siblings('div#' + container + '-summary"').html(summary);
 
-	$('#' + container).parent().parent().find('[name="selection_min"]').val(min);
-	$('#' + container).parent().parent().find('[name="selection_max"]').val(max);
-
-	$('#' + container).parent().parent().find('[name="min"]').val(new_min);
-	$('#' + container).parent().parent().find('[name="max"]').val(new_max);
-
-}
-
-function limit2display(container, value) {
-	var fieldtype = $('#' + container).parent().parent().find('[name="fieldtype"]').val();
+function limit2display(fieldtype, value) {
 	switch (fieldtype){
 		case 'int':
 			return parseInt(value);
