@@ -165,11 +165,11 @@ function _tow_solr_to_bool(&$value) {
  * Implementation of hook_apachesolr_modify_query()
  */
 function tow_apachesolr_modify_query(&$query, &$params) {
-	$current_tab = tow_get_homepage_tab();
+	$current_tab = tow_get_homepage_tab(); 
 	if ($current_tab == 'search_dataset') {
 		// Inner search
 		tow_apachesolr_record_modify_query($query, $params);
-	} else {
+	} else if ($current_tab == 'newest' || $current_tab == 'debated' || $current_tab == 'featured' || $current_tab == 'popular'){
 		// Outer search
 		tow_apachesolr_dataset_modify_query($query, $params);
 	}
@@ -225,7 +225,7 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
 	$query->add_filter('sis_tow_field_table', $nid);
 	
 	$params['stats'] = 'true';
-	$params['facet.limit'] = 10;
+	$params['facet.limit'] = 100;
 	$params['facet.missing'] = 'true';
 	foreach ($table_fields as $index=>$field){
 		$params['fl'] .= ',' . $field['name'];

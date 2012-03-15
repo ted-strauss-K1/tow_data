@@ -276,6 +276,13 @@ function tow_menu() {
     'type' => MENU_CALLBACK,
   );
   
+  $items['search_inner_zoom_ajax'] = array(
+    'page callback' => 'tow_search_inner_ajax_field_zooming',
+    'access arguments' => array('search content'),
+    'file' => 'tow_search_inner.inc',
+    'type' => MENU_CALLBACK,
+  );
+
   $items = array_merge($items, tow_tests_menu());
   
   return $items;

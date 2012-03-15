@@ -90,6 +90,7 @@ Drupal.behaviors.outer_search = function(context) {
 		var datastring = $(this).parent().children('form').children('div').children('[name="data"]').val();
 		var namestring = $(this).parent().children('form').children('div').children('[name="tooltips"]').val();
 		var fieldtype = $(this).parent().children('form').children('div').children('[name="fieldtype"]').val();
+		var fieldname = $(this).parent().children('form').children('div').children('[name="field"]').val();
 		var min = $(this).parent().find('[name="global_min"]').val();
 		var max = $(this).parent().find('[name="global_max"]').val();
 		var selection_min = $(this).parent().find('[name="selection_min"]').val();
@@ -114,11 +115,11 @@ Drupal.behaviors.outer_search = function(context) {
 			axistype = 'linear';
 		else
 			axistype = 'datetime';
-		plotChart(id, data, axistype, fieldtype, parseFloat(min), parseFloat(max), parseFloat(yMax) * 1.1, parseFloat(selection_min), parseFloat(selection_max));
+		plotChart(id, data, axistype, fieldname, fieldtype, parseFloat(min), parseFloat(max), parseFloat(yMax) * 1.1, parseFloat(selection_min), parseFloat(selection_max));
 	});
 	
 	
-	function plotChart(id, data, axistype, fieldtype, globalMin, globalMax, yMax, selectionMin, selectionMax) {
+	function plotChart(id, data, axistype, fieldname, fieldtype, globalMin, globalMax, yMax, selectionMin, selectionMax) {
 		var masterChart,
 			detailChart;
 		
@@ -180,10 +181,34 @@ Drupal.behaviors.outer_search = function(context) {
                     // listen to the selection event on the master chart to update the
                     // extremes of the detail chart
                     selection: function(event) {
-                        var extremesObject = event.xAxis[0],
-                            min = extremesObject.min,
-                            max = extremesObject.max;
+											var extremesObject = event.xAxis[0],
+													min = extremesObject.min,
+													max = extremesObject.max;
 												
+												$(window).css('cursor', 'wait');
+												var url = 'http://' + location.host + '/search_inner_zoom_ajax?XDEBUG_SESSION_START=ajax';
+												var searchRid = $('#tow-seach-inner-hash-form #edit-rid').val();
+												var searchHash = $('#tow-seach-inner-hash-form #edit-hash').val();
+												$.ajax({
+													url: url,
+													data: {
+														'rid' : searchRid,
+														'hash' : searchHash,
+														'visible_min'	: min,
+														'visible_max' : max,
+														'field_type' : fieldtype,
+														'field' : fieldname,
+													},
+													dataType: 'json',
+													success: function(data) {
+														detailChart.yAxis[0].setExtremes(0, 1.1 * data.yMax, false);
+														detailChart.series[0].setData(data.data, true, false);
+													},
+													
+												});	  
+
+												
+												$(window).css('cursor', 'auto');
 												newVisibleBox(min, max);
 												
                         return false;
@@ -370,6 +395,7 @@ Drupal.behaviors.outer_search = function(context) {
 							formatter: function() {
 								tooltip = this.point.name;
 								tooltip = tooltip.replace(/\\\\n/g,'<br/>');
+								tooltip = tooltip.replace(/\\n/g,'<br/>');
 								return tooltip;
 							},
 							crosshairs: true,

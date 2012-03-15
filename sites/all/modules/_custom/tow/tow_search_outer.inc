@@ -81,7 +81,7 @@ function tow_get_homepage_tab() {
 	// Note: support old GET format of searches for existing links.
 	$path = explode('/', $_GET['q'], 2);
 	$tab = $path[0];
-	if (!in_array($tab, array('featured', 'newest', 'popular', 'debated', 'search_dataset')))
+	if (!in_array($tab, array('featured', 'newest', 'popular', 'debated', 'search_dataset', 'search_inner_zoom_ajax')))
 		$tab = tow_get_search_outer_default_tab();
   }
   return $tab;
