@@ -180,8 +180,13 @@ div.tow-inner-search-widget{
 	border-bottom-style: dotted;
 }
 
-div.tow-inner-search-highcharts-container, div.tow-inner-search-highcharts-bar-container{
-	height: 210px;
+div.tow-inner-search-highcharts-container{
+	height: 168px;
+	position: relative;
+}
+
+div.tow-inner-search-highcharts-bar-container{
+	height: 128px;
 	position: relative;
 }
 

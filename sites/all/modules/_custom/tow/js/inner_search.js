@@ -145,14 +145,25 @@ Drupal.behaviors.outer_search = function(context) {
 			.css('position', 'relative');
 
 		var $detailContainer = $('<div id="' + id + '-detail">')
-			.css({ position: 'absolute', top: 0, height: 160, width: '100%'})
+			.css({ position: 'absolute', top: 0, height: 128, width: '100%'})
 			.appendTo($container);
 
 		var $masterContainer = $('<div id="' + id + '-master">')
-			.css({ position: 'absolute', top: 160, height: 40, width: '100%'})
+			.css({ position: 'absolute', top: 128, height: 40, width: '100%'})
 			.appendTo($container);
 		
-		// create master and in its callback, create the detail chart
+		var minorTickInterval, 
+			tickInterval;
+		if (yMax >=6) {
+			minorTickInterval = Math.floor(yMax/6);
+			tickInterval = minorTickInterval * 2;
+		} else if (yMax >= 4) {
+			minorTickInterval = 1;
+			tickInterval = 2;
+		} else 
+			tickInterval = 1;
+
+			// create master and in its callback, create the detail chart
 		createMaster();
 
 		$container
@@ -160,7 +171,6 @@ Drupal.behaviors.outer_search = function(context) {
 		displaySummary();
 		
     // create the master chart
-
 		function createMaster() {
         masterChart = new Highcharts.Chart({
             chart: {
@@ -181,6 +191,7 @@ Drupal.behaviors.outer_search = function(context) {
                     // listen to the selection event on the master chart to update the
                     // extremes of the detail chart
                     selection: function(event) {
+											$('#' + id +'-waiting').show();
 											var extremesObject = event.xAxis[0],
 													min = extremesObject.min,
 													max = extremesObject.max;
@@ -192,6 +203,7 @@ Drupal.behaviors.outer_search = function(context) {
 												$.ajax({
 													url: url,
 													data: {
+														'op': 'zoom',
 														'rid' : searchRid,
 														'hash' : searchHash,
 														'visible_min'	: min,
@@ -201,15 +213,18 @@ Drupal.behaviors.outer_search = function(context) {
 													},
 													dataType: 'json',
 													success: function(data) {
-														detailChart.yAxis[0].setExtremes(0, 1.1 * data.yMax, false);
-														detailChart.series[0].setData(data.data, true, false);
+														//detailChart.yAxis[0].setExtremes(0, 1.1 * data.yMax, false);
+														$('#' + id +'-waiting').hide();
+														detailChart.series[0].setData(data.data, false);
+														$(window).css('cursor', 'auto');
+														newVisibleRange(min, max);
+														
 													},
 													
 												});	  
-
+												newVisibleBox(min, max, false);
 												
-												$(window).css('cursor', 'auto');
-												newVisibleBox(min, max);
+												
 												
                         return false;
                     }
@@ -259,6 +274,7 @@ Drupal.behaviors.outer_search = function(context) {
             },
             plotOptions: {
                 series: {
+										color: '#4169E1',
                     fillColor: {
                         linearGradient: [0, 0, 0, 70],
                         stops: [
@@ -293,6 +309,9 @@ Drupal.behaviors.outer_search = function(context) {
 							width = masterChart.plotWidth,
 							top = masterChart.plotTop - visibleBoxBorder,
 							height = masterChart.plotHeight;
+							$('#' + masterChart.container.id).dblclick(function(e){
+								resetZoom();
+							});
 						$('#' + masterChart.container.id + '-visible')
 							.css('position', 'absolute')
 							.css('border-style', 'solid')
@@ -337,9 +356,6 @@ Drupal.behaviors.outer_search = function(context) {
 									extremes = detailChart.xAxis[0].getExtremes();
 								ratio = one - zero;
 								return false;
-							})
-							.dblclick(function(e){
-								newVisibleBox(globalMin, globalMax);
 							});
 							
             createDetail(masterChart);
@@ -357,12 +373,13 @@ Drupal.behaviors.outer_search = function(context) {
                 style: {
                     position: 'absolute'
                 },
-								spacingTop: 5,
+ 								spacingTop: 5,
 								spacingRight: 10,
 								spacingBottom: 3,
 								spacingLeft: 0,
 								marginLeft: 25,
-								marginRight: 10
+								marginRight: 10,
+								type: 'spline', 
             },
             credits: {
                 enabled: false
@@ -378,6 +395,8 @@ Drupal.behaviors.outer_search = function(context) {
 								min: globalMin,
 								max: globalMax,
 								tickPixelInterval: 50,
+								minPadding: 0.02,
+								maxPadding: 0.02,
             },
             yAxis: {
                 title: {
@@ -390,6 +409,8 @@ Drupal.behaviors.outer_search = function(context) {
 									y: 4
 								},
 								endOnTick: false,
+								minorTickInterval: minorTickInterval,
+								tickInterval: tickInterval,						
 						},
             tooltip: {
 							formatter: function() {
@@ -398,16 +419,18 @@ Drupal.behaviors.outer_search = function(context) {
 								tooltip = tooltip.replace(/\\n/g,'<br/>');
 								return tooltip;
 							},
-							crosshairs: true,
+//							crosshairs: true,
 							style: {
-								fontSize: '7pt'
+								fontSize: '7pt',
+								zIndex: 11,
 							}
             },
             legend: {
                 enabled: false
             },
             plotOptions: {
-                series: {
+                  series: {
+										color: '#4169E1',
                     marker: {
                         enabled: false,
                         states: {
@@ -418,16 +441,35 @@ Drupal.behaviors.outer_search = function(context) {
                     },
 										states: {
 												hover: {
-														lineWidth: 2
+													lineWidth: 2
 												}
 										}
-                }
-            },
+                },  
+/* 								column: {
+									borderWidth: 0,
+									pointWidth: 1,
+									shadow: false,
+								}, */
+            }, 
             series: [{
-//                pointStart: detailStart,
-                data: data
+              data: data
             }]
         }, function(detailChart){
+					
+					$('<div>')
+						.attr('id', id +'-waiting')
+						.css('position', 'absolute')
+						.css('left', detailChart.plotLeft)
+						.css('top', detailChart.plotTop)
+						.css('width', detailChart.plotWidth)
+						.css('height', detailChart.plotHeight)
+						.css("background-image", "url('http://" + location.host + "/sites/all/modules/_custom/tow/waiting.gif')")
+						.css('background-repeat', 'no-repeat')
+						.css('background-position', 'center center')
+						.css('background-color', 'rgba(255,255,255, 0.8)')
+						.css('z-index', 20)
+						.appendTo('#' + detailChart.container.id)
+						.hide();
 					$('#' + detailChart.container.id).mousedown(function(e){
 						isMouseDown = true;
 						currentObj = 'detail';
@@ -438,7 +480,11 @@ Drupal.behaviors.outer_search = function(context) {
 						ratio = one - zero;
 						visible_min = extremes.min;
 						visible_max = extremes.max;
+					})
+					.dblclick(function(e){
+						resetZoom();
 					});
+
 					towHighchartsNavigator(detailChart, masterChart);
 				});
     };
@@ -539,9 +585,14 @@ Drupal.behaviors.outer_search = function(context) {
 		$(document).mouseup(function(e){
 			isMouseDown = false;
 		});
-		
-		function newVisibleBox(min, max){
-			var rangewidth = max - min;
+
+		function resetZoom(){
+			detailChart.series[0].setData(data, false);
+			newVisibleBox(globalMin, globalMax);
+		}
+		function newVisibleBox(min, max, redrawDetail){
+			var rangewidth = max - min,
+				globalRandewidth = globalMax - globalMin;
 			if (min < globalMin){
 				min = globalMin;
 				max = globalMin + rangewidth;
@@ -553,16 +604,22 @@ Drupal.behaviors.outer_search = function(context) {
 			// move visible box on master
 			var left = masterChart.xAxis[0].translate(min, false) + masterChart.plotLeft,
 				width = masterChart.xAxis[0].translate(max, false) + masterChart.plotLeft - left;
-			left = left - visibleHandleBorder;
+			left = left - 2*visibleHandleBorder;
 			$('#' + masterChart.container.id + '-visible')
 				.show()
 				.css('left', left)
 				.css('width', width);
 			$('#' + masterChart.container.id + '-visible-handle')
 				.css('right', visibleHandleOffset);			
-			if (min == globalMin && max == globalMax)
+			
+			if (Math.abs(min - globalMin) <= globalRandewidth/200 && Math.abs(max - globalMax) <= globalRandewidth/200)
 				$('#' + masterChart.container.id + '-visible').hide();
 									
+			if (redrawDetail != false) 
+				newVisibleRange(min, max);
+		}
+		
+		function newVisibleRange(min, max){
 			// setting extremes on master
 			detailChart.xAxis[0].setExtremes(min, max, true, false);
 			
@@ -575,10 +632,9 @@ Drupal.behaviors.outer_search = function(context) {
 			
 			//redraw handles
 			currentIndex = 0;
-			moveHandle(detailChart.xAxis[0].translate(plotSelRange.min, false) + detailChart.plotLeft);
+			moveHandle(detailChart.xAxis[0].translate(plotSelRange.min, false) + detailChart.plotLeft, true);
 			currentIndex = 1;
-			moveHandle(detailChart.xAxis[0].translate(plotSelRange.max, false) + detailChart.plotLeft);
-			
+			moveHandle(detailChart.xAxis[0].translate(plotSelRange.max, false) + detailChart.plotLeft, true);
 		}
 		
 		function newHandlePos(newPos){
@@ -604,7 +660,7 @@ Drupal.behaviors.outer_search = function(context) {
 		
 		// moves handle defined by currentIndex to screen position screenX, 
 		// and also moves masks on both charts
-		function moveHandle(screenX){
+		function moveHandle(screenX, same){
 			var handle_id = detailChart.container.id + '-handle-' + currentIndex;
 			$('#' + handle_id).css('left', screenX - handleWidth/2);
 			plotX = detailChart.xAxis[0].translate(screenX - detailChart.plotLeft, true);
@@ -612,10 +668,12 @@ Drupal.behaviors.outer_search = function(context) {
 			changeMask(masterChart, currentIndex, plotX);
 			if (currentIndex) {
 				screenSelRange.max = screenX;
-				plotSelRange.max = plotX;
+				if (same != true)
+					plotSelRange.max = plotX;
 			} else {
 				screenSelRange.min = screenX;
-				plotSelRange.min = plotX;
+				if (same != true)
+					plotSelRange.min = plotX;
 			}
 			displaySummary();
 			if (screenX < detailLeft - 1  || screenX > detailRight + 1){
@@ -655,31 +713,82 @@ Drupal.behaviors.outer_search = function(context) {
 			id: maskId,
 			from: from,
 			to: to,
-			color: 'rgba(0, 0, 0, 0.2)',
+			color: 'rgba(127, 127, 127, 0.5)',
+			zIndex: 10,
 			});
 		}
 
 	}
+	
+	$(window).unload(function(e){
+		var url = 'http://' + location.host + '/search_inner_zoom_ajax?XDEBUG_SESSION_START=ajax';
+		var searchRid = $('#tow-seach-inner-hash-form #edit-rid').val();
+		var searchHash = $('#tow-seach-inner-hash-form #edit-hash').val();
+		$.ajax({
+			url: url,
+			async: false,
+			data: {
+				'rid' : searchRid,
+				'hash' : searchHash,
+				'op'	: 'cancel',
+			},
+		});	 
+	});
 	
 $('div.tow-inner-search-highcharts-bar-container').each(function(index){
 		var id = $(this).attr('id');
 		var datastring = $(this).parent().children('form').children('div').children('[name="data"]').val();
 		var namestring = $(this).parent().children('form').children('div').children('[name="tooltips"]').val();
 		var fieldtype = $(this).parent().children('form').children('div').children('[name="fieldtype"]').val();
+		var fieldname = $(this).parent().children('form').children('div').children('[name="field"]').val();
+		var selection_min = $(this).parent().find('[name="selection_min"]').val();
+		var selection_max = $(this).parent().find('[name="selection_max"]').val();
+		var global_min = $(this).parent().find('[name="global_min"]').val();
+		var global_max = $(this).parent().find('[name="global_max"]').val();
+		
+		var active = true;
+		
+		if (global_min == selection_min && global_max == selection_max)
+			active = false;
+		
 		datastring = datastring.substring(2, datastring.length - 2);
 		datastring = datastring.split(', ');//$(this).text(id);
 		namestring = namestring.substring(3, namestring.length - 3);
 		var names = namestring.split('", "');//$(this).text(id);
-		var data = [];
-		for (var key in datastring) {
-			var val = datastring[key];
-			data[key] = parseInt(val);
+		var data = [],
+			selected = [];
+		if (fieldtype != 'time' && fieldtype != 'date' && fieldtype != 'datetime' && fieldtype != 'timestamp') {
+			axistype = 'linear';
+			selection_min = parseFloat(selection_min);
+			selection_max = parseFloat(selection_max);
+		} else {
+			axistype = 'datetime';
 		}
-		chart = plotBarchart(id, names, data);
+		for (var key in datastring) {
+			var x;
+			 if (axistype == 'linear') 
+				x = parseFloat(names[key]);
+			else 
+				x = names[key];
+				
+			if (active)
+				selected[key] = (selection_min <= x && selection_max >= x);
+			else 
+				selected[key] = false;
+				
+			data[key] = parseInt(datastring[key]);
+		}
+		chart = plotBarchart(id, names, data, selected, axistype, fieldname, fieldtype, parseFloat(selection_min), parseFloat(selection_max));
 	});
 
 
-	function plotBarchart(id, categories, data) {
+	function plotBarchart(id, categories, data, selected, axistype, fieldname, fieldtype, selectionMin, selectionMax) {
+		var $container = $('#' + id);
+		$container
+			.before('<div class="tow-highcharts-summary" id="' + id + '-summary"></div>'); 
+		displaySummary();
+		
+			
 		return new Highcharts.Chart({
 			chart: {
 				renderTo: id,
@@ -693,30 +802,31 @@ $('div.tow-inner-search-highcharts-bar-container').each(function(index){
 			subtitle: {
 				text: ''
 			},
-			 plotOptions: {
-			 column: {
-				pointWidth: 15
-			 },
-			 series: {
-            allowPointSelect: true
-        }
-				// series: {
-					// marker: {
-						// enabled: false,
-						// states: {
-							// hover: {
-								// enabled: true
-							// }
-						// }
-					// },
-					// lineWidth: 1
-				// }
-			 },
+			plotOptions: {
+				column: {
+					pointWidth: 15
+				},
+				series: {
+          allowPointSelect: true,
+					point: {
+						events: {
+							select: function(e){
+								var current_key = this.x;
+								
+							}
+						}
+					},
+				},
+			},
 			xAxis: {
 				title: {
 					text: null
 				},
-				categories: categories
+				categories: categories,
+				labels: {
+//					align: 'left',
+//					rotation: 45,
+				},
 			},
 			yAxis: {
 				min: 0,
@@ -729,15 +839,15 @@ $('div.tow-inner-search-highcharts-bar-container').each(function(index){
 				}
 			},
 			tooltip: {
-				// formatter: function() {
-					// tooltip = this.point.name;
-					// tooltip = tooltip.replace(/\\\\n/g,'<br/>');
-					// return tooltip;
-				// },
-				// crosshairs: true,
-				// style: {
-					// fontSize: '7pt'
-				// }
+				formatter: function() {
+					var x = this.x,
+						y = this.y;
+						results = (y == 1) ? Drupal.t('result') : Drupal.t('results');
+						return x + ':<br/>' + y + ' ' + results;
+				},
+				style: {
+					fontSize: '7pt'
+				}
 			},
 			legend: {
 				enabled: false
@@ -749,7 +859,21 @@ $('div.tow-inner-search-highcharts-bar-container').each(function(index){
 				name: '',
 				data: data
 			}]
+		}, function(barChart){
+			var points = barChart.series[0].data;
+			for (var key in points) {
+			var point = points[key];
+				if (selected[key])
+					point.select(true, true);
+		}
 		});
+		
+		function displaySummary(){
+			var min = $('#' + id).parent().find('[name="selection_min"]').val(),
+				max = $('#' + id).parent().find('[name="selection_max"]').val(),
+				summary = '(from ' + min + ' to ' + max + ')';
+			$('#' + id).siblings('div#' + id + '-summary"').html(summary);
+		}
 	}
 }
 
@@ -798,5 +922,5 @@ function time(timestamp){
 }
 
 function dpm(message){
-	$('#content-messages-inner').before(message + ' | ');
+	//$('#breadcrumbs-inner').before(message + ' | ');
 }
