@@ -217,7 +217,7 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
  // TODO: add this only to records
 //		dpm(get_class_methods(get_class($query)));
 	$nid = tow_search_inner_get_nid();
-	$table_fields = tow_apachesolr_table_fields($nid);
+	$table_fields = tow_apachesolr_table_fields($nid, TRUE);
 
 	$params['fl'] .= ',sis_tow_field_table';
 	$query->add_filter('type', 'record');  
@@ -231,7 +231,7 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
 		$params['fl'] .= ',' . $field['name'];
 		$params['facet.field'][] = '{!ex=' . $field['name'] . '}' . $field['name'];
 		//add stats
-		if ($field['type'] != 'bool' && $field['type'] != 'text')	{
+		if ($field['type'] != 'bool' && $field['type'] != 'text' && $field['type'] != 'char')	{
 			$params['stats.field'][] = $field['name'];
 		}
 		
@@ -241,6 +241,10 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
 			$query->remove_filter($field_filter['#name'], $field_filter['#value'], $field_filter['#exclude']);
 			if ($field['type'] == 'enum') {//wrap in quotes
 				$field_filter['#value'] = '"' . $field_filter['#value'] . '"';
+			}
+			if ($field['type'] == 'text' || $field['type'] == 'char') {//wrap in quotes
+				$field_filter['#value'] = preg_replace('/--/', '\\--', $field_filter['#value']);
+				$field_filter['#value'] = preg_replace('/(?<!\\\\)\+/', '--', $field_filter['#value']);
 			}
 			$subquery->add_filter($field['name'], $field_filter['#value'], $field_filter['#exclude']);
 		}
@@ -308,7 +312,19 @@ function tow_apachesolr_update_index(&$document, $node) {
 						case 'datetime':
 							_tow_datetime_to_solr($value);
 							break;
-						default:
+						case 'char':
+						case 'text':
+						case 'code':
+							$words_field_name = 'sis_tow_' . $field_name . '_' . $pos . '_words';
+							$length_field_name = 'sis_tow_' . $field_name . '_' . $pos . '_length';
+							$words = str_word_count($value);
+							$length = strlen($value);
+							$document->$words_field_name = $words;
+							$document->$length_field_name = $length;
+							watchdog('inner_search', $words_field_name . ' => ' . $document->$words_field_name);
+							watchdog('inner_search', $length_field_name . ' => ' . $document->$length_field_name);
+							break;
+						default: 
 							break;
 					}
 					$document->$apachesolr_field_name = $value;
@@ -364,7 +380,6 @@ function tow_apachesolr_field_type($type) {
 		case 'enum': 
 			return 'sis'; //integer
 
-		case 'char': 
 		case 'code': 
 			return 'ss'; //string
 
@@ -380,9 +395,10 @@ function tow_apachesolr_field_type($type) {
 		case 'time': 
 			return 'ds'; //date
 
+		case 'char': 
 		case 'text': 
 		default: 
-			return 'ts'; //text
+			return 'sts'; //text (no break)
 	}
 }
 
@@ -607,9 +623,10 @@ function tow_apachesolr_ajax_settings() {
  * Returns array of fields of table with given nid
  * name, type, title, delta
  */
-function tow_apachesolr_table_fields($nid) {
+function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
 	static $current_nid = NULL;
 	static $fields = array();
+	static $f_fields = array();
 	if ($nid != $current_nid || empty($fields)) {
 		$current_nid = $nid;
 		$table_node = node_load($nid);
@@ -627,6 +644,20 @@ function tow_apachesolr_table_fields($nid) {
 							'title' => $field_title['value'], 
 							'delta' => $delta,
 						);
+						$f_fields[] = array(
+							'name' => $apachesolr_field_name, 
+							'type' => $field_type, 
+							'title' => $field_title['value'], 
+							'delta' => $delta,
+						);	
+						if ($field_type == 'text' || $field_type == 'char') {
+							$f_fields[] = array(
+								'name' => 'f_' . $apachesolr_field_name, 
+								'type' => $field_type, 
+								'title' => $field_title['value'], 
+								'delta' => $delta,
+							);
+						}
 					}
 				}
 			}
@@ -634,5 +665,6 @@ function tow_apachesolr_table_fields($nid) {
 			drupal_not_found();
 		}
 	}
-	return $fields;
+
+	return $add_facet_string_fields ? $f_fields : $fields; 
 }

@@ -50,16 +50,9 @@ function tow_search_inner_widgets_block() {
 		return $block;
 	}
 	
-	$table_fields = tow_apachesolr_table_fields($table_nid);
-
 // get stats for full range
-	foreach ($table_fields as $index=>$field){
-	//remove filter
-	$query->remove_filter($field['name']);
-	//add stats
-		// if ($field['type'] != 'bool' && $field['type'] != 'text')	{
-			// $params['stats.field'][] = $field['name'];
-		// }
+	foreach (tow_apachesolr_table_fields($table_nid, TRUE) as $index=>$field){
+		$query->remove_filter($field['name']);
 	}
 	$query->set_keys('');
 //	dpm(get_class_methods('Solr_Base_Query'));
@@ -83,6 +76,7 @@ function tow_search_inner_widgets_block() {
 	$block['content'] = drupal_get_form('tow_seach_inner_hash_form', $rid, $hash);
 	
 	//building solr query for facets for each field
+	$table_fields = tow_apachesolr_table_fields($table_nid);
 	foreach ($table_fields as $index=>$field){
 		$stats = isset($stats_response->stats->stats_fields->$field['name']) ? $stats_response->stats->stats_fields->$field['name'] : NULL;
 		$facet_counts = (array) $saved_response->facet_counts->facet_fields->$field['name'];
@@ -105,7 +99,7 @@ function tow_search_inner_widgets_block() {
 	
 	apachesolr_static_response_cache($saved_response, 'tow_inner_search');
 	apachesolr_current_query($saved_query, 'tow_inner_search');	
-
+	
 	//creating facet for each field
 	foreach ($table_fields as $index=>$field){
 		global $tow_search_inner_field_delta;
@@ -118,11 +112,13 @@ function tow_search_inner_widgets_block() {
 		}			
 		$newquery = clone $saved_query;
 		$newquery->remove_filter($field['name']);
+		$newquery->remove_filter('f_'. $field['name']);
 		$queryvalues = $newquery->get_url_queryvalues();
 
 		$querystring = tow_search_inner_compose_query($queryvalues['filters'], FALSE);
 		$reset = l(t('Reset'), $_GET['q'], array('query' => $querystring));
-		$widget = tow_search_inner_widget($field['name'], $field['type'], $response, $query, $stats_response->stats->stats_fields->$field['name']);
+		$whole_counts = count((array) $stats_response->facet_counts->facet_fields->$field['name']) - 1; // exclude _empty_ field
+		$widget = tow_search_inner_widget($field['name'], $field['type'], $response, $query, $stats_response->stats->stats_fields->$field['name'], $whole_counts, 'sis_tow_field_' . $field['type'] . '_' . $field['delta']);
 		$block['content'] .= '<div class="tow-inner-search-widget"><b>' . $field['title'] . '</b><br />' . $widget . '<br>' . $reset . '</div>';
 		
 	}
@@ -275,11 +271,15 @@ function tow_search_inner_facet_query(&$params, $field, $type, $stats, $barchart
 			case 'enum': 
 				$params['facet.field'][] = '{!ex=' . $field . '}' . $field; // 
 				break;
+			case 'text': 
+				$field = 'f_' . $field;
+				$params['facet.field'][] = '{!ex=' . $field . '}' . $field;
+				break;
 			case 'char': 
 			case 'code': 
-			case 'text': 
-			default: 
-				return NULL;
+			default:
+				$params['facet.field'][] = '{!ex=' . $field . '}' . $field;
+				break;
 		}
 	} else {
 		$params['facet.field'][] = '{!ex=' . $field . '}' . $field;
@@ -335,7 +335,7 @@ function _tow_search_inner_add_facet_range(&$params, $field, $min, $max, $gap){
 /**
  * Builds part of inner search facets block for specific field
  */
-function tow_search_inner_widget($field, $type, $response, $query, $stats) {
+function tow_search_inner_widget($field, $type, $response, $query, $stats, $whole_counts, $length_field = NULL) {
 	$empty = $response->stats->stats_fields->$field->missing;
 	switch ($type) {
 		case 'int':
@@ -346,15 +346,22 @@ function tow_search_inner_widget($field, $type, $response, $query, $stats) {
 		case 'timestamp':
 			return tow_search_inner_graph_widget($field, $type, $response->facet_counts, $empty, $stats);
 		case 'bool': 
+		case 'code': 
 			$facets_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $field, $field, '');
 			return $facets_list['content'];
 		case 'enum': 
 			$facets_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $field, $field, '', 'tow_search_facet_enum_option');
 			return $facets_list['content'];
-		case 'char': 
-		case 'code': 
 		case 'text': 
-			return drupal_get_form('tow_search_inner_text_facet_form', $field, $type);
+			$facet_field = 'f_' . $field; 
+			$facet_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $facet_field, $facet_field, '', 'tow_search_facet_trim_text');
+			$form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field) . drupal_get_form('tow_search_inner_text_widget_form', $field, $type);
+			return $facet_list['content'] . $form;
+		case 'char': 
+			$facet_field = 'f_' . $field;
+			$facet_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $facet_field, $facet_field, '');
+			$form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field) . drupal_get_form('tow_search_inner_text_widget_form', $field, $type);
+			return ($whole_counts > 50) ? $facet_list['content'] . $form : $facet_list['content'];
 		default: 
 			return NULL;
 	}
@@ -774,42 +781,11 @@ function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $e
 
 
 
-function tow_search_inner_text_facet_form($form_state, $field, $fieldtype = 'int') {
+function tow_search_inner_text_widget_form($form_state, $field, $fieldtype) {
+	
 	$form = array();
 
- 	$saved_query = apachesolr_current_query(NULL, 'tow_inner_search');
-	$query = clone $saved_query;
-	$active_filters = $query->get_filters($field);
-	if ($active_filters) {
-		$option = preg_replace('/[^\*]++/', '_', $active_filters[0]['#value']);
-		$value = preg_replace('/\*/', '', $active_filters[0]['#value']);
-		if ($active_filters[0]['#exclude'])
-			$option = '-' . $option;
-			$value = preg_replace('/(?<!\\\\)-/', ' ', $value);
-			$value = preg_replace('/\\\\-/', '-', $value);
-	}
-	$query->remove_filter($field);
-	$placeholder = $field . '_placeholder';
-	$query->add_filter($field, $field . '_placeholder');
-	$filters = $query->get_url_queryvalues();
-	$querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
-	$url = url($_GET['q'], array('query' => $querystring));
-		
-	$query->remove_filter($field, $field . '_placeholder');
-	$query->add_filter($field, $field . '_placeholder');
-	$filters = $query->get_url_queryvalues();
-	$querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
-	$negative_url =  url($_GET['q'], array('query' => $querystring));
-	
-	$form['url'] = array(
-		'#type' => 'hidden',
-		'#value' => $url,
-	); 
-
-	$form['negative_url'] = array(
-		'#type' => 'hidden',
-		'#value' => $negative_url,
-	); 
+/* field info */
 
 	$form['field'] = array(
 		'#type' => 'hidden',
@@ -821,6 +797,55 @@ function tow_search_inner_text_facet_form($form_state, $field, $fieldtype = 'int
 		'#value' => $fieldtype,
 	);  
 
+	$form['length_field'] = array(
+		'#type' => 'hidden',
+		'#value' => $length_field,
+	);  
+
+
+/* search by substring */
+
+ 	$saved_query = apachesolr_current_query(NULL, 'tow_inner_search');
+	$query = clone $saved_query;
+	$active_filters = $query->get_filters($field);
+	if ($active_filters) {
+		$option = preg_replace('/[^\*]++/', '_', $active_filters[0]['#value']);
+		$value = preg_replace('/\*/', '', $active_filters[0]['#value']);
+		if ($active_filters[0]['#exclude'])
+			$option = '-' . $option;
+		$value = preg_replace('/(?<!\\\\)\+/', ' ', $value);
+//		$value = preg_replace('/\\\\-/', '-', $value);
+		$value = preg_replace('/\\\\(\+|-|&&|\|\||!|\(|\)|\{|\}|\[|\]|\^|"|~|\*|\?|:|\\\\)/', '$1', $value);
+
+		dpm($value);
+	}
+	
+	// positive search (string includes substring)
+	$query->remove_filter($field);
+	$placeholder = $field . '_placeholder';
+	$query->add_filter($field, $field . '_placeholder');
+	$filters = $query->get_url_queryvalues();
+	$querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
+	$url = url($_GET['q'], array('query' => $querystring));
+
+	$form['url'] = array(
+		'#type' => 'hidden',
+		'#value' => $url,
+	); 
+		
+	// negative  search (string doesn't include substring)
+	$query->remove_filter($field, $field . '_placeholder');
+	$query->add_filter($field, $field . '_placeholder', TRUE);
+	$filters = $query->get_url_queryvalues();
+	$querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
+	$negative_url =  url($_GET['q'], array('query' => $querystring));
+
+	$form['negative_url'] = array(
+		'#type' => 'hidden',
+		'#value' => $negative_url,
+	); 
+
+	// input fields for search by substring
 	$form['option'] = array(
 		'#type' => 'select',
  		'#options' => array(
@@ -830,10 +855,9 @@ function tow_search_inner_text_facet_form($form_state, $field, $fieldtype = 'int
 							'-*_*' => 'not contains', 
 							'_' => 'equals', 
 							'-_' => 'not equals',
-//							'num_of_chars' => 'number of characters',
-//							'num_of_words' => 'number of words',
 		),
 	); 
+	
 	if (isset($option)) 
 		$form['option']['#value'] = $option;
 
@@ -843,6 +867,7 @@ function tow_search_inner_text_facet_form($form_state, $field, $fieldtype = 'int
 	if (isset($value)) 
 		$form['value']['#value'] = $value;
 
+/* Search button	*/
 	$form['search'] = array(
 		'#type' => 'button',
 		'#title' => t('Search'),
@@ -851,6 +876,110 @@ function tow_search_inner_text_facet_form($form_state, $field, $fieldtype = 'int
 	); 	 
 	
 	return $form;
+}
+
+
+
+function tow_search_inner_text_length_widget_form($form_state, $length_field) {
+	$form = array();
+
+/* field info */
+
+	$form['fieldtype'] = array(
+		'#type' => 'hidden',
+		'#value' => 'length',
+	);  
+
+	$form['field'] = array(
+		'#type' => 'hidden',
+		'#value' => $length_field,
+	);  
+
+
+/* search by # of words/characters  */
+	$saved_query = apachesolr_current_query(NULL, 'tow_inner_search');
+	$query = clone $saved_query;
+	$placeholder = $length_field . '_placeholder';
+
+	$prefix = '_words';
+	$active_filters = $query->get_filters($length_field . $prefix);
+	if (!$active_filters){
+		$prefix = '_length';
+		$active_filters = $query->get_filters($length_field . $prefix);
+	}
+	if ($active_filters) {
+		if (is_numeric($active_filters[0]['#value'])) {
+			// = 
+			$value = $active_filters[0]['#value'];
+			$option = $prefix . ':#';
+		} else if ($active_filters[0]['#start'] != '*') {
+			// >
+			$value = $active_filters[0]['#start'] - 1;
+			$option = $prefix . ':[# TO *]';
+		} else {
+			// <
+			$value = $active_filters[0]['#end'] + 1;
+			$option = $prefix . ':[* TO #]';
+		}
+	}
+	
+	// positive search (string includes substring)
+	$query->remove_filter($length_field . '_words');
+	$query->remove_filter($length_field . '_length');
+	
+	$query->add_filter($length_field, $placeholder);
+	$filters = $query->get_url_queryvalues();
+	$querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
+	$url = url($_GET['q'], array('query' => $querystring));
+
+	$form['url'] = array(
+		'#type' => 'hidden',
+		'#value' => $url,
+	); 	
+	// input fields for search by	# of words/characters
+	$form['option'] = array(
+		'#type' => 'select',
+ 		'#options' => array(
+			'_length:#' => '# characters =', 
+			'_length:[* TO #]'=> '# characters <', 
+			'_length:[# TO *]'=> '# characters >', 
+			'_words:#' => '# words =', 
+			'_words:[* TO #]'=> '# words <', 
+			'_words:[# TO *]'=> '# words >',
+		),
+	); 
+
+	if (isset($option)) 
+		$form['option']['#value'] = $option;
+
+	$form['value'] = array(
+		'#type' => 'textfield',
+	); 	
+	if (isset($value)) 
+		$form['value']['#value'] = $value;
+		
+
+/* Search button	*/
+	$form['search'] = array(
+		'#type' => 'button',
+		'#title' => t('Search'),
+		'#value' => t('Search'),
+		'#attributes' => array('onclick' => 'return false;'),
+	); 	 
+	
+	return $form;
+}
+
+function tow_search_facet_trim_text($facet, &$options){
+	$alter=array(
+			'html' => TRUE,
+			'ellipsis' => TRUE,
+			'word_boundary' => FALSE,
+			'max_length' => 15,
+	  ); 
+
+	  return views_trim_text($alter,$facet);
+
 }
 
 function tow_search_facet_enum_option($facet, &$options){
@@ -990,9 +1119,9 @@ function tow_search_inner_get_keys() {
   if (!isset($return)) {
 	// Extract keys as remainder of path
 	// Note: support old GET format of searches for existing links.
-	$path = explode('/', $_GET['q'], 3);
-	$keys = empty($_REQUEST['keys']) ? '' : $_REQUEST['keys'];
-	$return = count($path) == 3 ? $path[2] : $keys;
+		$path = explode('/', $_GET['q'], 3);
+		$keys = empty($_REQUEST['keys']) ? '' : $_REQUEST['keys'];
+		$return = count($path) == 3 ? $path[2] : $keys;
   }
   return $return;
 }

@@ -25,7 +25,9 @@ Drupal.behaviors.outer_search = function(context) {
 	}).appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
 	//simple search
 	$('#edit-keywords').change(function() {
-		window.location.href = 'http://' + location.host + '/search_dataset/' + $(this).parent().parent().children('#edit-nid').val() + '/' + $(this).val() + location.search;
+		var keywords = $(this).val().replace(/(\+|-|&&|\|\||!|\(|\)|\{|\}|\[|\]|\^|"|~|\*|\?|:|\\)/g, '\\$1');
+		keywords = encodeURIComponent(keywords);
+		window.location.href = 'http://' + location.host + '/search_dataset/' + $(this).parent().parent().children('#edit-nid').val() + '/' + keywords + location.search;
 	});
 
 	//	disabling page reload on submit
@@ -57,13 +59,27 @@ Drupal.behaviors.outer_search = function(context) {
 				}
 				url = url.replace(from_str, to_str);
 				window.location.href = 'http://' + location.host + url;
+			} else if (type == 'length') {
+				var option = $(this).parent().children('.form-item').children('[name="option"]').val();
+				var value = parseInt($(this).parent().children('.form-item').children('[name="value"]').val());
+				if (option.indexOf('[* TO #]') > -1)
+					value -= 1;
+				else if (option.indexOf('[# TO *]')  > -1)
+					value += 1;
+				
+				query = option.replace('#', value);
+				to_str = query;
+				from_str = '%3A' + from_str;
+				url = url.replace(from_str, to_str);
+				window.location.href = 'http://' + location.host + url;
 			} else {
 				var negative_url = $(this).parent().children('[name="negative_url"]').val();
 				var option = $(this).parent().children('.form-item').children('[name="option"]').val();
 				var text = $(this).parent().children('.form-item').children('[name="value"]').val();
-				text = text.replace('-','\\-');
-				text = text.replace(' ','-');
-				if (option.search('-')) {
+				text = text.replace(/(\+|-|&&|\|\||!|\(|\)|\{|\}|\[|\]|\^|"|~|\*|\?|:|\\\\)/g, '\\$1');
+				text = text.replace(/ /g,'+');
+				text = encodeURIComponent(text);
+				if (option.indexOf('-') > -1) {
 					url = negative_url;
 					option = option.replace('-', '');
 				}

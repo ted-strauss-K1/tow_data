@@ -66,15 +66,16 @@ function tow_inner_search_finalize_query(&$query, &$params) {
 		}
 	
 		// filter for empty field values
-		$filter = preg_replace('/-(sis|fs|ss|bs|ts|ds)_tow_field_(int|char|float|bool|text|enum|date|datetime|time|timestamp|code)_\d{1,}:\[\* TO \*\]/', '(*:* $0)', $filter);
-		
-		if (preg_match('/\(?(ss|ts)_tow_field_/', $filter, $matches)) {
-			$filter = preg_replace('/(?<!\\\\)-/', '\\ ', $filter);
-			$filter = preg_replace('/\\\\-/', '-', $filter);
-			$filter = '{!edismax}' . $filter;
+		$filter = preg_replace('/-(sis|fs|ss|bs|ts|sts|ds)_tow_field_(int|char|float|bool|text|enum|date|datetime|time|timestamp|code)_\d{1,}:\[\* TO \*\]/', '(*:* $0)', $filter);
+		if (preg_match('/\(?(ss|ts|sts)_tow_field_/', $filter, $matches)) {
+//			dpm($filter);
+			$filter = preg_replace('/(?<!\\\\)--/', '\\ ', $filter);
+			$filter = preg_replace('/\\\\--/', '--', $filter);
+			$filter = '{!edismax tag=' . $tag . '}'. $filter;
 		} elseif ($tag) 
 			$filter = '{!tag=' . $tag . '}' . $filter;
 			
 	}
-	//dpm($params['fq']);
+//	dpm($query->get_keys());
+//	dpm($params['fq']);
 }
