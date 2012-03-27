@@ -351,6 +351,9 @@ function tow_nodeapi(&$node, $op) {
   // Submit description after table node was inserted
   if ($node->type == 'table' && $op == 'insert')
     tow_field_descriptions_submit($node->nid);
+		
+	if ($node->type == 'record' && $op == 'presave')
+		tow_record_set_empty($node);
 }
 
 /**

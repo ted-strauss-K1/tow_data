@@ -181,14 +181,14 @@ function tow_import_progress_init($hash, $copied, $filename, $to) {
 function tow_import_progress_set($hash, $stage, $value) {
   global $user;
   db_query("UPDATE {tow_import_progress} SET stage%s = '%s' WHERE sid='%s' AND hash = %d", $stage, $value, $user->sid, $hash);
-  watchdog('import','Stage ' . $stage . ' set: ' . $value . '(hash ' . $hash . ')');
+  watchdog('import_stage','Stage ' . $stage . ' set: ' . $value . '(hash ' . $hash . ')');
 }
 
 function tow_import_progress_get($hash, $stage) {
   global $user;
 
   $response = db_result(db_query("SELECT SQL_NO_CACHE stage%s FROM {tow_import_progress} WHERE sid='%s' AND hash=%d", $stage, $user->sid, $hash));
-  watchdog('import','Stage ' . $stage . ' get: ' . $response . '(hash ' . $hash . ')');
+  watchdog('import_stage','Stage ' . $stage . ' get: ' . $response . '(hash ' . $hash . ')');
 
   if ($stage == 6)
     tow_import_progress_delete($hash);
@@ -867,7 +867,7 @@ function _test($hash, $filename, $to) {
       // 4.2 data
       for ($col_index = 0; $col_index <= $table['titles_cols_qty'] - 1; $col_index++) {
         if (isset($table['value'][$record_index][$col_index])) {
-          $new_record->{"field_" .  $table['col_type'][$col_index]}[$col_index]['value'] = $table['value'][$record_index][$col_index];
+          $new_record->{"field_" .  $table['col_type'][$col_index]}[$col_index]['value'] = _tow_insert_fake($table['value'][$record_index][$col_index]);
         }
         else {
           $new_record->{"field_" .  $table['col_type'][$col_index]}[$col_index]['value'] = '<not set>';

@@ -181,9 +181,9 @@ function tow_record_submit_values($form, &$form_state) {
       $value['value'] = _tow_bool_to_int($value['value']);
     if ($type == 'timestamp')
       $value['value'] = time();
-    $delta = $form_state['values']['delta'][$key];
+    $delta = $form_state['values']['delta'][$key]; 
     $form_state['values']['field_' . $type][$delta]['_weight'] = $delta;
-    $form_state['values']['field_' . $type][$delta]['value'] = $value['value'];
+    $form_state['values']['field_' . $type][$delta]['value'] = _tow_insert_fake($value['value']);
   }
 }
 
@@ -221,4 +221,16 @@ function tow_record_format_for_search_indexing(&$node) {
                                                    WHERE `nid` = %d 
                                                    AND `vid` = %d", 
                                                    $table_nid, $table_nid)));
+}
+
+/*
+ * Substitutes NULL placeholders by NULLs in node CCK fields
+ */
+function tow_record_set_empty(&$node) {
+	$types = content_types($node->type);
+	foreach ($types['fields'] as $field) {
+		foreach ($node->$field['field_name'] as &$instance) {
+			$instance['value'] = _tow_remove_fake($instance['value']);
+		}
+	}
 }
