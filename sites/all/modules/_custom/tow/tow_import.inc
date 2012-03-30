@@ -188,7 +188,7 @@ function tow_import_progress_get($hash, $stage) {
   global $user;
 
   $response = db_result(db_query("SELECT SQL_NO_CACHE stage%s FROM {tow_import_progress} WHERE sid='%s' AND hash=%d", $stage, $user->sid, $hash));
-  watchdog('import_stage','Stage ' . $stage . ' get: ' . $response . '(hash ' . $hash . ')');
+//  watchdog('import_stage','Stage ' . $stage . ' get: ' . $response . '(hash ' . $hash . ')');
 
   if ($stage == 6)
     tow_import_progress_delete($hash);
@@ -326,9 +326,10 @@ function tow_import_check_request($hash, $dataset_nid, $table_nid) {
 
 ###### FILE PROCESSING ######
 
-function _test($hash, $filename, $to) {
+function _test($hash, $filename, $to) {xdebug_break();
 
-  require_once 'sites/all/libraries/PHPExcelExtension/PHPExcel/IOFactory.php';
+try {
+	require_once 'sites/all/libraries/PHPExcelExtension/PHPExcel/IOFactory.php';
 
   // Default column title, used in case if data file contains no column title
   $default_column_title = "Column_";
@@ -369,13 +370,19 @@ function _test($hash, $filename, $to) {
   // 2.1.1 Automatically detect filetype and load it into the $objPHPExcel object
   // 2.1.1.1 Detect filetype
   
-  $inputFileType = PHPExcel_IOFactory::identify("$imported_file_name");
+	$cacheMethod = PHPExcel_CachedObjectStorageFactory::cache_to_phpTemp;
+	PHPExcel_Settings::setCacheStorageMethod($cacheMethod, $cacheSettings);
+
+	$inputFileType = PHPExcel_IOFactory::identify("$imported_file_name");
   // 2.1.1.2 Create reader of detected type
   $objReader = PHPExcel_IOFactory::createReader("$inputFileType");
   // 2.1.1.3 Set properties of Reader object depending on its type    
   // Read no formatting 
   if (method_exists($objReader, 'setReadDataOnly')) {
     $objReader->setReadDataOnly(true);
+  }
+  if (method_exists($objReader, 'enableMemoryOptimization()')) {
+    $objReader->enableMemoryOptimization();
   }
   // txt-file. Value delimiter may be tab or comma. 
   if (($inputFileType == 'CSV') && (strtolower($info['extension']) == "txt")) {
@@ -406,7 +413,7 @@ function _test($hash, $filename, $to) {
 	}
   
 
-  
+  watchdog('PHPExcel', 'PHPExcel completed loading');
   // check, if first row contains more than 
   
   
@@ -524,7 +531,7 @@ function _test($hash, $filename, $to) {
 
   // TODO: handle absence of data in the data file
 
-  $types = tow_possible_fields();
+  $types = array_merge(tow_possible_fields(), array('null'));
   $types_id = array_flip($types);
 
   // 2.4 Titles validation
@@ -867,10 +874,11 @@ function _test($hash, $filename, $to) {
       // 4.2 data
       for ($col_index = 0; $col_index <= $table['titles_cols_qty'] - 1; $col_index++) {
         if (isset($table['value'][$record_index][$col_index])) {
-          $new_record->{"field_" .  $table['col_type'][$col_index]}[$col_index]['value'] = _tow_insert_fake($table['value'][$record_index][$col_index]);
+          $value = _tow_reduce_type($table['col_type'][$col_index], $table['value'][$record_index][$col_index]);
+					$new_record->{"field_" .  $table['col_type'][$col_index]}[$col_index]['value'] = $value;
         }
         else {
-          $new_record->{"field_" .  $table['col_type'][$col_index]}[$col_index]['value'] = '<not set>';
+          $new_record->{"field_" .  $table['col_type'][$col_index]}[$col_index]['value'] = _tow_insert_fake(NULL);
         }
       }
       //drupal_set_message('<pre>' . print_r($new_record, true) . '</pre>');
@@ -884,7 +892,8 @@ function _test($hash, $filename, $to) {
   }
 
   tow_import_progress($hash, $stage, 'finish');
-
+	
+	$stage = 4;
   if ($warning_messages) {
     foreach  ($warning_messages as $value) {
       $warning .= $value . '; ';
@@ -892,12 +901,13 @@ function _test($hash, $filename, $to) {
     $warning = substr($warning, 0, -2);
     // TODO:  make a list of warnings to be displayed
     // $warning = theme_item_list($warning_messages, NULL, 'ul');
-    tow_import_progress($hash, 4, 'message', $warning);
+    tow_import_progress($hash, $stage, 'message', $warning);
   }
   else
-    tow_import_progress($hash, 4, 'fail');
-  //tow_import_progress($hash, 4, $warning);
-
+    tow_import_progress($hash, $stage, 'fail');
+  //tow_import_progress($hash, $stage, $warning);
+	
+	$stage = 5;
   if ($found_key_titles) {
     foreach  ($found_key_titles as $value) {
       $found_keys .= $value . '; ';
@@ -905,15 +915,16 @@ function _test($hash, $filename, $to) {
     $found_keys = substr($found_keys, 0, -2);
     // TODO:  make a list of warnings to be displayed
     // $warning = theme_item_list($warning_messages, NULL, 'ul');
-    tow_import_progress($hash, 5, 'message', 'we found ' . count($found_key_titles) . ' key fields (' . $found_keys . ')');
+    tow_import_progress($hash, $stage, 'message', 'we found ' . count($found_key_titles) . ' key fields (' . $found_keys . ')');
   }
   elseif (($progress_indicator < 0) || ($import_action == 'append')) {
-    tow_import_progress($hash, 5, 'fail');
+    tow_import_progress($hash, $stage, 'fail');
   }
   else {
-    tow_import_progress($hash, 5, 'message', "we found no key fields");
+    tow_import_progress($hash, $stage, 'message', "we found no key fields");
   }
-
+	
+	$stage = 6;
   if ($import_action == 'create') {
     if ($created_table_titles) {
       foreach  ($created_table_titles as $value) {
@@ -926,19 +937,22 @@ function _test($hash, $filename, $to) {
       $created_tables = substr($created_tables, 0, -2);
       // TODO:  make a list of warnings to be displayed
       // $warning = theme_item_list($warning_messages, NULL, 'ul');
-      tow_import_progress($hash, 6, 'message', $created_tables . ' created./ ' . $created_tables_spaced . '/ ' . $created_nids_spaced);
+      tow_import_progress($hash, $stage, 'message', $created_tables . ' created./ ' . $created_tables_spaced . '/ ' . $created_nids_spaced);
     }
     else {
-      tow_import_progress($hash, 6, 'message', "no tables created");
+      tow_import_progress($hash, $stage, 'message', "no tables created");
     }
   }
   else {
     if (($progress_indicator >= 0)) {
-      tow_import_progress($hash, 6, 'message', $table_node_to_be_updated->title . ' updated./ ' . $table_node_to_be_updated->title . '/ ' . $table_node_to_be_updated->nid);
+      tow_import_progress($hash, $stage, 'message', $table_node_to_be_updated->title . ' updated./ ' . $table_node_to_be_updated->title . '/ ' . $table_node_to_be_updated->nid);
     }
     else
-    tow_import_progress($hash, 6, 'message', "No data was appended.");
+    tow_import_progress($hash, $stage, 'message', "No data was appended.");
   }
+} catch (Exeption $e) {
+	tow_import_progress($hash, $stage, 'fail');
+}
 }
 
 /**
@@ -950,7 +964,7 @@ function _test($hash, $filename, $to) {
 function _tow_import_detect_type($str_value)
 {
   $value = strtolower(trim($str_value));
-
+	$res['value'] = $str_value;
   // boolean
   if ( ($value == 'true') ||
   ($value == 'false') ||
@@ -958,36 +972,25 @@ function _tow_import_detect_type($str_value)
   ($value == 'no') )
   {
     $res['type'] = "bool";
-    if ($value == 'true' || $value == 'yes') {
-      $res['value'] = 'true';
-    }
-    else {
-      $res['value'] = 'false';
-    }
   }
   // numeric: integer or float
   elseif  (is_numeric($value)) {
-    if (($res['value'] = (integer)$value) == $value) {
+    if ((integer)$value == $value) {
       $res['type'] = "int";
-    }
-    else
-    {
+    } else {
       $res['type'] = "float";
-      $res['value'] = (float) $value;
     }
   }
   // date
   elseif ($timestamp=strtotime($value)) {
-	if (abs($timestamp - time()) <= 86400) {//24*60*60
-		$res['value'] = date("H:i:s",$timestamp);
-		$res['type'] = "time";
-	} elseif (date('His',$timestamp) == '000000') {
-		$res['value'] = date("Y-m-d",$timestamp);
-		$res['type'] = "date";
-	} else {
-		$res['value'] = date("Y-m-d H:i:s",$timestamp);
-		$res['type'] = "datetime";
-	}
+		if (abs($timestamp - time()) <= 86400) {//24*60*60
+			$res['type'] = "time";
+		} elseif (date('His',$timestamp) == '000000') {
+			$res['type'] = "date";
+		} else {
+			$res['type'] = "datetime";
+		}
+		$res['value'] = $value;
   }
   elseif ($value === "null") {
     $res['type'] = "null";
@@ -995,9 +998,40 @@ function _tow_import_detect_type($str_value)
   }
   else {
     $res['type'] = "text";
-    $res['value'] = $str_value;
   }
   return $res;
+}
+
+/**
+ * 
+ * Reduces value to specific type
+ * @param string $type, $value
+ * @return $value
+ */
+function _tow_reduce_type($type, $value) {
+	switch ($type) {
+		case 'int':
+			return (integer) $value;
+		case 'float':
+			return (float) $value;
+		case 'bool':
+			$value = strtolower(trim($value));
+			if ($value == 'true' || $value == 'yes') {
+				return 'true';
+			} else {
+				return 'false';
+			}
+		case 'date':
+			return date("Y-m-d",strtotime($value));
+		case 'time':
+			return date("H:i:s",strtotime($value));
+		case 'datetime':
+			return date("Y-m-d H:i:s",strtotime($value));
+		case 'char':
+		case 'text':
+		default:
+			return $value;
+	}
 }
 
 /**

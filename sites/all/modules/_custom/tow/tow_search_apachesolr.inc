@@ -631,6 +631,8 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
 		$current_nid = $nid;
 		$table_node = node_load($nid);
 		if ($table_node->type == 'table') {
+			$index = 0;
+			$weights_array = unserialize($table_node->field_weights[0]['value']);
 			foreach (tow_possible_fields() as $field_type) {
 				$field_name = 'field_' . $field_type;
 				$field_title_name = 'field_title_' . $field_type;
@@ -638,7 +640,7 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
 				foreach ($table_node->$field_title_name as $delta => $field_title) {
 					if ($field_title['value'] != NULL) {
 						$apachesolr_field_name = $apachesolr_field_type . '_tow_' . $field_name . '_' . $delta;	
-						$fields[] = array(
+						$fields[$weights_array[$index]] = array(
 							'name' => $apachesolr_field_name, 
 							'type' => $field_type, 
 							'title' => $field_title['value'], 
@@ -658,8 +660,11 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
 								'delta' => $delta,
 							);
 						}
+						
+						$index++;
 					}
 				}
+				ksort($fields);
 			}
 		} else {
 			drupal_not_found();
