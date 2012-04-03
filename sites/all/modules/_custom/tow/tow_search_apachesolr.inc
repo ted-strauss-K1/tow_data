@@ -660,6 +660,26 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
 								'delta' => $delta,
 							);
 						}
+						if ($field_type == 'text' || $field_type == 'char') {
+							$f_fields[] = array(
+								'name' => 'f_' . $apachesolr_field_name, 
+								'type' => $field_type, 
+								'title' => $field_title['value'], 
+								'delta' => $delta,
+							);
+							$f_fields[] = array(
+								'name' => 'sis_tow_' . $field_name . '_' . $delta . '_words', 
+								'type' => $field_type, 
+								'title' => $field_title['value'], 
+								'delta' => $delta,
+							);
+							$f_fields[] = array(
+								'name' => 'sis_tow_' . $field_name . '_' . $delta . '_length', 
+								'type' => $field_type, 
+								'title' => $field_title['value'], 
+								'delta' => $delta,
+							);
+						}
 						
 						$index++;
 					}

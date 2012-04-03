@@ -47,7 +47,6 @@ function tow_search_inner_widgets_block() {
 		$table_nid = $saved_response->response->docs[0]->sis_tow_field_table;
 	else {
 		$table_nid = tow_search_inner_get_nid();
-		return $block;
 	}
 	
 // get stats for full range
@@ -57,8 +56,8 @@ function tow_search_inner_widgets_block() {
 	$query->set_keys('');
 //	dpm(get_class_methods('Solr_Base_Query'));
 	list($final_query, $stats_response) = apachesolr_do_query('tow_inner_search', $query, $params);
-	if (empty($stats_response))
-		return;
+//	if (empty($stats_response))
+//		return;
 	// apachesolr_static_response_cache($saved_response, 'tow_inner_search');
 	// apachesolr_current_query($saved_query, 'tow_inner_search');	
 	
@@ -340,7 +339,7 @@ function _tow_search_inner_add_facet_range(&$params, $field, $min, $max, $gap, $
  * Builds part of inner search facets block for specific field
  */
 function tow_search_inner_widget($field, $type, $response, $query, $stats, $whole_counts, $length_field = NULL) {
-	$empty = $response->stats->stats_fields->$field->missing;
+	$empty = $response->facet_counts->facet_fields->$field->_empty_;//response->stats->stats_fields->$field->missing;
 	switch ($type) {
 		case 'int':
 		case 'float':
@@ -832,8 +831,6 @@ function tow_search_inner_text_widget_form($form_state, $field, $fieldtype) {
 		$value = preg_replace('/(?<!\\\\)\+/', ' ', $value);
 //		$value = preg_replace('/\\\\-/', '-', $value);
 		$value = preg_replace('/\\\\(\+|-|&&|\|\||!|\(|\)|\{|\}|\[|\]|\^|"|~|\*|\?|:|\\\\)/', '$1', $value);
-
-		dpm($value);
 	}
 	
 	// positive search (string includes substring)
@@ -1210,9 +1207,9 @@ function tow_search_inner_facet_widget($response, $query, $module, $delta, $face
       $limit = isset($initial_limits[$module][$delta]) ? $initial_limits[$module][$delta] : variable_get('apachesolr_facet_query_initial_limit_default', 10);
       $output = theme('apachesolr_facet_list', $items, $limit);
       return array('subject' => $filter_by, 'content' => $output);
-    }
+    } 
   }
-  return NULL;
+  return array('content' => t('No results found'));
 }
 
 function theme_tow_search_inner_unclick_link($facet_text, $path, $options = array(), $count = 0, $active = FALSE, $num_found = NULL) {

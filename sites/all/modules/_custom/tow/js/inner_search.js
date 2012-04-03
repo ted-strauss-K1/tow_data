@@ -396,6 +396,7 @@ Drupal.behaviors.outer_search = function(context) {
 								marginLeft: 25,
 								marginRight: 10,
 								type: 'spline', 
+								plotBorderWidth: 1,
             },
             credits: {
                 enabled: false
@@ -486,6 +487,23 @@ Drupal.behaviors.outer_search = function(context) {
 						.css('z-index', 20)
 						.appendTo('#' + detailChart.container.id)
 						.hide();
+					$('<div>')
+						.attr('id', id +'-noresult')
+						.css('position', 'absolute')
+						.css('left', detailChart.plotLeft)
+						.css('top', detailChart.plotTop)
+						.css('width', detailChart.plotWidth)
+						.css('margin-top', detailChart.plotHeight/2-10)
+						.css('background-position', 'center center')
+						.css('z-index', 9)
+						.css('text-align', 'center')
+						.css('vertical-align', 'middle')
+						.css('font-size', '10')
+						.html('No results found')
+						.appendTo('#' + detailChart.container.id);
+						if (yMax)
+							$('#' + id +'-noresult').hide();
+
 					$('#' + detailChart.container.id).mousedown(function(e){
 						isMouseDown = true;
 						currentObj = 'detail';
@@ -542,7 +560,7 @@ Drupal.behaviors.outer_search = function(context) {
 					.css('left', x - handleWidth/2)	
 					.css('height', handleHeight)	
 					.css('width', handleWidth)
-					.css('z-index', 0)
+					.css('z-index', 10)
 					.css('background-color', 'white')
 					.css('border-style', 'solid')
 					.css('border-width', '1px')
