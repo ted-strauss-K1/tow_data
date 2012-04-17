@@ -44,7 +44,7 @@ function tow_search_inner_widgets_block() {
 	$params = apachesolr_search_basic_params($query);
 
 	if (isset($saved_response->response->docs[0]))
-		$table_nid = $saved_response->response->docs[0]->sis_tow_field_table;
+		$table_nid = $saved_response->response->docs[0]->ss_tow_field_table;
 	else {
 		$table_nid = tow_search_inner_get_nid();
 	}
@@ -154,7 +154,7 @@ function tow_seach_inner_hash_form($form_state, $rid, $hash){
 /**
  * Builds part of solr query for getting facet numbers for table field
  */
-function tow_search_inner_ajax_field_zooming() {xdebug_break();
+function tow_search_inner_ajax_field_zooming() {
 	$rid = $_GET['rid'];
 	$hash = $_GET['hash'];
 	if ($_GET['op'] == 'zoom') {
@@ -200,6 +200,7 @@ function tow_search_inner_ajax_field_zooming() {xdebug_break();
 		if (empty($response))
 			return drupal_json(NULL);
 
+		dpm($response->facet_counts);
 		list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $response->facet_counts->facet_ranges->$field);
 		$series = array();
 		foreach($data as $index => $point) {
@@ -388,7 +389,7 @@ function tow_search_inner_graph_widget($field, $type, $facet_counts, $empty, $st
 /*
  *	Returns line chart widget
  */
-function tow_search_inner_chart_widget($field, $field_type, $facet_counts, $empty){
+function tow_search_inner_chart_widget($field, $field_type, $facet_counts, $empty){dpm($facet_counts);
 
 	list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $facet_counts);
 	$data = drupal_to_js($data);
@@ -495,7 +496,11 @@ function tow_search_inner_chart_data($field, $field_type, $facet_counts){
 	}
 	array_push($facets_list, _tow_search_inner_range($interval_start, $interval_end, $is_natural_gap) . 
 		_tow_search_inner_number_of_results($group_counts));
-	array_push($data, array(($group_start - $gap + $end)/2, $group_counts));
+	if ($is_natural_gap) {
+		array_push($data, array($group_start - $gap, $group_counts));
+		$end = $group_start - $gap;
+	} else
+		array_push($data, array(($group_start - $gap + $end)/2, $group_counts));
 	
 	return array($data, $facets_list, $start, $end, $max_count);
 }
@@ -984,15 +989,18 @@ function tow_search_inner_text_length_widget_form($form_state, $length_field) {
 }
 
 function tow_search_facet_trim_text($facet, &$options){
-	$alter=array(
+	if ($facet == '[* TO *]') {
+		return theme('placeholder', t('<empty>'));
+	} else {
+		$alter=array(
 			'html' => TRUE,
 			'ellipsis' => TRUE,
 			'word_boundary' => FALSE,
 			'max_length' => 15,
-	  ); 
+		); 
 
-	  return views_trim_text($alter,$facet);
-
+		return views_trim_text($alter,$facet);
+	}
 }
 
 function tow_search_facet_enum_option($facet, &$options){
@@ -1001,7 +1009,7 @@ function tow_search_facet_enum_option($facet, &$options){
 	$response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
 
 	if (isset($response->response->docs[0]))
-		$table_nid = $response->response->docs[0]->sis_tow_field_table;
+		$table_nid = $response->response->docs[0]->ss_tow_field_table;
 
 	$table_node = node_load($table_nid);
 
@@ -1146,9 +1154,11 @@ function tow_search_inner_facet_widget($response, $query, $module, $delta, $face
   if (!empty($response->facet_counts->facet_fields->$facet_field)) {
     $contains_active = FALSE;
     $items = array();
+		dpm($response->facet_counts->facet_fields->$facet_field);
     foreach ($response->facet_counts->facet_fields->$facet_field as $facet => $count) {
       $options = array();
       $exclude = FALSE;
+			
 
       // Solr sends this back if it's empty.
       if ($facet == '_empty_') {
@@ -1935,6 +1945,8 @@ function tow_search_within_dataset_submit($form, &$form_state) {
 function tow_search_inner_get_nid() {
 	$path = explode('/', $_GET['q']);
 	$return = count($path) >= 2 ? $path[1] : FALSE;
+	$return = str_replace(' ', '+', $return); 
+//	dpm($return);
 	return $return;
 }
 
@@ -2085,3 +2097,4 @@ function tow_search_inner_range_limits($current_field){
 	$limits = array('min' => FALSE, 'max' => FALSE);
 	return $limits;
 }
+

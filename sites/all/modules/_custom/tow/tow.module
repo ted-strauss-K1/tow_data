@@ -25,6 +25,7 @@ include_once('./' . $module_path . '/tow_search.inc');
 include_once('./' . $module_path . '/tow_search_apachesolr.inc');
 include_once('./' . $module_path . '/tow_search_outer.inc');
 include_once('./' . $module_path . '/tow_search_inner.inc');
+include_once('./' . $module_path . '/tow_search_inner_linked.inc');
 
 include_once('./' . $module_path . '/tests/tow_tests.inc');
 
@@ -122,6 +123,13 @@ function tow_menu() {
     'page arguments' => array(1),
     'page callback' => 'tow_table_callback',
     'file' => 'tow_table.inc',
+  );
+
+  $items['link'] = array(
+    'access arguments' => array('access content'),
+    'page arguments' => array(1),
+    'page callback' => 'tow_search_inner_link_tables',
+    'file' => 'tow_search_inner_linked.inc',
   );
   
   $items['table/%/truncate'] = array(
@@ -354,6 +362,21 @@ function tow_nodeapi(&$node, $op) {
 		
 	if ($node->type == 'record' && $op == 'presave')
 		tow_record_set_empty($node);
+
+	if ($node->type == 'linked_record' && $op == 'presave')
+		tow_search_inner_set_empty($node);
+
+	if ($node->type == 'table')
+		tow_search_inner_update_table_links($node, $op);
+
+	if ($node->type == 'record' && $op == 'insert')
+		tow_search_inner_link_record($node);
+
+	if ($node->type == 'record' && $op == 'delete')
+		tow_search_inner_unlink_record($node);
+
+	if ($node->type == 'record' && $op == 'update')
+		tow_search_inner_relink_record($node);
 }
 
 /**

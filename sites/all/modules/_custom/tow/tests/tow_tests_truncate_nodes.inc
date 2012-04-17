@@ -1,6 +1,8 @@
 <?php
 
 include_once('./' . drupal_get_path('module', 'tow') . '/tests/tow_tests_truncate_cck.inc');
+include_once('./' . drupal_get_path('module', 'tow') . '/tests/tow_tests_truncate_linked_records.inc');
+
 
 function tow_tests_truncate_nodes() {
   return drupal_get_form('tow_tests_truncate_nodes_form');  
@@ -52,6 +54,6 @@ function tow_tests_truncate_nodes_form_submit($form, &$form_state){
   drupal_set_message('Terms from Dataset tags vocabulary are deleted.');
   
   $array = array();
+  tow_tests_truncate_linked_records_form_submit(array(), $array);
   tow_tests_truncate_cck_form_submit(array(), $array);
-  
 }

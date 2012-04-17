@@ -53,61 +53,43 @@ function tow_apachesolr_record_process_results(&$results) {
 //	dpm($response->stats);
 	//$response->facet_counts->facet_fields->$facet_field->$key;
 	if (isset($results[0]))
-		$table_nid = $results[0]['node']->sis_tow_field_table;
+		$table_nid = $results[0]['node']->ss_tow_field_table;
 	else
 		return NULL;
 	
-	$table_node = node_load($table_nid);
-	$weights_array = unserialize($table_node->field_weights[0]['value']);
+	$fields = tow_apachesolr_table_fields($table_nid);
 	$rows = array();
 	$headers = array();
 	foreach ($results as $key => $result) {
-		$index = 0;
 		$row = array();
-		foreach (tow_possible_fields() as $field_type) {
-			$delta = 0;
-			$apachesolr_field_type = tow_apachesolr_field_type($field_type);
-			if (!is_array($table_node->{'field_title_' . $field_type}))
-				continue;
-			foreach($table_node->{'field_title_' . $field_type} as $title_value) {
-				if ($title_value['value']) {
-					$apachesolr_field_name = $apachesolr_field_type . '_tow_field_' . $field_type . '_' . $delta;	
-					$value = $result['node']->$apachesolr_field_name;
-					switch ($field_type) {
-						case 'bool':
-						 $value = _tow_solr_to_bool($value);
-						 break;
-						case 'date':
-							_tow_solr_to_date($value);
-							break;
-						case 'time':
-							_tow_solr_to_time($value);
-							break;
-						case 'datetime':
-							_tow_solr_to_datetime($value);
-							break;
-						case 'timestamp':
-							_tow_solr_to_timestamp($value);
-							break;
-						case 'enum':
-							$enum_options = unserialize($table_node->field_enum_options[$delta]['value']);
-							$value = $enum_options[$value];
-						default:
-						 break;
-					}
-					$row[$weights_array[$index]] = array('data' => $value);
-					$headers[$weights_array[$index]] = array('data' => $title_value['value']);
-					$index++;
-					$delta++;
-				}
+		foreach ($fields as $field_key => $field) {
+			$value = $result['node']->$field['name'];
+			switch ($field['type']) {
+				case 'bool':
+				 $value = _tow_solr_to_bool($value);
+				 break;
+				case 'date':
+					_tow_solr_to_date($value);
+					break;
+				case 'time':
+					_tow_solr_to_time($value);
+					break;
+				case 'datetime':
+					_tow_solr_to_datetime($value);
+					break;
+				case 'timestamp':
+					_tow_solr_to_timestamp($value);
+					break;
+				case 'enum':
+					$value = $field['enum_options'][$value];
+				default:
+				 break;
 			}
+			$row[$field_key] = array('data' => $value);
+			$headers[$field_key] = array('data' => $field['title']);
 		}
-		if ($row)
-			ksort($row);
 		$rows[$key] = array('data' => $row);
 	}
-	if ($headers)
-		ksort($headers);		
 	$results['headers'] = $headers;
 	$results['rows'] = $rows;
 } 
@@ -219,10 +201,14 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
 	$nid = tow_search_inner_get_nid();
 	$table_fields = tow_apachesolr_table_fields($nid, TRUE);
 
-	$params['fl'] .= ',sis_tow_field_table';
-	$query->add_filter('type', 'record');  
+	$params['fl'] .= ',ss_tow_field_table';
+	if (is_numeric($nid)) {
+		$query->add_filter('type', 'record');  
+	} else {
+		$query->add_filter('type', 'linked_record');  
+	}
 	$params['rows'] = 10000000;
-	$query->add_filter('sis_tow_field_table', $nid);
+	$query->add_filter('ss_tow_field_table', $nid);
 	
 	$params['stats'] = 'true';
 	$params['facet.limit'] = 100;
@@ -284,57 +270,88 @@ function tow_apachesolr_update_index(&$document, $node) {
 	  $document->ss_teaser = views_trim_text($alter,$node->body);
 	  
   } elseif ($node->type == 'record') {// Add dataset_nid field and table_nid field to be indexed by apachesolr
-		watchdog('inner_search', 'node: <pre>' . print_r($node, TRUE) . '</pre>');
+//		watchdog('inner_search', 'node: <pre>' . print_r($node, TRUE) . '</pre>');
     $document->sis_tow_dataset_nid = db_result(db_query("
       SELECT `ctt`.`field_dataset_value` AS `dataset_nid`
       FROM {content_type_table} `ctt`
       LEFT JOIN {content_type_record} `ctr`
         ON `ctr`.`field_table_value` = `ctt`.`nid`
       WHERE `ctr`.`nid` = %d", $node->nid));   
-    $document->sis_tow_field_table = $node->field_table[0]['value'];
+    $table_nid = $node->field_table[0]['value'];
+		$document->ss_tow_field_table = $table_nid;
 		
-		$possible_fields = tow_possible_fields();
-		foreach ($possible_fields as $field_type) {
-			$field_name = 'field_' . $field_type;
-			$apachesolr_field_type = tow_apachesolr_field_type($field_type);
-			$pos = 0;
-			foreach ($node->$field_name as $field) {
-				if (isset($field['value'])) {
-					$apachesolr_field_name = $apachesolr_field_type . '_tow_' . $field_name . '_' . $pos;
-					$value = $field['value'];
-					switch ($field_type) {
-						case 'time':
-							_tow_time_to_solr($value);
-							break;
-						case 'date':
-							_tow_date_to_solr($value);
-							break;
-						case 'datetime':
-							_tow_datetime_to_solr($value);
-							break;
-						case 'char':
-						case 'text':
-						case 'code':
-							$words_field_name = 'sis_tow_' . $field_name . '_' . $pos . '_words';
-							$length_field_name = 'sis_tow_' . $field_name . '_' . $pos . '_length';
-							$words = str_word_count($value);
-							$length = strlen($value);
-							$document->$words_field_name = $words;
-							$document->$length_field_name = $length;
-							watchdog('inner_search', $words_field_name . ' => ' . $document->$words_field_name);
-							watchdog('inner_search', $length_field_name . ' => ' . $document->$length_field_name);
-							break;
-						default: 
-							break;
+		foreach (tow_apachesolr_table_fields($table_nid) as $field) {
+			$value = $node->{'field_' . $field['type']}[$field['delta']]['value'];
+			if (isset($value)) {
+				_tow_add_value_to_doc(&$document, $field['type'], $field['delta'], $value);
+			}
+		}
+//		watchdog('inner_search', 'doc: <pre>' . print_r($document, TRUE) . '</pre>');
+  } elseif ($node->type == 'linked_record') {
+		$tables = array();
+		foreach ($node->field_tables as $table) {
+			$tables[] = $table['value'];
+		}
+		$sorted_tables = $tables;
+		sort($sorted_tables);
+		$document->ss_tow_field_table = implode('+', $sorted_tables);
+		$records = array();
+		foreach ($tables as $key => $table_nid) {
+			$record_nid = $node->field_record_nid[$key]['value'];
+			$record = node_load($record_nid);
+			if ($table_nid == 53) 
+				watchdog('linked_search', 'record from 53: <pre>' . print_r($record, TRUE) . '</pre>');
+
+			$records[$table_nid] = $record;
+//			watchdog('linked_search', 'record from ' . $table_nid . ': <pre>' . print_r($record, TRUE) . '</pre>');
+		}
+		foreach (tow_apachesolr_table_fields($tables) as $field) {
+			foreach ($field['table'] as $table) {
+				$record = $records[$table['nid']];
+				if (!empty($record)) {
+					//watchdog('linked_search', 'field: <pre>' . print_r($field, TRUE) . '</pre>');
+					$value = $record->{'field_' . $field['type']}[$table['delta']]['value'];
+					if (isset($value)) {
+						_tow_add_value_to_doc(&$document, $field['type'], $field['delta'], $value);
 					}
-					$document->$apachesolr_field_name = $value;
-					$pos++;
-					watchdog('inner_search', $apachesolr_field_name . ' => ' . $document->$apachesolr_field_name);
+//					watchdog('linked_search', $field['name'] . '(t'. $table['nid'] . ', d' . $field['table'][0]['delta'] .') => ' . $document->$field['name']);
+					break;
 				}
 			}
 		}
-		watchdog('inner_search', 'doc: <pre>' . print_r($document, TRUE) . '</pre>');
-  }
+//		watchdog('linked_search', 'doc: <pre>' . print_r($document, TRUE) . '</pre>');
+	}
+}
+
+function _tow_add_value_to_doc(&$document, $field_type, $delta, $value) {
+	switch ($field_type) {
+		case 'time':
+			_tow_time_to_solr($value);
+			break;
+		case 'date':
+			_tow_date_to_solr($value);
+			break;
+		case 'datetime':
+			_tow_datetime_to_solr($value);
+			break;
+		case 'char':
+		case 'text':
+		case 'code':
+			$words_field_name = 'sis_tow_field_' . $field_type . '_' . $delta . '_words';
+			$length_field_name = 'sis_tow_field_' . $field_type . '_' . $delta . '_length';
+			$words = str_word_count($value);
+			$length = strlen($value);
+			$document->$words_field_name = $words;
+			$document->$length_field_name = $length;
+//			watchdog('inner_search', $words_field_name . ' => ' . $document->$words_field_name);
+//			watchdog('inner_search', $length_field_name . ' => ' . $document->$length_field_name);
+			break;
+		default: 
+			break;
+	}
+	$apachesolr_field_name = tow_apachesolr_field_name($field_type, $delta);
+	$document->$apachesolr_field_name = $value;
+//	watchdog('inner_search', $apachesolr_field_name . ' => ' . $document->$apachesolr_field_name);
 }
 
 /**
@@ -628,68 +645,124 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
 	static $fields = array();
 	static $f_fields = array();
 	if ($nid != $current_nid || empty($fields)) {
+		$fields = array();
+		$f_fields = array();
 		$current_nid = $nid;
-		$table_node = node_load($nid);
-		if ($table_node->type == 'table') {
-			$index = 0;
-			$weights_array = unserialize($table_node->field_weights[0]['value']);
-			foreach (tow_possible_fields() as $field_type) {
-				$field_name = 'field_' . $field_type;
-				$field_title_name = 'field_title_' . $field_type;
-				$apachesolr_field_type = tow_apachesolr_field_type($field_type);	
-				foreach ($table_node->$field_title_name as $delta => $field_title) {
-					if ($field_title['value'] != NULL) {
-						$apachesolr_field_name = $apachesolr_field_type . '_tow_' . $field_name . '_' . $delta;	
-						$fields[$weights_array[$index]] = array(
-							'name' => $apachesolr_field_name, 
-							'type' => $field_type, 
-							'title' => $field_title['value'], 
-							'delta' => $delta,
+		if (is_numeric($nid)) { // separate table
+			list($fields, $f_fields) = _tow_apachesolr_separate_table_fields($nid);
+		} else { // nid not numeric - linked table
+			if (!is_array($nid)) {
+				$nid = explode('+', $nid);
+			}
+			sort($nid);
+			$deltas = array();
+			$added_indexes = array();
+			$key = 0;
+			foreach($nid as $table_nid) {
+				list($table_fields, $table_f_fields) = _tow_apachesolr_separate_table_fields($table_nid);
+				foreach ($table_fields as $field) {
+					$add_to_list = TRUE;
+					if ($field['index']) {
+						if (!isset($added_indexes[$field['type']]))
+							$added_indexes[$field['type']] = array('titles' => array(), 'keys' => array());
+						$duplicate = array_search($field['title'], $added_indexes[$field['type']]['titles']);
+						if ($duplicate === FALSE) {
+							$added_indexes[$field['type']]['titles'][] = $field['title'];
+							$added_indexes[$field['type']]['keys'][] = $key;
+						} else {
+							$key_ = $added_indexes[$field['type']]['keys'][$duplicate]; // key of added index field 
+							$add_to_list = FALSE;
+							$fields[$key_]['table'][] = array(
+								'nid' => $table_nid, 
+								'delta' => $field['delta']
+							);
+						}
+					}
+					if ($add_to_list) {//field is either not index or is not index duplicate
+						if (isset($deltas[$field['type']])) {
+							$deltas[$field['type']]++;
+						} else {
+							$deltas[$field['type']] = 0;
+						}
+						$field['table'] = array();
+						$field['table'][0] = array(
+							'nid' => $table_nid, 
+							'delta' => $field['delta']
 						);
-						$f_fields[] = array(
-							'name' => $apachesolr_field_name, 
-							'type' => $field_type, 
-							'title' => $field_title['value'], 
-							'delta' => $delta,
-						);	
-						if ($field_type == 'text' || $field_type == 'char') {
-							$f_fields[] = array(
-								'name' => 'f_' . $apachesolr_field_name, 
-								'type' => $field_type, 
-								'title' => $field_title['value'], 
-								'delta' => $delta,
-							);
-						}
-						if ($field_type == 'text' || $field_type == 'char') {
-							$f_fields[] = array(
-								'name' => 'f_' . $apachesolr_field_name, 
-								'type' => $field_type, 
-								'title' => $field_title['value'], 
-								'delta' => $delta,
-							);
-							$f_fields[] = array(
-								'name' => 'sis_tow_' . $field_name . '_' . $delta . '_words', 
-								'type' => $field_type, 
-								'title' => $field_title['value'], 
-								'delta' => $delta,
-							);
-							$f_fields[] = array(
-								'name' => 'sis_tow_' . $field_name . '_' . $delta . '_length', 
-								'type' => $field_type, 
-								'title' => $field_title['value'], 
-								'delta' => $delta,
-							);
-						}
-						
-						$index++;
+//						$field['table_nid'] = $table_nid;
+//						$field['table_delta'] = $field['delta'];
+						$field['delta'] = $deltas[$field['type']];
+						$field['name'] = tow_apachesolr_field_name($field['type'], $field['delta']);
+						$fields[] = $field;
+						tow_search_apachesolr_add_facet_field($f_fields, $field);
+						$key++;
 					}
 				}
-				ksort($fields);
 			}
-		} else {
-			drupal_not_found();
 		}
 	}
-
 	return $add_facet_string_fields ? $f_fields : $fields; 
+}
+
+/*
+ * Returns array of fields of separate table with given nid
+ * name, type, title, delta
+ */
+function _tow_apachesolr_separate_table_fields($nid) {xdebug_break();
+//	watchdog('linked_search', $nid);
+	$fields = array();
+	$f_fields = array();
+	$table_node = node_load($nid, NULL, TRUE);
+	if ($table_node->type == 'table') {
+		$index = 0;
+		$weights_array = unserialize($table_node->field_weights[0]['value']);
+		$indexes_array = unserialize($table_node->field_indexes[0]['value']);
+		foreach (tow_possible_fields() as $field_type) {
+			$field_title_name = 'field_title_' . $field_type;
+			foreach ($table_node->$field_title_name as $delta => $field_title) {
+				if ($field_title['value'] != NULL) {
+					if ($field_type == 'enum') {
+						$enum_options = unserialize($table_node->field_enum_options[$delta]['value']);
+					} else {
+						$enum_options = NULL;
+					}
+					$x = $weights_array[$index];
+					$is_index = $indexes_array[$x];
+					$field = array(
+						'name' => tow_apachesolr_field_name($field_type, $delta), 
+						'type' => $field_type, 
+						'title' => $field_title['value'], 
+						'delta' => $delta,
+						'enum_options' => $enum_options,
+						'index' => $is_index//$indexes_array[$weights_array[$index]],
+					);
+					$fields[$weights_array[$index]] = $field;
+					tow_search_apachesolr_add_facet_field($f_fields, $field);
+					$index++;
+				}
+			}
+		}
+		ksort($fields);
+	} else {
+		drupal_not_found();
+	}
+	return array($fields, $f_fields);
+}
+
+function tow_search_apachesolr_add_facet_field(&$f_fields, $field) {
+	$f_fields[] = $field;	
+	if ($field['type'] == 'text' || $field['type'] == 'char') {
+		$field['name'] = 'f_' . $field['name'];
+		$f_fields[] = $field;
+
+		$field['name'] = 'sis_tow_field_' . $field['type'] . '_' . $field['delta'] . '_words';
+		$f_fields[] = $field;
+
+		$field['name'] = 'sis_tow_field_' . $field['type'] . '_' . $field['delta'] . '_length';
+		$f_fields[] = $field;
+	}
+}
+
+function tow_apachesolr_field_name($field_type, $delta) {
+	return tow_apachesolr_field_type($field_type) . '_tow_field_' . $field_type . '_' . $delta;	
 }

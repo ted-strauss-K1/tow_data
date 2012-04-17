@@ -20,6 +20,14 @@ function tow_tests_menu() {
     'file' => '/tests/tow_tests_truncate_cck.inc',
   );
   
+  $items['tests/tow_tests_truncate_linked_records'] = array(
+    'title' => 'Truncate linked records',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'tow_tests_truncate_linked_records',
+    'menu_name' => 'menu-tests',
+    'file' => '/tests/tow_tests_truncate_linked_records.inc',
+  );
+
   $items['tests/tow_tests_truncate_nodes'] = array(
     'title' => 'Truncate nodes',
     'access arguments' => array('administer site configuration'),

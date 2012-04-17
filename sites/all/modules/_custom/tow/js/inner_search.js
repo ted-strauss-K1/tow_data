@@ -25,7 +25,7 @@ Drupal.behaviors.outer_search = function(context) {
 	}).appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
 	//simple search
 	$('#edit-keywords').change(function() {
-		var keywords = $(this).val().replace(/(\+|-|&&|\|\||!|\(|\)|\{|\}|\[|\]|\^|"|~|\*|\?|:|\\)/g, '\\$1');
+		var keywords = $(this).val();//.replace(/(\+|-|&&|\|\||!|\(|\)|\{|\}|\[|\]|\^|"|~|\*|\?|:|\\)/g, '\\$1');
 		keywords = encodeURIComponent(keywords);
 		window.location.href = 'http://' + location.host + '/search_dataset/' + $(this).parent().parent().children('#edit-nid').val() + '/' + keywords + location.search;
 	});
