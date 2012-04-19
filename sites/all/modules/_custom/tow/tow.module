@@ -367,16 +367,10 @@ function tow_nodeapi(&$node, $op) {
 		tow_search_inner_set_empty($node);
 
 	if ($node->type == 'table')
-		tow_search_inner_update_table_links($node, $op);
+		tow_search_inner_queue_table_linking($node, $op);
 
-	if ($node->type == 'record' && $op == 'insert')
-		tow_search_inner_link_record($node);
-
-	if ($node->type == 'record' && $op == 'delete')
-		tow_search_inner_unlink_record($node);
-
-	if ($node->type == 'record' && $op == 'update')
-		tow_search_inner_relink_record($node);
+	if ($node->type == 'record')
+		tow_search_inner_queue_record_linking($node, $op);
 }
 
 /**
@@ -596,6 +590,7 @@ function tow_cron() {
   tow_search_cron();
   tow_import_cron();
 	tow_search_inner_cron();
+	tow_search_inner_linked_cron();
 }
 
 /**
