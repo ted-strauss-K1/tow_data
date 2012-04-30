@@ -200,7 +200,7 @@ function tow_search_inner_ajax_field_zooming() {
 		if (empty($response))
 			return drupal_json(NULL);
 
-		dpm($response->facet_counts);
+//		dpm($response->facet_counts);
 		list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $response->facet_counts->facet_ranges->$field);
 		$series = array();
 		foreach($data as $index => $point) {
@@ -389,7 +389,7 @@ function tow_search_inner_graph_widget($field, $type, $facet_counts, $empty, $st
 /*
  *	Returns line chart widget
  */
-function tow_search_inner_chart_widget($field, $field_type, $facet_counts, $empty){dpm($facet_counts);
+function tow_search_inner_chart_widget($field, $field_type, $facet_counts, $empty){//dpm($facet_counts);
 
 	list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $facet_counts);
 	$data = drupal_to_js($data);
@@ -1154,7 +1154,7 @@ function tow_search_inner_facet_widget($response, $query, $module, $delta, $face
   if (!empty($response->facet_counts->facet_fields->$facet_field)) {
     $contains_active = FALSE;
     $items = array();
-		dpm($response->facet_counts->facet_fields->$facet_field);
+//		dpm($response->facet_counts->facet_fields->$facet_field);
     foreach ($response->facet_counts->facet_fields->$facet_field as $facet => $count) {
       $options = array();
       $exclude = FALSE;

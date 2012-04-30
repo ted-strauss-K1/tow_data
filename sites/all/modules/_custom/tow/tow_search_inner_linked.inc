@@ -9,17 +9,19 @@ function tow_search_inner_relink_table($table_nid) {mydpm('tow_search_inner_reli
 										WHERE `field_tables_value`='%d'", $table_nid);
 
 	// build tablesets containing current table
-	$tablesets = tow_search_inner_build_table_tablesets($table_nid);
+	$tableset = tow_search_inner_build_table_tablesets($table_nid);
+	if (is_null($tableset))
+		return;
+	mydpm($tableset);
 	// create joint record nodes
-	foreach ($tablesets as $tableset) {
-		$results = tow_search_inner_link_records($tableset);
-		$tables = tow_search_inner_retrieve_tableset_tables($tableset);
-		while ($nids = db_fetch_array($results)) {
-			$deleted_nid = db_result($deleted_nids);
-			mydpm($deleted_nid . '->' . implode(' ', $nids));
-			tow_search_inner_create_linked_record($nids, $tables, $deleted_nid);
-		}
+	$results = tow_search_inner_link_records($tableset);
+	$tables = tow_search_inner_retrieve_tableset_tables($tableset);
+	while ($nids = db_fetch_array($results)) {
+		$deleted_nid = db_result($deleted_nids);
+		mydpm($deleted_nid . '->' . implode(' ', $nids));
+		tow_search_inner_create_linked_record($nids, $tables, $deleted_nid);
 	}
+	
 	while ($nid = db_result($deleted_nids)) {
 		mydpm($nid);
 		node_delete($nid);
@@ -46,17 +48,16 @@ function tow_search_inner_link_record($item){mydpm('tow_search_inner_link_record
 	$table_nid = $item['table_nid'];
 
 	// build tablesets containing current table
-	$tablesets = tow_search_inner_build_table_tablesets($table_nid);
-	mydpm($tablesets);
+	$tableset = tow_search_inner_build_table_tablesets($table_nid);
+	if (is_null($tableset))
+		return;
 
 	// create joint record nodes
-	foreach ($tablesets as $tableset) {
-		$record_info = array('record' => $item['record_nid'], 'table' => $table_nid);
-		$results = tow_search_inner_link_records($tableset, $record_info);
-		$tables = tow_search_inner_retrieve_tableset_tables($tableset);
-		while ($nids = db_fetch_array($results)) {
-			tow_search_inner_create_linked_record($nids, $tables);
-		}
+	$record_info = array('record' => $item['record_nid'], 'table' => $table_nid);
+	$results = tow_search_inner_link_records($tableset, $record_info);
+	$tables = tow_search_inner_retrieve_tableset_tables($tableset);
+	while ($nids = db_fetch_array($results)) {
+		tow_search_inner_create_linked_record($nids, $tables);
 	}
 }
 
@@ -149,18 +150,18 @@ function tow_search_inner_relink_record($item){mydpm('tow_search_inner_relink_re
 	
 	$deleted_nids = tow_search_inner_unlink_record($item, TRUE);
 	// build tablesets containing current table
-	$tablesets = tow_search_inner_build_table_tablesets($table_nid);
-	mydpm($tablesets);
+	$tableset = tow_search_inner_build_table_tablesets($table_nid);
+	if (is_null($tableset))
+		return;
 
 	// create joint record nodes
-	foreach ($tablesets as $tableset) {
-		$record_info = array('record' => $item['record_nid'], 'table' => $table_nid);
-		$results = tow_search_inner_link_records($tableset, $record_info);
-		$tables = tow_search_inner_retrieve_tableset_tables($tableset);
-		while ($nids = db_fetch_array($results)) {
-			tow_search_inner_create_linked_record($nids, $tables, array_shift($deleted_nids));
-		}
+	$record_info = array('record' => $item['record_nid'], 'table' => $table_nid);
+	$results = tow_search_inner_link_records($tableset, $record_info);
+	$tables = tow_search_inner_retrieve_tableset_tables($tableset);
+	while ($nids = db_fetch_array($results)) {
+		tow_search_inner_create_linked_record($nids, $tables, array_shift($deleted_nids));
 	}
+
 	while ($nid = array_shift($deleted_nids)) {
 		node_delete($nid);
 	}
@@ -171,97 +172,47 @@ function tow_search_inner_relink_record($item){mydpm('tow_search_inner_relink_re
  * @param: $base_table nid of base table
  */		
 function tow_search_inner_build_table_tablesets($base_table) {
+
+	// to allow cron work
+	// TODO: modify _tow_search_inner_build_linking_query()
+	//       for the case of many tables
+	//			 In the present state is takes too long time
+	
+
 	$base_table_node = node_load($base_table, NULL, TRUE);
 	$dataset_nid = $base_table_node->field_dataset[0]['value'];
 
 	//retrieving tables nids
 	$tables = array(); // tables of the same dataset as $base_table
-	$results = db_query("SELECT nid FROM {content_type_table} WHERE field_dataset_value='%d'", $dataset_nid);
+	$results = db_query("SELECT nid FROM {content_type_table} WHERE field_dataset_value='%d' AND nid<>'%d'", $dataset_nid, $base_table);
 	while ($result = db_fetch_array($results)) {
-		if ($base_table != $result['nid'])
-			$tables[] = $result['nid'];
+		$tables[] = $result['nid'];
 	};
 	if (empty($tables))
 		return NULL;
 		
 	sort($tables);
 		
+	$tableset = array(
+		$base_table => array(
+			'select' => array(),
+			'join' => NULL,
+		)
+	);
 	$tablesets = array();
-	$table_nids = array();
-	// linked pairs
-	foreach ($tables as $new_table) {
-		$linked_to = _tow_search_inner_linked_to($base_table, $new_table);
-		if (!empty($linked_to)) {
-			$tablesets[] = array(
-				$base_table => array(
-					'select' => $linked_to['to_fields'],
-					'join' => NULL,
-				),
-				$new_table => array(
-					'select' => $linked_to['fields'],
-					'join' => array(
-						$base_table => $linked_to,
-					),
-				),
-			);
-			$table_nids[] = array($base_table, $new_table);
-		}
-	}
-
+	_tow_search_inner_add_table($tablesets, $tables, $tableset, array($base_table)); 
 	
-	// multiple tables linked
-	$old_tablesets = $tablesets; //for prev level
+	if (empty($tablesets))
+		return NULL;
+	else
+		return $tablesets[0];
 	
-	do {// next level: 3 tables, then 4 tables etc.
-		$flag = FALSE;
-		$new_tablesets = array(); //for current level
-		$new_table_nids = array();//for current level
-		foreach ($old_tablesets as $tableset_key => $tableset) {
-			foreach ($tables as $new_table) {
-				if ($new_table > end($table_nids[$tableset_key])) {
-					$new_tableset = $tableset;
-					$linked_to = array();
-					$select = array();
-					foreach ($tableset as $table_nid => $table) {
-						$linked_to_instance = _tow_search_inner_linked_to($table_nid, $new_table);
-						if (!empty($linked_to_instance)) {
-							$linked_to[$table_nid] = $linked_to_instance;
-							foreach($linked_to_instance['fields'] as $new_field) {
-								if (!in_array($new_field, $select)) {
-									$select[] = $new_field;
-								}
-							}
-							foreach($linked_to_instance['to_fields'] as $new_field) {
-								if (!in_array($new_field, $new_tableset[$table_nid]['select'])) {
-									$new_tableset[$table_nid]['select'][] = $new_field;
-								}
-							}
-						}
-					}
-					if (!empty($linked_to)) {
-						$new_tableset[$new_table] = array(
-							'select' => $select,
-							'join' => $linked_to,
-						);
-						$new_tablesets[] = $new_tableset;
-						$new_table_nids[] = array_merge($table_nids[$tableset_key], array($new_table));
-						$flag = TRUE;
-					}	
-				}
-			}
-		}
-		$old_tablesets = $new_tablesets;
-		$table_nids = $new_table_nids;
-		$tablesets = array_merge($tablesets, $new_tablesets);
-	} while ($flag);
-	
-	return $tablesets;
 }
 		
 /**
  * Builds all linked tablesets for given dataset
  */		
-function tow_search_inner_link_tables($dataset_nid) {
+function tow_search_inner_build_tablesets($dataset_nid) {
 	//retrieving tables nids
 	$tables = array();
 	$results = db_query("SELECT nid FROM {content_type_table} WHERE field_dataset_value='%d'", $dataset_nid);
@@ -269,93 +220,77 @@ function tow_search_inner_link_tables($dataset_nid) {
 		$tables[] = $result['nid'];
 	};
 	sort($tables);
-	mydpm($tables);
+	$shifted_tables = $tables;
 	
 	$tablesets = array();
-	$table_nids = array();
-	// linked pairs
-	$new_tables=$tables;
-	foreach ($tables as $table) {
-		array_shift($new_tables);
-		foreach ($new_tables as $new_table) {
-			$linked_to = _tow_search_inner_linked_to($table, $new_table);
-			if (!empty($linked_to)) {
-				$tablesets[] = array(
-					$table => array(
-						'select' => $linked_to['to_fields'],
-						'join' => NULL,
-					),
-					$new_table => array(
-						'select' => $linked_to['fields'],
-						'join' => array(
-							$table => $linked_to,
-						),
-					),
-				);
-				$table_nids[] = array($table, $new_table);
-			}
-		}
-	}
 	
-	// multiple tables linked
-	$old_tablesets = $tablesets; //for prev level
-	
-	do {// next level: 3 tables, then 4 tables etc.
-		$flag = FALSE;
-		$new_tablesets = array(); //for current level
-		$new_table_nids = array();//for current level
-		foreach ($old_tablesets as $tableset_key => $tableset) {
-			foreach ($tables as $new_table) {
-				if ($new_table > end($table_nids[$tableset_key])) {
-					$new_tableset = $tableset;
-					$linked_to = array();
-					$select = array();
-					foreach ($tableset as $table_nid => $table) {
-						$linked_to_instance = _tow_search_inner_linked_to($table_nid, $new_table);
-						if (!empty($linked_to_instance)) {
-							$linked_to[$table_nid] = $linked_to_instance;
-							foreach($linked_to_instance['fields'] as $new_field) {
-								if (!in_array($new_field, $select)) {
-									$select[] = $new_field;
-								}
-							}
-							foreach($linked_to_instance['to_fields'] as $new_field) {
-								if (!in_array($new_field, $new_tableset[$table_nid]['select'])) {
-									$new_tableset[$table_nid]['select'][] = $new_field;
-								}
-							}
-						}
+	while (!empty($shifted_tables)) {
+		$table = array_shift($shifted_tables);
+		$tableset = array(
+			$table => array(
+				'select' => array(),
+				'join' => NULL,
+			)
+		);
+		_tow_search_inner_add_table($tablesets, $shifted_tables, $tableset, array($table)); 
+	}	
+	return array($tables, $tablesets);
+}
+
+/**
+ *
+ */
+function _tow_search_inner_add_table(&$tablesets, &$tables, $tableset, $tables_in) {
+	$tableset_is_updated = FALSE;
+	foreach ($tables as $key => $new_table) {
+		$new_table_is_linked = FALSE;
+		$linked_to = array();
+		$select = array();
+		foreach ($tables_in as $table_in) {
+			$linked_to_instance = _tow_search_inner_linked_to($table_in, $new_table);
+			if (!empty($linked_to_instance)) {
+				$linked_to[$table_in] = $linked_to_instance;
+				foreach($linked_to_instance['fields'] as $new_field) {
+					if (!in_array($new_field, $select)) {
+						$select[] = $new_field;
 					}
-					if (!empty($linked_to)) {
-						$new_tableset[$new_table] = array(
-							'select' => $select,
-							'join' => $linked_to,
-						);
-						$new_tablesets[] = $new_tableset;
-						$new_table_nids[] = array_merge($table_nids[$tableset_key], array($new_table));
-						$flag = TRUE;
-					}	
+				}
+				foreach($linked_to_instance['to_fields'] as $new_field) {
+					if (!in_array($new_field, $tableset[$table_in]['select'])) {
+						$tableset[$table_in]['select'][] = $new_field;
+					}
 				}
 			}
 		}
-		$old_tablesets = $new_tablesets;
-		$table_nids = $new_table_nids;
-		$tablesets = array_merge($tablesets, $new_tablesets);
-	} while ($flag);
-	tow_search_inner_link_records($tablesets);
-	return 'Hello world!';
+		if (!empty($linked_to)) {
+			$tableset[$new_table] = array(
+				'select' => $select,
+				'join' => $linked_to,
+			);
+			$tableset_is_updated = TRUE;
+			unset($tables[$key]);
+			_tow_search_inner_add_table($tablesets, $tables, $tableset, array_merge($tables_in, array($new_table)));
+			break;
+		}		
+	}
+	if (!$tableset_is_updated && count($tableset) > 1) {
+		$tablesets[] = $tableset;
+	}
 }
+
 /**
  * Builds query to retrieve nids of records being linked and returns SQL response with these nids
- * @param: $tableset
- * @param: $record_info = NULL or array('record' => $record_nid, 'table' => $table_nid)if not empty, contains nid of record and nid of table 
-  *        for the case when single record is linked to other tables
+ * @param
+ *  $tableset
+ * @param
+ *  $record_info = NULL or array('record' => $record_nid, 'table' => $table_nid)if not empty, contains nid of record and nid of table 
+ *        for the case when single record is linked to other tables
  */
 function tow_search_inner_link_records($tableset, $record_info = NULL) {mydpm('tow_search_inner_link_records');
 	$select = array();
 	$queries = array();
 	$ons = array();
-	foreach ($tableset as $key => $table) {
+	foreach ($tableset as $key => $table) {watchdog('linking', 'table ' . $key);
 		$ctr_alias = "`ctr`"; //"`ctr" . $key . "`";
 		$content_field_tables = array(); //	{content_field_int} AS  `cfi1`,
 		$content_fields = array(); //"`cfi1`.`field_int_value`
@@ -402,11 +337,7 @@ function tow_search_inner_link_records($tableset, $record_info = NULL) {mydpm('t
 		$ons[$key] = implode(' AND ', $on);
 	}
 	$select = implode(', ', $select);
-/* 		mydpm(array(
-		'select' => $select,
-		'queries' => $queries,
-		'ons' => $ons,
-	)); */
+
 	if (empty($record_info))
 		$query = _tow_search_inner_build_linking_query($select, $queries, $ons);
 	else
@@ -418,10 +349,10 @@ function tow_search_inner_link_records($tableset, $record_info = NULL) {mydpm('t
 
 }
 
-function _tow_search_inner_build_linking_query($select, $queries, $ons, $relinked_record_table = NULL){
+function _tow_search_inner_build_linking_query($select, $queries, $ons, $relinked_record_table = NULL){mydpm('_tow_search_inner_build_linking_query');
 	$n = count($ons)-1;
 	$query = array();
-	for ($ii = 0; $ii < pow(2,$n); $ii++) {
+	for ($ii = 0; $ii < pow(2,$n); $ii++) {mydpm($ii);
 		$jj = $ii;
 		$tables_query = array();
 		if ($relinked_record_table)
@@ -472,14 +403,25 @@ function _tow_search_inner_linked_to($to_nid, $nid) {
 	return empty($fields) ? NULL : array('fields' => $fields, 'to_fields' => $to_fields);
 }
 
+function _tow_search_inner_reduce_field($field) {
+	return array(
+		'type' => $field['type'], 
+		'title' => $field['title'], 
+		'delta' => $field['delta'], 
+	);
+}
 function _tow_search_inner_table_indexes($nid) {xdebug_break();
-	$indexes = array();
-	$fields = tow_apachesolr_table_fields($nid);
-	foreach ($fields as $field){
-		if ($field['index'])
-			$indexes[] = $field;
+	static $indexes_array = array();
+	if (!isset($indexes_array[$nid])) {
+		$indexes = array();
+		$fields = tow_apachesolr_table_fields($nid);
+		foreach ($fields as $field){
+			if ($field['index'])
+				$indexes[] = _tow_search_inner_reduce_field($field);
+		}
+		$indexes_array[$nid] = $indexes;
 	}
-	return $indexes;
+	return $indexes_array[$nid];
 }
 
 function tow_search_inner_queue_table_linking($node, $op){
@@ -507,13 +449,14 @@ function tow_search_inner_queue_table_linking($node, $op){
 							VALUES ('0', '%d', '%d', '%s', '%d')", $node->nid, $node->field_dataset[0]['value'], $op, time());
 	}
 }
-function tow_search_inner_queue_record_linking($node, $op){
+function tow_search_inner_queue_record_linking($node, $op){mydpm('tow_search_inner_queue_record_linking');
+	$table = node_load($node->field_table[0]['value']);
 	switch ($op) {
 		case 'insert':
 		case 'update':
 		case 'delete':
 			db_query("INSERT IGNORE INTO {tow_link_tables} (record_nid, table_nid, dataset_nid, op, timestamp) 
-					VALUES ('%d','%d', 0, '%s', '%d')", $node->nid, $node->field_table[0]['value'], $op, time());
+					VALUES ('%d','%d', '%d', '%s', '%d')", $node->nid, $node->field_table[0]['value'], $table->field_dataset[0]['value'], $op, time());
 			break;
 		default:
 			break;
@@ -606,8 +549,8 @@ function tow_search_inner_update_dataset_indexes($dataset_nid, $table_to_delete 
 }
 
 function mydpm($x){
-	dpm($x);
-	dd($x);
+//	dpm($x);
+//	dd($x);
 	watchdog('link_on_import', '<pre>' . print_r($x, TRUE) . '</pre>');
 }
 
@@ -615,18 +558,9 @@ function tow_search_inner_linked_cron() {
 	$time = time();
 	// delete duplicates
 	db_query("DELETE `t1` FROM {tow_link_tables} AS `t1`, {tow_link_tables} AS `t2` 
-						WHERE `t1`.`record_nid`=`t2`.`record_nid` AND
+						WHERE `t1`.`record_nid`>`t2`.`record_nid` AND
 						 `t1`.`table_nid`=`t2`.`table_nid` AND
-						 `t1`.`timestamp`<'%d' AND `t2`.`timestamp`<'%d'
-						 AND `t1`.`timestamp`<`t2`.`timestamp`", $time, $time);
-	// delete records whose tables are also in tow_link_tables
-	db_query("DELETE `t1` FROM {tow_link_tables} AS `t1` WHERE `t1`.`table_nid` IN 
-						(SELECT * FROM
-						(SELECT `t2`.`table_nid` FROM {tow_link_tables} AS `t2`
-						WHERE `t2`.`record_nid`='0') 
-						AS `t3`)
-						AND `t1`.`record_nid`<>'0'
-						AND `t1`.`timestamp` < '%d'", $time);
+						 `t1`.`timestamp`<'%d' AND `t2`.`timestamp`<'%d'", $time, $time);
 	// delete tables with insert and update ops if there is the same table with delete op
 	db_query("DELETE `t1` FROM {tow_link_tables} AS `t1` WHERE `t1`.`table_nid` IN 
 						(SELECT * FROM
@@ -651,18 +585,11 @@ function tow_search_inner_linked_cron() {
 	while ($item = db_fetch_array($results)) {
 		mydpm($item);
 		if ($item['record_nid']) {
-			// record
-			switch ($item['op']) {
-				case 'insert':
-					tow_search_inner_link_record($item);
-					break;
-				case 'update':
-					tow_search_inner_relink_record($item);
-					break;
-				case 'delete':
-					tow_search_inner_unlink_record($item);
-					break;
+			if (!in_array($item['dataset_nid'], $datasets)) {
+				tow_search_inner_update_dataset_indexes($item['dataset_nid']);
+				$datasets[] = $item['dataset_nid'];
 			}
+			tow_search_inner_relink_table($item['table_nid']);			
 		} else {
 			// table
 			switch ($item['op']) {
@@ -683,4 +610,51 @@ function tow_search_inner_linked_cron() {
 	}
 	// delete processed items
 	db_query("DELETE FROM {tow_link_tables} WHERE `timestamp` < '%d'", $time);
+}
+
+function tow_search_inner_list_of_tables_block() {
+
+	$nid = tow_search_inner_get_nid();
+	$is_dataset = db_result(db_query("SELECT COUNT(*) FROM {content_type_dataset} WHERE `nid`='%s'", $nid));
+	if (!$is_dataset) {
+		$table_nid = array_shift(explode('+', $nid));
+		$dataset_nid = db_result(db_query("SELECT `field_dataset_value` 
+									FROM {content_type_table} WHERE `nid`='%s'", $table_nid));
+		unset($table_nid);							
+		if (!$dataset_nid) {
+		//	drupal_not_found();
+			return;
+		}
+	} else {
+		$dataset_nid = $nid;
+	}
+	unset($nid);
+	
+	list($tables, $tablesets) = tow_search_inner_build_tablesets($dataset_nid);
+
+	$titles = array();
+	foreach ($tables as $table_nid) {
+		$table_node = node_load($table_nid);
+		$titles[$table_nid] = $table_node->title;
+	}
+	$linked_titles = array();
+	foreach ($tablesets as $tableset) {
+		$linked_title = array();
+		foreach ($tableset as $nid => $table) {
+			$links = array();
+			if (!empty($table['join'])) {
+				foreach ($table['join'] as $link_nid => $link_fields) {
+					$fields = array();
+					foreach ($link_fields['fields'] as $field_info) {
+						$fields[] = $field_info['title'];
+					}
+					$links[] = 'linked to ' . $titles[$link_nid] . ' by ' . implode(', ', $fields);
+				}
+			}
+			$linked_title[] = $titles[$nid] . (empty($links) ? '' : ' (' . implode('; ', $links). ')');
+		}	
+		$linked_titles[] = implode(', ', $linked_title);
+	}
+	$titles = array_merge($titles, $linked_titles);
+	return array('title' => 'List of tables', 'content' => theme('item_list', $titles));
 }

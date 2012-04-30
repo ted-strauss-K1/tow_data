@@ -403,6 +403,7 @@ function tow_block($op = 'list', $delta = 0) {
 		$blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
 		$blocks['search_inner_facets']['info'] = t('Inner search: facets block');
 		$blocks['search_inner_simple_search']['info'] = t('Inner search: simple search block');
+		$blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables od a dataset');
 		//search filter blocks
 	
 		$enabled_facets = apachesolr_get_enabled_facets('tow');
@@ -449,6 +450,9 @@ function tow_block($op = 'list', $delta = 0) {
 			if ($delta == 'search_inner_simple_search') {
 				return tow_search_inner_simple_search_block();
       }
+			 if ($delta == 'search_inner_list_of_tables')
+				return tow_search_inner_list_of_tables_block();
+				
       if ($delta == 'sis_tow_amount_tables') {
 				return tow_sis_tow_amount_tables_block();
       }

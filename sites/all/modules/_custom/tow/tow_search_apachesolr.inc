@@ -745,6 +745,7 @@ function _tow_apachesolr_separate_table_fields($nid) {xdebug_break();
 		ksort($fields);
 	} else {
 		drupal_not_found();
+		die();
 	}
 	return array($fields, $f_fields);
 }
