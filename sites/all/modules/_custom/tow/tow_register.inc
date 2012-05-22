@@ -11,7 +11,7 @@ define('TOW_MAX_ALLOWED_DATASET_KEYWORDS', 10);
  * Alter user registration form
  */
 function tow_register_form_alter(&$form, &$form_state) {
-  	
+    
   $help = t(file_get_contents(drupal_get_path('module', 'tow') . '/templates/registration_help.html'));
   
   $help = str_replace(
@@ -239,19 +239,19 @@ function _tow_register_create_dataset($data, $uid) {
     $dataset->taxonomy[0] = taxonomy_get_term($data['category']);
   
   if ($data['keywords']) {
-  	$terms = explode(',', $data['keywords']);
+    $terms = explode(',', $data['keywords']);
     
-  	if (count($terms) > TOW_MAX_ALLOWED_DATASET_KEYWORDS)
+    if (count($terms) > TOW_MAX_ALLOWED_DATASET_KEYWORDS)
       array_slice($terms, 0, TOW_MAX_ALLOWED_DATASET_KEYWORDS);
-  	
+    
     foreach ($terms as $term_name) {
-    	$term = array(
-    	  'vid' => 1,
-    	  'name' => trim($term_name)
-    	);
-    	taxonomy_save_term($term);
+      $term = array(
+        'vid' => 1,
+        'name' => trim($term_name)
+      );
+      taxonomy_save_term($term);
     }
-  	
+    
   }
   node_save($dataset);  
 

@@ -272,14 +272,14 @@ function _tow_field_description_save($table_nid, $index, $description, $is_new =
   if (!$is_new) {
     if ($description !== '') {
       db_query("UPDATE {tow_field_info} 
-      			SET `description` = '%s' 
-      			WHERE `nid` = '%d' 
-      			AND `index` = '%d';", $description, $table_nid, $index);
+            SET `description` = '%s' 
+            WHERE `nid` = '%d' 
+            AND `index` = '%d';", $description, $table_nid, $index);
     }
     else {
       db_query("DELETE FROM {tow_field_info}
-      			WHERE `nid` =  '%d'  
-      			AND `index` = '%d';", $table_nid, $index);
+            WHERE `nid` =  '%d'  
+            AND `index` = '%d';", $table_nid, $index);
     }
   }
   else {
@@ -289,17 +289,17 @@ function _tow_field_description_save($table_nid, $index, $description, $is_new =
   } 
 }
 /**
- *	Checks whether value is empty and chages it by NULL placeholder if so
+ *  Checks whether value is empty and chages it by NULL placeholder if so
  */
 function _tow_insert_fake($value) {
-	$placeholder = 'iWy2KupFUYKV4c9wmSrR';
-	return (empty($value) && (string)$value !== '0' && $value !== FALSE) ? $placeholder : $value;
+  $placeholder = 'iWy2KupFUYKV4c9wmSrR';
+  return (empty($value) && (string)$value !== '0' && $value !== FALSE) ? $placeholder : $value;
 }
 
 /**
- *	Checks whether unit string is NULL placeholder and chages it by NULL if so
+ *  Checks whether unit string is NULL placeholder and chages it by NULL if so
  */
 function _tow_remove_fake($value) {
-	$placeholder = 'iWy2KupFUYKV4c9wmSrR';
-	return ($value === $placeholder) ? NULL : $value;
+  $placeholder = 'iWy2KupFUYKV4c9wmSrR';
+  return ($value === $placeholder) ? NULL : $value;
 }

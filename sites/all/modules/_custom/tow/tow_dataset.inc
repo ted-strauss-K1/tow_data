@@ -146,7 +146,7 @@ function tow_dataset_summary(&$node) {
       }
 
       $node->summary['tables_stats'][] = array(
-      		'title' => t('Tables in this dataset'),
+          'title' => t('Tables in this dataset'),
             'data' => tow_dataset_tables($node->nid),
       );
 
@@ -182,10 +182,10 @@ function tow_dataset_summary(&$node) {
     // List of saved searches
     // get info on the saved searches
     $ss_results = db_query("SELECT `ctss`.`nid`, `n`.`title`, `ctss`.`field_results_qty_value`" . //", `ctss`.`field_url_value`" . 
-						"FROM {content_type_saved_search} `ctss`
-						LEFT JOIN {node} `n`
-						ON `n`.`nid` = `ctss`.`nid`
-						WHERE `ctss`.`field_dataset_nid_value` = %d", $node->nid);
+            "FROM {content_type_saved_search} `ctss`
+            LEFT JOIN {node} `n`
+            ON `n`.`nid` = `ctss`.`nid`
+            WHERE `ctss`.`field_dataset_nid_value` = %d", $node->nid);
     $ss_qty = 0; // ss counter
     $ss_list = array(); // list of saved search titles w/links
     while ($ss_res = db_fetch_array($ss_results)) {
@@ -233,9 +233,9 @@ function tow_dataset_tables($dataset_nid) {
     $row[] = array('data' => l($rs['title'], 'table/' . $rs['nid']));
     // number of records
     $row[] = array('data' => db_result(db_query('
-    	SELECT COUNT(*) 
-    	FROM {content_type_record} 
-    	WHERE field_table_value = %d', $rs['nid'])));
+      SELECT COUNT(*) 
+      FROM {content_type_record} 
+      WHERE field_table_value = %d', $rs['nid'])));
     // number of fields
     $table_node = node_load($rs['nid']);
     $table_fields = _tow_get_table_fields($table_node);
@@ -256,9 +256,9 @@ function tow_dataset_tables($dataset_nid) {
 
   $parameters['datatable_options'] = array(
     'bAutoWidth' => TRUE,
-  	'bLengthChange' => false,
+    'bLengthChange' => false,
     'bPagination' => false,      
-  	'bFilter'   => FALSE,  
+    'bFilter'   => FALSE,  
     'bSort' => false,
     'bInfo'     => false,
   );
@@ -287,7 +287,7 @@ function _tow_dataset_admin_tasks($node) {
   );
 
   if ($node->field_access_type[0]['value']){
-	$admin_tasks['invite'] = l('Invite people', 'invite/' . $node->nid) . ' ' . t('to access your data set');
+  $admin_tasks['invite'] = l('Invite people', 'invite/' . $node->nid) . ' ' . t('to access your data set');
     $admin_tasks['access_requests'] = tow_access_requests($node->nid);
   }
 
@@ -334,10 +334,10 @@ function tow_dataset_prepare_badge_block($node, $count_tables) {
 
   $dataset_count_records = db_result(db_query("
     SELECT COUNT(*) AS qty
-	FROM {content_type_record} r 
-	INNER JOIN {content_type_table} t
-	  ON r.field_table_value = t.nid
-	  AND t.field_dataset_value = %d",
+  FROM {content_type_record} r 
+  INNER JOIN {content_type_table} t
+    ON r.field_table_value = t.nid
+    AND t.field_dataset_value = %d",
   $node->nid));
 }
 

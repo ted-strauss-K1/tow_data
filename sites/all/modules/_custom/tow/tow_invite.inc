@@ -80,7 +80,7 @@ function tow_invite_form_submit($form, &$form_state) {
       return;
     }
     $token = user_password(32);
-	$link = l($dataset->title, 'node/' . $dataset->nid, array('absolute' => TRUE));
+  $link = l($dataset->title, 'node/' . $dataset->nid, array('absolute' => TRUE));
     $tokenlink = l('link', 'user/register', array('query' => 'token=' . $token, 'absolute' => TRUE));
     if (tow_invite_user($email, $link, $form_state['values']['message'], $person, $tokenlink)) {
       db_query("INSERT INTO {tow_invites} VALUES (%d, '%s', '%s')", $dataset->nid, $token, $email);
@@ -106,7 +106,7 @@ function tow_invite_user($email, $link, $user_message, $person, $tokenlink = FAL
   $body = '<p>Hello ' . $person . '</p>';
   $body .= '<p>' . $user->name . ' invites you to have access to his/her dataset ' . $link . ' on Theory on Wheels</p>';
   if ($tokenlink) {
-	$body .= '<p>Since access to this dataset is restricted, to get an access you need to register on Theory on Wheels first using a special ' . $tokenlink . '</p>';
+  $body .= '<p>Since access to this dataset is restricted, to get an access you need to register on Theory on Wheels first using a special ' . $tokenlink . '</p>';
   }
   if ($user_message) {
     $body .= '<p>' . $user->name . ' included the message:</p>';

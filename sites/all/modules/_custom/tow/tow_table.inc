@@ -89,15 +89,15 @@ function tow_table_callback($nid) {
  * Get table data to be placed into "table" view.
  * @param $node node to be displayed
  * 
- * $sort_index 		column index or 'nid'	// Default value: $sort_index = 'nid';
- * $sort_order		"ASC" or "DESC"	      // Default value: $sort_order = "ASC";
+ * $sort_index     column index or 'nid'  // Default value: $sort_index = 'nid';
+ * $sort_order    "ASC" or "DESC"        // Default value: $sort_order = "ASC";
  * 
- * $filter_column_index column index 		// Default value: $filter_column_index = 0,  
- * $filter_operator_key filtering operator 	// Default value: $filter_operator_key = 0,
+ * $filter_column_index column index     // Default value: $filter_column_index = 0,  
+ * $filter_operator_key filtering operator   // Default value: $filter_operator_key = 0,
  * $filter_value = value to be used during comparison // Default value: $filter_value = 0
  
- * $first_elem_no 	first element to be displayed	// Default value: $first_elem_no = 0;
- * $elements_per_page	no of elements to display 	// Default value: $total_elements = 10;
+ * $first_elem_no   first element to be displayed  // Default value: $first_elem_no = 0;
+ * $elements_per_page  no of elements to display   // Default value: $total_elements = 10;
  * 
  * 
  * 
@@ -119,7 +119,7 @@ function tow_table($node, $display_options = array()) {
   $user_table = tow_construct_table_query($node, $display_options);
 
   foreach ($user_table['titles']['values'] as $key=>$value) {
-	$headers[$key]=array('data'=>$value);
+  $headers[$key]=array('data'=>$value);
   }
 
   global $user;
@@ -127,9 +127,9 @@ function tow_table($node, $display_options = array()) {
   $show_actions = ($full_view && ($user->uid == $dataset->uid || user_access('edit any table content')));
   if ($show_actions)
     array_unshift($headers,array(
-		'data'=>'Action',
-		'datatable_options' => array('bSortable' => FALSE),
-	));
+    'data'=>'Action',
+    'datatable_options' => array('bSortable' => FALSE),
+  ));
  
   $query =  $user_table['query'];
   $args = $user_table['arguments'];
@@ -143,7 +143,7 @@ function tow_table($node, $display_options = array()) {
   while ($rs = db_fetch_array($result)){
     $row = array();
     foreach ($rs as $key => $value) {
-	  $table_types_key = isset($user_table['titles']['types'][$key]) ? $user_table['titles']['types'][$key] : '';
+    $table_types_key = isset($user_table['titles']['types'][$key]) ? $user_table['titles']['types'][$key] : '';
       if ($table_types_key == 'bool') {
         $row[] = array('data' => _tow_format_bool($value));
       }elseif ($table_types_key == 'date') {
@@ -164,41 +164,41 @@ function tow_table($node, $display_options = array()) {
         $row[] = array('data' => $value);
       }
     }
-	if ($show_actions){
-		$record_nid = $row[0]['data'];
-		$row[0]['data'] = l('edit', 'node/' . $record_nid . '/edit', array('query' => 'destination=table/' . $nid));
-		$row[0]['data'] .= ' ' . l('delete', 'node/' . $record_nid . '/delete', array('query' => 'destination=table/' . $nid));
-	}else{
-		array_shift($row); 
-	}
+  if ($show_actions){
+    $record_nid = $row[0]['data'];
+    $row[0]['data'] = l('edit', 'node/' . $record_nid . '/edit', array('query' => 'destination=table/' . $nid));
+    $row[0]['data'] .= ' ' . l('delete', 'node/' . $record_nid . '/delete', array('query' => 'destination=table/' . $nid));
+  }else{
+    array_shift($row); 
+  }
     $rows[] = array('data' => $row);
   }
   
   // Display parameters for datatable theme
   $parameters['datatable_options'] = array(
-	'bLengthChange' => FALSE,
-	'bPaginate' 	=> FALSE,      
-	'bFilter'		=> FALSE,  
-	'bSort' 		=> FALSE,
-	'bInfo'	    	=> FALSE,
-	'sScrollX'		=> '100%',
-//	'sScrollY'		=> '500',
-//	'bScrollCollapse' => true,
+  'bLengthChange' => FALSE,
+  'bPaginate'   => FALSE,      
+  'bFilter'    => FALSE,  
+  'bSort'     => FALSE,
+  'bInfo'        => FALSE,
+  'sScrollX'    => '100%',
+//  'sScrollY'    => '500',
+//  'bScrollCollapse' => true,
   );
   
   // Display parameters for datatable theme
   $parameters_full['datatable_options'] = array(
-	'bLengthChange' => FALSE,
-	'bPaginate' 	=> FALSE,      
-	'bFilter'		=> TRUE,  
-	'bSort' 		=> TRUE,
-	'bInfo'	    	=> FALSE,
-	'sScrollX'		=> '100%',
-	'sScrollY'		=> '300',
-	'bScrollCollapse' => true,
+  'bLengthChange' => FALSE,
+  'bPaginate'   => FALSE,      
+  'bFilter'    => TRUE,  
+  'bSort'     => TRUE,
+  'bInfo'        => FALSE,
+  'sScrollX'    => '100%',
+  'sScrollY'    => '300',
+  'bScrollCollapse' => true,
   );
 
-			
+      
   if ($full_view) {
     $output =  theme('datatable', $headers, $rows, $parameters_full);
   } else {
@@ -356,9 +356,9 @@ function tow_table_form_alter(&$form, &$form_state) {
     );
     $form['field_add']['unit'] = array(
       '#type' => 'textfield',
-    	'#description' => t('Enter unit'),
-    	'#size' => 20,
-    	'#maxlength' => 20,
+      '#description' => t('Enter unit'),
+      '#size' => 20,
+      '#maxlength' => 20,
     );
     $form['field_add']['enum_options'] = array(
       '#type' => 'textarea',
@@ -567,7 +567,7 @@ function tow_table_submit_indexes($form, &$form_state) {
  */
 function tow_table_submit_units($form, &$form_state) {
   foreach ($form_state['values']['fields']['data'] as $field){
-	$units[] = _tow_insert_fake($field['unit']);
+  $units[] = _tow_insert_fake($field['unit']);
   }
   
   if ($form_state['values']['field_add']['title'])
@@ -575,7 +575,7 @@ function tow_table_submit_units($form, &$form_state) {
   
   $units_array = array();
   foreach ($units as $index => $unit) {
-  	$units_array[] = array('value' => $unit);
+    $units_array[] = array('value' => $unit);
   }
     
     $form_state['values']['field_units'] = $units_array;
@@ -628,7 +628,7 @@ function tow_table_submit_create($form, &$form_state) {
   
   $form_state['values']['field_weights'][0]['value'] = serialize($weights);
   $form_state['values']['field_indexes'][0]['value'] = serialize($indexes);
-	$form_state['values']['field_units'] = $units;
+  $form_state['values']['field_units'] = $units;
 }
 
 /**
@@ -697,11 +697,11 @@ function tow_table_structure(&$node) {
       foreach($node->{'field_title_' . $field_type} as $title_value)
         if ($title_value['value']) {
            if ($user->uid == $node->uid || user_access('edit any table content')) {
-				$rows[$weights_array[$index]]['action'] = l('delete', 'field_delete/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]) . ' '
-					. l('edit', 'field_edit/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]);
-			} else {
-				$rows[$weights_array[$index]]['action'] = '';
-			}
+        $rows[$weights_array[$index]]['action'] = l('delete', 'field_delete/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]) . ' '
+          . l('edit', 'field_edit/' . $table->nid . '/' . $field_type . '/' . $delta . '/' . $weights_array[$index]);
+      } else {
+        $rows[$weights_array[$index]]['action'] = '';
+      }
           $rows[$weights_array[$index]]['value'] = $title_value['value'];
           $rows[$weights_array[$index]]['type'] = $field_type;
           $rows[$weights_array[$index]]['unit'] = _tow_remove_fake($units_array[$weights_array[$index]]['value']);
@@ -1050,14 +1050,14 @@ function _tow_get_table_fields($table_node){
   // 3 Add units and indexes to the fields
   // TODO: 
 //  dpm($aux_array);
-	return $aux_array;
+  return $aux_array;
 }
 
 function tow_table_display_switch_block() {
-	
-	global $dataset;
-	global $table;
-	// Do not display this block on the 
+  
+  global $dataset;
+  global $table;
+  // Do not display this block on the 
   if (!isset($table) || !($table->nid)) {
     return;
   }

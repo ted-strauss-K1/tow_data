@@ -229,21 +229,21 @@ SELECT `rec`.nid AS `nid`,
 `int0`.field_int_value AS `0`, `char0`.field_char_value AS `1`, `char1`.field_char_value AS `2`, `int1`.field_int_value AS `3`, `char2`.field_char_value AS `4`, `text0`.field_text_value AS `5`
 FROM content_field_int `int0`
 LEFT JOIN {content_field_char} `char0`
-	ON `char0`.nid = `int0`.nid
-	AND `char0`.delta = 0
-	AND `int0`.delta = 0
+  ON `char0`.nid = `int0`.nid
+  AND `char0`.delta = 0
+  AND `int0`.delta = 0
 LEFT JOIN {content_field_char} `char1`
-	ON `char1`.nid = `int0`.nid
-	AND `char1`.delta = 1
+  ON `char1`.nid = `int0`.nid
+  AND `char1`.delta = 1
 LEFT JOIN {content_field_int} `int1`
-	ON `int1`.nid = `int0`.nid
-	AND `int1`.delta = 1
+  ON `int1`.nid = `int0`.nid
+  AND `int1`.delta = 1
 LEFT JOIN {content_field_char} `char2`
-	ON `char2`.nid = `int0`.nid
-	AND `char2`.delta = 2
+  ON `char2`.nid = `int0`.nid
+  AND `char2`.delta = 2
 LEFT JOIN {content_field_text} `text0`
-	ON `text0`.nid = `int0`.nid
-	AND `text0`.delta = 0
+  ON `text0`.nid = `int0`.nid
+  AND `text0`.delta = 0
 WHERE `rec`.nid
 IN (
  SELECT nid

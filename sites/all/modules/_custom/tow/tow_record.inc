@@ -128,7 +128,7 @@ function tow_record_form_alter(&$form, &$form_state) {
       if ($value['type'] == 'bool') {
         $form['fields']['data'][$key]['value']['#options'] = array('-1' => '-----', '1' => 'true', '0' => 'false'); 
       }
-			
+      
       $form['delta'][$key] = array(
         '#type' => 'value',
         '#value' => $value['delta']
@@ -203,7 +203,7 @@ function tow_record_format_for_search_indexing(&$node) {
                                                       AND `vid` = %d
                                                       AND `delta` = %d", 
                                                       $table_nid, $table_nid, $delta)));
-	$node->content[] = array('#value' => $enum_options[$value['value']] . ' ');
+  $node->content[] = array('#value' => $enum_options[$value['value']] . ' ');
   }
   
   // Formating boolean field values
@@ -227,10 +227,10 @@ function tow_record_format_for_search_indexing(&$node) {
  * Substitutes NULL placeholders by NULLs in node CCK fields
  */
 function tow_record_set_empty(&$node) {
-	$types = content_types($node->type);
-	foreach ($types['fields'] as $field) {
-		foreach ($node->$field['field_name'] as &$instance) {
-			$instance['value'] = _tow_remove_fake($instance['value']);
-		}
-	}
+  $types = content_types($node->type);
+  foreach ($types['fields'] as $field) {
+    foreach ($node->$field['field_name'] as &$instance) {
+      $instance['value'] = _tow_remove_fake($instance['value']);
+    }
+  }
 }

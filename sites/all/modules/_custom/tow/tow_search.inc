@@ -8,11 +8,11 @@ define('TOW_CRON_HASH_SLEEP', 0);
 */
 function tow_search_form(&$form_state, $dataset_nid) {
 //  x('tow_search_form called');
-	
+  
   $form = array();
-	// Add form elements
-	tow_search_within_dataset_altering_form($form, $form_state, $dataset_nid);
-	return $form;
+  // Add form elements
+  tow_search_within_dataset_altering_form($form, $form_state, $dataset_nid);
+  return $form;
 }
 
 /** 
@@ -27,16 +27,16 @@ function tow_search_apachesolr_search_form(&$form, &$form_state) {
   // Calls search_within_dataset_altering_form function in case if redirecton to the apachesolr search page 
   // was made by simple search_within_dataset 
   if (strpos($filters, 'type:record') !== FALSE) {
-	
+  
     $matches_qty = preg_match('/(?<=dataset_nid:)\d{1,}$/', $filters, $dataset_nids);
     if ($matches_qty) {
       $dataset_nid = $dataset_nids[0];
       tow_search_within_dataset_altering_form($form, $form_state, $dataset_nid);
       return $form;
     }
-		else {
+    else {
       // TODO: GOTO 404 page 
-	  }
+    }
   }
   else {
     //tow_search_datasets_altering_form($form);

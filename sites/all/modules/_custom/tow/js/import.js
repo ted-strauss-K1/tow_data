@@ -1,11 +1,11 @@
 // User interface adjustment for import page
 // Copyright Theory on Wheels
 //**
-//	Drupal.behaviors.Import
+//  Drupal.behaviors.Import
 //**
-	
+  
 Drupal.behaviors.Import = function(context) {
-	
+  
   // hide and show table select dependently on user choice (whether import to dataset or to table)
   $('#edit-to-table').hide();
   $('#edit-to-way-1-wrapper').change(function() {
@@ -25,16 +25,16 @@ Drupal.behaviors.Import = function(context) {
       lock = false;
 
   if ($('#edit-hash').val() != '0') {
-	$(document).ready(function(){
-		hash = $('#edit-hash').val();
-		fileUploaded(hash);
-		return;
-	});
+  $(document).ready(function(){
+    hash = $('#edit-hash').val();
+    fileUploaded(hash);
+    return;
+  });
   } else {
-	hash = Math.round(Math.random()*1000000);
-	$('#edit-hash').val(hash);
+  hash = Math.round(Math.random()*1000000);
+  $('#edit-hash').val(hash);
   }
-  	  
+      
   // For Firefox >= 3.6 add drag&drop feature 
   if ($.browser.mozilla == true && parseInt($.browser.version.replace(/\./g, "")) > 19200)
     dragFile(hash);
@@ -43,27 +43,27 @@ Drupal.behaviors.Import = function(context) {
   
   
   $('#edit-upload').change(function(){
-	  
+    
     if (lock)
       return;
     lock = true;
-	
-	var files = this.files; 
+  
+  var files = this.files; 
     if (files != undefined) {
-		if (files.length != 1)
-			return;
-		fileUpload(hash, files[0]);
+    if (files.length != 1)
+      return;
+    fileUpload(hash, files[0]);
     } else {
-		  //$('#edit-submit').show();
-	}
+      //$('#edit-submit').show();
+  }
   });
   
   $('.get-it').click(function(){
-	  
+    
     if (lock)
       return;
     lock = true;
-	  
+    
     var grab_url = $('#edit-url').val(); 
    
     if (grab_url != "") { 
@@ -82,42 +82,42 @@ Drupal.behaviors.Import = function(context) {
   
   
   var lpStart = function(hash, stage, cycle) {
-	
-		cycle++;
-		if (cycle > 2000)
-		  return;
-		
-		$.ajax({
-		  url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
-		  dataType: 'json',
-		  success: function (data, textStatus) {
-			lpOnComplete(hash, stage, data.response, cycle);
-		  }
-		});
+  
+    cycle++;
+    if (cycle > 2000)
+      return;
+    
+    $.ajax({
+      url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
+      dataType: 'json',
+      success: function (data, textStatus) {
+      lpOnComplete(hash, stage, data.response, cycle);
+      }
+    });
   };
   
    var lpOnComplete = function(hash, stage, response, cycle) {
 
     var dots,
       nextStage = stage;
-	
+  
     if (stage <= 3) {
-	
+  
       if (response == 10) {
         $('.progress-table tr.' + stage + ' td.dots').text('..........');
         $('.progress-table tr.' + stage + ' td.status').text('ok');
         $('.progress-table tr.' + stage + ' td.status').addClass('ok');
         nextStage++;
-	  }
-	    	
+    }
+        
       else 
         
-    	if (response == -1) {
+      if (response == -1) {
           $('.progress-table tr.' + stage + ' td.status').text('error');
           $('.progress-table tr.' + stage + ' td.status').addClass('error');
           nextStage = 4;
         }
-	  
+    
         else {
           dots = '';    
           for (var i = 1; i <= response; i++)
@@ -125,14 +125,14 @@ Drupal.behaviors.Import = function(context) {
           $('.progress-table tr.' + stage + ' td.dots').text(dots);
         }
     
-	} 
-	
+  } 
+  
     else
 
       if (stage >= 4 && stage <= 5){
-	  
-        if (response != false) {	    
-        	
+    
+        if (response != false) {      
+          
           if (response !== '-1') {
             $('.progress-table tr.' + stage + ' td.message').text(response);
             $('.progress-table tr.' + stage).show();
@@ -158,7 +158,7 @@ Drupal.behaviors.Import = function(context) {
             
           for(var n=0; n<tables.length; n++) {
             if (nids[n])
-        	  message += '<a href="' + location.protocol + '//' + location.host + '/table/' + nids[n] + '">' + tables[n] + '</a>' + '; ';
+            message += '<a href="' + location.protocol + '//' + location.host + '/table/' + nids[n] + '">' + tables[n] + '</a>' + '; ';
           }
           
           message = rtrim(message);
@@ -172,7 +172,7 @@ Drupal.behaviors.Import = function(context) {
           return;
         }
       }
-	
+  
     setTimeout(
       function() {
         lpStart(hash, nextStage, cycle);
@@ -196,7 +196,7 @@ Drupal.behaviors.Import = function(context) {
       paramname: 'files',
       
       data: { 
-        hash: hash, 			// send POST variables
+        hash: hash,       // send POST variables
         table: function() {
           return getChosenTable();
         },
@@ -207,11 +207,11 @@ Drupal.behaviors.Import = function(context) {
         $('.progress-bar').show();
           lpStart(hash, 1, 0);
       },
-	  
+    
       maxfiles: 1,
 
       beforeEach: function(file) {
-			
+      
         if (lock == false) {
           lock = true;
           return true;
@@ -223,114 +223,114 @@ Drupal.behaviors.Import = function(context) {
     });
   };
     
-  function fileUpload(hash, file) {	    
+  function fileUpload(hash, file) {      
     
     var fileName = file.name,
         uri = 'upload_selected/' + hash + '/' + dataset + '/' + getChosenTable() + '?XDEBUG_SESSION_START=import',    
         xhr = new XMLHttpRequest();
     
     xhr.open("POST", uri, true);
-	$('.progress-bar').show();
-	lpStart(hash, 1, 0);
+  $('.progress-bar').show();
+  lpStart(hash, 1, 0);
 
-	//fData.append('files', file);
+  //fData.append('files', file);
     //xhr.send(fData);
-	
-	if (typeof FormData != 'undefined'){//XHR2
-		var fData = new FormData();
-		fData.append('files', file);
-		xhr.send(fData);
-	} else if (xhr.sendAsBinary){
-		var fReader = new FileReader();
-		fReader.addEventListener('load', function(){
-			var boundaryString = 'xxxxxxxxxxxx',
-				boundary = '--' + boundaryString,
-				requestbody = '';
+  
+  if (typeof FormData != 'undefined'){//XHR2
+    var fData = new FormData();
+    fData.append('files', file);
+    xhr.send(fData);
+  } else if (xhr.sendAsBinary){
+    var fReader = new FileReader();
+    fReader.addEventListener('load', function(){
+      var boundaryString = 'xxxxxxxxxxxx',
+        boundary = '--' + boundaryString,
+        requestbody = '';
 
-			requestbody += boundary + '\r\n'
-					+ 'Content-Disposition: form-data; name="files"; filename="' + file.name + '"' + '\r\n' // parameter name — upfile
-					+ 'Content-Type: application/octet-stream' + '\r\n'
-					+ '\r\n'
-					+ fReader.result // binary file content
-					+ '\r\n'
-					+ boundary;
+      requestbody += boundary + '\r\n'
+          + 'Content-Disposition: form-data; name="files"; filename="' + file.name + '"' + '\r\n' // parameter name — upfile
+          + 'Content-Type: application/octet-stream' + '\r\n'
+          + '\r\n'
+          + fReader.result // binary file content
+          + '\r\n'
+          + boundary;
 
-			xhr.setRequestHeader("Content-type", 'multipart/form-data; boundary="' + boundaryString + '"');
-			xhr.setRequestHeader("Connection", "close");
-			xhr.setRequestHeader("Content-length", requestbody.length);
-			xhr.sendAsBinary(requestbody);
-		}, false);
-		fReader.readAsBinaryString(file);
-	} else {
-		//$('#edit-submit').show();
-	}
+      xhr.setRequestHeader("Content-type", 'multipart/form-data; boundary="' + boundaryString + '"');
+      xhr.setRequestHeader("Connection", "close");
+      xhr.setRequestHeader("Content-length", requestbody.length);
+      xhr.sendAsBinary(requestbody);
+    }, false);
+    fReader.readAsBinaryString(file);
+  } else {
+    //$('#edit-submit').show();
+  }
 
     return true;
   }
   cycle=0;
   function fileUploaded(hash) {
-	$('.progress-bar').show();
+  $('.progress-bar').show();
     var stage=1,
-		cycle=0;
-	
-	$.ajax({
-	  url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
-	  dataType: 'json',
-	  success: function (data, textStatus) {
-		lpOnComplete(hash, stage, data.response, cycle);
-	  }
-	});
-	return true;
+    cycle=0;
+  
+  $.ajax({
+    url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
+    dataType: 'json',
+    success: function (data, textStatus) {
+    lpOnComplete(hash, stage, data.response, cycle);
+    }
+  });
+  return true;
   }
   
   function explode( delimiter, string ) { // Split a string by string
-	  	    //
-	  	    // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-	  	    // +   improved by: kenneth
-	  	    // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
-	  	 
-	  	    var emptyArray = { 0: '' };
-	  	 
-	  	    if ( arguments.length != 2
-	  	        || typeof arguments[0] == 'undefined'
-	  	        || typeof arguments[1] == 'undefined' )
-	  	    {
-	  	        return null;
-	  	    }
-	  	 
-	  	    if ( delimiter === ''
-	  	        || delimiter === false
-	  	        || delimiter === null )
-	  	    {
-	  	        return false;
-	  	    }
-	  	 
-	  	    if ( typeof delimiter == 'function'
-	  	        || typeof delimiter == 'object'
-	  	        || typeof string == 'function'
-	  	        || typeof string == 'object' )
-	  	    {
-	  	        return emptyArray;
-	  	    }
-	  	 
-	  	    if ( delimiter === true ) {
-	  	        delimiter = '1';
-	  	    }
-	  	 
-	  return string.toString().split ( delimiter.toString() );
-	  }
+          //
+          // +   original by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+          // +   improved by: kenneth
+          // +   improved by: Kevin van Zonneveld (http://kevin.vanzonneveld.net)
+       
+          var emptyArray = { 0: '' };
+       
+          if ( arguments.length != 2
+              || typeof arguments[0] == 'undefined'
+              || typeof arguments[1] == 'undefined' )
+          {
+              return null;
+          }
+       
+          if ( delimiter === ''
+              || delimiter === false
+              || delimiter === null )
+          {
+              return false;
+          }
+       
+          if ( typeof delimiter == 'function'
+              || typeof delimiter == 'object'
+              || typeof string == 'function'
+              || typeof string == 'object' )
+          {
+              return emptyArray;
+          }
+       
+          if ( delimiter === true ) {
+              delimiter = '1';
+          }
+       
+    return string.toString().split ( delimiter.toString() );
+    }
   
   function trim(str, chars) { 
-		return ltrim(rtrim(str, chars), chars); 
-	} 
-	 
-	function ltrim(str, chars) { 
-		chars = chars || "\\s"; 
-		return str.replace(new RegExp("^[" + chars + "]+", "g"), ""); 
-	} 
-	 
-	function rtrim(str, chars) { 
-		chars = chars || "\\s"; 
-		return str.replace(new RegExp("[" + chars + "]+$", "g"), ""); 
-	}
+    return ltrim(rtrim(str, chars), chars); 
+  } 
+   
+  function ltrim(str, chars) { 
+    chars = chars || "\\s"; 
+    return str.replace(new RegExp("^[" + chars + "]+", "g"), ""); 
+  } 
+   
+  function rtrim(str, chars) { 
+    chars = chars || "\\s"; 
+    return str.replace(new RegExp("[" + chars + "]+$", "g"), ""); 
+  }
 };

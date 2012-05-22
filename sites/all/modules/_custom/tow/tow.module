@@ -26,7 +26,6 @@ include_once('./' . $module_path . '/tow_search_apachesolr.inc');
 include_once('./' . $module_path . '/tow_search_outer.inc');
 include_once('./' . $module_path . '/tow_search_inner.inc');
 include_once('./' . $module_path . '/tow_search_inner_linked.inc');
-
 include_once('./' . $module_path . '/tests/tow_tests.inc');
 
 // Validation constants, min and max number of columns in a table 
@@ -90,7 +89,7 @@ function tow_theme() {
       ),
       'template' => 'templates/tow_theme_dataset_attachment',
     ),
-		    /**
+        /**
      * Returns a link for a facet term, with the number (count) of results for that term
      */
     'tow_search_inner_facet_link' => array(
@@ -247,6 +246,16 @@ function tow_menu() {
     'type' => MENU_CALLBACK,
   );
   
+   $items['search_dataset/%/sort_ajax'] = array(
+    'title' => 'Search dartaset ajax callback', 
+    'page callback' => 'tow_search_inner_widgets_block',
+    'page arguments' => array('sort'),
+    //'access arguments' => array('access content'),
+    'access arguments' => TRUE,
+    'file' => 'tow_search_inner.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
   $items['export/%'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('tow_export_form', 1),
@@ -331,7 +340,7 @@ function tow_nodeapi(&$node, $op) {
   }
  
   if ($node->type == 'dataset' && $op == 'view') {
-	tow_dataset_hide_hash($node);
+  tow_dataset_hide_hash($node);
     tow_statistics_dataset_extract($node->nid);
     tow_dataset_summary($node);
     tow_statistics_dataset_update($node);
@@ -359,18 +368,18 @@ function tow_nodeapi(&$node, $op) {
   // Submit description after table node was inserted
   if ($node->type == 'table' && $op == 'insert')
     tow_field_descriptions_submit($node->nid);
-		
-	if ($node->type == 'record' && $op == 'presave')
-		tow_record_set_empty($node);
+    
+  if ($node->type == 'record' && $op == 'presave')
+    tow_record_set_empty($node);
 
-	if ($node->type == 'linked_record' && $op == 'presave')
-		tow_search_inner_set_empty($node);
+  if ($node->type == 'linked_record' && $op == 'presave')
+    tow_search_inner_set_empty($node);
 
-	if ($node->type == 'table')
-		tow_search_inner_queue_table_linking($node, $op);
+  if ($node->type == 'table')
+    tow_search_inner_queue_table_linking($node, $op);
 
-	if ($node->type == 'record')
-		tow_search_inner_queue_record_linking($node, $op);
+  if ($node->type == 'record')
+    tow_search_inner_queue_record_linking($node, $op);
 }
 
 /**
@@ -397,79 +406,80 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['dataset_badge']['info'] = t('Dataset badge');
     $blocks['dataset_stats']['info'] = t('Dataset statistics');
     $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
-		$blocks['search_outer_results']['info'] = t('Outer search: Results');
+    $blocks['search_outer_results']['info'] = t('Outer search: Results');
     $blocks['search_outer_filter']['info'] = t('Outer search: Filters');
-		$blocks['search_outer_number_of_results']['info'] = t('Outer search: Number of results');
-		$blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
-		$blocks['search_inner_facets']['info'] = t('Inner search: facets block');
-		$blocks['search_inner_simple_search']['info'] = t('Inner search: simple search block');
-		$blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables od a dataset');
-		//search filter blocks
-	
-		$enabled_facets = apachesolr_get_enabled_facets('tow');
-		$facets = tow_apachesolr_facets();
-		// Add the blocks
-		foreach ($enabled_facets as $delta => $facet_field) {
-			if (isset($facets[$delta])) {
-				$blocks[$delta] = $facets[$delta] + array('cache' => BLOCK_CACHE_PER_PAGE,);
-			}
-		}	 
+    $blocks['search_outer_number_of_results']['info'] = t('Outer search: Number of results');
+    $blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
+    $blocks['search_inner_facets']['info'] = t('Inner search: facets block');
+    $blocks['search_inner_simple_search']['info'] = t('Inner search: simple search block');
+    $blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables od a dataset');
+    //search filter blocks
+  
+    $enabled_facets = apachesolr_get_enabled_facets('tow');
+    $facets = tow_apachesolr_facets();
+    // Add the blocks
+    foreach ($enabled_facets as $delta => $facet_field) {
+      if (isset($facets[$delta])) {
+        $blocks[$delta] = $facets[$delta] + array('cache' => BLOCK_CACHE_PER_PAGE,);
+      }
+    }   
     return $blocks;
   } elseif($op == 'view') {
     if (user_access('access content')) {
       if($delta == 'create_table') { 
-				return tow_dataset_create_table_block();
+        return tow_dataset_create_table_block();
       }
       if ($delta == 'pma_menu') {
-				return tow_pma_menu_block();
+        return tow_pma_menu_block();
       }
       if ($delta == 'dataset_badge') {
-				return tow_dataset_badge_block();
+        return tow_dataset_badge_block();
       }
       if ($delta == 'dataset_stats') {
-				return tow_dataset_stats_block();
+        return tow_dataset_stats_block();
       }
       if ($delta == 'table_display_switch') {
-      	return tow_table_display_switch_block();
+        return tow_table_display_switch_block();
       }
       if ($delta == 'search_outer_filter') {
-				return tow_search_outer_filter_block();
+        return tow_search_outer_filter_block();
       }      
-			if ($delta == 'search_outer_number_of_results') {
-				return tow_search_outer_number_of_results_block();
-			}
-			if ($delta == 'search_outer_tabs') {
-				return tow_search_outer_tabs_block();
-			}
-			if ($delta == 'search_outer_results') {
-				return tow_search_outer_results_block();
+      if ($delta == 'search_outer_number_of_results') {
+        return tow_search_outer_number_of_results_block();
       }
-			if ($delta == 'search_inner_facets') {
-				return tow_search_inner_widgets_block();
+      if ($delta == 'search_outer_tabs') {
+        return tow_search_outer_tabs_block();
       }
-			if ($delta == 'search_inner_simple_search') {
-				return tow_search_inner_simple_search_block();
+      if ($delta == 'search_outer_results') {
+        return tow_search_outer_results_block();
       }
-			 if ($delta == 'search_inner_list_of_tables')
-				return tow_search_inner_list_of_tables_block();
-				
+      if ($delta == 'search_inner_facets') {
+        drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
+        return tow_search_inner_widgets_block();
+      }
+      if ($delta == 'search_inner_simple_search') {
+        return tow_search_inner_simple_search_block();
+      }
+       if ($delta == 'search_inner_list_of_tables')
+        return tow_search_inner_list_of_tables_block();
+        
       if ($delta == 'sis_tow_amount_tables') {
-				return tow_sis_tow_amount_tables_block();
+        return tow_sis_tow_amount_tables_block();
       }
     } 
   } elseif($op == 'configure') {
-		if (user_access('access content')) {
-		  if ($delta == 'sis_tow_amount_tables') {
-			return apachesolr_facetcount_form('sis_tow_amount_tables', $delta);
-		  }
-		}
+    if (user_access('access content')) {
+      if ($delta == 'sis_tow_amount_tables') {
+      return apachesolr_facetcount_form('sis_tow_amount_tables', $delta);
+      }
+    }
   } elseif($op == 'save') {
-		if (user_access('access content')) {
-		  if ($delta == 'sis_tow_amount_tables') {
-			return apachesolr_facetcount_save($edit);
-		  }
-		}
-	}
+    if (user_access('access content')) {
+      if ($delta == 'sis_tow_amount_tables') {
+      return apachesolr_facetcount_save($edit);
+      }
+    }
+  }
 }
 
 /**
@@ -498,9 +508,9 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
       tow_register_form_alter($form, $form_state);
       break;
     case 'search_form':
-	    //tow_search_apachesolr_search_form($form, $form_state);
-		//$form['#action'] = 'newest';
-	break;  
+      //tow_search_apachesolr_search_form($form, $form_state);
+    //$form['#action'] = 'newest';
+  break;  
   }
   
   if ($form_id == 'node_delete_confirm' || $form_id == 'tow_table_truncate_confirm') {
@@ -593,8 +603,8 @@ function tow_maintanance_mode($status, $nid, $type) {
 function tow_cron() {
   tow_search_cron();
   tow_import_cron();
-	tow_search_inner_cron();
-	tow_search_inner_linked_cron();
+  tow_search_inner_cron();
+  tow_search_inner_linked_cron();
 }
 
 /**
@@ -621,8 +631,8 @@ function _tow_format_bool($value) {
     return 'true';
   if ($value === '0')
     return 'false';
-		
-	return NULL;
+    
+  return NULL;
 }
 
 /**
@@ -635,7 +645,7 @@ function _tow_bool_to_int($value) {
   if (strtolower($value) == 'false' || strtolower($value) == 'no' || $value == 0)
     return 0;
 
-		return NULL;
+    return NULL;
 }
 
 /**
@@ -667,31 +677,31 @@ function tow_table_list($nid) {
 function tow_search($op = 'search', $keys = NULL) {
 
   switch ($op) {
-	case 'name':
-	  return t('Search');
+  case 'name':
+    return t('Search');
 
-	case 'reset':
-	  apachesolr_clear_last_index('apachesolr_search');
-	  return;
+  case 'reset':
+    apachesolr_clear_last_index('apachesolr_search');
+    return;
 
-	case 'status':
-	  return apachesolr_index_status('apachesolr_search');
+  case 'status':
+    return apachesolr_index_status('apachesolr_search');
 
-	case 'search':
-	  $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
-	  $solrsort = isset($_GET['solrsort']) ? $_GET['solrsort'] : '';
-	  $page = isset($_GET['page']) ? $_GET['page'] : 0;
-	  try {
-		$results = apachesolr_search_execute($keys, 
-		$filters, 
-		$solrsort, 
-		tow_get_homepage_tab(), $page);
-		return $results;
-	  }
-	  catch (Exception $e) {
-		watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
-		apachesolr_failure(t('Solr search'), $keys);
-	  }
-	  break;
+  case 'search':
+    $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
+    $solrsort = isset($_GET['solrsort']) ? $_GET['solrsort'] : '';
+    $page = isset($_GET['page']) ? $_GET['page'] : 0;
+    try {
+    $results = apachesolr_search_execute($keys, 
+    $filters, 
+    $solrsort, 
+    tow_get_homepage_tab(), $page);
+    return $results;
+    }
+    catch (Exception $e) {
+    watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
+    apachesolr_failure(t('Solr search'), $keys);
+    }
+    break;
   } // switch
 }

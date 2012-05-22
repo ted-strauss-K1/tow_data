@@ -100,7 +100,7 @@ function tow_pma_breadcrumbs() {
     foreach ($dataset->taxonomy as $term_obj) {
       if ($term_obj->vid == 2) {
         $bc[] = l($term_obj->name, 'taxonomy/term/' . $term_obj->tid);
-  	    	break;
+          break;
       }
     }
   }
