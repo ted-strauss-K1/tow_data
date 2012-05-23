@@ -35,8 +35,8 @@ function tow_search_inner_simple_search_form() {
 /**
  * Inner search facets block
  */
-function tow_search_inner_widgets_block($ajax = '') {
-  //$ajax = 'sort';
+function tow_search_inner_widgets_block() {
+  
   $widgets_sort = isset($_GET['widgets_sort']) ? $_GET['widgets_sort'] : 'title';
   $sort = isset($_GET['sort']) ? $_GET['sort'] : 'asc';
   if (!in_array($widgets_sort, array('title', 'type', 'variability'))) {
@@ -57,7 +57,8 @@ function tow_search_inner_widgets_block($ajax = '') {
   // Get info from ApacheSolr.
   $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
   $saved_query = apachesolr_current_query(NULL, 'tow_inner_search');
-  $query = clone $saved_query;
+  # $query = clone $saved_query;
+  $query = unserialize(serialize($saved_query));
   $params = apachesolr_search_basic_params($query);
 
   // Get table's Node ID.
@@ -75,7 +76,8 @@ function tow_search_inner_widgets_block($ajax = '') {
 
   // Get some more info from ApacheSolr.
   list($final_query, $stats_response) = apachesolr_do_query('tow_inner_search', $query, $params);
-  $query = clone $saved_query;
+  # $query = clone $saved_query;
+  $query = unserialize(serialize($saved_query));
   $params = apachesolr_search_basic_params($query);
 
   // Save query and stats to db.
@@ -133,7 +135,8 @@ function tow_search_inner_widgets_block($ajax = '') {
       $query->remove_filter('{!tag=' . $field['name'] . '}' . $field['name'], $field_filter['#value']);
       $query->add_filter($field['name'], $field_filter['#value']);
     }      
-    $newquery = clone $saved_query;
+    # $newquery = clone $saved_query;
+    $newquery = unserialize(serialize($saved_query));
     $newquery->remove_filter($field['name']);
     $newquery->remove_filter('f_'. $field['name']);
     $queryvalues = $newquery->get_url_queryvalues();
@@ -147,22 +150,136 @@ function tow_search_inner_widgets_block($ajax = '') {
     $block['content'] .= drupal_get_form('tow_search_inner_widget_form', $field['title'], $widget, $reset);
   }
   
-  if ($ajax == 'sort') {
-    $block = array();
-    $block['title'] = '<div class="test-div-block-title><strong>Title</strong></div>"';
-    $block['content'] = '<div class="test-div-block-content><strong>Content</strong></div>"';
-    $block = drupal_json(array('data' => $block['content']));
-    exit();
-  }
-  
   return $block;
 }
 
 function tow_search_inner_widgets_block_ajax_callback() {
-  $block = tow_search_inner_widgets_block(TRUE);
-  //$str = $block['content'];
-  print $block['content'];
-  //return drupal_json(array('data' => $block['content']));
+  // $block = tow_search_inner_widgets_block();
+  
+  $widgets_sort = isset($_GET['widgets_sort']) ? $_GET['widgets_sort'] : 'title';
+  $sort = isset($_GET['sort']) ? $_GET['sort'] : 'asc';
+  if (!in_array($widgets_sort, array('title', 'type', 'variability'))) {
+    $widgets_sort = 'title';
+  }
+  if (!in_array($sort, array('asc', 'desc'))) {
+    $sort = 'asc';
+  }
+  $sort_params = array(
+    'widgets_sort' => $widgets_sort,
+    'sort' => $sort
+  );
+  
+  // Define the block.
+  $block = array();
+  $block['title'] = 'Filters';
+
+  // Get info from ApacheSolr.
+  $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+  $saved_query = apachesolr_current_query(NULL, 'tow_inner_search');
+  # $query = clone $saved_query;
+  $query = unserialize(serialize($saved_query));
+  /*$params = apachesolr_search_basic_params($query);
+
+  // Get table's Node ID.
+  if (isset($saved_response->response->docs[0]))
+    $table_nid = $saved_response->response->docs[0]->ss_tow_field_table;
+  else {
+    $table_nid = tow_search_inner_get_nid();
+  }
+  
+  // Get stats for full range.
+  foreach (tow_apachesolr_table_fields($table_nid, TRUE) as $index=>$field){
+    $query->remove_filter($field['name']);
+  }
+  $query->set_keys('');
+
+  // Get some more info from ApacheSolr.
+  list($final_query, $stats_response) = apachesolr_do_query('tow_inner_search', $query, $params);
+  # $query = clone $saved_query;
+  $query = unserialize(serialize($saved_query));
+  $params = apachesolr_search_basic_params($query);
+
+  // Save query and stats to db.
+  $serialized_query = serialize($query); 
+  $serialized_stats = serialize($stats_response->stats->stats_fields);
+  $hash = mt_rand(1000, 9999);
+  db_query("
+    INSERT INTO 
+      {tow_apachesolr_requests} (tnid, query, stats, hash, timestamp)
+      VALUES 
+        ('%d', '%s', '%s', '%d', '%s')
+    ", 
+    $table_nid, $serialized_query, $serialized_stats, $hash, date('Y-m-d H:i:s', time())
+  );
+  $rid = db_last_insert_id('tow_apachesolr_requests', 'rid');
+  
+  // Set the block's content.
+  $block['content'] = drupal_get_form('tow_search_inner_hash_form', $rid, $hash, $sort_params);
+  
+  // Building solr query for facets for each field.
+  $table_fields = tow_apachesolr_table_fields($table_nid);
+  foreach ($table_fields as $index => $field) {
+    $stats = isset($stats_response->stats->stats_fields->$field['name']) ? $stats_response->stats->stats_fields->$field['name'] : NULL;
+    $facet_counts = (array) $stats_response->facet_counts->facet_fields->$field['name'];
+    tow_search_inner_facet_query($params, $field['name'], $field['type'], $stats, count($facet_counts) < 6);
+  }
+  
+  // Request to solr using request built.
+  $params['rows'] = 0;
+  $params['facet'] = 'true';
+  $params['facet.limit'] = 100;
+  $params['facet.missing'] = 'true';
+  $params['facet.range.include'][] = 'edge';
+  $params['facet.range.include'][] = 'lower';
+  $params['facet.range.hardend'] = 'true';
+  
+  list($final_query, $response) = apachesolr_do_query('tow_inner_search', $query, $params);
+  if (empty($response))
+    return;
+  
+  apachesolr_static_response_cache($saved_response, 'tow_inner_search');
+  apachesolr_current_query($saved_query, 'tow_inner_search');  
+  
+  // Sort fields.
+  $table_fields = tow_search_inner_sort_fields($table_fields, $sort_params);
+  
+  // Creating facet for each field.
+  foreach ($table_fields as $index => $field) {
+    
+    global $tow_search_inner_field_delta;
+    $tow_search_inner_field_delta = $field['delta'];
+    
+    $field_filters = $query->get_filters('{!tag=' . $field['name'] . '}' . $field['name']);
+    foreach ($field_filters as $field_filter) {
+      $query->remove_filter('{!tag=' . $field['name'] . '}' . $field['name'], $field_filter['#value']);
+      $query->add_filter($field['name'], $field_filter['#value']);
+    }      
+    # $newquery = clone $saved_query;
+    $newquery = unserialize(serialize($saved_query));
+    $newquery->remove_filter($field['name']);
+    $newquery->remove_filter('f_'. $field['name']);
+    $queryvalues = $newquery->get_url_queryvalues();
+
+    $querystring = tow_search_inner_compose_query($queryvalues['filters'], FALSE);
+    $reset = l(t('Reset'), $_GET['q'], array('query' => $querystring));
+    $whole_counts = count((array) $stats_response->facet_counts->facet_fields->$field['name']) - 1; // exclude _empty_ field
+    $widget = tow_search_inner_widget($field['name'], $field['type'], $response, $query, $stats_response->stats->stats_fields->$field['name'], $whole_counts, 'sis_tow_field_' . $field['type'] . '_' . $field['delta']);
+    
+    # $block['content'] .= '<div class="tow-inner-search-widget"><b>' . $field['title'] . '</b><br />' . $widget . '<br>' . $reset . '</div>';
+    $block['content'] .= drupal_get_form('tow_search_inner_widget_form', $field['title'], $widget, $reset);
+  }
+  */
+  $ajax = FALSE;
+  $ajax = TRUE;
+  
+  if ($ajax) {
+    $block = array();
+    $block['title'] = '<div class="test-div-block-title"><strong>Title</strong></div>';
+    $block['content'] = '<div class="test-div-block-content"><strong>Content</strong></div>';
+  }
+  
+  return drupal_json(array('content' => $block['content']));
+  return drupal_json(array('data' => '<strong>Q</strong>'));
   exit();
 }
 

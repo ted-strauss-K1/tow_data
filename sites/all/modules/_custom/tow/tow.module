@@ -247,11 +247,10 @@ function tow_menu() {
   );
   
    $items['search_dataset/%/sort_ajax'] = array(
-    'title' => 'Search dartaset ajax callback', 
-    'page callback' => 'tow_search_inner_widgets_block',
-    'page arguments' => array('sort'),
-    //'access arguments' => array('access content'),
-    'access arguments' => TRUE,
+    'title' => 'Search dartaset widgets sorting ajax callback', 
+    'page callback' => 'tow_search_inner_widgets_block_ajax_callback',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
     'file' => 'tow_search_inner.inc',
     'type' => MENU_CALLBACK,
   );

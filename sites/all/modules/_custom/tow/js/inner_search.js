@@ -780,17 +780,14 @@ Drupal.behaviors.outer_search = function(context) {
     });   
   });
   
-  $('a.sort-link', context).click(function() {
+  $('a.sort-link').click(function(e) {
     
     var url = 'http://' + location.host + $(this).attr('href');
     
     var sortWidgets = function (data) {
-      var text = data.responseText;
-      console.log(text);
-      var info = eval('(' + text + ')');
-      console.log(info);
-      var html = info.data;
-      $('div#block-tow-search_inner_facets div.content', context).html(html);
+      var html = data.content;
+      console.log;
+      $('div#block-tow-search_inner_facets div.content').html(html);
     }
     
     var errorHandler = function(jqXHR, exception) {
@@ -816,7 +813,7 @@ Drupal.behaviors.outer_search = function(context) {
       type: 'POST',
       success: sortWidgets,
       error: errorHandler,
-      //dataType: 'json'
+      dataType: 'json'
     });
 
     return false;
