@@ -410,7 +410,7 @@ function _tow_search_inner_reduce_field($field) {
     'delta' => $field['delta'], 
   );
 }
-function _tow_search_inner_table_indexes($nid) {xdebug_break();
+function _tow_search_inner_table_indexes($nid) {//xdebug_break();
   static $indexes_array = array();
   if (!isset($indexes_array[$nid])) {
     $indexes = array();

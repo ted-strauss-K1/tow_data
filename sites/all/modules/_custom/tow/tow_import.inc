@@ -326,7 +326,7 @@ function tow_import_check_request($hash, $dataset_nid, $table_nid) {
 
 ###### FILE PROCESSING ######
 
-function _test($hash, $filename, $to) {xdebug_break();
+function _test($hash, $filename, $to) {//xdebug_break();
 
 try {
   require_once 'sites/all/libraries/PHPExcelExtension/PHPExcel/IOFactory.php';

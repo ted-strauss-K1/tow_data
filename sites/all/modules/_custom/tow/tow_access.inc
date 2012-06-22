@@ -1,26 +1,25 @@
 <?php
+
 // $Id: tow_access.inc,v 1.0.0.0 2011/02/28 23:42:15 tow Exp $
+
 /**
  * @file
- * Access functions
- */
-
-/* 
- * access types:
- * 0 open
- * 1 by request
- * 2 private
- */
-
-/*
- * access statuses:
- * -1 denied
- *  0 pending
- *  1 granted
+ *
+ * Access functions for Theory on Wheels.
+ * 
+ *  access types:
+ *    0 - open
+ *    1 - by request
+ *    2 - private
+ *
+ *  access statuses:
+ *    -1 - denied
+ *     0 - pending
+ *     1 - granted
  */
 
 /**
- * Deny access for dataset if access is forbidden
+ * Deny access for dataset if access is forbidden.
  */
 function tow_access_dataset($node) {
   

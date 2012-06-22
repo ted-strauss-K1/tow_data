@@ -6,23 +6,32 @@ Drupal.behaviors.outer_search = function(context) {
     visibleHandleWidth = 5,
     visibleHandleBorder = 1,
     visibleHandleOffset = 2,
-    visibleBoxBorder = 1;
+    visibleBoxBorder = 1,
+    arrayOfCharts = {},
+	arrayOfZooms = {},
+	arrayOfCollapse = {};
 
   // hide hidden facets
   $('.apachesolr-hidden-facet', context).hide();
   
   // add Show more/fewer link
-  $('<a href="#" class="apachesolr-showhide"></a>').text(Drupal.t('Show more')).click(function() {
-  if ($(this).parent().find('.apachesolr-hidden-facet:visible').length == 0) {
+  var show_more_fewer = function() {
+    $('<a href="#" class="apachesolr-showhide"></a>').text(Drupal.t('Show more')).click(function() {
+    if ($(this).parent().find('.apachesolr-hidden-facet:visible').length == 0) {
     $(this).parent().find('.apachesolr-hidden-facet').show();
     $(this).text(Drupal.t('Show fewer'));
-  }
-  else {
+    }
+    else {
     $(this).parent().find('.apachesolr-hidden-facet').hide();
     $(this).text(Drupal.t('Show more'));
-  }
-  return false;
-  }).appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
+    }
+    return false;
+    }).appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
+  };  
+  
+  show_more_fewer();
+  
+    
   //simple search
   $('#edit-keywords').change(function() {
     var keywords = $(this).val();//.replace(/(\+|-|&&|\|\||!|\(|\)|\{|\}|\[|\]|\^|"|~|\*|\?|:|\\)/g, '\\$1');
@@ -31,7 +40,7 @@ Drupal.behaviors.outer_search = function(context) {
   });
 
   //  disabling page reload on submit
-  $('.form-submit').live('click', function(e) {
+  $('.form-submit.search-button').live('click', function(e) {
     if (e.button == 0) {
       e.preventDefault();
       var field = $(this).parent().children('[name="field"]').val();
@@ -57,8 +66,18 @@ Drupal.behaviors.outer_search = function(context) {
             to_str = '[' + min + ' TO ' + max + ']';
             break;
         }
-        url = url.replace(from_str, to_str);
-        window.location.href = 'http://' + location.host + url;
+        
+    url = url.replace(from_str, to_str);
+        
+    var equal = url.indexOf("=");
+	var amper = url.indexOf("&");
+    var selectedHref = url.substring(equal + 1, amper);
+	filtersToSend = decodeURIComponent(selectedHref);
+	hash = '?filters=' + selectedHref;
+    location.hash = hash; 
+      
+    //window.location.href = 'http://' + location.host + url;
+    
       } else if (type == 'length') {
         var option = $(this).parent().children('.form-item').children('[name="option"]').val();
         var value = parseInt($(this).parent().children('.form-item').children('[name="value"]').val());
@@ -71,7 +90,16 @@ Drupal.behaviors.outer_search = function(context) {
         to_str = query;
         from_str = '%3A' + from_str;
         url = url.replace(from_str, to_str);
-        window.location.href = 'http://' + location.host + url;
+        
+    var equal = url.indexOf("=");
+	var amper = url.indexOf("&");
+	var selectedHref = url.substring(equal + 1, amper);
+	filtersToSend = decodeURIComponent(selectedHref);
+	hash = '?filters=' + selectedHref;
+    location.hash = hash; 
+    
+    
+   // window.location.href = 'http://' + location.host + url;
       } else {
         var negative_url = $(this).parent().children('[name="negative_url"]').val();
         var option = $(this).parent().children('.form-item').children('[name="option"]').val();
@@ -86,21 +114,571 @@ Drupal.behaviors.outer_search = function(context) {
         query = option.replace('_', text);
         to_str = query;
         url = url.replace(from_str, to_str);
-        window.location.href = 'http://' + location.host + url;
+        
+    var equal = url.indexOf("=");
+	var amper = url.indexOf("&");
+    var selectedHref = url.substring(equal + 1, amper);
+	filtersToSend = decodeURIComponent(selectedHref);
+	hash = '?filters=' + selectedHref;
+    location.hash = hash; 
+    
+    //window.location.href = 'http://' + location.host + url;
       }
     }
   });
   
   
-    //  disabling page reload on submit
-  $('[name="include_empty"]').live('click', function(e) {
-    if (e.button == 0) {
-      var url = $(this).parent().parent().parent().children('[name="include_empty_url"]').val();
-      if (url) 
-        window.location.href = 'http://' + location.host + url;
+  
+// //PD START
+  
+  //Reset
+  
+	$('.active').live('click', function(e) {
+    if ($(this).text() == 'Reset') {
+	  e.preventDefault();
+	  
+	  var myHref = $(this).attr('href');
+      
+	  
+        var equal = myHref.indexOf("=");
+		var selectedHref = myHref.substr(equal + 1);
+		if (equal != -1) {
+			filtersToSend = decodeURIComponent(selectedHref);
+			hash = '?filters=' + selectedHref;
+			location.hash = hash; 
+		}	
+	  
+	  else {
+		location.hash = '';
+	   } 
+    }
+  });
+	
+	
+	
+
+
+// sorting by title
+  var initialArray;
+  var title_sort;
+  var type_sort;
+  var min_cur;
+  var max_cur;
+    
+ //var sortFn = function() {
+  
+  
+  
+  var sortA = $('.tow-inner-search-widget').get();
+  
+  
+  var div_to_put = $('#tow-search-inner-hash-form');
+  
+  var title_sort1 = function () {
+    title_sort = 'asc';
+    type_sort = '';
+    $('.tow-inner-search-widget-sort a[href*=type]').text('type');
+    $('.tow-inner-search-widget-sort a[href*=title]').text('title (asc)');
+    var sortArray = $('.tow-inner-search-widget').get();
+      sortArray.sort(function(a,b){
+        var keyA = $(a).text().toLowerCase();
+        var keyB = $(b).text().toLowerCase();
+
+        if (keyA > keyB) return -1;
+        if (keyA < keyB) return 1;
+        return 0;
+      });
+      $.each(sortArray, function(i, form){
+        $('#tow-search-inner-hash-form').after(form);
+      });
+  };
+  
+  var title_sort2 = function () {
+    title_sort = 'desc';
+    type_sort = '';
+    $('.tow-inner-search-widget-sort a[href*=type]').text('type');
+    $('.tow-inner-search-widget-sort a[href*=title]').text('title (desc)');
+    var sortArray = $('.tow-inner-search-widget').get();
+      sortArray.sort(function(a,b){
+        var keyA = $(a).text().toLowerCase();
+        var keyB = $(b).text().toLowerCase();
+
+        if (keyA < keyB) return -1;
+        if (keyA > keyB) return 1;
+        return 0;
+      });
+      $.each(sortArray, function(i, form){
+        $('#tow-search-inner-hash-form').after(form);
+      });
+  };    
+
+  
+  $('.tow-inner-search-widget-sort a[href*=title]').live('click',function(e){
+    e.preventDefault();
+    if (title_sort == 'asc') {
+      title_sort2();
+    }
+    else {title_sort1();}
+    });
+  
+  
+// sorting by type
+  
+  var type_sort1 = function () {
+    title_sort = '';
+    type_sort = 'asc';
+    $('.tow-inner-search-widget-sort a[href*=title]').text('title');
+    
+    $('.tow-inner-search-widget-sort a[href*=type]').text('type (asc)');
+    var sortArray = $('.tow-inner-search-widget').get();
+      sortArray.sort(function(a,b){
+        var keyA = $(a).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
+        
+        var keyB = $(b).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
+        
+        if (keyA > keyB) return -1;
+        if (keyA < keyB) return 1;
+        return 0;
+      });
+      $.each(sortArray, function(i, form){
+        $('#tow-search-inner-hash-form').after(form);
+      });
+  };
+      
+  
+  var type_sort2 = function () {
+    title_sort = '';
+    type_sort = 'desc';
+    $('.tow-inner-search-widget-sort a[href*=title]').text('title');
+    
+    $('.tow-inner-search-widget-sort a[href*=type]').text('type (desc)');
+    var sortArray = $('.tow-inner-search-widget').get();
+      sortArray.sort(function(a,b){
+        var keyA = $(a).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
+        var keyB = $(b).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
+
+        if (keyA < keyB) return -1;
+        if (keyA > keyB) return 1;
+        return 0;
+      });
+      $.each(sortArray, function(i, form){
+        $('#tow-search-inner-hash-form').after(form);
+      });
+  };
+
+  
+  $('.tow-inner-search-widget-sort a[href*=type]').live('click',function(e){
+    e.preventDefault();
+        if (type_sort == 'asc') {
+      type_sort2();
+    }
+    else {type_sort1();}
+    });
+  
+  
+// sort reset all
+  $('.sort-link-reset').live('click', function(e) {
+    title_sort = '';
+    type_sort = '';
+    e.preventDefault();
+    $('.tow-inner-search-widget-sort a[href*=title]').text('title');
+    $('.tow-inner-search-widget-sort a[href*=type]').text('type');
+    
+	//$('.tow-inner-search-widget').remove();
+	$('#tow-search-inner-hash-form').after(initialArray);
+  });
+ //};
+ //sortFn(); 
+  
+ 
+//  AJAX search
+  
+  url = 'http://' + window.location.hostname + window.location.pathname + '/refresh_ajax';
+  var filtersToSend;
+  
+  var href_substr = function () {
+    $('a.apachesolr-facet, a.apachesolr-hidden-facet, .tow-inner-search-selected').live('click', function(e){
+      e.preventDefault();
+      var myHref = $(this).attr('href');
+      
+	  var equal = myHref.indexOf("=");
+	  
+	  if (equal != -1) {
+		  var selectedHref = myHref.substr(equal + 1);
+		  filtersToSend = decodeURIComponent(selectedHref);
+		  hash = '?filters=' + selectedHref;
+		  location.hash = hash; 
+	  }
+	  else {
+		location.hash = '';
+	  }
+	  
+      $('#edit-filters').value = filtersToSend;
+	  
+	  
+		
+	   
+	  //inner_search_ajax(); 
+    });
+  };
+  
+  href_substr();
+  
+  var inner_search_ajax = function () {
+    
+	//disabling other widget choice while AJAX proceed
+		$('#tow-search-inner-hash-form').after('<div id="modalDiv" style="position:absolute;top:0px;left:0px;display:none;cursor:progress;z-index:100;"></div>');
+		
+		document.getElementById("modalDiv").style.height="100%";
+		document.getElementById("modalDiv").style.width="100%";
+		document.getElementById("modalDiv").style.display="block";
+		
+		
+			var jsonToSend = JSON.stringify(arrayOfZooms);
+					
+	$.ajax({
+      url: url,
+      data: {
+			'filters':filtersToSend,
+			'zoom':jsonToSend
+			 },
+      beforeSend: function() {
+		//preserving user-selected collapsibility
+		$('.tow-inner-search-widget fieldset').each(function() {
+			var field = $(this).find('[name="field"]').val();
+			var collapsed;
+			if($(this).hasClass('collapsed')) {
+				collapsed = true;
+			}
+			else collapsed = false;
+			
+			arrayOfCollapse[field] = {'collapsed': collapsed};
+		
+		});
+	  
+	  
+	  },
+	  
+	  success: function(data) {
+		/*function getUrlVars() {
+			var vars = {};
+			var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+				vars[key] = value;
+			});
+			return vars;
+		}		  
+		
+		var first = getUrlVars()["filters"];
+		var second = getUrlVars()["zoom"];
+ 
+		alert(first);
+		alert(second);		  */
+		
+		
+		
+		
+        var html = data.block;
+		$('div#block-tow-search_inner_facets div.content').html(html);
+		
+		//returns collapsibility
+		Drupal.behaviors.collapse();
+		
+		//returning user-selected collapsibility
+		$('.tow-inner-search-widget fieldset').each(function() {
+			var field = $(this).find('[name="field"]').val();
+			if (arrayOfCollapse[field]['collapsed'] == true) {
+				$(this).addClass('collapsed');
+			}
+		});	
+		
+		initialArray = $('.tow-inner-search-widget').get();
+        $('.apachesolr-hidden-facet', context).hide();
+
+        show_more_fewer();
+		
+		
+		if (title_sort == 'asc') {title_sort1();}
+		if (title_sort == 'desc') {title_sort2();}
+		if (type_sort == 'asc') {type_sort1();}
+		if (type_sort == 'desc') {type_sort2();}
+		
+		
+        href_substr();
+		testChart();
+		
+	
+	// Запускаем таймер в начале выполнения сценария
+	//	var start = new Date();
+	
+	// Код, время которого необходимо измерить	 
+		
+		var tableMain = data.search;
+		$('div.content-content').html(tableMain);
+		
+		//number of rows in searchtable
+		var numberOfRows = $('#datatable-1 tbody tr').size();
+		$('#tow-search-inner-save-search-form').children('div').children('[name="rows_amount"]').val(numberOfRows);	
+		
+		
+        $('#datatable-1').dataTable({
+		//"sDom": 'C<"clear">lfrtip'
+		"sDom": '<"H"Cfr>t<"F"ip>',
+		"bJQueryUI": true
+		/*"sDom": '<"H"fr>tC<"F"ip>',
+		"bJQueryUI": true,
+		"bPaginate": false,
+		"sScrollY": "200px",
+		"bScrollCollapse": true,
+		"bScrollAutoCss": false,
+		"aoColumnDefs": [
+			{ "bVisible": false, "aTargets": [ 2 ] }
+		],
+		"oColVis": {
+			"buttonText": "&nbsp;",
+			"bRestore": true,
+			"sAlign": "left"
+		},
+		"fnDrawCallback": function (o) {
+			// Position the ColVis button as needed 
+			var nColVis = $('div.ColVis', o.nTableWrapper)[0];
+			nColVis.style.width = o.oScroll.iBarWidth+"px";
+			nColVis.style.top = ($('div.dataTables_scroll', o.nTableWrapper).position().top)+"px";
+			nColVis.style.height = ($('div.dataTables_scrollHead table', o.nTableWrapper).height())+"px";
+		}*/
+		});
+
+		
+		
+		
+		/*
+		"sScrollY": "200",
+		//"aaData": [
+			 Reduced data set 
+			[ "Trident", "Internet Explorer 4.0", 4 ],
+			[ "Trident", "Internet Explorer 5.0", 5 ],
+			[ "Trident", "Internet Explorer 4.0", 4 ],
+			
+			],
+		//"bServerSide": true,
+		
+		//"sAjaxSource": window.location.pathname + '/refresh_ajax?filters=' + filtersToSend,
+		//"sAjaxDataProp": "data.search",
+        //"sDom": "frtiS",
+		//"bStateSave": true,
+        //"bDeferRender": true,
+		//"bRetrieve": true,
+		"bScrollInfinite": true,
+		"bScrollCollapse": true,
+		"sDom": 'C<"clear">lfrtip',
+        //"bPaginate": true,
+        "bFilter": true,
+        "bSort": true,
+        "bInfo": false,
+        "sScrollX": "100%"
+		
+       
+	    });
+		//oTable.fnClearTable();
+		oTable.fnAddData([
+			
+			[ "Trident", "Internet Explorer 4.0", 4 ],
+			[ "Trident", "Internet Explorer 5.0", 5 ],
+			[ "Trident", "Internet Explorer 4.0", 4 ]
+			
+			]);
+		*/
+//for (var i = 0; i < 10000; i++) {/* Do nothing */}
+// Еще один таймер в конце
+//var end = new Date();
+// Вычисляем разницу в ms
+//var result = end.getTime() - start.getTime();
+// Вывод результата
+//alert(result + 'ms');
+	   
+				
+		
+      },
+        
+      dataType: 'json'
+    });
+  
+  };
+  
+
+//hashchange
+  
+  $(window).hashchange(function(){
+  
+  hash = location.hash;
+  var equal = hash.indexOf("=");
+  var selectedHref = hash.substr(equal + 1);
+  filtersToSend = decodeURIComponent(selectedHref);
+	
+  inner_search_ajax();
+     
+  });
+  $(window).hashchange();
+
+  
+//AJAX text fields search
+  
+ 
+  
+  $('.form-text').live('change', function(){
+	
+	if ($(this).val() != '') { 
+    
+     
+      var field = $(this).parent().parent().children('[name="field"]').val();
+      var url = $(this).parent().parent().children('[name="url"]').val();
+      var type = $(this).parent().parent().children('[name="fieldtype"]').val();
+      var from_str = field + '_placeholder';
+      var to_str;
+      
+	  if (type == 'length') {
+        var option = $(this).parent().parent().children('.form-item').children('[name="option"]').val();
+        var value = parseInt($(this).parent().parent().children('.form-item').children('[name="value"]').val());
+        if (option.indexOf('[* TO #]') > -1)
+          value -= 1;
+        else if (option.indexOf('[# TO *]')  > -1)
+          value += 1;
+        
+        query = option.replace('#', value);
+        to_str = query;
+        from_str = '%3A' + from_str;
+        url = url.replace(from_str, to_str);
+        
+    var equal = url.indexOf("=");
+	var amper = url.indexOf("&");
+	var selectedHref = url.substring(equal + 1, amper);
+	filtersToSend = decodeURIComponent(selectedHref);
+	hash = '?filters=' + selectedHref;
+    location.hash = hash; 
+           
+      } else {
+        var negative_url = $(this).parent().parent().children('[name="negative_url"]').val();
+        var option = $(this).parent().parent().children('.form-item').children('[name="option"]').val();
+        var text = $(this).parent().parent().children('.form-item').children('[name="value"]').val();
+        text = text.replace(/(\+|-|&&|\|\||!|\(|\)|\{|\}|\[|\]|\^|"|~|\*|\?|:|\\\\)/g, '\\$1');
+        text = text.replace(/ /g,'+');
+        text = encodeURIComponent(text);
+        if (option.indexOf('-') > -1) {
+          url = negative_url;
+          option = option.replace('-', '');
+        }
+        query = option.replace('_', text);
+        to_str = query;
+        url = url.replace(from_str, to_str);
+        
+    var equal = url.indexOf("=");
+	var amper = url.indexOf("&");
+    var selectedHref = url.substring(equal + 1, amper);
+	filtersToSend = decodeURIComponent(selectedHref);
+	hash = '?filters=' + selectedHref;
+    location.hash = hash; 
+       }
     }
   });
   
+//AJAX highcharts "on-line" reloading
+	 $('.tow-inner-search-highcharts-container .detail-container').live('mouseup', function(e) {
+	 
+	  var field = $(this).closest('.tow-inner-search-widget').find('[name="field"]').val();
+      var url = $(this).closest('.tow-inner-search-widget').find('[name="url"]').val();
+      var type = $(this).closest('.tow-inner-search-widget').find('[name="fieldtype"]').val();
+      var from_str = field + '_placeholder';
+      var to_str;
+      if (type == 'int' || type == 'float' || type == 'time' || type == 'date' || type == 'datetime' || type == 'timestamp') {
+        var min = $(this).closest('.tow-inner-search-widget').find('[name="min"]').val();
+        var max = $(this).closest('.tow-inner-search-widget').find('[name="max"]').val();
+		var glo_min = $(this).closest('.tow-inner-search-widget').find('[name="global_min"]').val();
+		var glo_max = $(this).closest('.tow-inner-search-widget').find('[name="global_max"]').val();
+        var sel_min = $(this).closest('.tow-inner-search-widget').find('[name="selection_min"]').val();
+		var sel_max = $(this).closest('.tow-inner-search-widget').find('[name="selection_max"]').val();
+		var check = $(this).closest('.tow-inner-search-widget').find('.form-checkbox').attr('checked');
+		
+		
+		//var regV = /\[\*\sTO\s\*\]/g;
+		var result = location.hash.search(field);
+		//alert(result);
+		
+		
+		
+		
+		if ((min == min_cur && max == max_cur) || (sel_min == glo_min && sel_max == glo_max && result == -1) || (sel_min == glo_min && sel_max == glo_max && !check)) {
+				return false;
+			}
+		
+		else {
+		
+        switch (type) {
+          case 'date':
+            to_str = '[' + min + 'T00:00:00Z TO ' + max + 'T00:00:00Z]';
+          break;
+          case 'time':
+            to_str = '[0001-01-01T' + min + 'Z TO 0001-01-01T' + max + 'Z]';
+          break;
+          case 'datetime':
+            to_str = '[' + min.replace(' ', 'T') + 'Z TO ' + max.replace(' ', 'T') + 'Z]';
+          break;
+          default:
+            to_str = '[' + min + ' TO ' + max + ']';
+            break;
+        }
+        
+    url = url.replace(from_str, to_str);
+        
+    var equal = url.indexOf("=");
+	var amper = url.indexOf("&");
+    var selectedHref = url.substring(equal + 1, amper);
+	filtersToSend = decodeURIComponent(selectedHref);
+	hash = '?filters=' + selectedHref;
+    location.hash = hash; 
+		}
+				
+		
+		
+		min_cur = min;
+		max_cur = max;
+		
+	}
+  });
+ 
+
+
+/*
+document.getElementById("<%=твой_буттон.ClientID%>").onclick=function(){
+document.getElementById("modalDiv").style.height="100%";
+document.getElementById("modalDiv").style.width="100%";
+document.getElementById("modalDiv").style.display="block";
+}//
+*/
+// // PD END
+  
+  
+ 
+    //  disabling page reload on submit
+  $('[name="include_empty"]').live('click', function(e) {
+    if (e.button == 0) {
+	  //e.preventDefault();
+	  var empty = $(this).closest('.tow-inner-search-widget').find('[name="include_empty_url"]').val();
+	    	
+    var equal = empty.indexOf("ers=");
+	var amper = empty.indexOf("&");
+	var selectedHref = empty.substring(equal + 4, amper);
+		if (equal != -1) {
+			filtersToSend = decodeURIComponent(selectedHref);
+			hash = '?filters=' + selectedHref;
+			location.hash = hash; 
+		}	
+	  
+	     else {
+		    location.hash = '';
+	      }// window.location.href = 'http://' + location.host + url;
+    }
+  });
+  
+ var testChart = function() {
   $('div.tow-inner-search-highcharts-container').each(function(index){
     var id = $(this).attr('id');
     
@@ -142,14 +720,27 @@ Drupal.behaviors.outer_search = function(context) {
       axistype = 'linear';
     else
       axistype = 'datetime';
-    plotChart(id, data, axistype, fieldname, fieldtype, parseFloat(min), parseFloat(max), parseFloat(yMax) * 1.1, parseFloat(selection_min), parseFloat(selection_max));
+    
+		plotChart(id, data, axistype, fieldname, fieldtype, parseFloat(min), parseFloat(max), parseFloat(yMax) * 1.1, parseFloat(selection_min), parseFloat(selection_max));
+	
   });
+	
+  };
+
+  
+  testChart();
   
   
   function plotChart(id, data, axistype, fieldname, fieldtype, globalMin, globalMax, yMax, selectionMin, selectionMax) {
     var masterChart,
       detailChart;
-    
+    //arrayOfCharts = {'master' : masterChart, 'detail' : detailChart};
+  /*updateData = function (id) {
+    detailChart.series[0].setData(data.data, false);
+    masterChart.series.data = newData;
+    detailChart.series.data = newData;
+    masterChart.redraw();
+  }*/
     var visible_min = globalMin,
       visible_max = globalMax;
     
@@ -171,7 +762,7 @@ Drupal.behaviors.outer_search = function(context) {
     var $container = $('#' + id)
       .css('position', 'relative');
 
-    var $detailContainer = $('<div id="' + id + '-detail">')
+    var $detailContainer = $('<div id="' + id + '-detail" class="detail-container">')
       .css({ position: 'absolute', top: 0, height: 128, width: '100%'})
       .appendTo($container);
 
@@ -223,10 +814,12 @@ Drupal.behaviors.outer_search = function(context) {
                           min = extremesObject.min,
                           max = extremesObject.max;
                         
+						arrayOfZooms[id] = {'min' : min, 'max' : max};
+						
                         $(window).css('cursor', 'wait');
                         var url = 'http://' + location.host + '/search_inner_zoom_ajax?XDEBUG_SESSION_START=ajax';
-                        var searchRid = $('#tow-seach-inner-hash-form #edit-rid').val();
-                        var searchHash = $('#tow-seach-inner-hash-form #edit-hash').val();
+                        var searchRid = $('#tow-search-inner-hash-form #edit-rid').val();
+                        var searchHash = $('#tow-search-inner-hash-form #edit-hash').val();
                         $.ajax({
                           url: url,
                           data: {
@@ -245,14 +838,13 @@ Drupal.behaviors.outer_search = function(context) {
                             detailChart.series[0].setData(data.data, false);
                             $(window).css('cursor', 'auto');
                             newVisibleRange(min, max);
-                            
+							
+							                            
                           },
                           
                         });    
                         newVisibleBox(min, max, false);
-                        
-                        
-                        
+                        					
                         return false;
                     }
                 }
@@ -338,6 +930,7 @@ Drupal.behaviors.outer_search = function(context) {
               height = masterChart.plotHeight;
               $('#' + masterChart.container.id).dblclick(function(e){
                 resetZoom();
+				arrayOfZooms[id] = undefined;
               });
             $('#' + masterChart.container.id + '-visible')
               .css('position', 'absolute')
@@ -528,13 +1121,33 @@ Drupal.behaviors.outer_search = function(context) {
           })
           .dblclick(function(e){
             resetZoom();
+			arrayOfZooms[id] = undefined;
           });
 
           towHighchartsNavigator(detailChart, masterChart);
         });
     };
     
-    
+	
+	
+	//preserving zoom after AJAX
+	 
+    arrayOfCharts[id] = {'master': masterChart, 'detail' : detailChart};
+	 
+    if (arrayOfZooms[id] != undefined) {
+		
+		//arrayOfCharts[id]['detail'].series[0].setData(data.data, false);
+		createDetail(arrayOfCharts[id]['master']);
+		
+		newVisibleRange(arrayOfZooms[id]['min'], arrayOfZooms[id]['max']);
+		newVisibleBox(arrayOfZooms[id]['min'], arrayOfZooms[id]['max'], false);
+		
+		towHighchartsNavigator(arrayOfCharts[id]['detail'], arrayOfCharts[id]['master']);
+	};
+	
+	
+	
+	
     function towHighchartsNavigator(detailChart, masterChart){
       add_mask(masterChart);
       add_mask(detailChart);
@@ -610,6 +1223,9 @@ Drupal.behaviors.outer_search = function(context) {
             
             lastMousePos = e.clientX;
             newVisibleBox(min, max);
+			
+			arrayOfZooms[id] = {'min' : min, 'max' : max};
+			
             return false;
           case 'detail':
             var span = e.clientX - lastMousePos,
@@ -618,6 +1234,9 @@ Drupal.behaviors.outer_search = function(context) {
             
             lastMousePos = e.clientX;
             newVisibleBox(min, max);
+			
+			arrayOfZooms[id] = {'min' : min, 'max' : max};
+			
             break;
           case 'master':
             break;
@@ -634,7 +1253,7 @@ Drupal.behaviors.outer_search = function(context) {
     function resetZoom(){
       detailChart.series[0].setData(data, false);
       newVisibleBox(globalMin, globalMax);
-    }
+    } 
     function newVisibleBox(min, max, redrawDetail){
       var rangewidth = max - min,
         globalRandewidth = globalMax - globalMin;
@@ -682,6 +1301,8 @@ Drupal.behaviors.outer_search = function(context) {
       moveHandle(detailChart.xAxis[0].translate(plotSelRange.max, false) + detailChart.plotLeft, true);
     }
     
+	
+	
     function newHandlePos(newPos){
       if (newPos > detailRight)
           return detailRight;
@@ -765,7 +1386,7 @@ Drupal.behaviors.outer_search = function(context) {
 
   }
   
-  $(window).unload(function(e){
+ /* $(window).unload(function(e){
     var url = 'http://' + location.host + '/search_inner_zoom_ajax?XDEBUG_SESSION_START=ajax';
     var searchRid = $('#tow-seach-inner-hash-form #edit-rid').val();
     var searchHash = $('#tow-seach-inner-hash-form #edit-hash').val();
@@ -778,47 +1399,54 @@ Drupal.behaviors.outer_search = function(context) {
         'op'  : 'cancel',
       },
     });   
-  });
-  
+  });*/
+/*  
   $('a.sort-link').click(function(e) {
     
     var url = 'http://' + location.host + $(this).attr('href');
     
     var sortWidgets = function (data) {
       var html = data.content;
-      console.log;
+      console.log(data);
       $('div#block-tow-search_inner_facets div.content').html(html);
     }
     
     var errorHandler = function(jqXHR, exception) {
-            if (jqXHR.status === 0) {
-                alert('Not connect.\n Verify Network.');
-            } else if (jqXHR.status == 404) {
-                alert('Requested page not found. [404]');
-            } else if (jqXHR.status == 500) {
-                alert('Internal Server Error [500].');
-            } else if (exception === 'parsererror') {
-                alert('Requested JSON parse failed.');
-            } else if (exception === 'timeout') {
-                alert('Time out error.');
-            } else if (exception === 'abort') {
-                alert('Ajax request aborted.');
-            } else {
-                alert('Uncaught Error.\n' + jqXHR.responseText);
-            }
-        }
+      if (jqXHR.status === 0) {
+        alert('Not connect.\n Verify Network.');
+      } 
+      else if (jqXHR.status == 404) {
+        alert('Requested page not found. [404]');
+      } 
+      else if (jqXHR.status == 500) {
+        alert('Internal Server Error [500].');
+      } 
+      else if (exception === 'parsererror') {
+        alert('Requested JSON parse failed.');
+      } 
+      else if (exception === 'timeout') {
+        alert('Time out error.');
+      } 
+      else if (exception === 'abort') {
+        alert('Ajax request aborted.');
+      } 
+      else {
+        alert('Uncaught Error.\n' + jqXHR.responseText);
+      }
+    }
     
     $.ajax({
       url: url,
+      //async: false,
       type: 'POST',
-      success: sortWidgets,
+      complete: sortWidgets,
       error: errorHandler,
       dataType: 'json'
     });
 
     return false;
   });
-  
+*/  
 $('div.tow-inner-search-highcharts-bar-container').each(function(index){
     var id = $(this).attr('id');
     var datastring = $(this).parent().children('form').children('div').children('[name="data"]').val();

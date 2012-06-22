@@ -708,8 +708,9 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
  * Returns array of fields of separate table with given nid
  * name, type, title, delta
  */
-function _tow_apachesolr_separate_table_fields($nid) {xdebug_break();
+function _tow_apachesolr_separate_table_fields($nid) {//xdebug_break();
 //  watchdog('linked_search', $nid);
+  //dpm($nid);
   $fields = array();
   $f_fields = array();
   $table_node = node_load($nid, NULL, TRUE);
@@ -743,7 +744,9 @@ function _tow_apachesolr_separate_table_fields($nid) {xdebug_break();
       }
     }
     ksort($fields);
-  } else {
+  } 
+  else if ($table_node->type != 'dataset') {
+    //dpm(__FUNCTION__);
     drupal_not_found();
     die();
   }

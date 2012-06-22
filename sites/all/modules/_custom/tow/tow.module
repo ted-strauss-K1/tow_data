@@ -1,12 +1,38 @@
 <?php
+
 // $Id: tow.module,v 1.0.0.0 2011/02/28 23:42:15 tow Exp $
+
 /**
  * @file
- * Custom code for tow.
+ * 
+ * Custom code for Theory on Wheels.
  */
-// when apachesolr modules updated, run sql command UPDATE system SET weight = 1 WHERE LOCATE('apachesolr', name) 
+
+# When apachesolr module's updated, run sql command UPDATE system SET weight = 1 WHERE LOCATE('apachesolr', name) 
+
+
+
+/****************************************************************************************************
+ * Global variables
+ ****************************************************************************************************/
 
 $module_path = drupal_get_path('module', 'tow');
+
+
+
+/****************************************************************************************************
+ * Constants
+ ****************************************************************************************************/
+
+define("MIN_FIELDS_IN_TABLE", 1);
+define("MAX_FIELDS_IN_TABLE", 20);
+
+
+
+/****************************************************************************************************
+ * Requirements
+ ****************************************************************************************************/
+
 include_once('./' . $module_path . '/tow_table_filter.inc');
 include_once('./' . $module_path . '/tow_table_sql.inc');
 include_once('./' . $module_path . '/tow_table.inc');
@@ -26,82 +52,20 @@ include_once('./' . $module_path . '/tow_search_apachesolr.inc');
 include_once('./' . $module_path . '/tow_search_outer.inc');
 include_once('./' . $module_path . '/tow_search_inner.inc');
 include_once('./' . $module_path . '/tow_search_inner_linked.inc');
+include_once('./' . $module_path . '/tow_saved_searches.inc');
 include_once('./' . $module_path . '/tests/tow_tests.inc');
 
-// Validation constants, min and max number of columns in a table 
-define("MIN_FIELDS_IN_TABLE", 1);
-define("MAX_FIELDS_IN_TABLE", 20);
+
+
+/****************************************************************************************************
+ * Hooks
+ ****************************************************************************************************/
 
 /**
- * Declare array of fields that may be used.
+ * Implementation of hook_init().
  */
-function tow_possible_fields() {
-  return array('int', 'char', 'float', 'bool', 'text', 'enum', 'date', 'datetime', 'time', 'timestamp', 'code');
-}
-
-/**
- * Implementation of hook_views_api().
- */
-function tow_views_api() {
-  return array(
-    'api' => 2,
-    'path' => drupal_get_path('module', 'tow'),
-  );
-}
-
-/**
- * Implementation of hook_theme()
- */
-function tow_theme() {
-  return array(
-    'tabular_form' => array(
-      'arguments' => array(
-        'form' => NULL,
-      ),
-    ),
-    'sortable_table' =>array(
-      'arguments' => array(
-        'header' => array(),
-        'rows' => array(),
-        'nid' => NULL,
-        'uid' => NULL,
-        'attributes' => array(),
-        'caption' => NULL
-      ),
-    ),
-    'tow_theme_dataset_badge' => array(
-      'arguments' => array(
-        'posted_by' => NULL,
-        'count' => NULL,
-        'searches' => NULL,
-        'added' => NULL,
-        'updated' => NULL,
-        'access' => NULL,
-      ),
-      'template' => 'templates/tow_block-dataset_badge',
-    ),
-    'tow_theme_dataset_attachment' => array(
-      'arguments' => array(
-        'description' => NULL,
-        'edit_description' => NULL,
-        'categories' => NULL,
-        'edit_categories' => NULL,
-      ),
-      'template' => 'templates/tow_theme_dataset_attachment',
-    ),
-        /**
-     * Returns a link for a facet term, with the number (count) of results for that term
-     */
-    'tow_search_inner_facet_link' => array(
-      'arguments' => array('facet_text' => NULL, 'path' => NULL, 'options' => NULL, 'count' => NULL, 'active' => FALSE, 'num_found' => NULL),
-    ),
-    /**
-     * Returns a link to remove a facet filter from the current search.
-     */
-    'tow_search_inner_unclick_link' => array(
-      'arguments' => array('facet_text' => NULL, 'path' => NULL, 'options' => NULL, 'count' => NULL, 'active' => FALSE, 'num_found' => NULL),
-    ),
-  );
+function tow_init() {
+  #
 }
 
 /**
@@ -110,6 +74,7 @@ function tow_theme() {
 function tow_menu() {
   $items = array();
   
+  // Dataset creation link.
   $items['data'] = array(
     'access arguments' => array('access content'),
     'title' => 'Data',
@@ -117,6 +82,7 @@ function tow_menu() {
     'menu_name' => 'primary-links',
   );
   
+  // Table node.
   $items['table'] = array(
     'access arguments' => array('access content'),
     'page arguments' => array(1),
@@ -124,13 +90,7 @@ function tow_menu() {
     'file' => 'tow_table.inc',
   );
 
-  $items['link'] = array(
-    'access arguments' => array('access content'),
-    'page arguments' => array(1),
-    'page callback' => 'tow_search_inner_link_tables',
-    'file' => 'tow_search_inner_linked.inc',
-  );
-  
+  // Truncate table.
   $items['table/%/truncate'] = array(
     'title' => 'Truncate',  
     'access arguments' => array('delete own record content'),
@@ -139,6 +99,8 @@ function tow_menu() {
     'file' => 'tow_table_truncate.inc',
     'type' => MENU_CALLBACK
   );
+  
+  // Field description.
   $items['field'] = array(
     'title' => 'Field Description',  
     'access arguments' => array('access content'),
@@ -147,6 +109,8 @@ function tow_menu() {
     'file' => 'tow_field.inc',
     'type' => MENU_CALLBACK
   );
+  
+  // Maintenance mode.
   $items['dataset/%/maintenance'] = array(
     'title' => 'Maintenance mode',
     'access arguments' => array('edit own dataset content'),
@@ -246,9 +210,9 @@ function tow_menu() {
     'type' => MENU_CALLBACK,
   );
   
-   $items['search_dataset/%/sort_ajax'] = array(
-    'title' => 'Search dartaset widgets sorting ajax callback', 
-    'page callback' => 'tow_search_inner_widgets_block_ajax_callback',
+  $items['search_dataset/%/refresh_ajax'] = array(
+    'title' => 'Refresh search results', 
+    'page callback' => 'tow_search_inner_refresh_ajax_callback',
     'page arguments' => array(1),
     'access arguments' => array('access content'),
     'file' => 'tow_search_inner.inc',
@@ -304,17 +268,13 @@ function tow_menu() {
   return $items;
 }
 
-function tow_data() {
-  return l('Create a new dataset', 'node/add/dataset', array('attributes' => array('class' => 'create-dataset-link')));
-}
-
 /**
  * Implementation of hook_nodeapi().
  */
 function tow_nodeapi(&$node, $op) {
-  // Delete all records that have ref to the table being deleted
-  // Delete all tables and saved searches that have ref to the dataset being deleted
-  //x($op);
+  
+  // Delete all records having reference to the table being deleted.
+  // Delete all tables and saved searches having reference to the dataset being deleted.
   if ($op == 'delete') {    
     $children_types = _tow_children_type($node->type);
     if ($children_types) {
@@ -331,29 +291,31 @@ function tow_nodeapi(&$node, $op) {
     }
   }
 
+  // Save current dataset to the global $dataset variable.
   if ($op == 'view') {
     if ($node->type == 'dataset') {
       global $dataset;
       $dataset = $node;
     }
   }
- 
+
+  // View options for the dataset. 
   if ($node->type == 'dataset' && $op == 'view') {
-  tow_dataset_hide_hash($node);
+    tow_dataset_hide_hash($node);
     tow_statistics_dataset_extract($node->nid);
     tow_dataset_summary($node);
     tow_statistics_dataset_update($node);
   }
   
-  // Add table structure to table node
+  // Add table structure to table node.
   if ($node->type == 'table' && $op == 'view') {
     tow_statistics_table_extract($node->nid);
     tow_table_structure($node);
     tow_statistics_table_update($node);
   }
   
-  // Redirect from node/[record-nid] to node/[record-nid]/edit
-  // Redirection is not performed if it is the solr who tries to access the page
+  // Redirect from node/[record-nid] to node/[record-nid]/edit.
+  // Redirection is not performed if it is the solr who tries to access the page.
   if  ($node->type == 'record' && $op == 'view') {
     if (!tow_access_bypass_solr())
       drupal_goto('node/' . $node->nid . '/edit', NULL, NULL, 301);
@@ -361,24 +323,150 @@ function tow_nodeapi(&$node, $op) {
       tow_record_format_for_search_indexing($node);
   }
   
-  if ($op == 'load' && $node->type == 'dataset')
+  // Set access to the dataset.
+  if ($op == 'load' && $node->type == 'dataset') {
     tow_access_dataset($node);
-
-  // Submit description after table node was inserted
-  if ($node->type == 'table' && $op == 'insert')
+  }
+  
+  // Submit description after table node was inserted.
+  if ($node->type == 'table' && $op == 'insert') {
     tow_field_descriptions_submit($node->nid);
-    
-  if ($node->type == 'record' && $op == 'presave')
+  }
+  
+  // Set Null values for Null-marked positions in records.
+  if ($node->type == 'record' && $op == 'presave') {
     tow_record_set_empty($node);
-
-  if ($node->type == 'linked_record' && $op == 'presave')
+  }
+  
+  // Set Null values for Null-marked positions in linked records.
+  if ($node->type == 'linked_record' && $op == 'presave') {
     tow_search_inner_set_empty($node);
+  }
 
-  if ($node->type == 'table')
+  if ($node->type == 'saved_search') {
+    switch ($op) {
+      
+      case 'validate':
+        //tow_saved_searches_check_exists($node);
+        break;
+    }
+  }
+  
+  /*
+   * Linking.
+   *
+  // Call linking manipulations for tables.
+  if ($node->type == 'table') {
     tow_search_inner_queue_table_linking($node, $op);
+  }
 
-  if ($node->type == 'record')
+  // Call linking manipulations for records.
+  if ($node->type == 'record') {
     tow_search_inner_queue_record_linking($node, $op);
+  }
+  */
+}
+
+/**
+ * Implementation of hook_theme()
+ */
+function tow_theme() {
+  return array(
+    
+    // Generates an output of the form as table.
+    'tabular_form' => array(
+      'arguments' => array(
+        'form' => NULL,
+      ),
+    ),
+    
+    // Generates an output of the sortable table.
+    'sortable_table' =>array(
+      'arguments' => array(
+        'header' => array(),
+        'rows' => array(),
+        'nid' => NULL,
+        'uid' => NULL,
+        'attributes' => array(),
+        'caption' => NULL
+      ),
+    ),
+    
+    // Themes the output of the Dataset badge block content.
+    'tow_theme_dataset_badge' => array(
+      'arguments' => array(
+        'posted_by' => NULL,
+        'count' => NULL,
+        'searches' => NULL,
+        'added' => NULL,
+        'updated' => NULL,
+        'access' => NULL,
+      ),
+      'template' => 'templates/tow_block-dataset_badge',
+    ),
+    
+    // 
+    'tow_theme_dataset_attachment' => array(
+      'arguments' => array(
+        'description' => NULL,
+        'edit_description' => NULL,
+        'categories' => NULL,
+        'edit_categories' => NULL,
+      ),
+      'template' => 'templates/tow_theme_dataset_attachment',
+    ),
+    
+    // Returns a link for a facet term, with the number (count) of results for that term.
+    'tow_search_inner_facet_link' => array(
+      'arguments' => array(
+        'facet_text' => NULL, 
+        'path' => NULL, 
+        'options' => NULL, 
+        'count' => NULL, 
+        'active' => FALSE, 
+        'num_found' => NULL
+      ),
+    ),
+    
+    // Returns a link to remove a facet filter from the current search.
+    'tow_search_inner_unclick_link' => array(
+      'arguments' => array(
+        'facet_text' => NULL, 
+        'path' => NULL, 
+        'options' => NULL, 
+        'count' => NULL, 
+        'active' => FALSE, 
+        'num_found' => NULL
+      ),
+    ),
+  );
+}
+
+/**
+ * Declare array of fields that may be used.
+ */
+function tow_possible_fields() {
+  return array('int', 'char', 'float', 'bool', 'text', 'enum', 'date', 'datetime', 'time', 'timestamp', 'code');
+}
+
+
+
+/****************************************************************************************************
+ * Views hooks
+ ****************************************************************************************************/
+
+/**
+ * Implementation of hook_views_api().
+ */
+function tow_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'tow'),
+  );
+}
+
+function tow_data() {
+  return l('Create a new dataset', 'node/add/dataset', array('attributes' => array('class' => 'create-dataset-link')));
 }
 
 /**
@@ -399,7 +487,9 @@ function tow_user($op, &$edit, &$account) {
  * Implementation of hook_block().
  */
 function tow_block($op = 'list', $delta = 0) {
+  
   if ($op == 'list') {
+    
     $blocks['create_table']['info'] = t('Create table');
     $blocks['pma_menu']['info'] = t('PhpMyAdmin menu');
     $blocks['dataset_badge']['info'] = t('Dataset badge');
@@ -412,6 +502,7 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['search_inner_facets']['info'] = t('Inner search: facets block');
     $blocks['search_inner_simple_search']['info'] = t('Inner search: simple search block');
     $blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables od a dataset');
+    # $blocks['saved_searches']['info'] = t('Saved Searches');
     //search filter blocks
   
     $enabled_facets = apachesolr_get_enabled_facets('tow');
@@ -423,48 +514,67 @@ function tow_block($op = 'list', $delta = 0) {
       }
     }   
     return $blocks;
-  } elseif($op == 'view') {
+  } 
+  elseif($op == 'view') {
     if (user_access('access content')) {
+      
       if($delta == 'create_table') { 
         return tow_dataset_create_table_block();
       }
+      
       if ($delta == 'pma_menu') {
         return tow_pma_menu_block();
       }
+      
       if ($delta == 'dataset_badge') {
         return tow_dataset_badge_block();
       }
+      
       if ($delta == 'dataset_stats') {
         return tow_dataset_stats_block();
       }
+      
       if ($delta == 'table_display_switch') {
         return tow_table_display_switch_block();
       }
+      
       if ($delta == 'search_outer_filter') {
         return tow_search_outer_filter_block();
       }      
+      
       if ($delta == 'search_outer_number_of_results') {
         return tow_search_outer_number_of_results_block();
       }
+      
       if ($delta == 'search_outer_tabs') {
         return tow_search_outer_tabs_block();
       }
+      
       if ($delta == 'search_outer_results') {
         return tow_search_outer_results_block();
       }
+      
       if ($delta == 'search_inner_facets') {
         drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
         return tow_search_inner_widgets_block();
       }
+      
       if ($delta == 'search_inner_simple_search') {
         return tow_search_inner_simple_search_block();
       }
-       if ($delta == 'search_inner_list_of_tables')
+      
+      if ($delta == 'search_inner_list_of_tables') {
         return tow_search_inner_list_of_tables_block();
-        
+      }
+      
       if ($delta == 'sis_tow_amount_tables') {
         return tow_sis_tow_amount_tables_block();
       }
+      /*
+      if ($delta == 'saved_searches') {
+        return tow_saved_searches_block();
+      }
+      */
     } 
   } elseif($op == 'configure') {
     if (user_access('access content')) {
@@ -603,7 +713,7 @@ function tow_cron() {
   tow_search_cron();
   tow_import_cron();
   tow_search_inner_cron();
-  tow_search_inner_linked_cron();
+  # tow_search_inner_linked_cron();
 }
 
 /**
