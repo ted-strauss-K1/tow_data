@@ -150,7 +150,7 @@ function tow_field_edit_form($form_state, $table_nid, $type, $delta, $index) {
   );
   
   // Read field description from database  
-  $description_res = db_query('SELECT `description` FROM {tow_field_info} WHERE `nid` = %d AND `index` = %d', $table_nid, $index);
+  $description_res = db_query('SELECT `description` FROM {tow_field_info} WHERE `nid` = %d AND `ind` = %d', $table_nid, $index);
   $description = '';
   while ($res = db_fetch_array($description_res))
      $description = $res['description'];
@@ -237,7 +237,7 @@ function tow_field_description_callback($field_index, $table_nid) {
   
   $dataset = node_load($dataset_nid);
 // END OF CHANGED  
-  $description_res = db_query('SELECT `description` FROM {tow_field_info} WHERE `nid` = %d AND `index` = %d', $table_nid, $field_index);
+  $description_res = db_query('SELECT `description` FROM {tow_field_info} WHERE `nid` = %d AND `ind` = %d', $table_nid, $field_index);
   
   $description = '';
   while ($res = db_fetch_array($description_res)){
@@ -274,17 +274,17 @@ function _tow_field_description_save($table_nid, $index, $description, $is_new =
       db_query("UPDATE {tow_field_info} 
             SET `description` = '%s' 
             WHERE `nid` = '%d' 
-            AND `index` = '%d';", $description, $table_nid, $index);
+            AND `ind` = '%d';", $description, $table_nid, $index);
     }
     else {
       db_query("DELETE FROM {tow_field_info}
             WHERE `nid` =  '%d'  
-            AND `index` = '%d';", $table_nid, $index);
+            AND `ind` = '%d';", $table_nid, $index);
     }
   }
   else {
     if ($description !== '')
-      db_query("INSERT INTO {tow_field_info} (`nid`, `index`, `description`) VALUES ('%d', '%d', '%s');", 
+      db_query("INSERT INTO {tow_field_info} (`nid`, `ind`, `description`) VALUES ('%d', '%d', '%s');", 
         $table_nid, $index, $description);
   } 
 }

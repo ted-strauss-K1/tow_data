@@ -421,9 +421,14 @@ Drupal.behaviors.outer_search = function(context) {
 		
 		
         $('#datatable-1').dataTable({
-		//"sDom": 'C<"clear">lfrtip'
-		"sDom": '<"H"Cfr>t<"F"ip>',
-		"bJQueryUI": true
+		"sDom": 'C<"clear">frti',
+		"oColVis": {
+		  "fnLabel": function ( index, title, th ) {
+		    return (index+1) +'. '+ title;
+		  }
+		},
+
+		
 		/*"sDom": '<"H"fr>tC<"F"ip>',
 		"bJQueryUI": true,
 		"bPaginate": false,
@@ -444,21 +449,22 @@ Drupal.behaviors.outer_search = function(context) {
 			nColVis.style.width = o.oScroll.iBarWidth+"px";
 			nColVis.style.top = ($('div.dataTables_scroll', o.nTableWrapper).position().top)+"px";
 			nColVis.style.height = ($('div.dataTables_scrollHead table', o.nTableWrapper).height())+"px";
-		}*/
-		});
-
+		}
+		});*/
 		
+		"sScrollY": "300",
 		
-		
-		/*
-		"sScrollY": "200",
-		//"aaData": [
+		//"oScroller": {
+			//"rowHeight": 50
+			//"displayBuffer": 9
+		//},
+		/*"aaData": [
 			 Reduced data set 
 			[ "Trident", "Internet Explorer 4.0", 4 ],
 			[ "Trident", "Internet Explorer 5.0", 5 ],
 			[ "Trident", "Internet Explorer 4.0", 4 ],
 			
-			],
+			],*/
 		//"bServerSide": true,
 		
 		//"sAjaxSource": window.location.pathname + '/refresh_ajax?filters=' + filtersToSend,
@@ -467,11 +473,10 @@ Drupal.behaviors.outer_search = function(context) {
 		//"bStateSave": true,
         //"bDeferRender": true,
 		//"bRetrieve": true,
-		"bScrollInfinite": true,
+		//"bScrollInfinite": true
 		"bScrollCollapse": true,
-		"sDom": 'C<"clear">lfrtip',
-        //"bPaginate": true,
-        "bFilter": true,
+		"bPaginate": false,
+		"bFilter": true,
         "bSort": true,
         "bInfo": false,
         "sScrollX": "100%"
@@ -479,7 +484,7 @@ Drupal.behaviors.outer_search = function(context) {
        
 	    });
 		//oTable.fnClearTable();
-		oTable.fnAddData([
+		/*oTable.fnAddData([
 			
 			[ "Trident", "Internet Explorer 4.0", 4 ],
 			[ "Trident", "Internet Explorer 5.0", 5 ],

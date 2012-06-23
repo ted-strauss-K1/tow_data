@@ -1301,6 +1301,8 @@ function tow_search_within_dataset_callback($nid) {
   drupal_add_js(drupal_get_path('module', 'tow') . '/js/jquery.ba-hashchange.min.js');
   drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
   drupal_add_js(drupal_get_path('module', 'tow') . '/js/highcharts.js');
+  drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/Scroller/media/js/dataTables.scroller.js');
+  drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/ColVis/media/js/ColVis.js');
 
   if ($results) {
     return $results;
