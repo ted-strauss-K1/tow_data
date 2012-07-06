@@ -98,7 +98,7 @@ function tow_search_inner_widgets_block() {
       VALUES 
         ('%d', '%s', '%s', '%d', '%s')
     ", 
-    $table_nid, $serialized_query, $serialized_stats, $hash, date('Y-m-d H:i:s', time())
+    $table_nid, $serialized_query, $serialized_stats, $hash, time() // date('Y-m-d H:i:s', time())
   );
   $rid = db_last_insert_id('tow_apachesolr_requests', 'rid');
   
@@ -281,9 +281,9 @@ function tow_search_inner_sort_fields($fields, $sort_params) {
  * Clears old requests to solr from db table {tow_apachesolr_requests}
  */
 function tow_search_inner_cron(){
-  $time = date('Y-m-d H:i:s', time() - 2*24*60*60); // 2 days before
+  $time = time() - (2 * 24 * 60 * 60); // 2 days before
   $result = db_query("DELETE FROM {tow_apachesolr_requests} 
-      WHERE timestamp < '%s'", $time);
+      WHERE timestamp < %d", $time);
   watchdog('inner search', 'Solr requests addressed before ' . $time . ' are cleared from database (' . $result . ')');
 }
 /**
@@ -413,8 +413,6 @@ function tow_search_inner_ajax_field_zooming() {
 
     $result = db_fetch_array(db_query("SELECT 
     query, stats, tnid FROM {tow_apachesolr_requests} WHERE rid='%d' AND hash='%d'", $rid, $hash));
-
-
     
     $serialized_query = $result['query'];
     $serialized_stats = $result['stats'];
@@ -1809,11 +1807,11 @@ function tow_search_within_dataset_altering_form(&$form, &$form_state, $dataset_
  * Returns list of saved searches, connected with dataset
  */
 function tow_search_get_saved_searches($dataset_nid) {
-  $saved_search_res = db_query("SELECT `ctss`.`nid`, `n`.`title`
-                                     FROM content_type_saved_search `ctss`
-                                     LEFT JOIN node `n`
-                                       ON `n`.`nid` = `ctss`.`nid`
-                                     WHERE `ctss`.`field_dataset_nid_value` = %d" , $dataset_nid);
+  $saved_search_res = db_query("SELECT ctss.nid, n.title
+                                     FROM content_type_saved_search ctss
+                                     LEFT JOIN node n
+                                       ON n.nid = ctss.nid
+                                     WHERE ctss.field_dataset_nid_value = %d" , $dataset_nid);
   // TODO: pass saved search nids (?)
   while ($saved_search = db_fetch_array($saved_search_res)) {
     $saved_searches[] = $saved_search['title'];
@@ -1973,11 +1971,11 @@ function tow_search_get_enum_options($nid) {
 
   $all_enum_options = array();
 
-  $res = db_query("SELECT `cfeo`.`nid` as `table_nid`, `cfeo`.`field_enum_options_value` as `enum_opt`
-            FROM {content_field_enum_options} `cfeo`
-            LEFT JOIN {content_type_table} `ctt`
-            ON `cfeo`.`nid` = `ctt`.`nid`
-            WHERE `ctt`.`field_dataset_value` = %d", $nid);
+  $res = db_query("SELECT cfeo.nid as table_nid, cfeo.field_enum_options_value as enum_opt
+            FROM {content_field_enum_options} cfeo
+            LEFT JOIN {content_type_table} ctt
+            ON cfeo.nid = ctt.nid
+            WHERE ctt.field_dataset_value = %d", $nid);
 
   while ($enum_options = db_fetch_array($res)) {
     if ($enum_options['enum_opt']) {

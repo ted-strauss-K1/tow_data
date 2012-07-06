@@ -20,7 +20,7 @@ function tow_invite_form($form_state, $nid) {
     die();
   }
   
-  if ($dataset->uid != $user->uid && !user_access('edit any dataset content')) {
+  if ($dataset->uid != $user->uid && !user_access('edit any dataset')) {
     drupal_access_denied();
     die();
   }
@@ -64,17 +64,60 @@ function tow_invite_form_submit($form, &$form_state) {
    
   if ($person = db_fetch_object($res)) {
     // If person to be invited is our existing user
-    db_query("
-      INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp)
-      VALUES (%d, %d, 1, %d)
-      ON DUPLICATE KEY UPDATE status = 1
+    $exists = db_result(db_query("
+    
+      SELECT 
+        t.nid AS nid, 
+        t.uid AS uid
+        
+        FROM 
+          {tow_access_requests} t
+        
+        WHERE 
+            t.nid = %d 
+          AND 
+            t.uid = %d
+            
+    ", $dataset->nid, $person->uid));
+    if (!$exists) {
+      db_query("
+        
+        INSERT 
+          INTO 
+            {tow_access_requests} 
+              (nid, uid, status, request_timestamp)
+      
+          VALUES 
+            (%d, %d, 1, %d)
+      
       ", $dataset->nid, $person->uid, time());
+    }
+    else {
+     db_query("
+        
+        UPDATE 
+        {tow_access_requests} 
+        
+        SET 
+          status = %d, 
+          request_timestamp = %d
+        
+        WHERE 
+            nid = %d 
+          AND 
+            uid = %d
+      
+      ", 1, time(), $dataset->nid, $person->uid);
+    }
     $link = l($dataset->title, 'node/' . $dataset->nid, array('absolute' => TRUE));
-    if (tow_invite_user($email, $link, $form_state['values']['message'], $person->name))
+    if (tow_invite_user($email, $link, $form_state['values']['message'], $person->name)) {
       drupal_set_message('Invite has been sent');
-    else
+    }
+    else {
       drupal_set_message('Invite has not been sent');
-  }else{
+    }
+  }
+  else {
     if (db_result(db_query("SELECT nid FROM {tow_invites} WHERE nid = %d AND email = '%s' LIMIT 1", $dataset->nid, $email))) {
       drupal_set_message('Invite had already been sent');
       return;
@@ -157,12 +200,73 @@ function tow_invite_register() {
 function tow_invite_insert($account) {
   $token = $_GET['token'];
   if ($token) {
-    $nid = db_result(db_query("SELECT nid FROM {tow_invites} WHERE token = '%s'", $token));
-    db_query("
-      INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp)
-      VALUES (%d, %d, 1, %d)
-      ON DUPLICATE KEY UPDATE status = 1
+    $nid = db_result(db_query("
+    
+      SELECT 
+        t.nid AS nid 
+        
+        FROM 
+          {tow_invites} t 
+        
+        WHERE 
+          t.token = '%s'
+          
+    ", $token));
+    $exists = db_result(db_query("
+    
+      SELECT 
+        t.nid AS nid, 
+        t.uid AS uid
+        
+        FROM 
+          {tow_access_requests} t
+        
+        WHERE 
+            t.nid = %d 
+          AND 
+            t.uid = %d
+            
+    ", $nid, $account->uid));
+    if ($exists) {
+      db_query("
+      
+        INSERT 
+          INTO 
+            {tow_access_requests} 
+              (nid, uid, status, request_timestamp)
+
+          VALUES 
+            (%d, %d, 1, %d)
+      
       ", $nid, $account->uid, time());
-    db_query("DELETE FROM {tow_invites} WHERE token = '%s'", $token);
+    }
+    else {
+     db_query("
+        
+        UPDATE 
+        {tow_access_requests} 
+        
+        SET 
+          status = %d, 
+          request_timestamp = %d
+        
+        WHERE 
+            nid = %d 
+          AND 
+            uid = %d
+      
+      ", 1, time(), $nid, $account->uid);
+    }
+    db_query("
+      
+      DELETE 
+        
+        FROM 
+          {tow_invites} t 
+        
+        WHERE 
+          t.token = '%s'
+          
+    ", $token);
   }
 }

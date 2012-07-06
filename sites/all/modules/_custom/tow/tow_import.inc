@@ -7,7 +7,7 @@
  */
 
 function tow_import_cron() {
-  db_query("DELETE FROM {tow_import_progress} WHERE NOW() > ADDTIME(`timestamp`, '1:00:00')");
+  db_query("DELETE FROM {tow_import_progress} WHERE %d > (timestamp + 3600)", time());
 }
 
 /**
@@ -187,7 +187,7 @@ function tow_import_progress_set($hash, $stage, $value) {
 function tow_import_progress_get($hash, $stage) {
   global $user;
 
-  $response = db_result(db_query("SELECT SQL_NO_CACHE stage%s FROM {tow_import_progress} WHERE sid='%s' AND hash=%d", $stage, $user->sid, $hash));
+  $response = db_result(db_query("SELECT stage%s FROM {tow_import_progress} WHERE sid='%s' AND hash=%d", $stage, $user->sid, $hash));
 //  watchdog('import_stage','Stage ' . $stage . ' get: ' . $response . '(hash ' . $hash . ')');
 
   if ($stage == 6)
@@ -502,10 +502,10 @@ try {
   if ($import_action == 'create') {
     $existing_table_titles_res = db_query("
     SELECT title 
-    FROM {node} `n` 
-    INNER JOIN {content_type_table} `t` 
-    ON `n`.nid = `t`.nid
-    AND `t`.field_dataset_value = %d", $dataset_nid);
+    FROM {node} n 
+    INNER JOIN {content_type_table} t 
+    ON n.nid = t.nid
+    AND t.field_dataset_value = %d", $dataset_nid);
 
     $existing_table_titles = array();
     while ($rs = db_fetch_array($existing_table_titles_res)) {
@@ -745,9 +745,9 @@ try {
   if ($import_action == 'create') {
     // reading key titles from other tables
     $existing_table_nids_res = db_query("
-      SELECT `nid`
-      FROM {content_type_table} `t` 
-      WHERE `t`.field_dataset_value = %d", $dataset_nid);
+      SELECT nid
+      FROM {content_type_table} t 
+      WHERE t.field_dataset_value = %d", $dataset_nid);
 
     $column_titles_keys = array();
     while ($rs = db_fetch_array($existing_table_nids_res)) {
@@ -1067,10 +1067,10 @@ function _test_xr($hash, $filename, $to) {
   if ($import_action == 'create') {
     $existing_table_titles_res = db_query("
     SELECT title 
-    FROM {node} `n` 
-    INNER JOIN {content_type_table} `t` 
-    ON `n`.nid = `t`.nid
-    AND `t`.field_dataset_value = %d", $dataset_nid);
+    FROM {node} n 
+    INNER JOIN {content_type_table} t 
+    ON n.nid = t.nid
+    AND t.field_dataset_value = %d", $dataset_nid);
 
     $existing_table_titles = array();
     while ($rs = db_fetch_array($existing_table_titles_res)) {
@@ -1310,9 +1310,9 @@ function _test_xr($hash, $filename, $to) {
   if ($import_action == 'create') {
     // reading key titles from other tables
     $existing_table_nids_res = db_query("
-      SELECT `nid`
-      FROM {content_type_table} `t` 
-      WHERE `t`.field_dataset_value = %d", $dataset_nid);
+      SELECT nid
+      FROM {content_type_table} t 
+      WHERE t.field_dataset_value = %d", $dataset_nid);
 
     $column_titles_keys = array();
     while ($rs = db_fetch_array($existing_table_nids_res)) {

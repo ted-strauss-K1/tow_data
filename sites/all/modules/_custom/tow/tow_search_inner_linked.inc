@@ -5,8 +5,8 @@
  */
 function tow_search_inner_relink_table($table_nid) {mydpm('tow_search_inner_relink_table ' . $table_nid);
   // find all records for table being changed 
-  $deleted_nids = db_query("SELECT `nid` FROM {content_field_tables}
-                    WHERE `field_tables_value`='%d'", $table_nid);
+  $deleted_nids = db_query("SELECT nid FROM {content_field_tables}
+                    WHERE field_tables_value = '%d'", $table_nid);
 
   // build tablesets containing current table
   $tableset = tow_search_inner_build_table_tablesets($table_nid);
@@ -33,8 +33,8 @@ function tow_search_inner_relink_table($table_nid) {mydpm('tow_search_inner_reli
  */
 function tow_search_inner_unlink_table($table_nid) {mydpm('tow_search_inner_unlink_table ' . $table_nid);
   // find all records for table being deleted
-  $deleted_nids = db_query("SELECT `nid` FROM {content_field_tables}
-                    WHERE `field_tables_value`='%d'", $table_nid);
+  $deleted_nids = db_query("SELECT nid FROM {content_field_tables}
+                    WHERE field_tables_value='%d'", $table_nid);
   // delete them
   while ($nid = db_result($deleted_nids)) {
     node_delete($nid);
@@ -113,7 +113,7 @@ function tow_search_inner_set_empty(&$node) {
  */
 function tow_search_inner_unlink_record($item, $do_not_delete = FALSE){mydpm('tow_search_inner_unlink_record ' . $item['record_nid']);
   // find all joint records containing record being changed
-  $nids = db_query("SELECT `nid` FROM {content_field_record_nid} WHERE `field_record_nid_value`='%d'", $item['record_nid']);
+  $nids = db_query("SELECT nid FROM {content_field_record_nid} WHERE field_record_nid_value='%d'", $item['record_nid']);
   // delete them
   $deleted_nids = array();
   while ($nid = db_result($nids)) {
@@ -291,48 +291,48 @@ function tow_search_inner_link_records($tableset, $record_info = NULL) {mydpm('t
   $queries = array();
   $ons = array();
   foreach ($tableset as $key => $table) {watchdog('linking', 'table ' . $key);
-    $ctr_alias = "`ctr`"; //"`ctr" . $key . "`";
-    $content_field_tables = array(); //  {content_field_int} AS  `cfi1`,
-    $content_fields = array(); //"`cfi1`.`field_int_value`
-    $conditions = array(); //`cfi1`.`nid` =  `ctr1`.`nid`
-    $deltas = array(); //`cfi1`.`delta` =0";
+    $ctr_alias = "ctr"; //"ctr" . $key . "";
+    $content_field_tables = array(); //  {content_field_int} AS  cfi1,
+    $content_fields = array(); // "cfi1.field_int_value
+    $conditions = array(); // cfi1.nid = ctr1.nid
+    $deltas = array(); // cfi1.delta = 0";
     foreach ($table['select'] as $cfkey => $field) {
-      $table_alias = '`cf' . $cfkey . '`';//'`cf' . $field['type'] . $cfkey . '`';
-      $content_field_tables[] = '{content_field_' . $field['type'] . '} AS ' . $table_alias;  //  {content_field_int} AS  `cfi1`,
-      $content_fields[] = $table_alias . '.`field_' . $field['type'] . '_value` AS `' . $field['type'] . $field['delta'] . '`'; //"`cfi1`.`field_int_value`
-      $deltas[] = $table_alias . '.`delta` = ' . $field['delta']; //`cfi1`.`delta` =0";
+      $table_alias = 'cf' . $cfkey . '';//'cf' . $field['type'] . $cfkey . '';
+      $content_field_tables[] = '{content_field_' . $field['type'] . '} AS ' . $table_alias;  //  {content_field_int} AS  cfi1,
+      $content_fields[] = $table_alias . '.field_' . $field['type'] . '_value AS ' . $field['type'] . $field['delta'] . ''; //"cfi1.field_int_value
+      $deltas[] = $table_alias . '.delta = ' . $field['delta']; //cfi1.delta =0";
       if (empty($record_info) || $record_info['table'] != $key)
-        $conditions[] = $table_alias . '.`nid` = ' . $ctr_alias . '.`nid`'; //`cfi1`.`nid` =  `ctr1`.`nid`
+        $conditions[] = $table_alias . '.nid = ' . $ctr_alias . '.nid'; //cfi1.nid =  ctr1.nid
       else
-        $conditions[] = $table_alias . '.`nid` = ' . $record_info['record']; 
+        $conditions[] = $table_alias . '.nid = ' . $record_info['record']; 
     }
     $content_field_tables = implode(', ', $content_field_tables);
     $content_fields = implode(', ', $content_fields);
     $conditions = implode(' AND ', $conditions);
     $deltas = implode(' AND ', $deltas);
     if (empty($record_info) || $record_info['table'] != $key) {
-      $query = "SELECT " . $ctr_alias . ".`nid` ,  " . $content_fields . //"`cfi1`.`field_int_value`
+      $query = "SELECT " . $ctr_alias . ".nid ,  " . $content_fields . //"cfi1.field_int_value
             " FROM {content_type_record} AS  " . $ctr_alias . ", " 
-            . $content_field_tables . //  {content_field_int} AS  `cfi1`,
-            " WHERE " . $ctr_alias . ".`field_table_value` = " . $key . 
-            " AND " . $conditions . //`cfi1`.`nid` =  `ctr1`.`nid`
-            " AND " . $deltas; //`cfi1`.`delta` =0";
+            . $content_field_tables . //  {content_field_int} AS  cfi1,
+            " WHERE " . $ctr_alias . ".field_table_value = " . $key . 
+            " AND " . $conditions . //cfi1.nid =  ctr1.nid
+            " AND " . $deltas; //cfi1.delta =0";
     } else {
-      $query = "SELECT " . $record_info['record'] . " AS `nid`,  " . $content_fields . //"`cfi1`.`field_int_value`
-            " FROM " . $content_field_tables . //  {content_field_int} AS  `cfi1`,
-            " WHERE " . $conditions . //`cfi1`.`nid` =  $record
-            " AND " . $deltas; //`cfi1`.`delta` =0";
+      $query = "SELECT " . $record_info['record'] . " AS nid,  " . $content_fields . //"cfi1.field_int_value
+            " FROM " . $content_field_tables . //  {content_field_int} AS  cfi1,
+            " WHERE " . $conditions . //cfi1.nid =  $record
+            " AND " . $deltas; //cfi1.delta =0";
     }
     $on = array();
     if (!empty($table['join'])) {
       foreach ($table['join'] as $table_key => $to_table) {
         foreach ($to_table['fields'] as $field_key => $field) {
           $to_field = $to_table['to_fields'][$field_key];
-          $on[] = '`t' . $key . '`.`' . $field['type'] . $field['delta'] . '` = ' . '`t' . $table_key . '`.`' . $to_field['type'] . $to_field['delta'] . '`';
+          $on[] = 't' . $key . '.' . $field['type'] . $field['delta'] . ' = ' . 't' . $table_key . '.' . $to_field['type'] . $to_field['delta'] . '';
         }
       }
     }
-    $select[$key] = '`t' . $key . '`.`nid` AS `t' . $key . 'nid`';
+    $select[$key] = 't' . $key . '.nid AS t' . $key . 'nid';
     $queries[$key] = $query;
     $ons[$key] = implode(' AND ', $on);
   }
@@ -356,12 +356,12 @@ function _tow_search_inner_build_linking_query($select, $queries, $ons, $relinke
     $jj = $ii;
     $tables_query = array();
     if ($relinked_record_table)
-      $nulls = array('`t' . $relinked_record_table . '`.`nid` IS NOT NULL');
+      $nulls = array('t' . $relinked_record_table . '.nid IS NOT NULL');
     else 
       $nulls = array();
     foreach ($queries as $table_nid => $table_query) {
       $on = $ons[$table_nid];
-      $table = '(' . $table_query . ') AS `t' . $table_nid . '`';
+      $table = '(' . $table_query . ') AS t' . $table_nid . '';
       if (empty($on)) {
         // first table -> no join
         $tables_query[] = $table;
@@ -369,7 +369,7 @@ function _tow_search_inner_build_linking_query($select, $queries, $ons, $relinke
         if ($jj & 1) {
           // LEFT JOIN
           $tables_query[] = 'LEFT JOIN ' . $table . ' ON ' . $on;
-          $nulls[] = '`t' . $table_nid . '`.`nid` IS NULL';
+          $nulls[] = 't' . $table_nid . '.nid IS NULL';
         } else {
           // RIGHT JOIN
           $tables_query[] = 'RIGHT JOIN ' . $table . ' ON ' . $on;
@@ -437,6 +437,7 @@ function tow_search_inner_queue_table_linking($node, $op){
         unset($_SESSION['table_indexes_changed'][$node->nid]);
       }
       break;
+    case 'load':
     case 'insert':
     case 'delete';
         $flag = TRUE;
@@ -445,18 +446,74 @@ function tow_search_inner_queue_table_linking($node, $op){
       break;
   }
   if ($flag) {
-    db_query("INSERT IGNORE INTO {tow_link_tables} (record_nid, table_nid, dataset_nid, op, timestamp) 
-              VALUES ('0', '%d', '%d', '%s', '%d')", $node->nid, $node->field_dataset[0]['value'], $op, time());
-  }
+//    $exists = (db_result(db_query("
+//      
+//      SELECT 
+//        t.record_nid AS nid
+//
+//        FROM 
+//          {tow_link_tables} t  
+//          
+//        WHERE 
+//            t.record_nid = %d
+//          AND
+//            t.op = '%s' 
+//          AND
+//            t.timestamp = %d 
+//    
+//      ", $node->nid, $op, time()))->nid) ? 1 : 0;
+//    if (!$exists) {
+      db_query("
+      
+        INSERT 
+          INTO 
+            {tow_link_tables} 
+              (record_nid, table_nid, dataset_nid, op, timestamp) 
+              
+          VALUES 
+            (%d, %d, %d, '%s', %d)
+      
+      ", 0, $node->nid, $node->field_dataset[0]['value'], $op, time());
+    }
+//  }
 }
+
 function tow_search_inner_queue_record_linking($node, $op){mydpm('tow_search_inner_queue_record_linking');
   $table = node_load($node->field_table[0]['value']);
   switch ($op) {
     case 'insert':
     case 'update':
     case 'delete':
-      db_query("INSERT IGNORE INTO {tow_link_tables} (record_nid, table_nid, dataset_nid, op, timestamp) 
-          VALUES ('%d','%d', '%d', '%s', '%d')", $node->nid, $node->field_table[0]['value'], $table->field_dataset[0]['value'], $op, time());
+    case 'load':
+//        $exists = db_result(db_query("
+//
+//          SELECT 
+//            t.record_nid AS nid 
+//        
+//            FROM 
+//              {tow_link_tables} t  
+//          
+//            WHERE 
+//                t.record_nid = %d
+//              AND
+//                t.op = '%s' 
+//              AND
+//                t.timestamp = %d 
+//
+//        ", $node->nid, $op, time()));
+//        if (!$exists) {
+          db_query("
+      
+            INSERT 
+              INTO 
+                {tow_link_tables} 
+                  (record_nid, table_nid, dataset_nid, op, timestamp) 
+
+              VALUES 
+                (%d, %d, %d, '%s', %d)
+
+          ", $node->nid, $node->field_table[0]['value'], $node->field_dataset[0]['value'], $op, time());
+//        }
       break;
     default:
       break;
@@ -535,11 +592,11 @@ function tow_search_inner_update_dataset_indexes($dataset_nid, $table_to_delete 
         }
       }
     }
-    db_query("UPDATE {content_type_table} SET `field_indexes_value` = '%s' 
-              WHERE `nid`='%d'", serialize($indexes), $base_table->nid);
+    db_query("UPDATE {content_type_table} SET field_indexes_value = '%s' 
+              WHERE nid='%d'", serialize($indexes), $base_table->nid);
               
     db_query("DELETE FROM {cache_content} 
-              WHERE `cid` =  'content:%d:%d'", $base_table->nid, $base_table->nid);
+              WHERE cid =  'content:%d:%d'", $base_table->nid, $base_table->nid);
   }
   $node = array_shift($tables);
   if ($node) {
@@ -556,47 +613,168 @@ function mydpm($x){
 
 function tow_search_inner_linked_cron() {
   $time = time();
-  // delete duplicates
-  db_query("DELETE `t1` FROM {tow_link_tables} AS `t1`, {tow_link_tables} AS `t2` 
-            WHERE `t1`.`record_nid`>`t2`.`record_nid` AND
-             `t1`.`table_nid`=`t2`.`table_nid` AND
-             `t1`.`timestamp`<'%d' AND `t2`.`timestamp`<'%d'", $time, $time);
-  // delete tables with insert and update ops if there is the same table with delete op
-  db_query("DELETE `t1` FROM {tow_link_tables} AS `t1` WHERE `t1`.`table_nid` IN 
-            (SELECT * FROM
-            (SELECT `t2`.`table_nid` FROM {tow_link_tables} AS `t2`
-            WHERE `t2`.`record_nid`='0' AND `t2`.`op`='delete')
-            AS `t3`)
-            AND `t1`.`record_nid`='0'  AND `t1`.`op`<>'delete'
-            AND `t1`.`timestamp` < '%d'", $time);
-  // delete tables with insert op if there is the same table with update op
-  db_query("DELETE `t1` FROM {tow_link_tables} AS `t1` WHERE `t1`.`table_nid` IN 
-            (SELECT * FROM
-            (SELECT `t2`.`table_nid` FROM {tow_link_tables} AS `t2`
-            WHERE `t2`.`record_nid`='0' AND `t2`.`op`='update')
-            AS `t3`)
-            AND `t1`.`record_nid`='0'  AND `t1`.`op`='insert'
-            AND `t1`.`timestamp` < '%d'", $time);
-  // remaining records and tables
-  $results = db_query("SELECT `record_nid`, `table_nid`, `dataset_nid`, `op`
-            FROM {tow_link_tables} WHERE `timestamp` < '%d'", $time);
+  // Delete duplicates.
+/*
+  db_query("DELETE FROM {tow_link_tables} AS t1, {tow_link_tables} AS t2 
+            WHERE t1.record_nid>t2.record_nid AND
+             t1.table_nid=t2.table_nid AND
+             t1.timestamp<'%d' AND t2.timestamp<'%d'", $time, $time);
+*/
+dpm('here 1');
+  $table_nids = array();
+  $query = db_query("
+  
+    SELECT 
+      n.nid AS nid 
+      
+      FROM 
+        {node} n
+        
+      WHERE 
+        n.type = '%s'
+  ", 'table');
+  while ($result = db_fetch_object($query)) {
+    $table_nids[] = $result->nid;
+  }
+  dpm($table_nids);
+  foreach ($table_nids as $table_nid) {
+    $min_record_nid = db_result(db_query("
+    
+      SELECT 
+        MIN(t.record_nid) AS record_nid
+        
+        FROM
+          {tow_link_tables} t
+        
+        WHERE 
+          t.table_nid = %d
+    
+    ", $table_nid));
+    $min_record_nid = ($min_record_nid) ? $min_record_nid : 0;
+    db_query("
+    
+      DELETE
+
+        FROM 	
+          {tow_link_tables} t 
+
+        WHERE 
+            t.record_nid > %d
+          AND 
+            t.table_nid = %d 
+
+    ", $min_record_nid, $table_nid);
+  }
+dpm('here 2');
+/*  
+  // Delete tables with 'insert' and 'update' ops if there is the same table with a 'delete' op.
+  db_query("
+  
+    DELETE 
+      FROM 
+        {tow_link_tables} t1 
+        
+      WHERE 
+          t1.table_nid IN (
+          
+            SELECT 
+              * 
+              
+              FROM (
+                
+                SELECT 
+                  t2.table_nid AS table_nid 
+                  
+                  FROM 
+                    {tow_link_tables} t2
+                  
+                  WHERE 
+                      t2.record_nid = %d 
+                    AND 
+                      t2.op = '%s'
+              ) t3
+          )
+        AND 
+          t1.record_nid = %d  
+        AND 
+          t1.op <> '%s'
+        AND 
+          t1.timestamp < %d
+  
+  ", 0, 'delete', 0, 'delete', $time);
+  
+  // Delete tables with 'insert' op if there is the same table with 'update' op.
+  db_query("
+  
+    DELETE 
+    
+      FROM 
+        {tow_link_tables} t1 
+        
+      WHERE 
+          t1.table_nid IN (
+        
+            SELECT 
+              * 
+            
+              FROM ( 
+              
+                SELECT 
+                  t2.table_nid AS table_nid 
+                
+                  FROM 
+                    {tow_link_tables} t2
+            
+                  WHERE 
+                      t2.record_nid = %d 
+                    AND 
+                      t2.op = '%s'
+              ) t3
+          )
+        AND 
+          t1.record_nid = %d 
+        AND 
+          t1.op = '%s'
+        AND 
+          t1.timestamp < %d
+         
+  ", 0, 'update', 0, 'insert', $time);
+*/  
+  // Remaining records and tables.
+  $results = db_query("
+  
+    SELECT 
+      * 
+      
+      FROM 
+        {tow_link_tables} t 
+        
+      WHERE 
+        t.timestamp < %d
+  
+  ", $time);
   $datasets = array();
-  //TODO: nodes -> nids in handling functions
+  
+  // TODO: nodes -> nids in handling functions
+  
   while ($item = db_fetch_array($results)) {
-    mydpm($item);
     if ($item['record_nid']) {
       if (!in_array($item['dataset_nid'], $datasets)) {
         tow_search_inner_update_dataset_indexes($item['dataset_nid']);
         $datasets[] = $item['dataset_nid'];
       }
       tow_search_inner_relink_table($item['table_nid']);      
-    } else {
-      // table
+    } 
+    else {
+      
+      // Table.
       switch ($item['op']) {
+        
         case 'delete':
           tow_search_inner_unlink_table($item['table_nid']);
           tow_search_inner_update_dataset_indexes($item['dataset_nid'], $item['table_nid']);
           break;
+        
         case 'insert':
         case 'update':
           if (!in_array($item['dataset_nid'], $datasets)) {
@@ -608,18 +786,28 @@ function tow_search_inner_linked_cron() {
       }
     }
   }
-  // delete processed items
-  db_query("DELETE FROM {tow_link_tables} WHERE `timestamp` < '%d'", $time);
+  
+  // Delete processed items.
+/*  db_query("
+  
+    DELETE 
+      FROM 
+        {tow_link_tables} t 
+      
+      WHERE 
+        t.timestamp < %d
+  
+  ", $time);*/
 }
 
 function tow_search_inner_list_of_tables_block() {
 
   $nid = tow_search_inner_get_nid();
-  $is_dataset = db_result(db_query("SELECT COUNT(*) FROM {content_type_dataset} WHERE `nid`='%s'", $nid));
+  $is_dataset = db_result(db_query("SELECT COUNT(*) FROM {content_type_dataset} WHERE nid='%s'", $nid));
   if (!$is_dataset) {
     $table_nid = array_shift(explode('+', $nid));
-    $dataset_nid = db_result(db_query("SELECT `field_dataset_value` 
-                  FROM {content_type_table} WHERE `nid`='%s'", $table_nid));
+    $dataset_nid = db_result(db_query("SELECT field_dataset_value 
+                  FROM {content_type_table} WHERE nid='%s'", $table_nid));
     unset($table_nid);              
     if (!$dataset_nid) {
     //  drupal_not_found();

@@ -24,7 +24,7 @@ function tow_table_truncate_confirm(&$form_state, $nid) {
     '#type' => 'value',
     '#value' => $nid,
   );
-  
+
   $form['#dataset'] = $node->field_dataset[0]['value'];
   
   return confirm_form(

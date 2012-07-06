@@ -150,7 +150,7 @@ function tow_field_edit_form($form_state, $table_nid, $type, $delta, $index) {
   );
   
   // Read field description from database  
-  $description_res = db_query('SELECT `description` FROM {tow_field_info} WHERE `nid` = %d AND `ind` = %d', $table_nid, $index);
+  $description_res = db_query("SELECT description FROM {tow_field_info} WHERE nid = %d AND ind = %d", $table_nid, $index);
   $description = '';
   while ($res = db_fetch_array($description_res))
      $description = $res['description'];
@@ -231,13 +231,13 @@ function tow_field_edit_form_submit($form, &$form_state) {
 function tow_field_description_callback($field_index, $table_nid) {
   
 // CHANGED
-  $dataset_nid_res = db_query("SELECT `field_dataset_value` FROM {content_type_table} WHERE `nid` = %d", $table_nid);
+  $dataset_nid_res = db_query("SELECT field_dataset_value FROM {content_type_table} WHERE nid = %d", $table_nid);
   $dataset_nid = db_fetch_array($dataset_nid_res);
   $dataset_nid = $dataset_nid['field_dataset_value'];
   
   $dataset = node_load($dataset_nid);
 // END OF CHANGED  
-  $description_res = db_query('SELECT `description` FROM {tow_field_info} WHERE `nid` = %d AND `ind` = %d', $table_nid, $field_index);
+  $description_res = db_query("SELECT description FROM {tow_field_info} WHERE nid = %d AND ind = %d", $table_nid, $field_index);
   
   $description = '';
   while ($res = db_fetch_array($description_res)){
@@ -267,24 +267,23 @@ function tow_field_descriptions_submit($table_nid) {
 /**
  *  Saves field description in the database
  */
-
 function _tow_field_description_save($table_nid, $index, $description, $is_new = TRUE) {
   if (!$is_new) {
     if ($description !== '') {
       db_query("UPDATE {tow_field_info} 
-            SET `description` = '%s' 
-            WHERE `nid` = '%d' 
-            AND `ind` = '%d';", $description, $table_nid, $index);
+            SET description = '%s' 
+            WHERE nid = %d 
+            AND ind = %d;", $description, $table_nid, $index);
     }
     else {
       db_query("DELETE FROM {tow_field_info}
-            WHERE `nid` =  '%d'  
-            AND `ind` = '%d';", $table_nid, $index);
+            WHERE nid =  %d 
+            AND ind = %d;", $table_nid, $index);
     }
   }
   else {
     if ($description !== '')
-      db_query("INSERT INTO {tow_field_info} (`nid`, `ind`, `description`) VALUES ('%d', '%d', '%s');", 
+      db_query("INSERT INTO {tow_field_info} (nid, ind, description) VALUES ('%d', '%d', '%s');", 
         $table_nid, $index, $description);
   } 
 }

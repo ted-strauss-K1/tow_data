@@ -256,7 +256,7 @@ function tow_apachesolr_update_index(&$document, $node) {
     $node->nid));
     
     $document->sis_tow_amount_saved_searches = db_result(db_query("SELECT COUNT(*)
-                                                                   FROM {content_type_saved_search} `ss`
+                                                                   FROM {content_type_saved_search} ss
                                                                    WHERE field_dataset_nid_value = %d",
                                                                    $node->nid));
     $document->ss_picture = $node->picture;
@@ -272,14 +272,14 @@ function tow_apachesolr_update_index(&$document, $node) {
   } elseif ($node->type == 'record') {// Add dataset_nid field and table_nid field to be indexed by apachesolr
 //    watchdog('inner_search', 'node: <pre>' . print_r($node, TRUE) . '</pre>');
     $document->sis_tow_dataset_nid = db_result(db_query("
-      SELECT `ctt`.`field_dataset_value` AS `dataset_nid`
-      FROM {content_type_table} `ctt`
-      LEFT JOIN {content_type_record} `ctr`
-        ON `ctr`.`field_table_value` = `ctt`.`nid`
-      WHERE `ctr`.`nid` = %d", $node->nid));   
+      SELECT ctt.field_dataset_value AS dataset_nid
+      FROM {content_type_table} ctt
+      LEFT JOIN {content_type_record} ctr
+        ON ctr.field_table_value = ctt.nid
+      WHERE ctr.nid = %d", $node->nid));   
     $table_nid = $node->field_table[0]['value'];
     $document->ss_tow_field_table = $table_nid;
-    
+
     foreach (tow_apachesolr_table_fields($table_nid) as $field) {
       $value = $node->{'field_' . $field['type']}[$field['delta']]['value'];
       if (isset($value)) {

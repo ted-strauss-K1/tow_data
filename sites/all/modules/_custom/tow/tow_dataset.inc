@@ -105,12 +105,22 @@ function tow_dataset_summary(&$node) {
   }
   // Extract and show names of tables from the dataset
   $table_titles_res = db_query("
-    SELECT `table`.nid AS `nid`, `node`.title AS `title` 
-    FROM {content_type_table} `table`
-    LEFT JOIN {node} `node`
-      ON `table`.nid = `node`.nid
-    WHERE `table`.field_dataset_value = %d
-    ", $node->nid);
+
+    SELECT 
+      t.nid AS nid, 
+      n.title AS title 
+    
+      FROM 
+          {content_type_table} t
+        LEFT JOIN 
+          {node} n
+          ON 
+            t.nid = n.nid
+    
+      WHERE 
+        t.field_dataset_value = %d
+    
+  ", $node->nid);
 
   // originally, $grey_pma_menu flag is used to tell tow_pma_menu to make links like "import", "browse" not clicable when access is limited
   // so here we use this flag to know if we should show links to tables and table contents
@@ -134,7 +144,19 @@ function tow_dataset_summary(&$node) {
     if (!$grey_pma_menu) {
       shuffle($table_nids);
       foreach($table_nids as $tn) {
-        if($count = db_result(db_query("SELECT COUNT(*) FROM {content_type_record} WHERE field_table_value = %d", $tn))) {
+        $count = db_result(db_query("
+        
+            SELECT 
+              COUNT(*) AS c 
+            
+            FROM 
+              {content_type_record} r 
+              
+            WHERE 
+              r.field_table_value = %d
+        
+        ", $tn));
+        if($count) {
           $tables[] = array(
             'nid' => $tn,
             'count' => $count
@@ -166,36 +188,39 @@ function tow_dataset_summary(&$node) {
             'table' => tow_table($table_node, $display_options)
           );
         }
-
-        /*  $view1 = views_get_view('dataset');
-         $a = $view1->execute_display('default', $node->nid);
-         */
-        //$node->summary['view_table']['stats'] = views_embed_view('dataset', 'default', $node->nid);
-        //$a = views_embed_view('dataset', 'page_1', $node->nid);
-        //x($a);
-        // x($node->summary['table_stats']['stats']);
-
       }
-
-
     }
+
     // List of saved searches
     // get info on the saved searches
-    $ss_results = db_query("SELECT `ctss`.`nid`, `n`.`title`, `ctss`.`field_results_qty_value`" . //", `ctss`.`field_url_value`" . 
-            "FROM {content_type_saved_search} `ctss`
-            LEFT JOIN {node} `n`
-            ON `n`.`nid` = `ctss`.`nid`
-            WHERE `ctss`.`field_dataset_nid_value` = %d", $node->nid);
+    $ss_results = db_query("
+    
+      SELECT 
+        ctss.nid AS nid, 
+        n.title AS title, 
+        ctss.field_search_constraints_value AS field_search_constraints_value 
+        
+        FROM 
+            {content_type_saved_search} ctss 
+          LEFT JOIN 
+            {node} n
+            ON 
+              n.nid = ctss.nid
+            
+        WHERE 
+          ctss.field_dataset_nid_value = %d
+          
+    ", $node->nid);
     $ss_qty = 0; // ss counter
     $ss_list = array(); // list of saved search titles w/links
     while ($ss_res = db_fetch_array($ss_results)) {
       $ss_qty ++;
       // limit list of titles size
       if ($ss_qty <= 4) {
-        $results_str = ' (' . (int)$ss_res['field_results_qty_value'] . " result" .
-                        (($ss_res['field_results_qty_value'] != 1) ? 's)' : ')');
+        //$results_str = ' (' . (int)$ss_res['field_results_qty_value'] . " result" .
+        //                (($ss_res['field_results_qty_value'] != 1) ? 's)' : ')');
         //$ss_list[]  = l($ss_res['title'], $ss_res['field_url_value']) . $results_str;
-        $ss_list[] = l($ss_res['title'], 'search_dataset/' . $node->nid) . $results_str ;
+        $ss_list[] = l($ss_res['title'], 'search_dataset/' . $node->nid . '#?filters=' . $ss_res['field_search_constraints_value']);// . $results_str ;
       }
     };
     // put info into 'saved_searches' block of the summary  
@@ -208,6 +233,40 @@ function tow_dataset_summary(&$node) {
   tow_dataset_prepare_badge_block($node, count($tables_list));
 
 }
+
+function tow_dataset_refresh_table_samples_ajax_callback($dnid) {
+  $dataset = node_load($dnid);
+  tow_dataset_summary($dataset);
+  
+  $output = '';
+  if (isset($dataset->summary['view_table'])) {
+    $output .= '<div class="sample-tables">';
+    $output .= '<span class="field-label">Some random samples from this data set</span>';
+    $output .= '<span>&nbsp;(<a href= "node/' . $dataset->nid . '">refresh</a> for a new sample)</span>';
+    foreach ($dataset->summary['view_table'] as $t) {
+      $output .= '<div class="random-table">';
+      $output .= $t['title'];
+      $output .= $t['table'];
+      $output .= '</div>';
+    }
+    $output .= '</div>';
+  }
+  
+  return drupal_json(array('samples' => $output));
+}
+
+function tow_dataset_access_ajax_callback($dnid) {
+  $dataset = node_load($dnid);
+  $access = $_GET['access'];
+  $confirm = (isset($_GET['confirm']) && $_GET['confirm'] == 'true') ? TRUE : FALSE;
+  if ($confirm) {
+    $dataset->field_access_type[0]['value'] = $access;
+    node_save($dataset);
+  }
+  
+  return drupal_json(array('selected' => $dataset->field_access_type[0]['value']));
+}
+
 /**
  * @return formatted table of dataset tables
  */
@@ -219,11 +278,19 @@ function tow_dataset_tables($dataset_nid) {
 
   // Table nids and titles
   $table_titles_res = db_query("
-    SELECT `table`.nid AS `nid`, `node`.title AS `title` 
-    FROM {content_type_table} `table`
-    LEFT JOIN {node} `node`
-      ON `table`.nid = `node`.nid
-    WHERE `table`.field_dataset_value = %d
+    SELECT 
+      t.nid AS nid, 
+      n.title AS title 
+      
+      FROM 
+          {content_type_table} t
+        LEFT JOIN 
+          {node} n 
+          ON 
+            t.nid = n.nid 
+
+      WHERE 
+        t.field_dataset_value = %d 
     ", $dataset_nid);
    
   // for each table
@@ -232,10 +299,18 @@ function tow_dataset_tables($dataset_nid) {
     // Title with link
     $row[] = array('data' => l($rs['title'], 'table/' . $rs['nid']));
     // number of records
-    $row[] = array('data' => db_result(db_query('
-      SELECT COUNT(*) 
-      FROM {content_type_record} 
-      WHERE field_table_value = %d', $rs['nid'])));
+    $row[] = array('data' => db_result(db_query("
+      
+      SELECT 
+        COUNT(*) AS c
+      
+        FROM 
+          {content_type_record} r 
+        
+        WHERE 
+          r.field_table_value = %d
+
+    ", $rs['nid'])));
     // number of fields
     $table_node = node_load($rs['nid']);
     $table_fields = _tow_get_table_fields($table_node);
@@ -305,10 +380,32 @@ function _tow_dataset_admin_tasks($node) {
  */
 function _tow_dataset_count_all($uid) {
   $res = db_query("
-      SELECT COUNT(*) AS c FROM {node} WHERE uid = %d AND type = 'table'
-    UNION ALL
-      SELECT COUNT(*)AS c FROM {node} WHERE uid = %d AND type = 'record'
-    ", $uid, $uid);
+      
+      SELECT 
+        COUNT(*) AS c 
+        
+        FROM 
+          {node} n 
+        
+        WHERE 
+            n.uid = %d 
+          AND 
+            n.type = 'table'
+      
+    UNION ALL 
+      
+      SELECT 
+        COUNT(*) AS c 
+        
+        FROM 
+          {node} n 
+        
+        WHERE 
+            n.uid = %d 
+          AND 
+            n.type = 'record'
+
+  ", $uid, $uid);
 
   $data[] = db_fetch_array($res);
   $data[] = db_fetch_array($res);
@@ -333,12 +430,20 @@ function tow_dataset_prepare_badge_block($node, $count_tables) {
 
 
   $dataset_count_records = db_result(db_query("
-    SELECT COUNT(*) AS qty
-  FROM {content_type_record} r 
-  INNER JOIN {content_type_table} t
-    ON r.field_table_value = t.nid
-    AND t.field_dataset_value = %d",
-  $node->nid));
+    
+    SELECT 
+      COUNT(*) AS qty 
+  
+      FROM 
+          {content_type_record} r 
+        INNER JOIN 
+          {content_type_table} t
+          ON 
+              r.field_table_value = t.nid
+            AND 
+              t.field_dataset_value = %d
+  
+  ", $node->nid));
 }
 
 /**
@@ -444,7 +549,7 @@ function tow_dataset_maintenance_confirm(&$form_state, $nid) {
   }
 
   global $user;
-  if ($user->uid != $dataset->uid && !user_access('edit any dataset content')) {
+  if ($user->uid != $dataset->uid && !user_access('edit any dataset')) {
     drupal_access_denied();
     die();
   }

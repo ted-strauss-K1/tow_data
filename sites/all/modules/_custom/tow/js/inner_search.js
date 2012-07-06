@@ -1,4 +1,4 @@
-Drupal.behaviors.outer_search = function(context) {
+Drupal.behaviors.inner_search = function(context) {
   var handleHeight = 15,
     handleWidth = 6,
     handleBorder = 1,
@@ -360,22 +360,6 @@ Drupal.behaviors.outer_search = function(context) {
 	  },
 	  
 	  success: function(data) {
-		/*function getUrlVars() {
-			var vars = {};
-			var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
-				vars[key] = value;
-			});
-			return vars;
-		}		  
-		
-		var first = getUrlVars()["filters"];
-		var second = getUrlVars()["zoom"];
- 
-		alert(first);
-		alert(second);		  */
-		
-		
-		
 		
         var html = data.block;
 		$('div#block-tow-search_inner_facets div.content').html(html);
@@ -420,14 +404,14 @@ Drupal.behaviors.outer_search = function(context) {
 		$('#tow-search-inner-save-search-form').children('div').children('[name="rows_amount"]').val(numberOfRows);	
 		
 		
-        $('#datatable-1').dataTable({
+        var oTable = $('#datatable-1').dataTable({
 		"sDom": 'C<"clear">frti',
 		"oColVis": {
 		  "fnLabel": function ( index, title, th ) {
 		    return (index+1) +'. '+ title;
 		  }
 		},
-
+		
 		
 		/*"sDom": '<"H"fr>tC<"F"ip>',
 		"bJQueryUI": true,
@@ -470,10 +454,10 @@ Drupal.behaviors.outer_search = function(context) {
 		//"sAjaxSource": window.location.pathname + '/refresh_ajax?filters=' + filtersToSend,
 		//"sAjaxDataProp": "data.search",
         //"sDom": "frtiS",
-		//"bStateSave": true,
+		"bStateSave": true,
         //"bDeferRender": true,
 		//"bRetrieve": true,
-		//"bScrollInfinite": true
+		//"bScrollInfinite": true,
 		"bScrollCollapse": true,
 		"bPaginate": false,
 		"bFilter": true,
@@ -483,6 +467,8 @@ Drupal.behaviors.outer_search = function(context) {
 		
        
 	    });
+		
+				
 		//oTable.fnClearTable();
 		/*oTable.fnAddData([
 			

@@ -37,6 +37,7 @@ function tow_access_dataset($node) {
           $grey_pma_menu = TRUE;
         }
         else {
+          watchdog('drupal_access_denied();', 'Line: 40', array(), WATCHDOG_DEBUG);
           drupal_access_denied();
           die();
         }
@@ -48,9 +49,22 @@ function tow_access_dataset($node) {
       // dataset summary page
       if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
         if ($user->uid) {
-          $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
+          $status = db_result(db_query("
+          
+            SELECT 
+              tar.status AS status 
+              
+              FROM 
+                {tow_access_requests} tar 
+
+              WHERE 
+                  tar.nid = %d 
+                AND 
+                  tar.uid = %d
+          
+          ", $node->nid, $user->uid));
         }
-        if ($status != 1 && !user_access('edit any dataset content')) {
+        if ($status != 1 && !user_access('edit any dataset')) {
           if (tow_access_bypass_solr())
             return;
           global $grey_pma_menu;
@@ -61,11 +75,24 @@ function tow_access_dataset($node) {
     }
 
     if ($user->uid) {
-      $status = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d", $node->nid, $user->uid));
+      $status = db_result(db_query("
+      
+        SELECT 
+          tar.status 
+          
+          FROM 
+            {tow_access_requests} tar 
+          
+          WHERE 
+              tar.nid = %d 
+            AND 
+              tar.uid = %d
+      
+      ", $node->nid, $user->uid));
     }
     // if user has no access
     if ($status != 1) {
-      if (user_access('edit any dataset content')) {
+      if (user_access('edit any dataset') || $user->uid == 1) {
         return;
       }
       // from dataset summary perform redirect to dataset structure to avoid eternal cycling
@@ -73,6 +100,7 @@ function tow_access_dataset($node) {
         return;
       if ($args[0] == 'node' && $args[1] == $node->nid)
         drupal_goto('dataset/' . $node->nid);
+      watchdog('drupal_access_denied();', 'Line: 78', array(), WATCHDOG_DEBUG);
       drupal_access_denied();
       die();
     }
@@ -146,7 +174,22 @@ function tow_access_type_form_submit($form, &$form_state) {
  */
 function tow_access_request_widget($nid, $uid) {
   
-  $request = db_result(db_query("SELECT status FROM {tow_access_requests} WHERE nid = %d AND uid = %d LIMIT 1", $nid, $uid));
+  $request = db_result(db_query("
+  
+    SELECT 
+      tar.status AS status 
+      
+      FROM 
+        {tow_access_requests} tar 
+      
+      WHERE 
+          tar.nid = %d 
+        AND 
+          tar.uid = %d 
+          
+      LIMIT 1
+  
+  ", $nid, $uid));
   
   if ($request === FALSE)
     return drupal_get_form('tow_access_request_form');
@@ -180,8 +223,20 @@ function tow_access_request_form_submit($form, &$form_state) {
   global $dataset;
   global $user;
   if ($user->uid) {
-    db_query("INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp) VALUES (%d, %d, 0, %d)", $dataset->nid, $user->uid, time());
-  }else {
+    db_query("
+    
+      INSERT 
+        INTO 
+          {tow_access_requests} 
+            (nid, uid, status, request_timestamp) 
+          
+          VALUES 
+            (%d, %d, 0, %d)
+            
+    ", $dataset->nid, $user->uid, time());
+  }
+  else {
+    watchdog('drupal_access_denied();', 'Line: 187', array(), WATCHDOG_DEBUG);
     drupal_access_denied();
     die();
   }
@@ -192,12 +247,26 @@ function tow_access_request_form_submit($form, &$form_state) {
  */
 function tow_access_requests($nid) {
   $res = db_query("
-    SELECT t.request_timestamp, t.status, t.uid, u.name 
-    FROM {tow_access_requests} t INNER JOIN {users} u
-    ON t.uid = u.uid 
-    WHERE t.nid = %d
-    AND u.status = 1
-    ", $nid);
+    
+    SELECT 
+      t.request_timestamp AS request_timestamp, 
+      t.status AS status, 
+      t.uid AS uid, 
+      u.name AS name 
+    
+      FROM 
+          {tow_access_requests} t 
+        INNER JOIN 
+          {users} u
+          ON 
+            t.uid = u.uid 
+    
+      WHERE 
+          t.nid = %d
+        AND 
+          u.status = 1
+
+  ", $nid);
   while ($r = db_fetch_array($res)) {
     
     if ($r['status'] == 1) {
@@ -245,7 +314,7 @@ function tow_access_confirm($form_state, $action, $nid, $uid) {
   global $dataset;
   $dataset = node_load($nid);
   
-  if ($user->uid == $dataset->uid || user_access('edit any dataset content')) {
+  if ($user->uid == $dataset->uid || user_access('edit any dataset')) {
     if (  ($action == 'grant' || $action == 'deny')  && is_numeric($nid) && is_numeric($uid)  ) {
       
       $requester = user_load($uid);
@@ -305,6 +374,7 @@ function tow_access_confirm($form_state, $action, $nid, $uid) {
       
     }
   }
+  watchdog('drupal_access_denied();', 'Line: 311', array(), WATCHDOG_DEBUG);
   drupal_access_denied();
   die();  
 }
@@ -315,19 +385,43 @@ function tow_access_confirm($form_state, $action, $nid, $uid) {
 function tow_access_confirm_submit($form, &$form_state) {
   
   if ($form_state['values']['action'] == 'open') {
-  global $dataset;
-  $dataset->field_access_type[0]['value'] = 0;
-  node_save($dataset);
+    global $dataset;
+    $dataset->field_access_type[0]['value'] = 0;
+    node_save($dataset);
 
-  db_query("DELETE FROM {tow_access_requests} WHERE nid = %d", $form_state['values']['nid']);
+    db_query("
 
-  } else {
+      DELETE 
+      
+        FROM 
+          {tow_access_requests} tar 
+
+        WHERE 
+          tar.nid = %d
+
+    ", $form_state['values']['nid']);
+
+  } 
+  else {
     if ($form_state['values']['action'] == 'grant')
     $status = 1;
     else
     $status = -1;
     
-    db_query("UPDATE {tow_access_requests} SET status = %d WHERE nid = %d AND uid = %d", $status, $form_state['values']['nid'], $form_state['values']['uid']);
+    db_query("
+      
+      UPDATE 
+        {tow_access_requests} 
+        
+        SET 
+          status = %d 
+        
+        WHERE 
+            nid = %d 
+          AND 
+            uid = %d
+            
+    ", $status, $form_state['values']['nid'], $form_state['values']['uid']);
   }
   $form_state['redirect'] = 'node/' . $form_state['values']['nid'];  
 }

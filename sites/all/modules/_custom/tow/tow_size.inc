@@ -26,7 +26,7 @@ function tow_size_all_records($uid) {
     $select .= " SUM(BIT_LENGTH(field_" . $field . "_value)) +";
     $from .= "INNER JOIN content_field_" . $field . " f_" . $field .  " ON r.nid = f_" . $field . ".nid\n"; 
   }
-  
+
   $query = rtrim($select, '+') . "AS sum ". $from . "WHERE n.uid = %d";
 
   return db_result(db_query($query, $uid))/8;

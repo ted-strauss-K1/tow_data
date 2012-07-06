@@ -197,11 +197,11 @@ function tow_record_format_for_search_indexing(&$node) {
   // Adding enum field value 
   unset($node->content['field_enum']);
   foreach ($node->field_enum as $delta => $value) {
-    $enum_options = unserialize(db_result(db_query("SELECT `field_enum_options_value` 
+    $enum_options = unserialize(db_result(db_query("SELECT field_enum_options_value 
                                                     FROM {content_field_enum_options}
-                                                    WHERE `nid` = %d 
-                                                      AND `vid` = %d
-                                                      AND `delta` = %d", 
+                                                    WHERE nid = %d 
+                                                      AND vid = %d
+                                                      AND delta = %d", 
                                                       $table_nid, $table_nid, $delta)));
   $node->content[] = array('#value' => $enum_options[$value['value']] . ' ');
   }
@@ -216,10 +216,10 @@ function tow_record_format_for_search_indexing(&$node) {
   
   // Substitute table_nid by table title
   unset($node->content['field_table']);
-  $node->content[] = array('#value' => db_result(db_query("SELECT `title`
+  $node->content[] = array('#value' => db_result(db_query("SELECT title
                                                    FROM {node}
-                                                   WHERE `nid` = %d 
-                                                   AND `vid` = %d", 
+                                                   WHERE nid = %d 
+                                                   AND vid = %d", 
                                                    $table_nid, $table_nid)));
 }
 

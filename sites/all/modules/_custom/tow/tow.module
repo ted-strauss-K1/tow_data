@@ -34,6 +34,8 @@ define("MAX_FIELDS_IN_TABLE", 20);
  ****************************************************************************************************/
 
 include_once('./' . $module_path . '/tow_table_filter.inc');
+include_once('./' . $module_path . '/tow.db.tables.inc');
+include_once('./' . $module_path . '/tow.cck.inc');
 include_once('./' . $module_path . '/tow_table_sql.inc');
 include_once('./' . $module_path . '/tow_table.inc');
 include_once('./' . $module_path . '/tow_record.inc');
@@ -65,7 +67,16 @@ include_once('./' . $module_path . '/tests/tow_tests.inc');
  * Implementation of hook_init().
  */
 function tow_init() {
-  #
+  if (arg(0) == 'dataset' && arg(1)) {
+    drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
+  }
+  if (arg(0) == 'node' && arg(1)) {
+    $node = node_load(arg(1));
+    if ($node->type == 'dataset') {
+      drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
+    }
+  }
 }
 
 /**
@@ -118,6 +129,24 @@ function tow_menu() {
     'page arguments' => array('tow_dataset_maintenance_confirm', 1),
     'file' => 'tow_dataset.inc',
     'type' => MENU_CALLBACK
+  );
+  
+  $items['dataset/%/ajax/samples'] = array(
+    'title' => 'Refresh table samples', 
+    'page callback' => 'tow_dataset_refresh_table_samples_ajax_callback',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'file' => 'tow_dataset.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  $items['dataset/%/ajax/access'] = array(
+    'title' => 'Change an access to the dataset', 
+    'page callback' => 'tow_dataset_access_ajax_callback',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'file' => 'tow_dataset.inc',
+    'type' => MENU_CALLBACK,
   );
   
   $items['access'] = array(
@@ -280,10 +309,32 @@ function tow_nodeapi(&$node, $op) {
     if ($children_types) {
       foreach ($children_types as $children_type) {
         if ($children_type == 'saved_search') {
-          $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_nid_value` = %d", $children_type, $node->type, $node->nid);
+          $res = db_query("
+          
+            SELECT 
+              n.nid AS nid 
+              
+              FROM 
+                {content_type_%s} n 
+                
+              WHERE 
+                n.field_{%s}_nid_value = %d
+          
+          ", $children_type, $node->type, $node->nid);
         }
         else {
-          $res = db_query("SELECT nid FROM {content_type_%s} WHERE field_{%s}_value = %d", $children_type, $node->type, $node->nid);
+          $res = db_query("
+          
+            SELECT 
+              n.nid AS nid 
+              
+              FROM 
+                {content_type_%s} n 
+              
+              WHERE 
+                n.field_{%s}_value = %d
+          
+          ", $children_type, $node->type, $node->nid);
         }
         while($node_to_delete = db_fetch_object($res))
           node_delete($node_to_delete->nid);
@@ -352,9 +403,6 @@ function tow_nodeapi(&$node, $op) {
     }
   }
   
-  /*
-   * Linking.
-   *
   // Call linking manipulations for tables.
   if ($node->type == 'table') {
     tow_search_inner_queue_table_linking($node, $op);
@@ -364,7 +412,7 @@ function tow_nodeapi(&$node, $op) {
   if ($node->type == 'record') {
     tow_search_inner_queue_record_linking($node, $op);
   }
-  */
+  
 }
 
 /**
@@ -659,6 +707,100 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
 }
 
 /**
+ * Implementation of hook_access().
+ */
+function tow_access($op, $node, $account) {
+  switch ($op) {
+    case 'create':
+      return user_access('create ' . $type, $account) && $account->uid ? TRUE : NULL;
+    case 'delete':
+      return user_access('delete any ' . $type, $account) || (user_access('delete own ' . $type, $account) && ($node->uid == $account->uid)) ? TRUE : NULL;
+    case 'update':
+      return user_access('edit any ' . $type, $account) || (user_access('edit own ' . $type, $account) && ($node->uid == $account->uid)) ? TRUE : NULL;
+    case 'view':
+      return user_access('view ' . $type, $account);
+  }
+}
+
+/**
+ * Implementation of hook_node_info().
+ */
+function tow_node_info() {
+  return array(
+    'dataset' => array(
+      'name' => t('Dataset'),
+      'module' => 'tow',
+      'description' => 'A set of information stored to some group of tables.',
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+    'table' => array(
+      'name' => t('Table'),
+      'module' => 'tow',
+      'description' => 'A combination of records.',
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+    'record' => array(
+      'name' => t('Record'),
+      'module' => 'tow',
+      'description' => 'A piece of data classified by types and sence.',
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+    'linked_record' => array(
+      'name' => t('Linked Record'),
+      'module' => 'tow',
+      'description' => 'A combination of two or more records linked by  common fields.',
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+    'saved_search' => array(
+      'name' => t('Saved Search'),
+      'module' => 'tow',
+      'description' => 'A combination of search constraints for further usage.',
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function tow_perm() {
+  $permissions = array();
+  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search');
+  foreach ($types as $type) {
+    $permissions[] = 'create ' . $type;
+    $permissions[] = 'delete any ' . $type;
+    $permissions[] = 'delete own ' . $type;
+    $permissions[] = 'edit any ' . $type;
+    $permissions[] = 'edit own ' . $type;
+    $permissions[] = 'view ' . $type;
+  }
+  
+  return $permissions;
+}
+
+/**
+ * Implementation of hook_form().
+ */
+function tow_form($node) {
+  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search');
+  if (in_array($node->type, $types)) {
+    $form = array();
+  }
+  
+  return $form;
+}
+
+/**
  * Submit callback for table and dataset editing form
  * Checks whether status of node is changed. If it is changed call tow_maintanance_mode function
  */
@@ -683,10 +825,32 @@ function tow_maintanance_mode($status, $nid, $type) {
     foreach ($children_types as $children_type) {
       
       if ($children_type == 'saved_search') {
-        $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_nid_value` = %d", $children_type, $type, $nid);
+        $res = db_query("
+        
+          SELECT 
+            n.nid AS nid 
+            
+            FROM 
+              {content_type_%s} n 
+              
+            WHERE 
+              n.field_{%s}_nid_value = %d
+        
+        ", $children_type, $type, $nid);
       }
       else {
-        $res = db_query("SELECT `nid` FROM {content_type_%s} WHERE `field_{%s}_value` = %d", $children_type, $type, $nid);
+        $res = db_query("
+        
+          SELECT 
+            n.nid AS nid 
+            
+            FROM 
+              {content_type_%s} n 
+              
+            WHERE 
+              n.field_{%s}_value = %d
+        
+        ", $children_type, $type, $nid);
       }
    
       if ($type == 'dataset')
@@ -713,7 +877,7 @@ function tow_cron() {
   tow_search_cron();
   tow_import_cron();
   tow_search_inner_cron();
-  # tow_search_inner_linked_cron();
+  tow_search_inner_linked_cron();
 }
 
 /**
@@ -765,18 +929,27 @@ function _tow_bool_to_int($value) {
 function tow_table_list($nid) {
 
   $tables_res = db_query("
-    SELECT n.nid, n.title 
-    FROM {content_type_table} t
-    LEFT JOIN {node} n
-      ON t.nid = n.nid
-    WHERE t.field_dataset_value = %d
+    
+    SELECT 
+      n.nid AS nid, 
+      n.title AS title 
+      
+      FROM 
+          {content_type_table} t 
+        LEFT JOIN 
+          {node} n
+          ON t.nid = n.nid 
+
+      WHERE 
+        t.field_dataset_value = %d 
+
     ", $nid);
   
   $tables = array();
   
   while($table = db_fetch_array($tables_res))
     $tables[$table['nid']] = $table['title'];
-  
+  dpm($tables);
   return $tables;
 }
 

@@ -26,7 +26,7 @@ function tow_table_filter() {
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,  
   );
-  
+
   $form['table_filter']['field'] = array(
     '#type' => 'select',
     '#options' => array(),

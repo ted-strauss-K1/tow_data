@@ -132,15 +132,23 @@ function tow_export_form_submit($form, &$form_state) {
   else {
     // get nids of all tables in the dataset   
     $table_nids_res = db_query("
-    SELECT `nid`
-    FROM {content_type_table} `t` 
-    WHERE `t`.field_dataset_value = %d", $dataset_nid);
+
+      SELECT 
+        t.nid 
+
+        FROM 
+          {content_type_table} t 
+
+        WHERE 
+          t.field_dataset_value = %d 
+
+    ", $dataset_nid);
     $table_nids = array();
     while ($rs = db_fetch_array($table_nids_res)) {
       $table_nids[] = strtolower($rs['nid']);
     }
   }
-  
+
   // 1 Read table data
   $export_data = array();
   $export_data['table_qty'] = 0;
@@ -313,18 +321,18 @@ function tow_export_form_submit($form, &$form_state) {
     foreach ($export_data['table_titles'] as $table_index => $table_title) {
       // 2.2.b.1 Create new table
       // Table title
-      $SQL_request = "CREATE TABLE IF NOT EXISTS `" . $table_title . "` (\n";
+      $SQL_request = "CREATE TABLE IF NOT EXISTS " . $table_title . " (\n";
 
       foreach($export_data['column_titles'][$table_index] as $column_index => $column_title) {
         // Column titles 
-        $SQL_request .= "  `" . $column_title . "` ";
+        $SQL_request .= "  " . $column_title . " ";
         // Column types 
         $SQL_request .= _tow_export_get_sql_type($export_data['column_types'][$table_index][$column_index]) . "\n";
       } // column titles loop
       
       foreach ($export_data['key_column_titles'][$table_index] as $column_index => $column_title) {
         // Keys 
-        $SQL_request .= "  KEY `" . $column_title . "` (`" . $column_title . "`),\n";
+        $SQL_request .= "  KEY " . $column_title . " (" . $column_title . "), ";
       }
       
       $SQL_request = substr($SQL_request, 0, -2);
@@ -332,10 +340,10 @@ function tow_export_form_submit($form, &$form_state) {
       $SQL_requests .= $SQL_request . "\n";
       
       // 2.2.b.2 Insert values into the table
-      $SQL_request = "INSERT INTO `" . $table_title . "` (";
+      $SQL_request = "INSERT INTO " . $table_title . " (";
       // Column titles
       foreach($export_data['column_titles'][$table_index] as $column_title) {
-        $SQL_request .= "`" . $column_title . "`, ";
+        $SQL_request .= "" . $column_title . ", ";
       } 
       $SQL_request = substr($SQL_request, 0, -2);
       $SQL_request .= ") VALUES\n";

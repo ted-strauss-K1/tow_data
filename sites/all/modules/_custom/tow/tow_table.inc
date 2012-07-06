@@ -770,7 +770,7 @@ function tow_table_structure_blanks($table_nid, $delta, $type) {
       WHERE r.field_table_value = %d
       AND x.delta = %d
     ) / (
-      SELECT COUNT(*) FROM `content_type_record` WHERE field_table_value = %d
+      SELECT COUNT(*) FROM content_type_record WHERE field_table_value = %d
     )
     ", $type, $type, $table_nid, $delta, $table_nid)) * 100);
   if ($blanks != 0)

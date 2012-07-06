@@ -69,7 +69,7 @@ function tow_views_dataset_attachment($view, $node) {
   
   global $user;
   $description = $node->teaser . ' ' . l('more', 'node/' . $node->nid);  
-  if ($user->uid == $node->uid  || user_access('edit any dataset content'))
+  if ($user->uid == $node->uid  || user_access('edit any dataset'))
     $edit_description = l('edit description', 'node/' . $node->nid . '/edit');
   
   if (is_array($node->taxonomy) && !empty($node->taxonomy)) {

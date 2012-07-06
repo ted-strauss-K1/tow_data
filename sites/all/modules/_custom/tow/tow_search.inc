@@ -49,9 +49,67 @@ function tow_search_cron() {
    $res = db_query("SELECT nid FROM {node} WHERE type='dataset'");
   while ($node = db_fetch_object($res)) {//watchdog('search',$node->nid);
     sleep(TOW_CRON_HASH_SLEEP);
-    $res1=db_query("CALL dataset_hash_update(%d)", $node->nid);//watchdog('search',($res1==FALSE?'Failed':'Success'));
+    //$res1=db_query("CALL dataset_hash_update(%d)", $node->nid);//watchdog('search',($res1==FALSE?'Failed':'Success'));
+    tow_search_dataset_hash_update($node->nid);//watchdog('search',($res1==FALSE?'Failed':'Success'));
     $res1=db_query("DELETE FROM {cache_content} WHERE cid = 'content:%s:%s'", $node->nid, $node->nid);//watchdog('search',($res1==FALSE?'Failed':'Success'));
   }
   //watchdog('search','Datasets\' hash is updated');
    
+}
+
+function tow_search_dataset_hash_update($nid) {
+  
+  $hash = '';
+  $params = array(
+    array('table' => 'node_revisions', 'field' => 'body', 'alias' => 'table_descriptions'),
+    array('table' => 'tow_field_info', 'field' => 'description', 'alias' => 'field_descriptions'),
+    array('table' => 'node', 'field' => 'title', 'alias' => 'table_names'),
+    array('table' => 'content_field_title_int', 'field' => 'field_title_int_value', 'alias' => 'int_fields'),
+    array('table' => 'content_field_title_char', 'field' => 'field_title_char_value', 'alias' => 'char_fields'),
+    array('table' => 'content_field_title_float', 'field' => 'field_title_float_value', 'alias' => 'float_fields'),
+    array('table' => 'content_field_title_bool', 'field' => 'field_title_bool_value', 'alias' => 'bool_fields'),
+    array('table' => 'content_field_title_text', 'field' => 'field_title_text_value', 'alias' => 'text_fields'),
+    array('table' => 'content_field_title_enum', 'field' => 'field_title_enum_value', 'alias' => 'enum_fields'),
+    array('table' => 'content_field_title_date', 'field' => 'field_title_date_value', 'alias' => 'date_fields'),
+    array('table' => 'content_field_title_datetime', 'field' => 'field_title_datetime_value', 'alias' => 'datetime_fields'),
+    array('table' => 'content_field_title_time', 'field' => 'field_title_time_value', 'alias' => 'time_fields'),
+    array('table' => 'content_field_title_timestamp', 'field' => 'field_title_timestamp_value', 'alias' => 'timestamp_fields'),
+    array('table' => 'content_field_title_code', 'field' => 'field_title_code_value', 'alias' => 'code_fields'),
+  );
+  
+  foreach ($params as $p) {
+    $query = "
+      SELECT 
+        t1.%s AS %s
+
+        FROM 
+            {%s} t1
+          INNER JOIN 
+            {content_type_table} t2 
+            ON 
+              t1.nid = t2.nid 
+
+        WHERE 
+          t2.field_dataset_value = %d
+    ";
+    $query = db_query($query, $p['field'], $p['alias'], $p['table'], $nid);
+    while ($result = db_fetch_object($query)) {
+      $hash .= $result->{$p['alias']} . ' ';
+    }
+  }
+  $hash = trim($hash);
+
+  $query = "
+
+    UPDATE {content_type_dataset} 
+  
+      SET 
+        field_hash_value = '%s' 
+
+      WHERE 
+        nid = %d
+  
+  ";
+  db_query($query, $hash, $nid);
+
 }
