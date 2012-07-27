@@ -1,0 +1,101 @@
+<?php
+
+/**
+ * @file
+ * 
+ * Custom code for Theory on Wheels.
+ */
+
+
+
+/****************************************************************************************************
+ * Hooks
+ ****************************************************************************************************/
+
+/**
+ * Implementation of hook_search().
+ */
+function tow_inner_search_search($op = 'search', $keys = NULL) {
+  
+  switch ($op) {
+    case 'name':
+      return t('Search');
+
+    case 'reset':
+      apachesolr_clear_last_index('apachesolr_search');
+      return;
+
+    case 'status':
+      return apachesolr_index_status('apachesolr_search');
+
+    case 'search':
+      $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
+      $solrsort = isset($_GET['solrsort']) ? $_GET['solrsort'] : '';
+      $page = isset($_GET['page']) ? $_GET['page'] : 0;
+      try {
+        $results = apachesolr_search_execute($keys, $filters, $solrsort, 'search_dataset/' . tow_search_inner_get_nid(), $page, 'tow_inner_search');
+        return $results;
+      }
+      catch (Exception $e) {
+        watchdog('ToW', 'Apache Solr: ' . nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
+        apachesolr_failure(t('Solr search'), $keys);
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_search_page().
+ */
+function tow_inner_search_search_page($results) {
+  
+  // Display parameters for datatable theme.
+  $parameters_full['datatable_options'] = array(
+    'bLengthChange' => FALSE,
+    'bPaginate' => FALSE,      
+    'bFilter' => TRUE,  
+    'bSort' => TRUE,
+    'bInfo' => FALSE,
+    'sScrollX' => '100%',
+    'sScrollY' => '400px',
+    'bScrollCollapse' => TRUE,
+  );
+  
+  return theme('datatable', $results['headers'], $results['rows'], $parameters_full);
+}
+
+
+
+/****************************************************************************************************
+ * Apachesolr hooks
+ ****************************************************************************************************/
+
+/**
+ * Implementation of hook_finalize_query().
+ */
+function tow_inner_search_finalize_query(&$query, &$params) {
+  
+  foreach ($params['fq'] as &$filter) {
+  $tag = ''; 
+  if (preg_match('/(?<=^\()\w{1,}(?=:)/', $filter, $matches)) {
+    $tag = $matches[0];
+  }
+  elseif (preg_match('/(?<=^)\w{1,}(?=:)/', $filter, $matches)) {
+    $tag = $matches[0];
+  }
+  elseif (preg_match('/(?<=^\(-)\w{1,}(?=:)/', $filter, $matches)) {
+    $tag = $matches[0];
+  }
+  
+  // Filter for empty field values.
+  $filter = preg_replace('/-(sis|fs|ss|bs|ts|sts|ds)_tow_field_(int|char|float|bool|text|enum|date|datetime|time|timestamp|code)_\d{1,}:\[\* TO \*\]/', '(*:* $0)', $filter);
+  if (preg_match('/\(?(ss|ts|sts)_tow_field_/', $filter, $matches)) {
+    $filter = preg_replace('/(?<!\\\\)--/', '\\ ', $filter);
+    $filter = preg_replace('/\\\\--/', '--', $filter);
+    $filter = '{!edismax tag=' . $tag . '}'. $filter;
+  }
+  elseif ($tag) 
+    $filter = '{!tag=' . $tag . '}' . $filter;  
+  }
+  
+}

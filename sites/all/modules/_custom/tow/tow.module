@@ -1,0 +1,1369 @@
+<?php
+
+/**
+ * @file
+ * 
+ * Custom code for Theory on Wheels.
+ */
+
+
+
+/****************************************************************************************************
+ * Global variables
+ ****************************************************************************************************/
+
+$module_path = drupal_get_path('module', 'tow');
+
+
+
+/****************************************************************************************************
+ * Constants
+ ****************************************************************************************************/
+
+define("MIN_FIELDS_IN_TABLE", 1);
+define("MAX_FIELDS_IN_TABLE", 20);
+define("TOW_CRON_HASH_SLEEP", 0);
+
+
+
+/****************************************************************************************************
+ * Requirements
+ ****************************************************************************************************/
+
+module_load_include('inc', 'tow', 'includes/tow.access');
+module_load_include('inc', 'tow', 'includes/tow.apachesolr');
+module_load_include('inc', 'tow', 'includes/tow.dataset');
+module_load_include('inc', 'tow', 'includes/tow.debug');
+module_load_include('inc', 'tow', 'includes/tow.field');
+module_load_include('inc', 'tow', 'includes/tow.import');
+module_load_include('inc', 'tow', 'includes/tow.invite');
+module_load_include('inc', 'tow', 'includes/tow.pma_menu');
+module_load_include('inc', 'tow', 'includes/tow.record');
+module_load_include('inc', 'tow', 'includes/tow.register');
+module_load_include('inc', 'tow', 'includes/tow.saved_searches');
+module_load_include('inc', 'tow', 'includes/tow.search_inner');
+module_load_include('inc', 'tow', 'includes/tow.search_inner_linked');
+module_load_include('inc', 'tow', 'includes/tow.search_outer');
+module_load_include('inc', 'tow', 'includes/tow.statistics');
+module_load_include('inc', 'tow', 'includes/tow.table');
+module_load_include('inc', 'tow', 'includes/tow.tests');
+module_load_include('inc', 'tow', 'includes/tow.views');
+
+
+
+/****************************************************************************************************
+ * Hooks
+ ****************************************************************************************************/
+
+/**
+ * Implementation of hook_access().
+ */
+function tow_access($op, $node, $account) {
+  switch ($op) {
+  
+    // Check if a user is allowed to create the node.
+    case 'create':
+      return user_access('create ' . $node->type, $account) && $account->uid ? TRUE : NULL;
+    
+    // Check if a user is allowed to delete the node.
+    case 'delete':
+      return user_access('delete any ' . $node->type, $account) || (user_access('delete own ' . $node->type, $account) && ($node->uid == $account->uid)) ? TRUE : NULL;
+    
+    // Check if a user is allowed to edit the node.
+    case 'update':
+      return user_access('edit any ' . $node->type, $account) || (user_access('edit own ' . $node->type, $account) && ($node->uid == $account->uid)) ? TRUE : NULL;
+    
+    // Check if a user is allowed to view the node.
+    case 'view':
+      return user_access('view ' . $node->type, $account);
+  }
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function tow_block($op = 'list', $delta = 0) {
+  
+  // Case 'list' option.
+  if ($op == 'list') {
+    
+    // Information properties.
+    $blocks['create_table']['info'] = t('Create table');
+    $blocks['pma_menu']['info'] = t('PhpMyAdmin menu'); 
+    $blocks['dataset_badge']['info'] = t('Dataset badge');
+    $blocks['dataset_stats']['info'] = t('Dataset statistics');
+    $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
+    $blocks['search_outer_results']['info'] = t('Outer search: Results');
+    $blocks['search_outer_filter']['info'] = t('Outer search: Filters');
+    $blocks['search_outer_number_of_results']['info'] = t('Outer search: Number of results');
+    $blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
+    $blocks['search_inner_facets']['info'] = t('Inner search: facets block');
+    $blocks['search_inner_simple_search']['info'] = t('Inner search: simple search block');
+    $blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables od a dataset');
+    
+    // Facets info.
+    $enabled_facets = apachesolr_get_enabled_facets('tow');
+    $facets = tow_apachesolr_facets();
+    
+    
+    // Add the facet blocks.
+    foreach ($enabled_facets as $delta => $facet_field) {
+      if (isset($facets[$delta])) {
+        $blocks[$delta] = $facets[$delta] + array('cache' => BLOCK_CACHE_PER_PAGE);
+      }
+    }
+    
+    return $blocks;
+  }
+  
+  // Case 'view' option.
+  elseif ($op == 'view') {
+    if (user_access('access content')) {
+      
+      // 'Create table' block.
+      if ($delta == 'create_table') { 
+        return tow_dataset_create_table_block();
+      }
+      
+      // 'PhpMyAdmin menu' block.
+      if ($delta == 'pma_menu') {
+        return tow_pma_menu_block();
+      }
+      
+      // 'Dataset badge' block.
+      if ($delta == 'dataset_badge') {
+        return tow_dataset_badge_block();
+      }
+      
+      // 'Dataset statistics' block.
+      if ($delta == 'dataset_stats') {
+        return tow_dataset_stats_block();
+      }
+      
+      // 'Table Content/Structure switch' block.
+      if ($delta == 'table_display_switch') {
+        return tow_table_display_switch_block();
+      }
+      
+      // 'Outer search: Filters' block.
+      if ($delta == 'search_outer_filter') {
+        return tow_search_outer_filter_block();
+      }      
+      
+      // 'Outer search: Number of results' block.
+      if ($delta == 'search_outer_number_of_results') {
+        return tow_search_outer_number_of_results_block();
+      }
+      
+      // 'Outer search: Tabs for outer search' block.
+      if ($delta == 'search_outer_tabs') {
+        return tow_search_outer_tabs_block();
+      }
+      
+      // 'Outer search: Results' block.
+      if ($delta == 'search_outer_results') {
+        return tow_search_outer_results_block();
+      }
+      
+      // 'Inner search: facets block' block.
+      if ($delta == 'search_inner_facets') {
+        drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
+        return tow_search_inner_widgets_block();
+      }
+      
+      // 'Inner search: simple search block' block.
+      if ($delta == 'search_inner_simple_search') {
+        return tow_search_inner_simple_search_block();
+      }
+      
+      // 'Inner search: list of separate and linked tables od a dataset' block.
+      if ($delta == 'search_inner_list_of_tables') {
+        return tow_search_inner_linked_list_of_tables_block();
+      }
+      
+      // Block of facets for amount of tables (test facet block).
+      if ($delta == 'sis_tow_amount_tables') {
+        return tow_search_outer_sis_tow_amount_tables_block();
+      }
+    }
+  }
+  
+  // Case 'configure' option.
+  elseif ($op == 'configure') {
+    if (user_access('access content')) {
+      if ($delta == 'sis_tow_amount_tables') {
+        return apachesolr_facetcount_form('sis_tow_amount_tables', $delta);
+      }
+    }
+  }
+  
+  // Case 'save' option.
+  elseif ($op == 'save') {
+    if (user_access('access content')) {
+      if ($delta == 'sis_tow_amount_tables') {
+        return apachesolr_facetcount_save($edit);
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function tow_cron() {
+  
+  // Create dataset categories if necessary.
+  // tow_create_dataset_categories();
+  
+  // Search part of the cron.
+  tow_search_cron();
+  
+  // Import part of the cron.
+  tow_import_cron();
+  
+  // Inner search within the cron.
+  tow_search_inner_cron();
+  
+  // Linked records inner search section.
+  tow_search_inner_linked_cron();
+}
+
+/**
+ * Implementation of hook_form().
+ */
+function tow_form($node) {
+  
+  // Define node types this module implements.
+  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search');
+  
+  // Add an empty form for each of the node types.
+  // This is necessary for CCK fields to be added programmatically during installation.
+  // All the other necessary form elements are added to the forms of these node types via hook_form_alter().
+  if (in_array($node->type, $types)) {
+    $form = array();
+  }
+  
+  return $form;
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function tow_form_alter(&$form, &$form_state, $form_id) {  
+  
+  // Add an extra submit handler for dataset and table forms for checking the status has been changed.
+  if ($form_id == 'dataset_node_form' || $form_id == 'table_node_form') {
+    $form['#submit'][] = 'tow_submit_maintanance_mode';
+  }
+  
+  // Call special callbacks for some kinds of forms.
+  switch ($form_id) {
+    
+    // Dataset node form.
+    case 'dataset_node_form':
+      tow_dataset_form_alter(&$form, $form_state);
+      break;
+      
+    // Table node form.
+    case 'table_node_form':
+      tow_table_form_alter(&$form, $form_state);
+      break;
+    
+    // Record node form.
+    case 'record_node_form':
+      tow_record_form_alter(&$form, $form_state);
+      break;
+    
+    // User registration form.
+    case 'user_register':
+      tow_register_form_alter($form, $form_state);
+      break;
+  }
+  
+  // Altering deletion and truncation forms.
+  if ($form_id == 'node_delete_confirm' || $form_id == 'tow_table_truncate_confirm') {
+    
+    // Load a node object.
+    $node = node_load($form['nid']['#value']);
+    
+    // Altering depends on node type.
+    switch ($node->type) {
+      
+      // Dataset.
+      case 'dataset':
+        global $_tow_dataset;
+        
+        // Save necessary dataset properties.
+        $_tow_dataset = (object)(array('nid' => $node->nid, 'title' => $node->title));
+        break;
+        
+      // Table.
+      case 'table':
+        global $_tow_dataset;
+        global $_tow_table;
+        
+        // Load a dataset current table belongs to and save necessary dataset properties.
+        $_tow_dataset = node_load($node->field_dataset['0']['value']);
+        $_tow_dataset = (object)array('nid' => $_tow_dataset->nid, 'title' => $_tow_dataset->title);
+        
+        // Save necessary table properties.
+        $_tow_table = (object)array('nid' => $node->nid, 'title' => $node->title);
+        break;
+        
+      // Record.
+      case 'record':
+        global $_tow_dataset;
+        global $_tow_table;
+        
+        // Load a dataset and a table current record belongs to and save necessary properties.
+        $_tow_table = node_load($node->field_table['0']['value']);
+        $_tow_dataset = node_load($_tow_table->field_dataset['0']['value']);
+        $_tow_dataset = (object)array('nid' => $_tow_dataset->nid, 'title' => $_tow_dataset->title);
+        $_tow_table = (object)array('nid' => $_tow_table->nid, 'title' => $_tow_table->title);
+        break;
+    }
+  
+  }
+  
+  // Add cancel button to record, table and dataset node editing and user register forms.
+  if ($form_id == 'record_node_form' || $form_id == 'table_node_form' || $form_id == 'dataset_node_form' || $form_id == 'user_register') {
+    $form['buttons']['cancel'] = array(
+      '#type' => 'submit',
+      '#value' => t('Cancel'),
+      '#weight' => 20
+    );
+  }
+  
+}
+
+/**
+ * Implementation of hook_init().
+ */
+function tow_init() {
+
+  // Add dataTables representation to the "Browse dataset" page and include collapsible table descriptions in there.
+  if (arg(0) == 'dataset' && arg(1)) {
+    drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
+  }
+  
+  // Add Ajax handling to "Overview dataset" page.
+  if (arg(0) == 'node' && arg(1)) {
+    $node = node_load(arg(1));
+    if ($node->type == 'dataset') {
+      drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
+    }
+  }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function tow_menu() {
+  $items = array();
+  
+  // Dataset creation link.
+  $items['data'] = array(
+    'access arguments' => array('access content'),
+    'title' => 'Data',
+    'page callback' => 'tow_data',
+    'menu_name' => 'primary-links',
+  );
+  
+  // Table node.
+  $items['table'] = array(
+    'access arguments' => array('access content'),
+    'page arguments' => array(1),
+    'page callback' => 'tow_table_page_callback',
+    'file' => 'includes/tow.table.inc',
+  );
+
+  // Truncate table.
+  $items['table/%/truncate'] = array(
+    'title' => 'Truncate',  
+    'access arguments' => array('delete own record'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_table_truncate_confirm', 1),
+    'file' => 'includes/tow.table.inc',
+    'type' => MENU_CALLBACK
+  );
+  
+  // Field description.
+  $items['field'] = array(
+    'title' => 'Field Description',  
+    'access arguments' => array('access content'),
+    'page callback' => 'tow_field_description_callback',
+    'page arguments' => array(2),
+    'file' => 'includes/tow.field.inc',
+    'type' => MENU_CALLBACK
+  );
+  
+  // Maintenance mode.
+  $items['dataset/%/maintenance'] = array(
+    'title' => 'Maintenance mode',
+    'access arguments' => array('edit own dataset'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_dataset_maintenance_confirm', 1),
+    'file' => 'includes/tow.dataset.inc',
+    'type' => MENU_CALLBACK
+  );
+  
+  // Page for refreshing table samples with Ajax.
+  $items['dataset/%/ajax/samples'] = array(
+    'title' => 'Refresh table samples', 
+    'page callback' => 'tow_ajax_handlers_dataset_refresh_table_samples',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Page for changing an access type with Ajax.
+  $items['dataset/%/ajax/access'] = array(
+    'title' => 'Change an access to the dataset', 
+    'page callback' => 'tow_ajax_handlers_dataset_access_type',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Access actions.
+  $items['access'] = array(
+    'title' => NULL,
+    'access arguments' => array('edit own dataset'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_access_confirm', 1, 2, 3),
+    'file' => 'includes/tow.access.inc',
+    'type' => MENU_CALLBACK
+  );
+  
+  // Field deletion confirmation page.
+  $items['field_delete'] = array(
+    'title' => NULL,
+    'access arguments' => array('edit own table'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_field_delete_confirm', 1, 2, 3, 4),
+    'file' => 'includes/tow.field.inc',
+    'type' => MENU_CALLBACK
+  );
+  
+  // Interface for field editing.
+  $items['field_edit'] = array(
+    'title' => NULL,
+    'access arguments' => array('edit own table'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_field_edit_form', 1, 2, 3, 4),
+    'file' => 'includes/tow.field.inc',
+    'type' => MENU_CALLBACK
+  );
+  
+  // Invitation form.
+  $items['invite'] = array(
+    'title' => NULL,
+    'access arguments' => array('edit own dataset'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_invite_form', 1),
+    'file' => 'includes/tow.invite.inc',
+    'type' => MENU_CALLBACK
+  );
+  
+  // Callback for AHAH add more buttons.
+  $items['add-more-feeds/js'] = array(
+    'page callback' => 'tow_ajax_handlers_register_add_more',
+    'access arguments' => array('access content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Import form.
+  $items['import/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_import_form', 1),
+    'access arguments' => array('edit own dataset'),
+    'file' => 'includes/tow.import.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Ajax handler for import progress.
+  $items['import_progress_get'] = array(
+    'page callback' => 'tow_ajax_handlers_import_progress_get',
+    'page arguments' => array(1, 2),
+    'access arguments' => array('edit own dataset'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Upload dragged items.
+  $items['import/upload_dragged'] = array(
+    'page callback' => 'tow_import_dragged',
+    'access arguments' => array('edit own dataset'),
+    'file' => 'includes/tow.import.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Upload selected items.
+  $items['import/upload_selected'] = array(
+    'page callback' => 'tow_import_selected',
+    'page arguments' => array(2, 3, 4),
+    'access arguments' => array('edit own dataset'),
+    'file' => 'includes/tow.import.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Grab info.
+  $items['import_grab'] = array(
+    'page callback' => 'tow_import_grab',
+    'page arguments' => array(1, 2, 3, 4),
+    'access arguments' => array('edit own dataset'),
+    'file' => 'includes/tow.import.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Page for inner search within dataset.
+  $items['search_dataset'] = array(
+    'page callback' => 'tow_search_inner_within_dataset_callback',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'file' => 'includes/tow.search_inner.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Ajax handler for refreshing search results.
+  $items['search_dataset/%/refresh_ajax'] = array(
+    'title' => 'Refresh search results', 
+    'page callback' => 'tow_ajax_handlers_refresh_search_results',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Export form.
+  $items['export/%'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_export_form', 1),
+    'access arguments' => array('edit own dataset'),
+    'file' => 'includes/tow.export.inc',
+    'type' => MENU_CALLBACK,
+  );  
+  
+  // Home page (outer search through datasets).
+  $items['home'] = array(
+    'page callback' => 'tow_search_outer_view',
+    'access arguments' => array('search content'),
+    'file' => 'includes/tow.search_outer.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // Newest datasets.
+  $items['newest'] = array(
+    'page callback' => 'tow_search_outer_view',
+    'access arguments' => array('search content'),
+    'file' => 'includes/tow.search_outer.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // Popular datasets.
+  $items['popular'] = array(
+    'page callback' => 'tow_search_outer_view',
+    'access arguments' => array('search content'),
+    'file' => 'includes/tow.search_outer.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Ajax handler for outer search.
+  $items['search_outer_ajax'] = array(
+    'page callback' => 'tow_ajax_handlers_search_outer',
+    'access arguments' => array('search content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Ajax handler for zooming options.
+  $items['search_inner_zoom_ajax'] = array(
+    'page callback' => 'tow_ajax_handlers_field_zooming',
+    'access arguments' => array('search content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+  );
+
+  // Add test menu items.
+  $items = array_merge($items, tow_tests_menu());
+  
+  return $items;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function tow_nodeapi(&$node, $op) {
+  global $user;
+  
+  // Delete all records having reference to the table being deleted.
+  // Delete all tables and saved searches having reference to the dataset being deleted.
+  if ($op == 'delete') {    
+    $children_types = _tow_children_type($node->type);
+    if ($children_types) {
+      foreach ($children_types as $children_type) {
+        if ($children_type == 'saved_search') {
+          $res = db_query("
+          
+            SELECT 
+              n.nid AS nid 
+              
+              FROM 
+                {content_type_%s} n 
+                
+              WHERE 
+                n.field_{%s}_nid_value = %d
+          
+          ", $children_type, $node->type, $node->nid);
+        }
+        else {
+          $res = db_query("
+          
+            SELECT 
+              n.nid AS nid 
+              
+              FROM 
+                {content_type_%s} n 
+              
+              WHERE 
+                n.field_{%s}_value = %d
+          
+          ", $children_type, $node->type, $node->nid);
+        }
+        while ($node_to_delete = db_fetch_object($res))
+          node_delete($node_to_delete->nid);
+      }
+    }
+  }
+
+  // Save current dataset to the global $_tow_dataset variable.
+  if ($op == 'view') {
+    if ($node->type == 'dataset') {
+      global $_tow_dataset;
+      $_tow_dataset = $node;
+    }
+  }
+
+  // View options for the dataset. 
+  if ($node->type == 'dataset' && $op == 'view') {
+    tow_dataset_hide_hash($node);
+    tow_statistics_dataset_extract($node->nid);
+    tow_dataset_summary($node);
+    tow_statistics_dataset_update($node);
+  }
+  
+  // Add table structure to table node.
+  if ($node->type == 'table' && $op == 'view') {
+    tow_statistics_table_extract($node->nid);
+    tow_table_structure($node);
+    tow_statistics_table_update($node);
+  }
+  
+  // Redirect from node/[record-nid] to node/[record-nid]/edit.
+  // Redirection is not performed if it is the solr who tries to access the page.
+  if  ($node->type == 'record' && $op == 'view') {
+    if (!tow_access_bypass_solr()) {
+      drupal_goto('node/' . $node->nid . '/edit', NULL, NULL, 301);
+    }
+    else {
+      tow_record_format_for_search_indexing($node);
+    }
+  }
+  
+  // Set access to the dataset.
+  if ($op == 'load' && $node->type == 'dataset') {
+    tow_access_dataset($node);
+  }
+  
+  // Submit description after table node was inserted.
+  if ($node->type == 'table' && $op == 'insert') {
+    tow_field_descriptions_submit($node->nid);
+  }
+  
+  // Set Null values for Null-marked positions in records.
+  if ($node->type == 'record' && $op == 'presave') {
+    tow_record_set_empty($node);
+  }
+  
+  // Set Null values for Null-marked positions in linked records.
+  if ($node->type == 'linked_record' && $op == 'presave') {
+    _tow_search_inner_linked_set_empty($node);
+  }
+
+  // Call linking manipulations for tables.
+  if ($node->type == 'table') {
+    tow_search_inner_linked_queue_table_linking($node, $op);
+  }
+
+  // Call linking manipulations for records.
+  if ($node->type == 'record') {
+    tow_search_inner_linked_queue_record_linking($node, $op);
+  }
+  
+}
+
+/**
+ * Implementation of hook_node_info().
+ */
+function tow_node_info() {
+  return array(
+    
+    // Dataset.
+    'dataset' => array(
+      'name' => t('Dataset'),
+      'module' => 'tow',
+      'description' => "A set of information stored to some group of tables.",
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+    
+    // Table.
+    'table' => array(
+      'name' => t('Table'),
+      'module' => 'tow',
+      'description' => "A combination of records.",
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+    
+    // Record.
+    'record' => array(
+      'name' => t('Record'),
+      'module' => 'tow',
+      'description' => "A piece of data classified by types and sence.",
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+    
+    // Linked record.
+    'linked_record' => array(
+      'name' => t('Linked Record'),
+      'module' => 'tow',
+      'description' => "A combination of two or more records linked by common fields.",
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+    
+    // Saved search.
+    'saved_search' => array(
+      'name' => t('Saved Search'),
+      'module' => 'tow',
+      'description' => "A combination of search constraints for further usage.",
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_perm().
+ */
+function tow_perm() {
+  $permissions = array();
+  
+  // Node types implemented in this module.
+  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search');
+  
+  // Define basic node permissions for each of the types.
+  foreach ($types as $type) {
+    $permissions[] = 'create ' . $type;
+    $permissions[] = 'delete any ' . $type;
+    $permissions[] = 'delete own ' . $type;
+    $permissions[] = 'edit any ' . $type;
+    $permissions[] = 'edit own ' . $type;
+    $permissions[] = 'view ' . $type;
+  }
+  
+  return $permissions;
+}
+
+/**
+ * Implementation of hook_theme()
+ */
+function tow_theme() {
+  return array(
+    
+    // Generates an output of the form as table.
+    'tow_table_tabular_form' => array(
+      'arguments' => array(
+        'form' => NULL,
+      ),
+      'file' => 'includes/tow.theme.inc',
+    ),
+    
+    // Generates an output of the sortable table.
+    'tow_table_sortable_table' => array(
+      'arguments' => array(
+        'header' => array(),
+        'rows' => array(),
+        'nid' => NULL,
+        'uid' => NULL,
+        'attributes' => array(),
+        'caption' => NULL
+      ),
+      'file' => 'includes/tow.theme.inc',
+    ),
+    
+    // Themes the output of the Dataset badge block content.
+    'tow_theme_dataset_badge' => array(
+      'arguments' => array(
+        'posted_by' => NULL,
+        'count' => NULL,
+        'searches' => NULL,
+        'added' => NULL,
+        'updated' => NULL,
+        'access' => NULL,
+      ),
+      'template' => 'templates/tow.theme.dataset_badge',
+    ),
+    
+    // Dataset attachment.
+    'tow_theme_dataset_attachment' => array(
+      'arguments' => array(
+        'description' => NULL,
+        'edit_description' => NULL,
+        'categories' => NULL,
+        'edit_categories' => NULL,
+      ),
+      'template' => 'templates/tow.theme.dataset_attachment',
+    ),
+    
+    // Returns a link for a facet term, with the number (count) of results for that term.
+    'tow_search_inner_facet_link' => array(
+      'arguments' => array(
+        'facet_text' => NULL, 
+        'path' => NULL, 
+        'options' => NULL, 
+        'count' => NULL, 
+        'active' => FALSE, 
+        'num_found' => NULL
+      ),
+      'file' => 'includes/tow.theme.inc',
+    ),
+    
+    // Returns a link to remove a facet filter from the current search.
+    'tow_search_inner_unclick_link' => array(
+      'arguments' => array(
+        'facet_text' => NULL, 
+        'path' => NULL, 
+        'options' => NULL, 
+        'count' => NULL, 
+        'active' => FALSE, 
+        'num_found' => NULL
+      ),
+      'file' => 'includes/tow.theme.inc',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_search().
+ */
+function tow_search($op = 'search', $keys = NULL) {
+  
+  switch ($op) {
+    case 'name':
+      return t('Search');
+
+    case 'reset':
+      apachesolr_clear_last_index('apachesolr_search');
+      return;
+
+    case 'status':
+      return apachesolr_index_status('apachesolr_search');
+
+    case 'search':
+      
+      // Get parametres.
+      $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
+      $solrsort = isset($_GET['solrsort']) ? $_GET['solrsort'] : '';
+      $page = isset($_GET['page']) ? $_GET['page'] : 0;
+      
+      // Try to get search results...
+      try {
+        $results = apachesolr_search_execute($keys, $filters, $solrsort, tow_search_outer_get_homepage_tab(), $page);
+        return $results;
+      }
+      
+      // ...Make a log entry on failure.
+      catch (Exception $e) {
+        watchdog('ToW', 'Apache Solr: ' . nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
+        apachesolr_failure(t('Solr search'), $keys);
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function tow_user($op, &$edit, &$account) {
+  
+  // Actions on viewing the registration form.
+  if ($op == 'register') {
+    tow_invite_register();
+  }
+  
+  // Actions on creation of a user.
+  if ($op == 'insert') {
+    tow_invite_insert($account);
+    tow_register($edit, $account);
+  }
+  
+}
+
+
+
+/****************************************************************************************************
+ * Views hooks
+ ****************************************************************************************************/
+
+/**
+ * Implementation of hook_views_api().
+ */
+function tow_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'tow') . '/includes',
+  );
+}
+
+
+
+/****************************************************************************************************
+ * Callback functions
+ ****************************************************************************************************/
+
+/**
+ * Submission callback for table and dataset editing form.
+ * Checks whether status of node is changed. If it is changed call tow_maintanance_mode function.
+ */
+function tow_submit_maintanance_mode($form, &$form_state) {
+  if ($form['options']['status']['#default_value'] != $form_state['values']['status']) {
+    tow_maintanance_mode($form_state['values']['status'], $form_state['values']['nid'], $form_state['values']['type']);
+  }
+}
+
+
+
+/****************************************************************************************************
+ * Common functions
+ ****************************************************************************************************/
+
+/**
+ * Creates dataset categories if necessary.
+ */
+function tow_create_dataset_categories() {
+  
+  // Get 'Dataset categories' vocabulary ID.
+  $vid = db_result(db_query("
+  
+    SELECT 
+      v.vid AS vid 
+      
+      FROM 
+        {vocabulary} v
+      
+      WHERE 
+        v.name = '%s' 
+
+  ", 'Dataset categories'));
+
+  // If does not exist.
+  if (!$vid) {
+    $empty = TRUE;
+    $not_created = TRUE;
+  }
+  
+  // Check empty.
+  else {
+    $not_created = FALSE;
+    $empty = (db_result(db_query("
+  
+      SELECT 
+        COUNT(*) 
+      
+        FROM 
+          {term_data} td 
+        
+        WHERE 
+          td.vid = %d 
+
+    ", $vid))) ? FALSE : TRUE;
+  }
+
+  // Needs to be filled.
+  if ($empty) {
+
+    // Needs in creation.
+    if ($not_created) {
+      $vocabulary = array(
+        'name' => t('Dataset categories'),
+        'description' => '',
+        'help' => '',
+        'relations' => 1,
+        'hierarchy' => 0,
+        'multiple' => 0,
+        'required' => 0,
+        'tags' => 0,
+        'module' => 'tow',
+        'weight' => 0,
+        'nodes' => array('dataset' => 'dataset'),
+      );
+      taxonomy_save_vocabulary($vocabulary);
+      $vid = $vocabulary['vid'];
+    }
+  
+    // Create terms.
+    $names = _tow_taxonomy_dataset_categories();
+    foreach ($names as $name) {
+      $term = array(
+        'vid' => $vid,
+        'name' => $name,
+      );
+      taxonomy_save_term($term);
+    }
+  }
+}
+
+/**
+ * Returns a link for creation a dataset.
+ */
+function tow_data() {
+  return l('Create a new dataset', 'node/add/dataset', array('attributes' => array('class' => 'create-dataset-link')));
+}
+
+/**
+ * When table is published/unpublished, perform the same change of status for records connected.
+ * When dataset is published/unpublished, perform the same change of status for tables connected and recursively call this function for each table.
+ */
+function tow_maintanance_mode($status, $nid, $type) {
+  
+  // (Un)publish the node depending on its status.
+  if ($status == 1) {
+    $function = 'node_publish_action'; 
+  }
+  elseif ($status == 0) {
+    $function = 'node_unpublish_action';
+  }
+  
+  // Get children types.
+  $children_types = _tow_children_type($type);
+  
+  if ($children_types) {
+    foreach ($children_types as $children_type) {
+      
+      // Case Saved search.
+      if ($children_type == 'saved_search') {
+        $res = db_query("
+        
+          SELECT 
+            n.nid AS nid 
+            
+            FROM 
+              {content_type_%s} n 
+              
+            WHERE 
+              n.field_{%s}_nid_value = %d
+        
+        ", $children_type, $type, $nid);
+      }
+      
+      // Case any other type.
+      else {
+        $res = db_query("
+        
+          SELECT 
+            n.nid AS nid 
+            
+            FROM 
+              {content_type_%s} n 
+              
+            WHERE 
+              n.field_{%s}_value = %d
+        
+        ", $children_type, $type, $nid);
+      }
+   
+      // Apply actions to the dataset...
+      if ($type == 'dataset')
+        while ($node = db_fetch_object($res)) {
+          $node = node_load($node->nid);
+          $function($node);
+          node_save($node);
+          tow_maintanance_mode($status, $node->nid, $children_type);
+        }
+      
+      // To the other node types.
+      else {
+        while ($node = db_fetch_object($res)) {
+          $node = node_load($node->nid);
+          $function($node);
+          node_save($node);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Declare array of fields that may be used.
+ */
+function tow_possible_fields() {
+  return array('int', 'char', 'float', 'bool', 'text', 'enum', 'date', 'datetime', 'time', 'timestamp', 'code');
+}
+
+/**
+ * Search part of the hook_cron().
+ */
+function tow_search_cron() {
+  
+  $res = db_query("
+  
+    SELECT 
+      n.nid AS nid 
+      
+      FROM 
+        {node} n 
+        
+      WHERE 
+        n.type = '%s' 
+
+  ", 'dataset');
+  
+  while ($node = db_fetch_object($res)) {
+    
+    // Sleep.
+    sleep(TOW_CRON_HASH_SLEEP);
+    
+    // Update dataset hashes.
+    tow_dataset_hash_update($node->nid);
+    
+    // Delete content cache for the datasets.
+    db_query("
+      
+      DELETE 
+        FROM 
+          {cache_content} 
+          
+        WHERE 
+          cid = 'content:%s:%s'
+          
+    ", $node->nid, $node->nid);
+  }
+}
+
+/**
+ * Extract and show names of tables from the dataset.
+ * @param $nid : dataset nid
+ * @return array
+ */
+function tow_table_list($nid) {
+
+  $tables_res = db_query("
+    
+    SELECT 
+      n.nid AS nid, 
+      n.title AS title 
+      
+      FROM 
+          {content_type_table} t 
+        LEFT JOIN 
+          {node} n
+          ON t.nid = n.nid 
+
+      WHERE 
+        t.field_dataset_value = %d 
+
+    ", $nid);
+  
+  $tables = array();
+  
+  while ($table = db_fetch_array($tables_res)) {
+    $tables[$table['nid']] = $table['title'];
+  }
+  
+  return $tables;
+}
+
+
+
+/****************************************************************************************************
+ * Helper functions
+ ****************************************************************************************************/
+
+/**
+ * For @param $value return 1 if it is "true", "yes" or 1.
+ * Return 0 if the value is "false", "no" or 0. Return NULL otherwise.
+ * Not case-sensitive.
+ */
+function _tow_bool_to_int($value) {
+  
+  // "True", "Yes" or 1.
+  if (strtolower($value) == 'true' || strtolower($value) == 'yes' || $value == 1) {
+    return 1;
+  }
+
+  // "False", "No" or 0.
+  if (strtolower($value) == 'false' || strtolower($value) == 'no' || $value == 0) {
+    return 0;
+  }
+
+  return NULL;
+}
+
+/**
+ * Returns "record" for "table" and ("table", "saved_search" for "dataset".
+ */
+function _tow_children_type($type) {
+  switch ($type) {
+    case 'table':
+      $children_type = array('record');
+      break;
+    case 'dataset':
+      $children_type = array('table', 'saved_search');
+      break;
+  }
+  return $children_type;
+}  
+
+/**
+ * For @param $value return boolean string.
+ */
+function _tow_format_bool($value) {
+  if ($value)
+    return 'true';
+  if ($value === '0')
+    return 'false';
+    
+  return NULL;
+}
+
+/**
+ * Reads information about table fields, including their title, types, units, 
+ * and puts them in the correct order according to the wights array.   
+ */
+function _tow_get_table_fields($table_node) {
+  $aux_array = array();
+  
+  // Information from the cck fields.
+  // Weights responsible for the column order.
+  $weights_array = unserialize($table_node->field_weights[0]['value']);
+  
+  // Indexes, responsible for the connection of the tables with each other.
+  $indexes = unserialize($table_node->field_indexes[0]['value']);
+  
+  // Units of the columns.
+  $units =  _tow_field_remove_fake($table_node->field_units);
+  
+  // Extracting all data needed for query construction into auxiliary array.
+  $index = 0;
+  foreach (tow_possible_fields() as $field_type) {
+    $delta = 0;
+    if (!is_array($table_node->{'field_title_' . $field_type})) {
+      continue;
+    }
+    foreach ($table_node->{'field_title_' . $field_type} as $title_value) {
+      if ($title_value['value']) {
+        $aux_array[$weights_array[$index]]['title'] = $title_value['value'];
+        $aux_array[$weights_array[$index]]['delta'] = $delta;
+        $aux_array[$weights_array[$index]]['type'] = $field_type;
+        $aux_array[$weights_array[$index]]['index'] = $indexes[$index];
+
+        $index++;
+        $delta++;
+      }
+    }
+  }
+
+  // Sort array according to the field weights.
+  if ($aux_array) {
+    ksort($aux_array);
+  }
+
+  return $aux_array;
+}
+
+/**
+ * Sets validation error messages if any.
+ */
+function _tow_show_validation_error($error, $err_field_names, $err_msgs) {
+  if ($error) {
+    foreach ($err_field_names as $err_no => $err_field_name) {
+      form_set_error($err_field_name, check_plain($err_msgs[$err_no]));
+    }
+    
+    // Exclude repeating messages.
+    $_SESSION['messages']['error'] = array_unique($_SESSION['messages']['error']);
+  }
+}
+
+/**
+ * Returns possible dataset categories.
+ */
+function _tow_taxonomy_dataset_categories() {
+  
+  $categories = array(
+    'Social sciences',
+    'Anthropology',
+    'Archaeology',
+    'Area studies',
+    'Cultural and ethnic studies',
+    'Economics',
+    'Gender and sexuality studies',
+    'Geography',
+    'Political science',
+    'Psychology',
+    'Sociology',
+    'Natural sciences',
+    'Space sciences',
+    'Earth sciences',
+    'Life sciences',
+    'Chemistry',
+    'Physics',
+    'Formal sciences',
+    'Computer sciences',
+    'Logic',
+    'Mathematics',
+    'Statistics',
+    'Systems science',
+    'Professions and Applied sciences',
+    'Agriculture',
+    'Architecture and design',
+    'Business',
+    'Divinity',
+    'Education',
+    'Engineering',
+    'Environmental studies and Forestry',
+    'Family and consumer science',
+    'Health sciences',
+    'Human physical performance and recreation',
+    'Journalism, media studies and communication',
+    'Law',
+    'Library and museum studies',
+    'Military sciences',
+    'Public administration',
+    'Social work',
+    'Transportation',
+    'Humanities',
+    'History',
+    'Languages and linguistics',
+    'Literature',
+    'Performing arts',
+    'Philosophy',
+    'Religion',
+    'Visual arts',
+    'Other'
+  );
+  
+  return $categories;
+}

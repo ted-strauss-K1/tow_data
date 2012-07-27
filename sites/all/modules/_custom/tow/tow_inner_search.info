@@ -1,0 +1,7 @@
+core = 6.x
+
+package = Custom
+name = Theory on Wheels: Inner Search
+description = Provides addtions for inner search for Theory on Wheels.
+
+dependencies[] = tow

@@ -1,0 +1,239 @@
+<?php
+
+/**
+ * @file
+ * 
+ * Install and uninstall functions for the fortissimmo Property module.
+ */
+
+
+
+/****************************************************************************************************
+ * Requirements
+ ****************************************************************************************************/
+
+module_load_include('inc', 'tow', 'includes/tow.db_tables');
+module_load_include('inc', 'tow', 'includes/tow.cck');
+
+
+
+/**************************************************************************************************** 
+ * Hooks 
+ ****************************************************************************************************/
+
+/**
+ * Implementation of hook_schema().
+ */
+function tow_schema() {
+  
+  $schema = array();
+
+  // Node tables.
+  $schema['tow_access_requests'] = tow_db_tables_tow_access_requests();
+  $schema['tow_apachesolr_requests'] = tow_db_tables_tow_apachesolr_requests();
+  $schema['tow_dataset_counter'] = tow_db_tables_tow_dataset_counter();
+  $schema['tow_field_info'] = tow_db_tables_tow_field_info();
+  $schema['tow_import_progress'] = tow_db_tables_tow_import_progress();
+  $schema['tow_invites'] = tow_db_tables_tow_invites();
+  $schema['tow_link_tables'] = tow_db_tables_tow_link_tables();
+  $schema['tow_table_counter'] = tow_db_tables_tow_table_counter();
+  
+  return $schema;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function tow_install() {
+  drupal_install_schema('tow');
+  
+  $fields = tow_install_fields();
+
+  // Need to load the CCK include file where content_field_instance_create() is defined.
+  module_load_include('inc', 'content', 'includes/content.crud');
+
+  // Create several fields at a time.
+  foreach ($fields as $field) {
+    content_field_instance_create($field, FALSE);
+  }
+  
+  // Create taxonomy.
+  $vocabulary = array(
+    'name' => t('Dataset categories'),
+    'description' => '',
+    'help' => '',
+    'relations' => 1,
+    'hierarchy' => 0,
+    'multiple' => 0,
+    'required' => 0,
+    'tags' => 0,
+    'module' => 'tow',
+    'weight' => 0,
+    'nodes' => array('dataset' => 'dataset'),
+  );
+  taxonomy_save_vocabulary($vocabulary);
+  tow_create_dataset_categories();
+
+  $vocabulary = array(
+    'name' => t('Dataset tags'),
+    'description' => '',
+    'help' => '',
+    'relations' => 1,
+    'hierarchy' => 1,
+    'multiple' => 0,
+    'required' => 0,
+    'tags' => 1,
+    'module' => 'tow',
+    'weight' => 0,
+    'nodes' => array('dataset' => 'dataset'),
+  );
+  taxonomy_save_vocabulary($vocabulary);
+
+  // Clear caches and rebuild menu.
+  content_clear_type_cache(TRUE);
+  menu_rebuild();
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function tow_uninstall() {
+  module_load_include('inc', 'content', 'includes/content.crud');
+  
+  // Define the CCK fields to be deleted.
+  $fields = array();
+  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search');
+  foreach ($types as $type_name) {
+    $query = db_query("SELECT cnfi.field_name AS field_name FROM {content_node_field_instance} cnfi WHERE cnfi.type_name = '%s'", $type_name);
+    while ($record = db_fetch_object($query)) {
+      $fields[] = $record->field_name;
+    }
+  
+    // Need to load the CCK include file where content_field_instance_create() is defined.
+    foreach ($fields as $field_name) {
+      content_field_instance_delete($field_name, $type_name);
+    }
+  
+    // Delete all the Fortissimmo Property nodes.
+    $query = db_query(db_rewrite_sql("SELECT n.nid AS nid FROM {node} n WHERE n.type = '%s'"), $type_name);
+    while ($nid = db_fetch_object($query)->nid) {
+      node_delete($nid);
+    }
+  
+    // Delete 'tow' node type.
+    node_type_delete($type_name);
+    node_types_rebuild();
+  }
+  
+  // Delete taxonomy.
+  $query = db_query("SELECT v.vid AS vid FROM {vocabulary} v WHERE v.name = '%s' OR v.name = '%s'", 'Dataset categories', 'Dataset tags');
+  while ($vocab = db_fetch_object($query)) {
+    taxonomy_del_vocabulary($vocab->vid);
+  }
+
+  // Drop tables.
+  drupal_uninstall_schema('tow');
+  
+  // Delete all the variables connected with menutotax
+  db_query("DELETE FROM {variable} WHERE name LIKE 'tow_%'");
+  cache_clear_all('variables', 'cache');
+}
+
+
+
+/**************************************************************************************************** 
+ * Functions 
+ ****************************************************************************************************/
+
+/**
+ * This function defines premie's fields.
+ */
+function tow_install_fields() {
+  module_load_include('inc', 'tow', 'tow.cck');
+  
+  // Initialisation.
+  $fields = array();
+  $weight = tow_cck_init_weight();
+
+  /* Dataset fields. */
+  $format = array(1 => 'hidden', 2 => 'hidden', 3 => 'hidden', 4 => 'default', 'full' => 'hidden', 'teaser' => 'hidden', 'label' => 'hidden', 'token' => 'default');
+  $exclude = array(1 => 0, 2 => 0, 3 => 0, 4 => 0, 'full' => 1, 'teaser' => 1, 'label' => 1, 'token' => 0);
+  $allowed_values = '
+    0|Open
+    1|By request
+    2|Private
+  ';
+  $fields[] = tow_cck_integer('field_access_type', 'dataset', t('Access Type'), $weight++, $format, $exclude, 'optionwidgets_select', 1, 0, $allowed_values);
+  $format = array(1 => 'default', 2 => 'default', 3 => 'default', 4 => 'default', 'full' => 'plain', 'teaser' => 'plain', 'label' => 'hidden', 'token' => 'default');
+  $exclude = array(1 => 0, 2 => 0, 3 => 0, 4 => 0, 'full' => 0, 'teaser' => 0, 'label' => 0, 'token' => 0);
+  $fields[] = tow_cck_textarea('field_hash', 'dataset', t('Hash'), $weight++, $format, $exclude);
+  
+  /* Table fields. */
+  $format = array(1 => 'default', 2 => 'default', 3 => 'default', 4 => 'default', 'full' => 'hidden', 'teaser' => 'hidden', 'label' => 'hidden', 'token' => 'default');
+  $exclude = array(1 => 0, 2 => 0, 3 => 0, 4 => 0, 'full' => 1, 'teaser' => 1, 'label' => 1, 'token' => 0);
+  $fields[] = tow_cck_textfield('field_title_int', 'table', t('Int Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_char', 'table', t('Char Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_float', 'table', t('Float Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_bool', 'table', t('Bool Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_text', 'table', t('Text Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_enum', 'table', t('Enum Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_date', 'table', t('Date Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_datetime', 'table', t('Datetime Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_time', 'table', t('Time Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_timestamp', 'table', t('Timestamp Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_title_code', 'table', t('Code Title'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_enum_options', 'table', t('Enum Options'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_textfield('field_weights', 'table', t('Weights'), $weight++, $format, $exclude);
+  $fields[] = tow_cck_textfield('field_indexes', 'table', t('Indexes'), $weight++, $format, $exclude);
+  $fields[] = tow_cck_textfield('field_units', 'table', t('Units'), $weight++, $format, $exclude);
+  $php = '
+    $dataset_nids_res = db_query(db_rewrite_sql("SELECT n.nid FROM {node} n WHERE n.type = \'dataset\'"));
+    while ($dataset_nid = db_fetch_array($dataset_nids_res)) {
+      $allowed_values[$dataset_nid[\'nid\']] = $dataset_nid[\'nid\'];
+    }
+    return $allowed_values;
+  ';
+  $fields[] = tow_cck_integer('field_dataset', 'table', t('Dataset'), $weight++, $format, $exclude, 'number', 1, 0, '', $php);
+  
+  /* Record fields. */
+  $format = array(1 => 'default', 2 => 'default', 3 => 'default', 4 => 'default', 'full' => 'us_0', 'teaser' => 'hidden', 'label' => 'hidden', 'token' => 'default');
+  $exclude = array(1 => 0, 2 => 0, 3 => 0, 4 => 0, 'full' => 0, 'teaser' => 1, 'label' => 1, 'token' => 0);
+  $fields[] = tow_cck_integer('field_int', 'record', t('Int'), $weight++, $format, $exclude, 'number', 0, 1);
+  $format['full'] = 'plain';
+  $fields[] = tow_cck_textfield('field_char', 'record', t('Char'), $weight++, $format, $exclude, 0, 1);
+  $format['full'] = 'us_2';
+  $fields[] = tow_cck_decimal('field_float', 'record', t('Float'), $weight++, $format, $exclude, 'number', 0, 1);
+  $format['full'] = 'unformatted';
+  $fields[] = tow_cck_integer('field_bool', 'record', t('Bool'), $weight++, $format, $exclude, 'number', 0, 1);
+  $format['full'] = 'plain';
+  $fields[] = tow_cck_textarea('field_text', 'record', t('Text'), $weight++, $format, $exclude, 0, 1);
+  $format['full'] = 'unformatted';
+  $fields[] = tow_cck_integer('field_enum', 'record', t('Enum'), $weight++, $format, $exclude, 'number', 0, 1);
+  $format['full'] = 'default';
+  $fields[] = tow_cck_date('field_date', 'record', t('Date'), $weight++, $format, $exclude, 0, 1);
+  $format['full'] = 'default';
+  $fields[] = tow_cck_datetime('field_datetime', 'record', t('Datetime'), $weight++, $format, $exclude, 0, 1);
+  $format['full'] = 'plain';
+  $fields[] = tow_cck_textfield('field_time', 'record', t('Time'), $weight++, $format, $exclude, 0, 1);
+  $format['full'] = 'unformatted';
+  $fields[] = tow_cck_integer('field_timestamp', 'record', t('Timestamp'), $weight++, $format, $exclude, 'number', 0, 1);
+  $format['full'] = 'plain';
+  $fields[] = tow_cck_textfield('field_code', 'record', t('Code'), $weight++, $format, $exclude, 0, 1);
+  $fields[] = tow_cck_integer('field_table', 'record', t('Table'), $weight++, $format, $exclude, 'number', 1);
+  
+  /* Linked Record fields. */
+  $format = array(1 => 'default', 2 => 'default', 3 => 'default', 4 => 'default', 'full' => 'hidden', 'teaser' => 'hidden', 'label' => 'hidden', 'token' => 'default');
+  $exclude = array(1 => 0, 2 => 0, 3 => 0, 4 => 0, 'full' => 0, 'teaser' => 1, 'label' => 1, 'token' => 0);
+  $fields[] = tow_cck_integer('field_record_nid', 'linked_record', t('Record NID'), $weight++, $format, $exclude, 'number', 1, 1);
+  $fields[] = tow_cck_textfield('field_tables', 'linked_record', t('Linked Tables'), $weight++, $format, $exclude, 1, 1);
+  
+  /* Saved Search fields. */
+  $format = array(1 => 'default', 2 => 'default', 3 => 'default', 4 => 'default', 'full' => 'hidden', 'teaser' => 'hidden', 'label' => 'hidden', 'token' => 'default');
+  $exclude = array(1 => 0, 2 => 0, 3 => 0, 4 => 0, 'full' => 1, 'teaser' => 1, 'label' => 1, 'token' => 0);
+  $fields[] = tow_cck_integer('field_dataset_nid', 'saved_search', t('Dataset NID'), $weight++, $format, $exclude, 'number', 1);
+  $fields[] = tow_cck_textfield('field_table_nid', 'saved_search', t('Table NID'), $weight++, $format, $exclude);
+  $fields[] = tow_cck_textarea('field_search_constraints', 'saved_search', t('Search Constraints'), $weight++, $format, $exclude);
+  $fields[] = tow_cck_textfield('field_sc_hash', 'saved_search', t('SC Hash'), $weight++, $format, $exclude);
+
+  return $fields;
+}
