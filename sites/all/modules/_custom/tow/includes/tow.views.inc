@@ -7,11 +7,83 @@
  * Api documentation is at http://views.doc.logrus.com/
  */
 
+module_load_include('inc', 'tow', 'includes/views/tow.views.default_views');
+
 
 
 /****************************************************************************************************
  * Views hooks
  ****************************************************************************************************/
+
+/**
+ * Implementation of hook_views_data().
+ */
+function tow_views_data() {
+  
+  
+  // User 'Top Taxonomy' field.
+  $data['users']['top_taxonomy'] = array(
+    'title' => t('Top Taxonomy'), 
+    'help' => t('User\'s most usable taxonomy terms. The amount of terms and vocabularies can be specified.'),
+    'field' => array(
+      'handler' => 'tow_views_handler_field_top_taxonomy',
+    ), 
+  );
+  
+  // User 'Top Taxonomy' filter.
+  $data['users']['creation_interval'] = array(
+    'title' => t('Creation Interval'), 
+    'help' => t('User\'s creation interval.'),
+    'filter' => array(
+      'handler' => 'tow_views_handler_filter_creation_interval',
+    ), 
+  );
+  
+  // User 'Content Count' sorting.
+  $data['users']['content_count'] = array(
+    'title' => t('Content Count'), 
+    'help' => t('User\'s content amount.'),
+    'sort' => array(
+      'handler' => 'tow_views_handler_sort_content_count',
+    ), 
+  );
+  
+  // User 'Vote Count' sorting.
+  $data['users']['vote_count'] = array(
+    'title' => t('Vote Count'), 
+    'help' => t('User\'s votes amount.'),
+    'sort' => array(
+      'handler' => 'tow_views_handler_sort_vote_count',
+    ), 
+  );
+  
+  return $data;
+}
+
+/**
+ * Implementation of hook_views_handlers().
+ */
+function tow_views_handlers() {
+  return array(
+    'info' => array(
+      'path' => drupal_get_path('module', 'tow') . '/includes/views/handlers',
+    ),
+    'handlers' => array(
+      'tow_views_handler_field_top_taxonomy' => array(
+        'parent' => 'views_handler_field',
+      ),
+      'tow_views_handler_filter_creation_interval' => array(
+        'parent' => 'views_handler_filter',
+      ),
+      'tow_views_handler_sort_content_count' => array(
+        'parent' => 'views_handler_sort',
+      ),
+      'tow_views_handler_sort_vote_count' => array(
+        'parent' => 'views_handler_sort',
+      ),
+    ),
+  );
+}
 
 /**
  * Implementation of hook_views_query_alter().
@@ -39,7 +111,6 @@ function tow_views_query_alter(&$view, &$query) {
     // Where.
     $query->where[0]['clauses'][2] = 'ctt.field_dataset_value=%d';
     $query->where[0]['args'][1] = $view->args[0];
-
   }
 }
 

@@ -9,14 +9,6 @@
 
 
 /****************************************************************************************************
- * Constants
- ****************************************************************************************************/
-
-define('TOW_MAX_ALLOWED_DATASET_KEYWORDS', 10);
-
-
-
-/****************************************************************************************************
  * Hook handlers
  ****************************************************************************************************/
 
@@ -258,7 +250,7 @@ function tow_register(&$edit, $account) {
  * Keys are term IDs, values are term names, array is sorted alphabetically.
  */
 function tow_register_taxonomy() {
-  $res = db_query("SELECT tid, name FROM {term_data} WHERE vid = 2 ORDER BY name ASC");
+  $res = db_query("SELECT td.tid, td.name FROM {term_data} td JOIN {vocabulary} v ON td.vid = v.vid WHERE v.name = '%s' ORDER BY name ASC", 'Dataset categories');
   while ($term = db_fetch_array($res)) {
     $terms[$term['tid']] = $term['name'];
   }
@@ -295,8 +287,8 @@ function _tow_register_create_dataset($data, $uid) {
     $terms = explode(',', $data['keywords']);
     
     // Prevent mass terming.
-    if (count($terms) > TOW_MAX_ALLOWED_DATASET_KEYWORDS) {
-      array_slice($terms, 0, TOW_MAX_ALLOWED_DATASET_KEYWORDS);
+    if (count($terms) > variable_get('tow_max_allowed_dataset_keywords', 10)) {
+      array_slice($terms, 0, variable_get('tow_max_allowed_dataset_keywords', 10));
     }
     
     // Save terms.
@@ -311,7 +303,12 @@ function _tow_register_create_dataset($data, $uid) {
   }
   
   // Save dataset.
-  node_save($dataset);  
+  try {
+    node_save($dataset);
+  }
+  catch (Exception $e) {
+    watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+  }
 }
 
 /**

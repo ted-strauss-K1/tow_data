@@ -259,7 +259,7 @@ function tow_dataset_create_table_form_validate($form, &$form_state) {
         n.nid IN (
           
           SELECT 
-            n.nid AS nid 
+            ctt.nid AS nid 
             
             FROM 
               {content_type_table} ctt 
@@ -281,10 +281,10 @@ function tow_dataset_create_table_form_validate($form, &$form_state) {
   }  
 
   // Max and min fields check.
-  if (($form_state['values']['count_fields'] > MAX_FIELDS_IN_TABLE) || ($form_state['values']['count_fields'] < MIN_FIELDS_IN_TABLE)) {
+  if (($form_state['values']['count_fields'] > variable_get('tow_max_fields_in_table', 20)) || ($form_state['values']['count_fields'] < variable_get('tow_min_fields_in_table', 1))) {
      $error = TRUE;
      $err_field_names[] = "count_fields";
-     $err_msgs[] = t("The number of fields must be greater than " . MIN_FIELDS_IN_TABLE . " and less than " . MAX_FIELDS_IN_TABLE . ".");
+     $err_msgs[] = t("The number of fields must be greater than " . variable_get('tow_min_fields_in_table', 1) . " and less than " . variable_get('tow_max_fields_in_table', 20) . ".");
   }
   
   // Showing error messages.
@@ -324,7 +324,12 @@ function tow_dataset_maintenance_confirm_submit($form, &$form_state) {
     $dataset->status = 1;
   }
   
-  node_save($dataset);
+  try {
+    node_save($dataset);
+  }
+  catch (Exception $e) {
+    watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+  }
   
   // Recursively perform the same action with tables and records.
   tow_maintanance_mode($dataset->status, $dataset->nid, 'dataset');

@@ -1454,7 +1454,12 @@ function tow_table_clone_table_form_submit($form, &$form_state) {
   }
   
   // Save node.
-  node_save($node);
+  try {
+    node_save($node);
+  }
+  catch (Exception $e) {
+    watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+  }
   
   // Redirect.
   $nid = db_result(db_query_range(db_rewrite_sql("SELECT n.nid FROM {node} n WHERE n.uid = %d ORDER BY n.nid DESC"), array($user->uid), 0, 1));
@@ -1533,8 +1538,13 @@ function tow_table_field_add_form_submit($form, &$form_state) {
   
   // Add unit to the units array.
   $node->field_units[] = array('value' => $unit);
-    
-  node_save($node);
+  
+  try {
+    node_save($node);
+  }
+  catch (Exception $e) {
+    watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+  }
   
   // Saving description.
   $description = trim($form_state['values']['field_add']['description']);

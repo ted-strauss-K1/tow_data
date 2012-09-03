@@ -33,7 +33,7 @@ function tow_pma_menu_block() {
   $items['browse'] = ($_tow_grey_pma_menu) ? t('Browse') : (($_tow_table) ? l('Browse', 'table/' . $_tow_table->nid) : l('Browse', 'dataset/' . $_tow_dataset->nid));
   $items['docs'] = l('Docs', 'docs');
   $items['forum'] = l('Forum', 'forum');
-    
+
   // Theme the block.
   $block['content'] = theme_item_list($items, NULL, 'ul');
 
@@ -75,7 +75,8 @@ function tow_pma_menu_breadcrumbs() {
   // Select taxonomy term corresponding to dataset category.
   if ($_tow_dataset->taxonomy) {
     foreach ($_tow_dataset->taxonomy as $term_obj) {
-      if ($term_obj->vid == 2) {
+      $q = db_result(db_query("SELECT v.vid AS vid FROM {vocabulary} v WHERE v.name = '%s'", 'Dataset categories'));
+      if ($term_obj->vid == $q) {
         $bc[] = l($term_obj->name, 'taxonomy/term/' . $term_obj->tid);
           break;
       }

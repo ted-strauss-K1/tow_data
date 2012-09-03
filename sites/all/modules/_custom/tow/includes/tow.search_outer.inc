@@ -406,7 +406,7 @@ function tow_search_outer_filter_taxonomy() {
  
   $terms = array('any' => t('any'));
   
-  $res = db_query("SELECT tid, name FROM {term_data} WHERE vid = 2 ORDER BY name ASC");
+  $res = db_query("SELECT td.tid, td.name FROM {term_data} td JOIN {vocabulary} v ON td.vid = v.vid WHERE v.name = '%s' ORDER BY name ASC", 'Dataset categories');
   while ($term = db_fetch_array($res)) {
     $terms[$term['tid']] = $term['name'];
   }

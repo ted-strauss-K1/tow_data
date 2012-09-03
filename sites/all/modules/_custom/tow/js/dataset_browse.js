@@ -1,51 +1,43 @@
 Drupal.behaviors.dataset_browse = function(context) {
 	
-  // 'detail'-info for rows in DataTable
-  
-  // Insert a 'details' column to the table
-			$('.views-table tr:last').remove();
-			
-			var nCloneTh = document.createElement( 'th' );
-			var nCloneTd = document.createElement( 'td' );
-			nCloneTd.innerHTML = '<img src="../../misc/menu-collapsed.png">';
-			//nCloneTd.className = "center";
-			 
-			$('.views-table thead tr').each( function () {
-				this.insertBefore( nCloneTh, this.childNodes[0] );
-			} );
-			 
-			$('.views-table tbody tr').each( function () {
-				this.insertBefore(  nCloneTd.cloneNode( true ), this.childNodes[0] );
-			} );
+  // 'Detail'-info for rows in DataTable.
+  // Insert a 'details' column to the table.
+  $('.views-table tr:last').remove();
+
+	var nCloneTh = document.createElement( 'th' );
+	var nCloneTd = document.createElement( 'td' );
+	nCloneTd.innerHTML = '<img src="../../misc/menu-collapsed.png">';
+
+	$('.views-table thead tr').each(function() {
+    this.insertBefore(nCloneTh, this.childNodes[0]);
+  });
+
+	$('.views-table tbody tr').each(function() {
+		this.insertBefore(nCloneTd.cloneNode(true), this.childNodes[0]);
+	});
 		
-		var oTable = $('.views-table').dataTable({
-		
-		
-		"aoColumnDefs": [
-					{ "bSortable": false, "aTargets": [ 0 ] },
-					{ "bVisible": false, "aTargets": [ 4 ] }
-				],
+	var oTable = $('.views-table').dataTable({
+    "aoColumnDefs": [
+			{"bSortable": false, "aTargets": [0]},
+			{"bVisible": false, "aTargets": [4]}
+		],
 		"aaSorting": [[1, 'asc']], 
 		"bFilter": false,
 		"bPaginate": false,
 		"bInfo": false 
-		});
+  });
 		
 		
-		function fnFormatDetails ( oTable, nTr )
-		{
-			var aData = oTable.fnGetData( nTr );
-			var sOut = '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">';
-			sOut += '<tr><td>Description:</td><td>' + aData[4] + '</td></tr>';
-			//sOut += '<tr><td>Link to source:</td><td>Could provide a link here</td></tr>';
-			//sOut += '<tr><td>Extra info:</td><td>And any further details here (images etc)</td></tr>';
-			sOut += '</table>';
-			 
-			return sOut;
-		}
-		
-					
-			// Initialse DataTables, with no sorting on the 'details' column
+	function fnFormatDetails(oTable, nTr) {
+    var aData = oTable.fnGetData(nTr);
+		var sOut = '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">';
+		sOut += '<tr><td>Description:</td><td>' + aData[4] + '</td></tr>';
+		sOut += '</table>';
+
+		return sOut;
+	}
+
+	// Initialse DataTables, with no sorting on the 'details' column
 			
 			/*var oTable = $('#datatable-1').dataTable( {
 				"aoColumnDefs": [

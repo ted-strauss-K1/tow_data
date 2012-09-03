@@ -13,6 +13,62 @@
  ****************************************************************************************************/
 
 /**
+ * Handles the creation of a saved search with Ajax.
+ */
+function tow_ajax_handlers_create_saved_search($nid) {
+
+  // Get current node.
+  if (!is_numeric($nid)) {
+    $nid = str_replace(' ', '+', $nid);
+    $nid_array = explode('+', $nid);
+    $node = node_load($nid_array[0]);
+  }
+  else {
+    $node = node_load($nid);
+  }
+  $node->nid = $nid;
+  
+  // Get filters.
+  $filters = $_GET['filters'];
+  
+  // Rows amount.
+  $rows_amount = $_GET['rows_amount'];
+  
+  // Selected fields.
+  $selected_fields = (isset($_GET['selected_fields'])) ? json_decode($_GET['selected_fields'], TRUE) : array();
+  
+  // Create saved search.
+  $saved_search = tow_saved_searches_saved_search_create($node, $filters, $rows_amount, $selected_fields);
+  
+  // Validation.
+  if ($saved_search == NULL) {
+    $json = array(
+      'saved' => FALSE,
+      'message' => t("The search you are trying to save already exists."),
+    );
+  }
+  else {
+    try {
+      node_save($saved_search);
+      $block = tow_saved_searches_list_block($nid);
+      $json = array(
+        'saved' => TRUE,
+        'saved_searches' => $block['content'],
+      );
+    }
+    catch (Exception $e) {
+      watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+      $json = array(
+        'saved' => FALSE,
+        'message' => $e->getMessage(),
+      );
+    }
+  }
+  
+  return drupal_json($json);
+}
+
+/**
  * Handles the change of access type to the dataset with Ajax.
  */
 function tow_ajax_handlers_dataset_access_type($dnid) {
@@ -27,12 +83,20 @@ function tow_ajax_handlers_dataset_access_type($dnid) {
   // If the change was confirmed or the confirmation message was not shown (for 'by request' and 'private' types).
   if ($confirm) {
     $dataset->field_access_type[0]['value'] = $access;
-    node_save($dataset);
+    try {
+      node_save($dataset);
+    }
+    catch (Exception $e) {
+      watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+    }
   }
   
-  return drupal_json(array(
+  // JSON.
+  $json = array(
     'selected' => $dataset->field_access_type[0]['value']
-  ));
+  );
+  
+  return drupal_json($json);
 }
 
 /**
@@ -42,6 +106,7 @@ function tow_ajax_handlers_dataset_refresh_table_samples($dnid) {
   
   // Prepare dataset.
   $dataset = node_load($dnid);
+  dcp($dataset);
   tow_dataset_summary($dataset);
   
   // Generate the output.
@@ -59,10 +124,13 @@ function tow_ajax_handlers_dataset_refresh_table_samples($dnid) {
     $output .= '</div>';
   }
   
-  // Return the output.
-  return drupal_json(array(
+  // JSON.
+  $json = array(
     'samples' => $output
-  ));
+  );
+  
+  // Return the output.
+  return drupal_json($json);
 }
 
 /**
@@ -136,7 +204,11 @@ function tow_ajax_handlers_field_zooming() {
     
     list($final_query, $response) = apachesolr_do_query('tow_inner_search', $query, $params);
     if (empty($response)) {
-      return drupal_json(NULL);
+    
+      // JSON.
+      $json = NULL;
+      
+      return drupal_json($json);
     }
     
     list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $response->facet_counts->facet_ranges->$field);
@@ -149,11 +221,14 @@ function tow_ajax_handlers_field_zooming() {
       );
     }
     
-    return drupal_json(array(
+    // JSON.
+    $json = array(
       'data' => $series, 
       'yMax' => $max_count
-    ));
-  } 
+    );
+    
+    return drupal_json($json);
+  }
   else {
     db_query("
     
@@ -183,10 +258,13 @@ function tow_ajax_handlers_import_progress_get($hash, $stage) {
     tow_import_progress_delete($hash);
   }
 
-  return drupal_json(array(
+  // JSON.
+  $json = array(
     'status' => TRUE, 
     'response' => $response
-  ));
+  );
+
+  return drupal_json($json);
 }
 
 /**
@@ -206,14 +284,17 @@ function tow_ajax_handlers_register_add_more() {
   
   drupal_process_form($form_id, $form, $form_state);
   $form = drupal_rebuild_form($form_id, $form_state, $args, $form_build_id);
-   
+
   $items = $form['feeds']['items'];
   $output = drupal_render($items);
   
-  return drupal_json(array(
+  // JSON.
+  $json = array(
     'status' => TRUE, 
     'data' => $output
-  ));
+  );
+
+  return drupal_json($json);
 }
 
 /**
@@ -221,20 +302,26 @@ function tow_ajax_handlers_register_add_more() {
  */
 function tow_ajax_handlers_refresh_search_results($nid) {
   
+  // Fields list block content.
+  $fields = tow_search_inner_field_list_block();
+  
   // Emulate we are on the search page.
   $_GET['q'] = str_replace('/refresh_ajax', '', $_GET['q']);
   
   // Define search data.
-  $results = tow_search_inner_within_dataset_callback($nid);
-
-  // Generate new block output.
-  $block = tow_search_inner_widgets_block();
+  $search = tow_search_inner_within_dataset_callback($nid);
   
-  // Return a JSON object containing a new content of the block.
-  return drupal_json(array(
-    'search' => $results, 
-    'block' => $block['content']
-  ));
+  // Generate new widgets block output.
+  $widgets = tow_search_inner_widgets_block();
+  
+  // JSON.
+  $json = array(
+    'search' => $search, 
+    'widgets' => $widgets['content'],
+    'fields' => $fields['content'],
+  );
+  
+  return drupal_json($json);
 }
 
 /**
@@ -246,10 +333,14 @@ function tow_ajax_handlers_search_outer() {
   $form = drupal_get_form('tow_search_outer_filter_form');
   $number_block = tow_search_outer_number_of_results_block();
   $tabs_block = tow_search_outer_tabs_block();
-  return drupal_json(array(
+  
+  // JSON.
+  $json = array(
     'results' => $results,
     'form' => $form, 
     'number' => $number_block['content'], 
     'tabs' => $tabs_block['content'],
-  ));
+  );
+
+  return drupal_json($json);
 } 

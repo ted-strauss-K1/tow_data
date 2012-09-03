@@ -342,7 +342,7 @@ function tow_record_format_for_search_indexing(&$node) {
   ", $table_nid, $table_nid)));
 }
 
-/*
+/**
  * Substitutes NULL placeholders by NULLs in node CCK fields.
  */
 function tow_record_set_empty(&$node) {

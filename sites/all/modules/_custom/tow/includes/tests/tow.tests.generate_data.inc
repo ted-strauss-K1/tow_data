@@ -29,7 +29,7 @@ function tow_tests_generate_data_form() {
     '#description' => t('Enter no of new users'),
     '#size' => 5,
     '#maxlength' => 20,
-    '#default_value' => 2,
+    '#default_value' => 0,
   );
 
   $form['dataset_qty'] = array(
@@ -37,7 +37,7 @@ function tow_tests_generate_data_form() {
     '#description' => t('Enter no of datasets for each user'),
     '#size' => 5,
     '#maxlength' => 20,
-    '#default_value' => 2,
+    '#default_value' => 1,
   );
   
   $form['table_qty'] = array(
@@ -148,7 +148,6 @@ function tow_tests_generate_data_form_submit($form, &$form_state) {
   $vid_res = db_query("SELECT vid FROM {vocabulary} WHERE name = '%s'", 'Dataset categories');
   $vid_category = db_fetch_array($vid_res);
   $vid_category = $vid_category['vid']; 
-  
   $vid_res = db_query("SELECT vid FROM {vocabulary} WHERE name = '%s'", 'Dataset tags');
   $vid_tag = db_fetch_array($vid_res);
   $vid_tag = $vid_tag['vid']; 
@@ -158,6 +157,8 @@ function tow_tests_generate_data_form_submit($form, &$form_state) {
   $term_res_tag = db_query("SELECT tid, name, vid, description, weight FROM {term_data} WHERE vid = %d", $vid_tag);
   $term_qty_category = 0;
   $term_qty_tag = 0;
+  $terms_category = array();
+  $terms_tag = array();
   while ($term = db_fetch_array($term_res_category)) {
     $terms_category[] = $term;
     $term_qty_category++; 
@@ -245,7 +246,12 @@ function tow_tests_generate_data_form_submit($form, &$form_state) {
       }
 
       // Save node, get dataset nid.
-      node_save($new_dataset);
+      try {
+        node_save($new_dataset);
+      }
+      catch (Exception $e) {
+        watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+      }
       $dataset_nid = $new_dataset->nid;
 
       // Generate access requests for the dataset.
@@ -285,10 +291,10 @@ function tow_tests_generate_data_form_submit($form, &$form_state) {
         $column_type = array();
         $indexes_array = array();
          
-        for ($col_index = 0; $col_index <= $columns_qty-1; $col_index++) {
+        for ($col_index = 0; $col_index <= $columns_qty - 1; $col_index++) {
           
           // Types of columns.
-          $type_id = mt_rand(0, $types_qty-1);
+          $type_id = mt_rand(0, $types_qty - 1);
           $column_type[$col_index]['type_id'] = $type_id ;
           $field_type = "field_title_" . $types[$type_id];
           $column_type[$col_index]['type'] = $types[$type_id];
@@ -319,11 +325,16 @@ function tow_tests_generate_data_form_submit($form, &$form_state) {
         $new_table->field_indexes[0]['value'] = serialize($indexes_array);
         
         // Save node, get table nid.
-        node_save($new_table);
+        try {
+          node_save($new_table);
+        }
+        catch (Exception $e) {
+          watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+        }
         $table_nid = $new_table->nid;
 
         // For each table create records.
-        $qty_records = mt_rand($min_records, $qty['records']);
+        $qty_records = ($table_nid) ? mt_rand($min_records, $qty['records']) : 0;
         for ($rid = 1; $rid <= $qty_records; $rid++) {
 
           // Type. 
@@ -332,13 +343,13 @@ function tow_tests_generate_data_form_submit($form, &$form_state) {
           $new_record->uid = $uid;
    
           // Data.
-          for ($col_index = 0; $col_index <= $columns_qty-1; $col_index++) {
+          for ($col_index = 0; $col_index <= $columns_qty - 1; $col_index++) {
             switch ($column_type[$col_index]['type']) {
               case 'int':
                 $value = mt_rand(0, 1000);
                 break;
               case 'float':
-                $value = mt_rand(0, 1000000)/mt_rand(1, 1000000);
+                $value = mt_rand(0, 1000000) / mt_rand(1, 1000000);
                 break;
               case 'char':
               case 'text':
@@ -369,7 +380,12 @@ function tow_tests_generate_data_form_submit($form, &$form_state) {
             $new_record->{"field_" . $column_type[$col_index]['type']}[]['value'] = $value;
           }
           $new_record->field_table[0]['value'] = $table_nid;
-          node_save($new_record);
+          try {
+            node_save($new_record);
+          }
+          catch (Exception $e) {
+            watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+          }
         }
       }
       

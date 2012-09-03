@@ -63,10 +63,11 @@
       </div>
 	  
       <?php
-		print 'tags: ';
+        print 'tags: ';
+        $result['tags'] = isset($result['tags']) ? $result['tags'] : array();
         foreach ($result['tags'] as $term) {
-			print '<div class="tags">' . $term . '</div>'; 
-		}
+          print '<div class="tags">' . $term . '</div>'; 
+        }
       ?>
       
     </div>

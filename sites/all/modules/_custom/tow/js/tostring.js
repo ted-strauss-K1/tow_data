@@ -1,5 +1,4 @@
-Array.prototype.toString =
-Object.prototype.toString = function() {
+Array.prototype.toString = Object.prototype.toString = function() {
   var cont = '';
   for (var k in this) {
     var v = this[k];
@@ -13,7 +12,6 @@ Object.prototype.toString = function() {
     cont += k + ': ' + vs + '\n';
   }
 
-  //cont = cont.replace(/(.+\n)/g, '  $1');  //IE5+, GK1+, but don't work in OP7+
   var a = cont.split('\n');
   cont = '';
   for (var i in a) {
@@ -22,8 +20,11 @@ Object.prototype.toString = function() {
   var s = cont;
   if (this.constructor == Object) {
     s = "{\n"+cont+"}";
-  } else if (this.constructor == Array) {
-    s = "[\n"+cont+"]";
+  } 
+  else {
+    if (this.constructor == Array) {
+      s = "[\n"+cont+"]";
+    }
   }
   
   var getType = function(that) {
@@ -35,7 +36,6 @@ Object.prototype.toString = function() {
   return s;
 };
 
-
 var hash = {
   color:    "red",
   artefact: "pill",
@@ -45,5 +45,3 @@ var hash = {
     arr: [1,2,3]
   }
 };
-
-//alert(hash);

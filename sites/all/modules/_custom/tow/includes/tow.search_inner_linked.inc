@@ -140,7 +140,7 @@ function tow_search_inner_linked_cron() {
 }
 
 /**
- * 'Inner search: list of separate and linked tables od a dataset' block.
+ * 'Inner search: list of separate and linked tables of a dataset' block.
  */
 function tow_search_inner_linked_list_of_tables_block() {
 
@@ -156,7 +156,7 @@ function tow_search_inner_linked_list_of_tables_block() {
   // Get dataset NID.
   if (!$is_dataset) {
     $table_nid = array_shift(explode('+', $nid));
-    $dataset_nid = db_result(db_query("SELECT ctt.field_dataset_value AS field_dataset_value FROM {content_type_table} WHERE nid = '%s'", $table_nid));
+    $dataset_nid = db_result(db_query("SELECT ctt.field_dataset_value AS field_dataset_value FROM {content_type_table} ctt WHERE ctt.nid = '%s'", $table_nid));
     unset($table_nid);              
 
     if (!$dataset_nid) {
@@ -173,11 +173,13 @@ function tow_search_inner_linked_list_of_tables_block() {
 
   // Single table titles.
   $titles = array();
+  $table_nodes = array();
   foreach ($tables as $table_nid) {
     $table_node = node_load($table_nid);
+    $table_nodes[$table_node->nid] = $table_node;
     $titles[$table_nid] = $table_node->title;
   }
-  
+
   // Linked table titles.
   $linked_titles = array();
   foreach ($tablesets as $tableset) {
@@ -225,7 +227,7 @@ function tow_search_inner_linked_queue_record_linking($node, $op) {
           VALUES 
             (%d, %d, %d, '%s', %d)
 
-      ", $node->nid, $node->field_table[0]['value'], $node->field_dataset[0]['value'], $op, time());
+      ", $node->nid, $node->field_table[0]['value'], $table->field_dataset[0]['value'], $op, time());
       break;
     default:
       break;
@@ -264,7 +266,7 @@ function tow_search_inner_linked_queue_table_linking($node, $op) {
   }
   
   // Write records.
-  if ($flag) {
+  if ($needed) {
     db_query("
       
       INSERT 
@@ -298,7 +300,7 @@ function tow_search_inner_linked_build_tablesets($dataset_nid) {
   };
   sort($tables);
   $shifted_tables = $tables;
-  
+
   $tablesets = array();
   
   while (!empty($shifted_tables)) {
@@ -310,7 +312,7 @@ function tow_search_inner_linked_build_tablesets($dataset_nid) {
       )
     );
     _tow_search_inner_linked_add_table($tablesets, $shifted_tables, $tableset, array($table)); 
-  }  
+  }
   return array($tables, $tablesets);
 }
 
@@ -411,8 +413,11 @@ function tow_search_inner_linked_create_linked_record($nids, $tables, $deleted_n
     $node->nid = $deleted_nid;
     $node->vid = $deleted_nid;
   }
-  $node->name = "Links " . implode(', ', $nids);
-  $node->name = rtrim($node->name, ', ');
+  $aux_nids = array();
+  foreach ($nids as $nid) {
+    $aux_nids[] = (is_null($nid)) ? '[NULL]' : $nid;
+  }
+  $node->name = "Links " . implode(', ', $aux_nids);
   $node->title = $node->name;
   $node->body = '';
   $node->type = 'linked_record';  
@@ -429,7 +434,12 @@ function tow_search_inner_linked_create_linked_record($nids, $tables, $deleted_n
   
   // Save node if all the values are apropriate ones.
   if ($node = node_submit($node)) {
-    node_save($node);
+    try {
+      node_save($node);
+    }
+    catch (Exception $e) {
+      watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+    }
   }
   // Show an error message otherwise.
   else {
@@ -597,10 +607,11 @@ function tow_search_inner_linked_relink_table($table_nid) {
     SELECT 
       t.nid AS nid 
 
-      FROM {content_field_tables} t 
+      FROM 
+        {content_field_tables} t 
 
       WHERE 
-        field_tables_value = %d
+        field_tables_value = '%s'
 
   ", $table_nid);
 
@@ -660,7 +671,12 @@ function tow_search_inner_linked_unlink_record($item, $do_not_delete = FALSE) {
       }
     } 
     else {
-      node_save($linked_record);
+      try {
+        node_save($linked_record);
+      }
+      catch (Exception $e) {
+        watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+      }
     }
   }
   if ($do_not_delete) {
@@ -683,7 +699,7 @@ function tow_search_inner_linked_unlink_table($table_nid) {
         {content_field_tables} t 
 
       WHERE 
-        field_tables_value = %d 
+        field_tables_value = '%s' 
 
   ", $table_nid);
   
@@ -909,4 +925,26 @@ function _tow_search_inner_linked_to($to_nid, $nid) {
     }
   }
   return empty($fields) ? NULL : array('fields' => $fields, 'to_fields' => $to_fields);
+}
+
+/**
+ * Defines a linking fields within a tableset.
+ */
+function _tow_search_inner_linking_fields($tableset_nids) {
+  $return = array();
+  foreach ($tableset_nids as $to_nid_key => $to_nid) {
+    foreach ($tableset_nids as $nid_key => $nid) {
+      if ($nid == $to_nid) {
+        continue;
+      }
+      $fields = _tow_search_inner_linked_to($to_nid, $nid);
+      $fields = isset($fields['fields']) ? $fields['fields'] : array();
+      foreach ($fields as $field) {
+        $return[$field['title'] . '_' . $field['type']] = $field;
+      }
+    }
+    unset($tableset_nids[$to_nid_key]);
+  }
+  
+  return $return;
 }

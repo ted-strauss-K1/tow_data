@@ -398,7 +398,12 @@ function tow_access_confirm_submit($form, &$form_state) {
     // Save dataset.
     global $_tow_dataset;
     $_tow_dataset->field_access_type[0]['value'] = 0;
-    node_save($_tow_dataset);
+    try {
+      node_save($_tow_dataset);
+    }
+    catch (Exception $e) {
+      watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+    }
 
     // Remove auxiliary data.
     db_query("

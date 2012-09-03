@@ -61,7 +61,10 @@ function tow_inner_search_search_page($results) {
     'bScrollCollapse' => TRUE,
   );
   
-  return theme('datatable', $results['headers'], $results['rows'], $parameters_full);
+  // DataTable theming.
+  $output = theme('datatable', $results['headers'], $results['rows'], $parameters_full);
+  
+  return $output;
 }
 
 
@@ -74,7 +77,7 @@ function tow_inner_search_search_page($results) {
  * Implementation of hook_finalize_query().
  */
 function tow_inner_search_finalize_query(&$query, &$params) {
-  
+
   foreach ($params['fq'] as &$filter) {
   $tag = ''; 
   if (preg_match('/(?<=^\()\w{1,}(?=:)/', $filter, $matches)) {

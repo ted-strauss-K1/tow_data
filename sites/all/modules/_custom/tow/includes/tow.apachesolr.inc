@@ -178,20 +178,23 @@ function tow_apachesolr_update_index(&$document, $node) {
     $sorted_tables = $tables;
     sort($sorted_tables);
     $document->ss_tow_field_table = implode('+', $sorted_tables);
-    
+
     // Put records.
     $records = array();
     foreach ($tables as $key => $table_nid) {
       $record_nid = $node->field_record_nid[$key]['value'];
       $record = node_load($record_nid);
       $records[$table_nid] = $record;
+      $document->{'sis_tow_linked_table_nid' . '_' . $key} = $table_nid;
+      $document->{'sis_tow_linked_record_nid' . '_' . $key} = (is_null($record_nid)) ? 0 : $record_nid;
+      $document->{'sis_tow_l_p' . '_' . $key} = (is_null($record_nid)) ? 0 : $record->field_position[0]['value'];
     }
     foreach (tow_apachesolr_table_fields($tables) as $field) {
       foreach ($field['table'] as $table) {
         $record = $records[$table['nid']];
         if (!empty($record)) {
           $value = $record->{'field_' . $field['type']}[$table['delta']]['value'];
-          
+
           // Add values to docs.
           if (isset($value)) {
             _tow_apachesolr_add_value_to_doc(&$document, $field['type'], $field['delta'], $value);
@@ -275,8 +278,10 @@ function tow_apachesolr_dataset_process_results(&$results) {
     
     // Add taxonomy.
     $results[$key]['category'] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
-    foreach ($result['fields']['im_vid_1'] as $tid) {
-      $results[$key]['tags'][] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
+    if (isset($result['fields']['im_vid_1']) && !is_null($result['fields']['im_vid_1'])) {
+      foreach ($result['fields']['im_vid_1'] as $tid) {
+        $results[$key]['tags'][] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
+      }
     }
   }
 }
@@ -287,15 +292,39 @@ function tow_apachesolr_dataset_process_results(&$results) {
  */
 function tow_apachesolr_record_modify_query(&$query, &$params) {
   $nid = tow_search_inner_get_nid();
-  $table_fields = tow_apachesolr_table_fields($nid, TRUE);
-
+  
   $params['fl'] .= ',ss_tow_field_table';
   if (is_numeric($nid)) {
-    $query->add_filter('type', 'record');  
+    $query->add_filter('type', 'record');
   } 
   else {
-    $query->add_filter('type', 'linked_record');  
+    $query->add_filter('type', 'linked_record');
+    
+    // Check the usage of field collapsing.
+    $nid_collapsed = explode('+', $nid);
+    sort($nid_collapsed);
+    $nid_full = array_keys(tow_search_inner_linked_build_table_tablesets($nid_collapsed[0]));
+    sort($nid_full);
+    $nid_diff = array_diff($nid_full, $nid_collapsed);
+    $fc = (empty($nid_diff)) ? FALSE : TRUE;
+    
+    // Set grouping on field collapsing.
+    if ($fc) {
+      $nid = implode('+', $nid_full);
+      $list = array();
+      foreach ($nid_collapsed as $n) {
+        $k = array_search($n, $nid_full);
+        $list[] = 'sis_tow_l_p_' . $k;
+      }
+      # $params['group'] = 'true';
+      # $params['group.func'] = _tow_apachesolr_group_function($list);
+      # $params['group.field'] = 'ss_tow_field_table';
+      # $params['group.facet'] = 'true';
+    }
   }
+  
+  $table_fields = tow_apachesolr_table_fields($nid, TRUE);
+  
   $params['rows'] = 10000000;
   $query->add_filter('ss_tow_field_table', $nid);
   
@@ -334,11 +363,11 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
 
 /**
  * Part of hook_apachesolr_process_results() implementation
- * for the case of inner search (within dataset)
+ * for the case of inner search (within dataset).
  */
 function tow_apachesolr_record_process_results(&$results) {
-  $response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
 
+  $response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
   if (isset($results[0])) {
     $table_nid = $results[0]['node']->ss_tow_field_table;
   }
@@ -349,10 +378,48 @@ function tow_apachesolr_record_process_results(&$results) {
   $fields = tow_apachesolr_table_fields($table_nid);
   $rows = array();
   $headers = array();
+
+  $nid = tow_search_inner_get_nid();
+  $selected_fields = (isset($_GET['selected_fields'])) ? json_decode($_GET['selected_fields'], TRUE) : array();
+  
+  // Leave only the selected fields if field selection is provided.
+  if (!empty($selected_fields)) {
+    foreach ($fields as $key => $field) {
+      if (!in_array($field['title'] . '_' . $field['type'], $selected_fields)) {
+        unset($fields[$key]);
+      }
+    }
+  }
+  else {
+    if (!is_numeric($nid)) {
+      
+      // Check the usage of field collapsing.
+      $nid_collapsed = explode('+', $nid);
+      sort($nid_collapsed);
+      $nid_full = array_keys(tow_search_inner_linked_build_table_tablesets($nid_collapsed[0]));
+      sort($nid_full);
+      $nid_diff = array_diff($nid_full, $nid_collapsed);
+    
+      // Unset unnecessary fields.
+      if (!empty($nid_diff)) {
+        foreach ($fields as $key => $field) {
+          $unset = TRUE;
+          foreach ($field['table'] as $ft) {
+            if (!in_array($ft['nid'], $nid_diff)) {
+              $unset = FALSE;
+              break;
+            }
+          }
+          if ($unset) {
+            unset($fields[$key]);
+          }
+        }
+      }
+    }
+  }
   
   foreach ($results as $key => $result) {
     $row = array();
-    
     foreach ($fields as $field_key => $field) {
       $value = $result['node']->$field['name'];
       
@@ -644,6 +711,7 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
     // NID is not numeric - linked table.
     else {
       if (!is_array($nid)) {
+        $nid = str_replace(' ', '+', $nid);
         $nid = explode('+', $nid);
       }
       sort($nid);
@@ -763,13 +831,37 @@ function _tow_apachesolr_datetime_to_solr(&$value) {
 }
 
 /**
+ * Returns a grouping function string representation for a given subtableset.
+ */
+function _tow_apachesolr_group_function($list = array()) {
+  
+  // Define the base and degree.
+  $degree = 0;
+  $base = variable_get('tow_max_records_in_table', 920);
+  
+  $result = '0';
+  if (!isset($list) || (count($list) == 0)) {
+    $result = '0';
+  }
+  else {
+    while (!empty($list)) {
+      $field = array_shift($list);
+      $result = 'add(product(' . $field . ',pow(' . $base . ',' . $degree . ')),' . $result . ')';
+      $degree++;
+    }
+  }
+  
+  return $result;
+}
+
+/**
  * Returns array of fields of separate table with given nid, name, type, title, delta.
  */
 function _tow_apachesolr_separate_table_fields($nid) {
   $fields = array();
   $f_fields = array();
   $table_node = node_load($nid, NULL, TRUE);
-  
+
   if ($table_node->type == 'table') {
     $index = 0;
     $weights_array = unserialize($table_node->field_weights[0]['value']);

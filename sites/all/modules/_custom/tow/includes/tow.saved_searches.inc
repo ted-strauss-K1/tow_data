@@ -9,6 +9,86 @@
 
 
 /****************************************************************************************************
+ * Hook handlers
+ ****************************************************************************************************/
+
+function tow_saved_searches_list_block($nid = NULL) {
+  $nid = (isset($nid)) ? $nid : arg(1);
+  $nid = str_replace(' ', '+', $nid);
+  
+  $is_dataset = FALSE;
+  if (is_numeric($nid)) {
+    $o = node_load($nid);
+    $is_dataset = ($o->type == 'dataset') ? TRUE : FALSE;
+  }
+  
+  if ($is_dataset) {
+    $query = db_query("
+
+      SELECT 
+        ctss.nid AS nid 
+        
+        FROM 
+          {content_type_saved_search} ctss 
+
+        WHERE 
+          ctss.field_dataset_nid_value = %d 
+
+    ", $nid);
+  }
+  else {
+    $query = db_query("
+
+      SELECT 
+        ctss.nid AS nid 
+        
+        FROM 
+          {content_type_saved_search} ctss 
+
+        WHERE 
+          ctss.field_table_nid_value = '%s' 
+
+    ", $nid);
+  }
+  $saved_searches = array();
+  while ($result = db_fetch_object($query)) {
+    $saved_searches[] = node_load($result->nid);
+  }
+  
+  $block['content'] = '';
+  
+  foreach ($saved_searches as $node) {
+    $query = db_query("
+
+      SELECT 
+        c.cid AS cid 
+        
+        FROM 
+          {comments} c 
+
+        WHERE 
+          c.nid = %d 
+
+    ", $node->nid);
+    $comments = array();
+    while ($result = db_fetch_object($query)) {
+      $comments[] = _comment_load($result->cid);
+    }
+  
+    $output = '<div class="tow-saved-search-block-item">';
+    $output .= node_view($node);
+    foreach ($comments as $comment) {
+      $output .= theme('comment_view', $comment, $node);
+    }
+    $output .= '</div>';
+    
+    $block['content'] .= $output;
+  }
+  
+  return $block;
+}
+
+/****************************************************************************************************
  * Forms
  ****************************************************************************************************/
 
@@ -16,8 +96,34 @@
  * Defines a form with button for saving search.
  */ 
 function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
-  
   $form = array();
+  
+  $filters = $_GET['filters'];
+  $table_nid = arg(1);
+  $selected_fields = (isset($_GET['selected_fields'])) ? json_decode($_GET['selected_fields'], TRUE) : array();
+  
+  // Filters.
+  $form['filters'] = array(
+    '#type' => 'hidden',
+    '#value' => $filters,
+  );
+  
+  // Rows amount.
+  $form['rows_amount'] = array(
+    '#type' => 'hidden',
+    '#value' => $rows_amount,
+  );
+  
+  // Rows amount.
+  $form['selected_fields'] = array(
+    '#type' => 'hidden',
+    '#value' => serialize($selected_fields),
+  );
+  
+  // Rows amount.
+  $form['summary'] = array(
+    '#value' => tow_saved_searches_summary($table_nid, $filters, $rows_amount, $selected_fields),
+  );
   
   // Button.
   $form['save_search'] = array(
@@ -27,22 +133,10 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
     '#submit' => array('tow_saved_searches_save_search_form_submit'),
   );
   
-  // Filters.
-  $form['filters'] = array(
-    '#type' => 'hidden',
-    '#value' => $_GET['filters'],
-  );
-  
-  // Rows amount.
-  $form['rows_amount'] = array(
-    '#type' => 'hidden',
-    '#value' => $rows_amount,
-  );
-  
   // Action.
   $form['#action'] = str_replace('/refresh_ajax', '', $_GET['q']);
   $form['#action'] = str_replace('search_dataset/', '', $form['#action']);
-  $form['#action'] = '/search_dataset/' . arg(1); 
+  $form['#action'] = '/search_dataset/' . $table_nid; 
   
   return $form;
 }
@@ -57,10 +151,18 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
  * Checks whether current search has already been saved.
  */
 function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
-  
+
   // Get current node.
   $nid = arg(1);
-  $node = node_load($nid);
+  if (!is_numeric($nid)) {
+    $nid = str_replace(' ', '+', $nid);
+    $nid_array = explode('+', $nid);
+    $node = node_load($nid_array[0]);
+  }
+  else {
+    $node = node_load($nid);
+  }
+  $node->nid = $nid;
   
   // Get filters.
   $form['filters']['#value'] = $form['filters']['#post']['filters'];
@@ -68,17 +170,24 @@ function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
   $filters = $form_state['values']['filters'];
   
   // Rows amount.
+  $form['rows_amount']['#value'] = $form['rows_amount']['#post']['rows_amount'];
+  $form_state['values']['rows_amount'] = $form['rows_amount']['#value'];
   $rows_amount = $form_state['values']['rows_amount'];
   
+  // Rows amount.
+  $form['selected_fields']['#value'] = $form['selected_fields']['#post']['selected_fields'];
+  $form_state['values']['selected_fields'] = $form['selected_fields']['#value'];
+  $selected_fields = unserialize($form_state['values']['selected_fields']);
+  
   // Create saved search.
-  $saved_search = tow_saved_searches_saved_search_create($node, $filters, $rows_amount);
+  $saved_search = tow_saved_searches_saved_search_create($node, $filters, $rows_amount, $selected_fields);
   
   // Put it to the form.
   $form_state['#saved_search'] = $saved_search;
   
   // Validation.
   if ($saved_search == NULL) {
-    form_set_error('filters', check_plain(t("The search you are trying already exists.")));
+    form_set_error('filters', check_plain(t("The search you are trying to save already exists.")));
   }
 }
 
@@ -94,7 +203,12 @@ function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
 function tow_saved_searches_save_search_form_submit(&$form, &$form_state) {
   $saved_search = $form_state['#saved_search'];
   if ($saved_search != NULL) {
-    node_save($saved_search);
+    try {
+      node_save($saved_search);
+    }
+    catch (Exception $e) {
+      watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+    }
   }
 }
 
@@ -171,7 +285,7 @@ function tow_saved_searches_get_constraints($filters) {
 /**
  * Constructs a Saved Search node object.
  */
-function tow_saved_searches_saved_search_create($node, $filters, $rows_amount = 0) {
+function tow_saved_searches_saved_search_create($node, $filters, $rows_amount = 0, $selected_fields = array()) {
   module_load_include('inc', 'node', 'node.pages');
   
   // Prepare a new Saved Search object.
@@ -190,7 +304,7 @@ function tow_saved_searches_saved_search_create($node, $filters, $rows_amount = 
   if ($node->type == 'table') {
     $saved_search->field_table_nid[0]['value'] = $node->nid;
     $saved_search->field_dataset_nid[0]['value'] = $node->field_dataset[0]['value'];
-    $saved_search->body = tow_saved_searches_summary($node->nid, $filters, $rows_amount);
+    $saved_search->body = tow_saved_searches_summary($node->nid, $filters, $rows_amount, $selected_fields);
   }
   
   // Save search constraints.
@@ -243,7 +357,7 @@ function tow_saved_searches_sort_constraints($filters) {
 /**
  * Generates a summary for the saved search.
  */
-function tow_saved_searches_summary($table_nid, $filters, $rows_amount = 0) {
+function tow_saved_searches_summary($table_nid, $filters, $rows_amount = 0, $selected_fields = array()) {
   
   $fields = tow_apachesolr_table_fields($table_nid, TRUE);
   
@@ -253,7 +367,9 @@ function tow_saved_searches_summary($table_nid, $filters, $rows_amount = 0) {
   // Get the values for ecah constraint into an array.
   $info = array();
   foreach ($fields as $field) {
-    $info[$field['name']] = $field;
+    if (empty($selected_fields) || in_array($field['title'] . '_' . $field['type'], $selected_fields)) {
+      $info[$field['name']] = $field;
+    }
   }
   
   foreach ($constraints as $constraint) {
@@ -368,7 +484,7 @@ function tow_saved_searches_summary($table_nid, $filters, $rows_amount = 0) {
   }
   
   // Build summary.
-  $summary = '<pre>';
+  $summary = '';
   
   // Searched for part.
   $summary .= t('Searched for');
@@ -387,7 +503,7 @@ function tow_saved_searches_summary($table_nid, $filters, $rows_amount = 0) {
     }
   }
   if ($empty) {
-    $summary = '<pre>';
+    $summary = '';
   }
   else {
     $summary = rtrim($summary, ',');
@@ -395,23 +511,23 @@ function tow_saved_searches_summary($table_nid, $filters, $rows_amount = 0) {
   }
   
   // Displaying fields part.
-  $summary .= ' ' . 'Displaying fields:';
   $titles = array();
   foreach ($info as $field) {
     $titles[] = $field['title'];
   }
   $titles = array_unique($titles);
+  $summary .= (empty($titles)) ? '' : ' ' . 'Displaying fields:';
   foreach ($titles as $field) {
     $summary .= ' \'' . $field . '\'' . ',';
   }
   $summary = rtrim($summary, ',');
-  $summary .= '.';
+  $summary .= (empty($titles)) ? '' : '.';
   
   // Rows amount part
-  $summary .= ($rows_amount === 0) ? '' : "<strong> $rows_amount rows of results.</strong>";
+  $summary .= ($rows_amount === 0) ? '' : "<strong> $rows_amount row" . (($rows_amount == 1) ? "" : "s") . " of results.</strong>";
   
   // Finish building the summary.
-  $summary .= '</pre>';
+  $summary .= '';
   
   return $summary;
 }

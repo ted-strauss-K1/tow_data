@@ -344,7 +344,12 @@ function tow_field_delete_confirm_submit($form, &$form_state) {
   unset($_tow_table->field_units[$field_index]);
 
   // Save table.
-  node_save($_tow_table);
+  try {
+    node_save($_tow_table);
+  }
+  catch (Exception $e) {
+    watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+  }
 
   drupal_set_message('The field has been deleted');
   $form_state['redirect'] = 'node/' . $_tow_table->nid;
@@ -385,7 +390,12 @@ function tow_field_edit_form_submit($form, &$form_state) {
   
   // Save if necessary.
   if ($node_save) {
-    node_save($_tow_table);
+    try {
+      node_save($_tow_table);
+    }
+    catch (Exception $e) {
+      watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+    }
   }
   
   // Save description.

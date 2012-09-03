@@ -258,8 +258,8 @@ function tow_import_progress_init($hash, $copied, $filename, $to) {
     $phpexcelreader = 'phpexcelreader';
     
     // Uncomment the method you want to use.
-    # tow_import_file_process_test($hash, $filename, $to, $phpexcel);
-    tow_import_file_process_test($hash, $filename, $to, $phpexcelreader);
+    tow_import_file_process_test($hash, $filename, $to, $phpexcel);
+    # tow_import_file_process_test($hash, $filename, $to, $phpexcelreader);
   }
   
   // Else stop.
@@ -819,7 +819,12 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
         $new_table->field_indexes[0]['value'] = serialize($indexes_array);
 
         // Node save, get table nid.
-        node_save($new_table);
+        try {
+          node_save($new_table);
+        }
+        catch (Exception $e) {
+          watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+        }
         $table_nid = $new_table->nid;
 
         if ($table_nid) {
@@ -846,7 +851,12 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
           }
         }
         $new_record->field_table[0]['value'] = $table_nid;
-        node_save($new_record);
+        try {
+          node_save($new_record);
+        }
+        catch (Exception $e) {
+          watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+        }
         tow_import_progress($hash, $stage);
       }
 

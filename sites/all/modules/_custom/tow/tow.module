@@ -12,17 +12,7 @@
  * Global variables
  ****************************************************************************************************/
 
-$module_path = drupal_get_path('module', 'tow');
-
-
-
-/****************************************************************************************************
- * Constants
- ****************************************************************************************************/
-
-define("MIN_FIELDS_IN_TABLE", 1);
-define("MAX_FIELDS_IN_TABLE", 20);
-define("TOW_CRON_HASH_SLEEP", 0);
+drupal_add_css(drupal_get_path('module', 'tow') . '/css/tow.css');
 
 
 
@@ -30,6 +20,8 @@ define("TOW_CRON_HASH_SLEEP", 0);
  * Requirements
  ****************************************************************************************************/
 
+require_once 'sites/all/libraries/ChromePhp/ChromePhp.php';
+  
 module_load_include('inc', 'tow', 'includes/tow.access');
 module_load_include('inc', 'tow', 'includes/tow.apachesolr');
 module_load_include('inc', 'tow', 'includes/tow.dataset');
@@ -99,12 +91,13 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
     $blocks['search_inner_facets']['info'] = t('Inner search: facets block');
     $blocks['search_inner_simple_search']['info'] = t('Inner search: simple search block');
-    $blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables od a dataset');
+    $blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables of a dataset');
+    $blocks['search_inner_field_list']['info'] = t('Inner search: field list');
+    $blocks['saved_searches_list']['info'] = t('Saved Searches');
     
     // Facets info.
     $enabled_facets = apachesolr_get_enabled_facets('tow');
     $facets = tow_apachesolr_facets();
-    
     
     // Add the facet blocks.
     foreach ($enabled_facets as $delta => $facet_field) {
@@ -112,6 +105,54 @@ function tow_block($op = 'list', $delta = 0) {
         $blocks[$delta] = $facets[$delta] + array('cache' => BLOCK_CACHE_PER_PAGE);
       }
     }
+    
+    // Extra options: Inner search: field list.
+    $blocks['search_inner_field_list']['visibility'] = 2;
+    $blocks['search_inner_field_list']['pages'] = '
+      <?php  
+        if (arg(0) != "search_dataset") {
+          return FALSE;
+        }
+        else {
+          $nid = arg(1);
+          if (!is_numeric($nid)) {
+            return FALSE;
+          }
+          else {
+            $node = node_load($nid);
+            return (($node->type == "dataset") ? TRUE : FALSE);
+          }
+        }
+      ?>
+    ';
+    
+    // Extra options: Saved Searches.
+    $blocks['saved_searches_list']['visibility'] = 2;
+    $blocks['saved_searches_list']['pages'] = 
+    '
+      <?php  
+        if (arg(0) != "search_dataset") {
+          return FALSE;
+        }
+        else {
+          $nid = arg(1);
+          if (!is_numeric($nid)) {
+            return TRUE;
+          }
+          else {
+            $node = node_load($nid);
+            return (($node->type == "dataset") ? FALSE : TRUE);
+          }
+        }
+      ?>
+    ';
+    /*
+    '
+      <?php  
+        return (arg(0) != "search_dataset") ? FALSE : TRUE;
+      ?>
+    ';
+    */
     
     return $blocks;
   }
@@ -176,9 +217,19 @@ function tow_block($op = 'list', $delta = 0) {
         return tow_search_inner_simple_search_block();
       }
       
-      // 'Inner search: list of separate and linked tables od a dataset' block.
+      // 'Inner search: list of separate and linked tables of a dataset' block.
       if ($delta == 'search_inner_list_of_tables') {
         return tow_search_inner_linked_list_of_tables_block();
+      }
+      
+      // 'Inner search: field list' block.
+      if ($delta == 'search_inner_field_list') {
+        return tow_search_inner_field_list_block();
+      }
+      
+      // 'Saved Searches' block.
+      if ($delta == 'saved_searches_list') {
+        return tow_saved_searches_list_block();
       }
       
       // Block of facets for amount of tables (test facet block).
@@ -213,7 +264,7 @@ function tow_block($op = 'list', $delta = 0) {
 function tow_cron() {
   
   // Create dataset categories if necessary.
-  // tow_create_dataset_categories();
+  tow_create_dataset_categories();
   
   // Search part of the cron.
   tow_search_cron();
@@ -232,16 +283,17 @@ function tow_cron() {
  * Implementation of hook_form().
  */
 function tow_form($node) {
-  
-  // Define node types this module implements.
-  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search');
-  
-  // Add an empty form for each of the node types.
-  // This is necessary for CCK fields to be added programmatically during installation.
-  // All the other necessary form elements are added to the forms of these node types via hook_form_alter().
-  if (in_array($node->type, $types)) {
-    $form = array();
-  }
+ 
+  $type = node_get_types('type', $node);
+
+  $form['title'] = array(
+    '#type' => 'textfield', 
+    '#title' => check_plain($type->title_label), 
+    '#required' => TRUE, 
+    '#default_value' => $node->title,
+  );
+
+  $form['body_field'] = node_body_field($node, $type->body_label, $type->min_word_count);
   
   return $form;
 }
@@ -340,7 +392,15 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_init().
  */
 function tow_init() {
-
+  
+  // Add dataTables representation to the dataset search page.
+  if (arg(0) == 'search_dataset' && arg(1)) {
+    $node = node_load(arg(1));
+    if ($node->type == 'dataset') {
+      drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
+    }
+  }
+  
   // Add dataTables representation to the "Browse dataset" page and include collapsible table descriptions in there.
   if (arg(0) == 'dataset' && arg(1)) {
     drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
@@ -354,6 +414,16 @@ function tow_init() {
       drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
     }
   }
+  
+  if (arg(0) == 'node' && arg(1) && !arg(2)) {
+    $node = node_load(arg(1));
+    if ($node->type == 'saved_search') {
+      $path = 'search_dataset/';
+      $path .= ($node->field_table_nid[0]['value'] == 0) ? $node->field_dataset_nid[0]['value'] : $node->field_table_nid[0]['value'];
+      $fragment = ($node->field_search_constraints[0]['value'] == '') ? NULL : '?filters=' . $node->field_search_constraints[0]['value'];
+      drupal_goto($path, NULL, $fragment);
+    }
+  }
 }
 
 /**
@@ -361,6 +431,15 @@ function tow_init() {
  */
 function tow_menu() {
   $items = array();
+  
+  // Dataset creation link.
+  $items['admin/settings/tow'] = array(
+    'access arguments' => array('administer site configuration'),
+    'title' => 'Theory on Wheels settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('tow_admin_settings_form'),
+    'file' => 'includes/tow.admin.inc',
+  );
   
   // Dataset creation link.
   $items['data'] = array(
@@ -422,6 +501,16 @@ function tow_menu() {
   $items['dataset/%/ajax/access'] = array(
     'title' => 'Change an access to the dataset', 
     'page callback' => 'tow_ajax_handlers_dataset_access_type',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Page for creating a saved search with Ajax.
+  $items['search_dataset/%/ajax/save_search'] = array(
+    'title' => 'Create a saved search', 
+    'page callback' => 'tow_ajax_handlers_create_saved_search',
     'page arguments' => array(1),
     'access arguments' => array('access content'),
     'file' => 'includes/tow.ajax_handlers.inc',
@@ -656,6 +745,27 @@ function tow_nodeapi(&$node, $op) {
     tow_statistics_dataset_update($node);
   }
   
+  // Set a serialized array of available record positions within a table.
+  if ($node->type == 'table' && $op == 'presave') {
+    $allowed = TRUE;
+    if (!isset($node->nid)) {
+      $dataset_nid = $node->field_dataset[0]['value'];
+      $amount = db_result(db_query("SELECT COUNT(*) FROM {content_type_table} ctt WHERE ctt.field_dataset_value = %d", $dataset_nid));
+      $allowed = ($amount < variable_get('tow_max_tables_in_dataset', 12)) ? TRUE : FALSE;
+    }
+    if (!$allowed) {
+      throw new Exception('Impossible to create a table');
+    }
+    if (is_null($node->field_available_positions[0]['value'])) {
+      $available_positions = array();
+      $max_rec = variable_get('tow_max_records_in_table', 920);
+      for ($i = 0; $i < $max_rec; $i++) {
+        $available_positions[] = $i;
+      }
+      $node->field_available_positions[0]['value'] = serialize($available_positions);
+    }
+  }
+  
   // Add table structure to table node.
   if ($node->type == 'table' && $op == 'view') {
     tow_statistics_table_extract($node->nid);
@@ -684,8 +794,26 @@ function tow_nodeapi(&$node, $op) {
     tow_field_descriptions_submit($node->nid);
   }
   
-  // Set Null values for Null-marked positions in records.
+  // Presave record.
   if ($node->type == 'record' && $op == 'presave') {
+    
+    if (!isset($node->nid)) {
+      
+      // Check if create.
+      $available_positions = db_result(db_query("SELECT ctt.field_available_positions_value AS fapv FROM {content_type_table} ctt WHERE ctt.nid = %d", $node->field_table[0]['value']));
+      $available_positions = unserialize($available_positions);
+      $amount_av = count($available_positions);
+      $allowed = ($amount_av > 0) ? TRUE : FALSE;
+      if (!$allowed) {
+        throw new Exception('Impossible to create a record');
+      }
+      
+      // Set a position for the record within a table.
+      $node->field_position[0]['value'] = array_shift($available_positions);
+      db_query("UPDATE {content_type_table} SET field_available_positions_value = '%s' WHERE nid = %d", serialize($available_positions), $node->field_table[0]['value']);
+    }
+  
+    // Set Null values for Null-marked positions in records.
     tow_record_set_empty($node);
   }
   
@@ -704,6 +832,13 @@ function tow_nodeapi(&$node, $op) {
     tow_search_inner_linked_queue_record_linking($node, $op);
   }
   
+  // Set available record's position for a table. 
+  if ($node->type == 'record' && $op == 'delete') {
+    $available_positions = db_result(db_query("SELECT ctt.field_available_positions_value AS fapv FROM {content_type_table} ctt WHERE ctt.nid = %d", $node->field_table[0]['value']));
+    $available_positions = unserialize($available_positions);
+    $available_positions[] = $node->field_position[0]['value'];
+    db_query("UPDATE {content_type_table} SET field_available_positions_value = '%s' WHERE nid = %d", serialize($available_positions), $node->field_table[0]['value']);
+  }
 }
 
 /**
@@ -1099,7 +1234,12 @@ function tow_maintanance_mode($status, $nid, $type) {
         while ($node = db_fetch_object($res)) {
           $node = node_load($node->nid);
           $function($node);
-          node_save($node);
+          try {
+            node_save($node);
+          }
+          catch (Exception $e) {
+            watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+          }
           tow_maintanance_mode($status, $node->nid, $children_type);
         }
       
@@ -1108,7 +1248,12 @@ function tow_maintanance_mode($status, $nid, $type) {
         while ($node = db_fetch_object($res)) {
           $node = node_load($node->nid);
           $function($node);
-          node_save($node);
+          try {
+            node_save($node);
+          }
+          catch (Exception $e) {
+            watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+          }
         }
       }
     }
@@ -1143,7 +1288,7 @@ function tow_search_cron() {
   while ($node = db_fetch_object($res)) {
     
     // Sleep.
-    sleep(TOW_CRON_HASH_SLEEP);
+    sleep(variable_get('tow_cron_hash_sleep', 0));
     
     // Update dataset hashes.
     tow_dataset_hash_update($node->nid);

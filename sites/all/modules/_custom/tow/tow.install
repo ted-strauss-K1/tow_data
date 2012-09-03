@@ -194,6 +194,7 @@ function tow_install_fields() {
     return $allowed_values;
   ';
   $fields[] = tow_cck_integer('field_dataset', 'table', t('Dataset'), $weight++, $format, $exclude, 'number', 1, 0, '', $php);
+  $fields[] = tow_cck_textarea('field_available_positions', 'table', t('Available Positions'), $weight++, $format, $exclude);
   
   /* Record fields. */
   $format = array(1 => 'default', 2 => 'default', 3 => 'default', 4 => 'default', 'full' => 'us_0', 'teaser' => 'hidden', 'label' => 'hidden', 'token' => 'default');
@@ -220,6 +221,7 @@ function tow_install_fields() {
   $format['full'] = 'plain';
   $fields[] = tow_cck_textfield('field_code', 'record', t('Code'), $weight++, $format, $exclude, 0, 1);
   $fields[] = tow_cck_integer('field_table', 'record', t('Table'), $weight++, $format, $exclude, 'number', 1);
+  $fields[] = tow_cck_integer('field_position', 'record', t('Position'), $weight++, $format, $exclude, 'number', 1);
   
   /* Linked Record fields. */
   $format = array(1 => 'default', 2 => 'default', 3 => 'default', 4 => 'default', 'full' => 'hidden', 'teaser' => 'hidden', 'label' => 'hidden', 'token' => 'default');

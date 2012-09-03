@@ -1,45 +1,43 @@
 Drupal.behaviors.outer_search = function(context) {
   var default_tab = '#newest';
   
-  // hide hidden facets
+  // Hide hidden facets.
   $('.apachesolr-hidden-facet', context).hide();
   
-  // add Show more/fewer link
+  // Add Show more/fewer link.
   $('<a href="#" class="apachesolr-showhide"></a>').text(Drupal.t('Show more')).click(function() {
-  if ($(this).parent().find('.apachesolr-hidden-facet:visible').length == 0) {
-    $(this).parent().find('.apachesolr-hidden-facet').show();
-    $(this).text(Drupal.t('Show fewer'));
-  }
-  else {
-    $(this).parent().find('.apachesolr-hidden-facet').hide();
-    $(this).text(Drupal.t('Show more'));
-  }
-  return false;
+    if ($(this).parent().find('.apachesolr-hidden-facet:visible').length == 0) {
+      $(this).parent().find('.apachesolr-hidden-facet').show();
+      $(this).text(Drupal.t('Show fewer'));
+    }
+    else {
+      $(this).parent().find('.apachesolr-hidden-facet').hide();
+      $(this).text(Drupal.t('Show more'));
+    }
+    return false;
   }).appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
 
-
-  // run search on hash change (links). uses hashchangeevent plugin
-  $(window).hashchange(function(){
+  // Run search on hash change (links). Uses hashchangeevent plugin.
+  $(window).hashchange(function() {
     hash = location.hash;
     if (!hash) {
       hash = default_tab;
       location.hash = hash;
     }
-    if (!do_not_search)  {
+    if (!do_not_search) {
       url = 'http://' + location.host + '/search_outer_ajax/' + hash;
       do_search(url, hash);
     }
     do_not_search = false;
   });
   
-  //  run search on changing search form
-//  $('#block-tow-search_outer_filter').change(function(){
-  $('#edit-keywords, #edit-size, #edit-saved-searches, #edit-access-status, #edit-forum, #edit-docs, #edit-categories').change(function(){
+  // Run search on changing search form.
+  $('#edit-keywords, #edit-size, #edit-saved-searches, #edit-access-status, #edit-forum, #edit-docs, #edit-categories').change(function() {
     build_query_and_search();
   });
   
-  //  disabling page reload on submit
-  $('#edit-submit').live('click', function(e) {
+  // Disabling page reload on submit.
+  $('#tow-search-outer-filter-form #edit-submit').live('click', function(e) {
     if (e.button == 0) {
       e.preventDefault();
       $(this).attr('disabled','true');
@@ -47,13 +45,13 @@ Drupal.behaviors.outer_search = function(context) {
     }
   });
   
-  //  building search query from form
+  // Building search query from form.
   var build_query_and_search = function () {
     path = '/' + $('#edit-keywords').val();
     query = 'filters=';
 
-    // subjects
-    // each consequent search option should be separated from previous by whitespace
+    // Subjects.
+    // Each consequent search option should be separated from previous by whitespace.
     if ($('#edit-size').val() !== '0') {
       query += ' ' + 'sis_tow_amount_records:[' + $('#edit-size').val() + ' TO *]';
     }
@@ -83,11 +81,9 @@ Drupal.behaviors.outer_search = function(context) {
     hash = tab + path + (query ? '?' + query : '');
     
     location.hash = hash;
-//    url = 'http://' + location.host + '/search_outer_ajax/' + tab + path + '?' + query;
-//    do_search(url, hash);
   }
   
-  //  search request and associated actions
+  // Search request and associated actions.
   var do_search = function (url, hash) {
     $('#content-content').html($('#edit-search-placeholder').val());
     url = url.replace('#', '');
@@ -99,22 +95,22 @@ Drupal.behaviors.outer_search = function(context) {
         $('#block-tow-search_outer_number_of_results > .inner > .content').html(data.number);
         $('#block-tow-search_outer_tabs > .inner > .content').html(data.tabs);
         
-        $('#edit-keywords, #edit-size, #edit-saved-searches, #edit-access-status, #edit-forum, #edit-docs, #edit-categories').change(function(){
+        $('#edit-keywords, #edit-size, #edit-saved-searches, #edit-access-status, #edit-forum, #edit-docs, #edit-categories').change(function() {
           build_query_and_search();
         });
         
         $('.apachesolr-hidden-facet', context).hide();
         
         $('<a href="#" class="apachesolr-showhide"></a>').text(Drupal.t('Show more')).click(function() {
-        if ($(this).parent().find('.apachesolr-hidden-facet:visible').length == 0) {
-          $(this).parent().find('.apachesolr-hidden-facet').show();
-          $(this).text(Drupal.t('Show fewer'));
-        }
-        else {
-          $(this).parent().find('.apachesolr-hidden-facet').hide();
-          $(this).text(Drupal.t('Show more'));
-        }
-        return false;
+          if ($(this).parent().find('.apachesolr-hidden-facet:visible').length == 0) {
+            $(this).parent().find('.apachesolr-hidden-facet').show();
+            $(this).text(Drupal.t('Show fewer'));
+          }
+          else {
+            $(this).parent().find('.apachesolr-hidden-facet').hide();
+            $(this).text(Drupal.t('Show more'));
+          }
+          return false;
         }).appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
 
         $('a.active, a.apachesolr-facet, a.apachesolr-hidden-facet, a.apachesolr-unclick, a.tow-search-outer-tab').each(function() {
@@ -133,7 +129,6 @@ Drupal.behaviors.outer_search = function(context) {
       href = '/#' + href.substring(1);
       $(this).attr('href', href);
     });
-
   }
 
   var setFavicon = function () {
@@ -141,15 +136,15 @@ Drupal.behaviors.outer_search = function(context) {
     $('<link href="'+ link +'" rel="shortcut icon" type="image/x-icon" />').appendTo('head');
   }  
 
-  // trigger the first search
+  // Trigger the first search.
   do_not_search = false;
   if (location.hash !== '' && location.hash !== default_tab && location.hash !== default_tab + '/') {
     $(window).hashchange();
-  } else {
+  } 
+  else {
     do_not_search = true;
     location.hash = default_tab;
     links_to_hash();
     setFavicon();
-//    do_not_search = false;
   }
 }
