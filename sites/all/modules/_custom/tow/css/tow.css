@@ -1,0 +1,12 @@
+.tow-dataset-field-link {
+  background: white;
+}
+
+.tow-dataset-field-link.selected {
+  background: black;
+  color: white;
+}
+
+.tow-dataset-field-link.unavailable {
+  color: lightgrey;
+}
