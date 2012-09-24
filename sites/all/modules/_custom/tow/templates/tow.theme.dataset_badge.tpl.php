@@ -14,6 +14,8 @@
   <p><?php print $searches; ?></p>
   <p><?php print $added; ?></p>
   <p><?php print $updated; ?></p>
-  <p><?php print $access; ?></p>
+  <p class="dt-at"><?php print $access; ?></p>
+  <p><?php print $visits; ?></p>
+  <div class="extrainfo"><p><?php print $extrainfo; ?></p></div>
 </div>
 

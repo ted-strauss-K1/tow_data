@@ -31,12 +31,13 @@ function tow_schema() {
   // Node tables.
   $schema['tow_access_requests'] = tow_db_tables_tow_access_requests();
   $schema['tow_apachesolr_requests'] = tow_db_tables_tow_apachesolr_requests();
-  $schema['tow_dataset_counter'] = tow_db_tables_tow_dataset_counter();
+  $schema['tow_node_views_counter'] = tow_db_tables_tow_dataset_counter();
   $schema['tow_field_info'] = tow_db_tables_tow_field_info();
   $schema['tow_import_progress'] = tow_db_tables_tow_import_progress();
   $schema['tow_invites'] = tow_db_tables_tow_invites();
   $schema['tow_link_tables'] = tow_db_tables_tow_link_tables();
   $schema['tow_table_counter'] = tow_db_tables_tow_table_counter();
+  $schema['tow_term_timestamps'] = tow_db_tables_tow_term_timestamps();
   
   return $schema;
 }

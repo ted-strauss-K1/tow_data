@@ -344,7 +344,6 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
       
       $is_linking_field = FALSE;
       if (isset($key)) {
-        //dpm($linking_fields[$key], $key);
         foreach ($linking_fields[$key] as $l_field) {
           if (($l_field['title'] == $field['title']) && ($l_field['type'] == $field['type'])) {
             $is_linking_field = TRUE;
@@ -386,7 +385,7 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
     $table = node_load($table_nid);
     $form["tow_table_fields_$table_nid"] = array(
       '#type' => 'fieldset',
-      '#title' => $table->title,
+      '#title' => filter_xss($table->title),
       '#collapsible' => TRUE,
       '#collapsed' => (!(empty($selected_tableset) || in_array($table_nid, $selected_tableset))) ? TRUE : FALSE,
     );
@@ -399,7 +398,7 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
       '#value' => $fields_list,
     );
   }
-  
+
   return $form;
 }
 

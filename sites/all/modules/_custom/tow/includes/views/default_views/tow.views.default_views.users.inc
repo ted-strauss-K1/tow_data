@@ -17,7 +17,7 @@
  */
 function tow_views_default_views_users() {
   $view = new view;
-  $view->name = 'users';
+  $view->name = 'Users';
   $view->description = '';
   $view->tag = '';
   $view->base_table = 'users';
@@ -430,11 +430,6 @@ function tow_views_default_views_users() {
       'relationship' => 'none',
     ),
     'top_taxonomy' => array(
-      'id' => 'top_taxonomy',
-      'table' => 'users',
-      'field' => 'top_taxonomy',
-    ),
-    'top_taxonomy_1' => array(
       'label' => '',
       'alter' => array(
         'alter_text' => 0,
@@ -461,46 +456,21 @@ function tow_views_default_views_users() {
       'empty_zero' => 0,
       'hide_alter_empty' => 1,
       'vocabularies' => array(
-        9 => 9,
         8 => 0,
+        9 => 0,
         12 => 0,
       ),
       'terms_amount' => '3',
       'separator' => '0',
       'is_linked' => 1,
       'exclude' => 0,
-      'id' => 'top_taxonomy_1',
+      'id' => 'top_taxonomy',
       'table' => 'users',
       'field' => 'top_taxonomy',
       'relationship' => 'none',
     ),
   ));
-  $handler->override_option('sorts', array(
-    'content_count' => array(
-      'id' => 'content_count',
-      'table' => 'users',
-      'field' => 'content_count',
-    ),
-  ));
   $handler->override_option('filters', array(
-    'name' => array(
-      'operator' => 'contains',
-      'value' => '',
-      'group' => '0',
-      'exposed' => TRUE,
-      'expose' => array(
-        'use_operator' => 0,
-        'operator' => 'name_op',
-        'identifier' => 'name',
-        'label' => 'Type to find users',
-        'remember' => 0,
-      ),
-      'case' => 0,
-      'id' => 'name',
-      'table' => 'users',
-      'field' => 'name',
-      'relationship' => 'none',
-    ),
     'creation_interval' => array(
       'operator' => NULL,
       'value' => '4',
@@ -520,6 +490,27 @@ function tow_views_default_views_users() {
       'field' => 'creation_interval',
       'relationship' => 'none',
     ),
+    'summary' => array(
+      'operator' => 'contains',
+      'value' => '',
+      'group' => '0',
+      'exposed' => TRUE,
+      'expose' => array(
+        'use_operator' => 0,
+        'operator' => '',
+        'identifier' => 'summary',
+        'label' => 'Type to find users',
+        'remember' => 0,
+      ),
+      'case' => 1,
+      'id' => 'summary',
+      'table' => 'users',
+      'field' => 'summary',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
   ));
   $handler->override_option('access', array(
     'type' => 'none',
@@ -527,6 +518,7 @@ function tow_views_default_views_users() {
   $handler->override_option('cache', array(
     'type' => 'none',
   ));
+  $handler->override_option('items_per_page', 0);
   $handler = $view->new_display('page', 'New Users', 'page_1');
   $handler->override_option('fields', array(
     'uid' => array(
@@ -2443,6 +2435,46 @@ function tow_views_default_views_users() {
     ),
   ));
   $handler->override_option('filters', array(
+    'creation_interval' => array(
+      'operator' => NULL,
+      'value' => '4',
+      'group' => '0',
+      'exposed' => TRUE,
+      'expose' => array(
+        'use_operator' => 0,
+        'operator' => 'creation_interval_op',
+        'identifier' => 'creation_interval',
+        'label' => 'User: Creation Interval',
+        'optional' => 0,
+        'single' => 0,
+        'remember' => 0,
+      ),
+      'id' => 'creation_interval',
+      'table' => 'users',
+      'field' => 'creation_interval',
+      'relationship' => 'none',
+    ),
+    'summary' => array(
+      'operator' => 'contains',
+      'value' => '',
+      'group' => '0',
+      'exposed' => TRUE,
+      'expose' => array(
+        'use_operator' => 0,
+        'operator' => '',
+        'identifier' => 'summary',
+        'label' => 'Type to find users',
+        'remember' => 0,
+      ),
+      'case' => 1,
+      'id' => 'summary',
+      'table' => 'users',
+      'field' => 'summary',
+      'relationship' => 'none',
+      'override' => array(
+        'button' => 'Override',
+      ),
+    ),
     'rid' => array(
       'operator' => 'or',
       'value' => array(
@@ -2461,50 +2493,7 @@ function tow_views_default_views_users() {
         'button' => 'Use default',
       ),
       'relationship' => 'none',
-      'reduce_duplicates' => 1,
-    ),
-    'name' => array(
-      'operator' => 'contains',
-      'value' => '',
-      'group' => '0',
-      'exposed' => TRUE,
-      'expose' => array(
-        'use_operator' => 0,
-        'operator' => 'name_op',
-        'identifier' => 'name',
-        'label' => 'Type to find users',
-        'remember' => 0,
-      ),
-      'case' => 0,
-      'id' => 'name',
-      'table' => 'users',
-      'field' => 'name',
-      'override' => array(
-        'button' => 'Use default',
-      ),
-      'relationship' => 'none',
-    ),
-    'creation_interval' => array(
-      'operator' => '>=',
-      'value' => '4',
-      'group' => '0',
-      'exposed' => TRUE,
-      'expose' => array(
-        'use_operator' => 0,
-        'operator' => 'creation_interval_op',
-        'identifier' => 'creation_interval',
-        'label' => 'Users created',
-        'optional' => 0,
-        'single' => 0,
-        'remember' => 0,
-      ),
-      'id' => 'creation_interval',
-      'table' => 'users',
-      'field' => 'creation_interval',
-      'override' => array(
-        'button' => 'Use default',
-      ),
-      'relationship' => 'none',
+      'reduce_duplicates' => 0,
     ),
   ));
   $handler->override_option('title', 'Moderators');

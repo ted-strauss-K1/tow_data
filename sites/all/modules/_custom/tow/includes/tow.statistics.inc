@@ -24,7 +24,7 @@ function tow_statistics_dataset_extract($nid) {
       t.timestamp AS timestamp 
       
       FROM 
-        {tow_dataset_counter} t 
+        {tow_node_views_counter} t 
 
       WHERE 
         t.nid = %d 
@@ -34,16 +34,16 @@ function tow_statistics_dataset_extract($nid) {
 }
 
 /**
- * If current user is not an owner of dataset node, store data about page view in tow_dataset_counter table.
+ * If current user is not an owner of dataset node, store data about page view in tow_node_views_counter table.
  */
-function tow_statistics_dataset_update($node) {
+function tow_statistics_node_views_update($node) {
   
   // Dataset owner should not affect statistics of his datasets.
   global $user;
   if ($user->uid == $node->uid) {
     return;
   }
-    
+
   $time = time();
   
   $count = db_result(db_query("
@@ -52,20 +52,20 @@ function tow_statistics_dataset_update($node) {
       MAX(t.count) AS count
         
       FROM 
-        {tow_dataset_counter} t
+        {tow_node_views_counter} t
         
       WHERE 
         t.nid = %d 
             
   ", $node->nid));
-  $count++;
   
   if (!$count) {
+    $count++;
     db_query("
   
       INSERT 
         INTO 
-          {tow_dataset_counter} 
+          {tow_node_views_counter} 
             (nid, count, timestamp)
     
         VALUES 
@@ -74,10 +74,11 @@ function tow_statistics_dataset_update($node) {
     ", $node->nid, $count, $time);
   }
   else {
+    $count++;
     db_query("
         
       UPDATE 
-        {tow_dataset_counter} 
+        {tow_node_views_counter} 
         
       SET 
         count = %d, 

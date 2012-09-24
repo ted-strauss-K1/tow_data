@@ -42,13 +42,13 @@ class GroupsActivity extends HeartbeatAccess {
 
     // Sql parts
     $this->stream->sql_start = "SELECT
-      hm.hid AS 'hid', hm.message AS 'message_orig',
-      hm.message_concat AS 'message_concat_orig',
-      hm.attachments AS 'attachments', hm.concat_args,
-      hm.custom AS 'custom', hm.description as 'description',
-      hm.perms, hm.variables AS 'variables_orig',
+      hm.hid AS hid, hm.message AS message_orig,
+      hm.message_concat AS message_concat_orig,
+      hm.attachments AS attachments, hm.concat_args,
+      hm.custom AS custom, hm.description as description,
+      hm.perms, hm.variables AS variables_orig,
       ua.*,
-      1 AS 'count'
+      1 AS count
     FROM {heartbeat_activity} ua
     LEFT JOIN {heartbeat_messages} hm ON ua.message_id = hm.message_id
     INNER JOIN {og_ancestry} oa ON (oa.nid = ua.nid OR oa.group_nid = ua.nid)

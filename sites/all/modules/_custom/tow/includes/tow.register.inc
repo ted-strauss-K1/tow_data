@@ -42,7 +42,7 @@ function tow_register_form_alter(&$form, &$form_state) {
   );
   
   // Set help.
-  $form['user_registration_help'][0]['#value'] = $help;
+  # $form['user_registration_help'][0]['#value'] = $help;
   
   // Account settings.
   $form['account']['email_verify'] = array(

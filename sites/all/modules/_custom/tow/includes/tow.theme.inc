@@ -23,7 +23,7 @@ function theme_tow_search_inner_facet_link($facet_text, $path, $options = array(
   }
   
   $options['attributes']['class'] = implode(' ', $options['attributes']['class']);
-  $link = _tow_theme_search_inner_l($facet_text ." ($count)",  $path, $options);
+  $link = _tow_theme_search_inner_l($facet_text,  $path, $options) . " ($count)";
   
   return $link;
 }
@@ -169,6 +169,27 @@ function theme_tow_table_tabular_form($form) {
   }
   
   return theme('table', $form['header']['#value'], $rows);
+}
+
+/**
+ * Purpose: Allow my_userpoints to be themeable.
+ */
+function theme_tow_user_list_userpoints($args, $header, $rows) {
+  $pager_limit = variable_get(USERPOINTS_REPORT_LIMIT, 10);
+  $output  = theme('table', $header, $rows);
+  $output .= "<p>";
+  if (isset($args) && isset($args['subtotals'])) {
+    foreach ($args['subtotals'] as $tid => $data) {
+      $output .= '<strong>'. $data['name'] .' '. t('!points Balance', userpoints_translation()) .':</strong> '. $data['total'] .'<br />';
+    }
+  }
+  $output .= "</p>";
+  $output .= "<p>";
+  $output .= '<strong>'. t('Total !points Balance', userpoints_translation()) .':</strong> '. $args['overall_total'] .'<br />';
+  $output .= "</p>";
+  $output .= theme('pager', NULL, $pager_limit, 0);
+
+  return $output;
 }
 
 

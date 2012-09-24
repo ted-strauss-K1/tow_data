@@ -9,3 +9,6 @@ dependencies[] = text
 dependencies[] = number
 dependencies[] = date
 dependencies[] = apachesolr_search
+dependencies[] = votingapi
+dependencies[] = views
+dependencies[] = taxonomy

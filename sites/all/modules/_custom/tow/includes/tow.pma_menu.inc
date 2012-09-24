@@ -25,15 +25,42 @@ function tow_pma_menu_block() {
   if (!$_tow_dataset) {
     return;
   }
+  
+  // Define browse submenu items.
+  // Table nids and titles
+  $table_titles_res = db_query("
 
+    SELECT 
+      t.nid AS nid, 
+      n.title AS title 
+      
+      FROM 
+          {content_type_table} t
+        LEFT JOIN 
+          {node} n 
+          ON 
+            t.nid = n.nid 
+
+      WHERE 
+        t.field_dataset_value = %d 
+
+  ", $_tow_dataset->nid);
+  
+  $subitems = '';
+  while ($rs = db_fetch_array($table_titles_res)) {
+      $subitems .= '<li>' . l($rs['title'], 'table/' . $rs['nid']) . '</li>';
+  }
+  
   // Define menu items.
   $items = array();
-  $items['summary'] = l('Overview', 'node/' . $_tow_dataset->nid);
-  $items['search'] = ($_tow_grey_pma_menu) ? t('Search') : l('Search', 'search_dataset/' . $_tow_dataset->nid);
+  //$items['summary'] = l('Overview', 'node/' . $_tow_dataset->nid);
   $items['browse'] = ($_tow_grey_pma_menu) ? t('Browse') : (($_tow_table) ? l('Browse', 'table/' . $_tow_table->nid) : l('Browse', 'dataset/' . $_tow_dataset->nid));
+  $items['browse'] .= '<ul class="browse-submenu">' . $subitems . '</ul>';
+  $items['search'] = ($_tow_grey_pma_menu) ? t('Search') : l('Search', 'search_dataset/' . $_tow_dataset->nid);
   $items['docs'] = l('Docs', 'docs');
-  $items['forum'] = l('Forum', 'forum');
-
+  //$items['forum'] = l('Forum', 'forum');
+  $items['new_dataset'] = l('New dataset', 'node/add/dataset');
+ 
   // Theme the block.
   $block['content'] = theme_item_list($items, NULL, 'ul');
 

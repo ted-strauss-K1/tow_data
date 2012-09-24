@@ -40,6 +40,7 @@ module_load_include('inc', 'tow', 'includes/tow.statistics');
 module_load_include('inc', 'tow', 'includes/tow.table');
 module_load_include('inc', 'tow', 'includes/tow.tests');
 module_load_include('inc', 'tow', 'includes/tow.views');
+module_load_include('inc', 'tow', 'includes/tow.user');
 
 
 
@@ -83,6 +84,7 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['create_table']['info'] = t('Create table');
     $blocks['pma_menu']['info'] = t('PhpMyAdmin menu'); 
     $blocks['dataset_badge']['info'] = t('Dataset badge');
+    $blocks['dataset_share']['info'] = t('Dataset share');
     $blocks['dataset_stats']['info'] = t('Dataset statistics');
     $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
     $blocks['search_outer_results']['info'] = t('Outer search: Results');
@@ -94,6 +96,9 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables of a dataset');
     $blocks['search_inner_field_list']['info'] = t('Inner search: field list');
     $blocks['saved_searches_list']['info'] = t('Saved Searches');
+    $blocks['search_outer_sponsored']['info'] = t('Outer search: Sponsored');
+    $blocks['search_outer_searchinput']['info'] = t('Outer search: Search input');
+    $blocks['user_view']['info'] = t('User');
     
     // Facets info.
     $enabled_facets = apachesolr_get_enabled_facets('tow');
@@ -154,6 +159,10 @@ function tow_block($op = 'list', $delta = 0) {
     ';
     */
     
+    // Extra options: Inner search: field list.
+    $blocks['user_view']['visibility'] = 1;
+    $blocks['user_view']['pages'] = 'user/*';
+    
     return $blocks;
   }
   
@@ -175,6 +184,11 @@ function tow_block($op = 'list', $delta = 0) {
       if ($delta == 'dataset_badge') {
         return tow_dataset_badge_block();
       }
+
+      // 'Dataset share' block.
+      if ($delta == 'dataset_share') {
+        return tow_dataset_share_block();
+      }
       
       // 'Dataset statistics' block.
       if ($delta == 'dataset_stats') {
@@ -189,7 +203,17 @@ function tow_block($op = 'list', $delta = 0) {
       // 'Outer search: Filters' block.
       if ($delta == 'search_outer_filter') {
         return tow_search_outer_filter_block();
-      }      
+      }
+
+      // 'Outer search: Search input' block.
+      if ($delta == 'search_outer_searchinput') {
+        return tow_search_outer_searchinput_block();
+      }
+
+      // 'Outer search: Sponsored' block.
+      if ($delta == 'search_outer_sponsored') {
+        return tow_search_outer_sponsored_block();
+      }
       
       // 'Outer search: Number of results' block.
       if ($delta == 'search_outer_number_of_results') {
@@ -230,6 +254,11 @@ function tow_block($op = 'list', $delta = 0) {
       // 'Saved Searches' block.
       if ($delta == 'saved_searches_list') {
         return tow_saved_searches_list_block();
+      }
+      
+      // 'User' block.
+      if ($delta == 'user_view') {
+        return tow_user_view_block();
       }
       
       // Block of facets for amount of tables (test facet block).
@@ -301,8 +330,8 @@ function tow_form($node) {
 /**
  * Implementation of hook_form_alter().
  */
-function tow_form_alter(&$form, &$form_state, $form_id) {  
-  
+function tow_form_alter(&$form, &$form_state, $form_id) {
+
   // Add an extra submit handler for dataset and table forms for checking the status has been changed.
   if ($form_id == 'dataset_node_form' || $form_id == 'table_node_form') {
     $form['#submit'][] = 'tow_submit_maintanance_mode';
@@ -328,7 +357,7 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
     
     // User registration form.
     case 'user_register':
-      tow_register_form_alter($form, $form_state);
+      # tow_register_form_alter($form, $form_state);
       break;
   }
   
@@ -401,6 +430,11 @@ function tow_init() {
     }
   }
   
+  // Redirect to the front page with filtering by term instead of going to the term view page.
+  if (arg(0) == 'taxonomy' && arg(1) == 'term' && arg(2) && is_numeric(arg(2)) && !arg(3)) {
+    drupal_goto('', NULL, 'newest/?filters=tid:' . arg(2));
+  }
+  
   // Add dataTables representation to the "Browse dataset" page and include collapsible table descriptions in there.
   if (arg(0) == 'dataset' && arg(1)) {
     drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
@@ -418,6 +452,7 @@ function tow_init() {
   if (arg(0) == 'node' && arg(1) && !arg(2)) {
     $node = node_load(arg(1));
     if ($node->type == 'saved_search') {
+      tow_statistics_node_views_update($node);
       $path = 'search_dataset/';
       $path .= ($node->field_table_nid[0]['value'] == 0) ? $node->field_dataset_nid[0]['value'] : $node->field_table_nid[0]['value'];
       $fragment = ($node->field_search_constraints[0]['value'] == '') ? NULL : '?filters=' . $node->field_search_constraints[0]['value'];
@@ -501,6 +536,16 @@ function tow_menu() {
   $items['dataset/%/ajax/access'] = array(
     'title' => 'Change an access to the dataset', 
     'page callback' => 'tow_ajax_handlers_dataset_access_type',
+    'page arguments' => array(1),
+    'access arguments' => array('access content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+  );
+  
+  // Page for changing bookmark count with Ajax.
+  $items['dataset/%/ajax/bookmark'] = array(
+    'title' => 'Change bookmark count for the dataset', 
+    'page callback' => 'tow_ajax_handlers_dataset_bookmark_count',
     'page arguments' => array(1),
     'access arguments' => array('access content'),
     'file' => 'includes/tow.ajax_handlers.inc',
@@ -677,10 +722,37 @@ function tow_menu() {
     'type' => MENU_CALLBACK,
   );
 
+  // User datasets.
+  $items['user/%/datasets'] = array(
+    'title' => 'Datasets',
+    'weight' => 2,
+    'page callback' => 'tow_search_outer_view',
+    'access arguments' => array('search content'),
+    'file' => 'includes/tow.search_outer.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+
+  // User saved searches.
+  $items['user/%/saved_searches'] = array(
+    'title' => 'Searches',
+    'weight' => 3,
+    'page callback' => 'tow_search_outer_view',
+    'access arguments' => array('search content'),
+    'file' => 'includes/tow.search_outer.inc',
+    'type' => MENU_LOCAL_TASK,
+  );
+  
   // Add test menu items.
   $items = array_merge($items, tow_tests_menu());
   
   return $items;
+}
+
+/**
+ * Implementation of hook_menu_alter().
+ */
+function tow_menu_alter(&$items) {
+  tow_user_menu_alter($items);
 }
 
 /**
@@ -691,7 +763,7 @@ function tow_nodeapi(&$node, $op) {
   
   // Delete all records having reference to the table being deleted.
   // Delete all tables and saved searches having reference to the dataset being deleted.
-  if ($op == 'delete') {    
+  if ($op == 'delete') {
     $children_types = _tow_children_type($node->type);
     if ($children_types) {
       foreach ($children_types as $children_type) {
@@ -736,13 +808,43 @@ function tow_nodeapi(&$node, $op) {
       $_tow_dataset = $node;
     }
   }
-
-  // View options for the dataset. 
+  
+  // Remove voting widgets for dataset for its further input within a theme.
+  if ($op == 'alter' && $node->type == 'dataset') {
+    $node->body = $node->content['body']['#value'];
+  }
+  
+  // Update.
+  if ($op == 'update') {
+    $terms = array_keys(taxonomy_node_get_terms($node));
+    foreach ($terms as $tid) {
+      
+      $timestamp = time();
+      
+      $record = new stdClass;
+      $record->tid = $tid;
+      $first = db_result(db_query("SELECT t.first_used AS first_used FROM {tow_term_timestamps} t WHERE t.tid = %d", $tid));
+      if (!$first) {
+        $record->first_used = $timestamp;
+      }
+      $record->last_used = $timestamp;
+      
+      $isset = db_result(db_query("SELECT t.tid AS tid FROM {tow_term_timestamps} t WHERE t.tid = %d", $tid));
+      if ($isset) {
+        drupal_write_record('tow_term_timestamps', $record, 'tid');
+      }
+      else {
+        drupal_write_record('tow_term_timestamps', $record);
+      }
+    }
+  }
+  
+  // View options for the dataset.
   if ($node->type == 'dataset' && $op == 'view') {
     tow_dataset_hide_hash($node);
     tow_statistics_dataset_extract($node->nid);
     tow_dataset_summary($node);
-    tow_statistics_dataset_update($node);
+    tow_statistics_node_views_update($node);
   }
   
   // Set a serialized array of available record positions within a table.
@@ -922,6 +1024,55 @@ function tow_perm() {
 }
 
 /**
+ * Implementation of hook_taxonomy().
+ */
+function tow_taxonomy($op, $type, $array) {
+  
+  if ($type == 'term') {
+    switch ($op) {
+      
+      case 'insert':
+        
+        // Current time.
+        $timestamp = time();
+        
+        // New record.
+        $record = new stdClass;
+        $record->tid = $array['tid'];
+        $record->created = $timestamp;
+        $record->updated = $timestamp;
+        $record->first_used = 0;
+        $record->last_used = 0;
+        
+        // Save to the db.
+        drupal_write_record('tow_term_timestamps', $record);
+        break;
+      
+      case 'update':
+        
+        // Current time.
+        $timestamp = time();
+        
+        // New record.
+        $record = new stdClass;
+        $record->tid = $array['tid'];
+        $record->updated = $timestamp;
+        
+        // Save to the db.
+        drupal_write_record('tow_term_timestamps', $record, 'tid');
+        break;
+      
+      case 'delete':
+        
+        // Delete timestamps' records for the term.
+        db_query("DELETE FROM {tow_term_timestamps} WHERE tid = %d", $array['tid']);
+        break;
+      
+    }
+  }
+}
+
+/**
  * Implementation of hook_theme()
  */
 function tow_theme() {
@@ -957,8 +1108,15 @@ function tow_theme() {
         'added' => NULL,
         'updated' => NULL,
         'access' => NULL,
+        'visits' => NULL,
+        'extrainfo' => NULL,
       ),
       'template' => 'templates/tow.theme.dataset_badge',
+    ),
+
+    // Themes the output of the Dataset Share block content.
+    'tow_theme_dataset_share' => array(
+      'template' => 'templates/tow.theme.dataset_share',
     ),
     
     // Dataset attachment.
@@ -994,6 +1152,16 @@ function tow_theme() {
         'count' => NULL, 
         'active' => FALSE, 
         'num_found' => NULL
+      ),
+      'file' => 'includes/tow.theme.inc',
+    ),
+    
+    // Returns themed userpoints information.
+    'tow_user_list_userpoints' => array(
+      'arguments' => array(
+        'args' => NULL,
+        'header' => NULL,
+        'rows' => NULL,
       ),
       'file' => 'includes/tow.theme.inc',
     ),

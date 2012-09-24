@@ -10,3 +10,7 @@
 .tow-dataset-field-link.unavailable {
   color: lightgrey;
 }
+
+.comment .vud-widget-upanddown .down-score {
+  display: none;
+}

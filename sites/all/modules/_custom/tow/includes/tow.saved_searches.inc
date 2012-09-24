@@ -12,6 +12,9 @@
  * Hook handlers
  ****************************************************************************************************/
 
+/**
+ * Saved searches block.
+ */
 function tow_saved_searches_list_block($nid = NULL) {
   $nid = (isset($nid)) ? $nid : arg(1);
   $nid = str_replace(' ', '+', $nid);
@@ -84,7 +87,7 @@ function tow_saved_searches_list_block($nid = NULL) {
     
     $block['content'] .= $output;
   }
-  
+
   return $block;
 }
 
@@ -305,6 +308,7 @@ function tow_saved_searches_saved_search_create($node, $filters, $rows_amount = 
     $saved_search->field_table_nid[0]['value'] = $node->nid;
     $saved_search->field_dataset_nid[0]['value'] = $node->field_dataset[0]['value'];
     $saved_search->body = tow_saved_searches_summary($node->nid, $filters, $rows_amount, $selected_fields);
+    $saved_search->teaser = node_teaser($saved_search->body);
   }
   
   // Save search constraints.

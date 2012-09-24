@@ -1,0 +1,13 @@
+; $Id$
+name = Profile Complete Percentage
+description = Configure CCK profile fields to be tagged as required for a profile to be complete. Display the percent of profile completion to the user via a block.
+dependencies[] = profile
+version = 6.x-2.1
+core = 6.x
+
+; Information added by drupal.org packaging script on 2011-01-02
+version = "6.x-2.2"
+core = "6.x"
+project = "pcp"
+datestamp = "1293995111"
+

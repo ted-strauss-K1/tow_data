@@ -123,7 +123,7 @@ function friendlist_activity_get_friends($uid) {
 
   if ($api == 'friendlist_api') {
 
-    $sql = "SELECT fr.requestee_id as 'uid' FROM {friendlist_relations} as fr
+    $sql = "SELECT fr.requestee_id as uid FROM {friendlist_relations} as fr
     INNER JOIN {friendlist_statuses} fs ON fs.rid = fr.rid
     WHERE fr.requester_id = %d AND fs.status = '%s' ORDER BY fs.last_update_time DESC, fr.rid DESC";
     $result = db_query($sql, $uid, 'TW_BOTH');

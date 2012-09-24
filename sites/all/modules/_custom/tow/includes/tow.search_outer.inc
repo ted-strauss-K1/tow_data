@@ -12,6 +12,33 @@
  * Hook handlers
  ****************************************************************************************************/
 
+ /**
+ * Home page sponsored block.
+ */
+function tow_search_outer_sponsored_block() {
+
+  // Construct block.
+  $block = array();
+  $block['title'] = 'Sponsored';
+  $block['content'] = '<img src="/sites/default/files/pictures/ebay.png" alt="">';
+
+  return $block;
+}
+
+/**
+ * All pages search input block.
+ */
+function tow_search_outer_searchinput_block() {
+  
+  $block = array();
+  
+  // Define block.
+  $block['title'] = NULL;
+  $block['content'] = drupal_get_form('tow_search_outer_searchinput_form');
+  
+  return $block;
+}
+ 
 /**
  * Home page search block.
  */
@@ -39,10 +66,10 @@ function tow_search_outer_number_of_results_block() {
     
     // Amount of datasets.
     if ($number_of_results == 1) {
-      $content =  $total . ' ' . t('dataset');
+      $content = '<span>' . $total . '</span>' . ' ' . t('dataset');
     }
     else {
-      $content =  $total . ' ' . t('datasets');
+      $content = '<span>' . $total . '</span>' . ' ' . t('datasets');
     }
     
     $keys = trim(tow_search_outer_get_keys());
@@ -150,16 +177,27 @@ function tow_search_outer_tabs_block() {
   );
 
   // A set of links.
-  $content .= tow_search_outer_tab_link($tab, 'Featured', 'featured', TRUE);
-  $content .= ' | ' . tow_search_outer_tab_link($tab, 'Newest', 'newest');
-  $content .= ' | ' . tow_search_outer_tab_link($tab, 'Popular', 'popular');
-  $content .= ' | ' . tow_search_outer_tab_link($tab, 'Debated', 'debated', TRUE);
-  $content .= ' | ' . l('Create new dataset', 'node/add/dataset');
+  /*$content .= '<div class="item-list"><ul><li>' . tow_search_outer_tab_link($tab, 'Featured', 'featured', TRUE) . '</li>';
+  $content .= '<li>' . tow_search_outer_tab_link($tab, 'Newest', 'newest') . '</li>';
+  $content .= '<li>' . tow_search_outer_tab_link($tab, 'Popular', 'popular') . '</li>';
+  $content .= '<li>' . tow_search_outer_tab_link($tab, 'Debated', 'debated', TRUE) . '</li>';
+  $content .= '<li>' . l('Create new dataset', 'node/add/dataset') . '</li></ul></div>';*/
+  
+  // A set of links.
+  $items = array();
+  $items['featured'] = tow_search_outer_tab_link($tab, 'Featured', 'featured', TRUE);
+  $items['newest'] = tow_search_outer_tab_link($tab, 'Newest', 'newest');
+  $items['popular'] = tow_search_outer_tab_link($tab, 'Popular', 'popular');
+  $items['debated'] = tow_search_outer_tab_link($tab, 'Debated', 'debated', TRUE);
+  $items['newdataset'] = l('Create new dataset', 'node/add/dataset');
+  
+  // Theme the block.
+  $block['content'] = theme_item_list($items, NULL, 'ul');
 
   // Construct block.
-  $block = array();
+  /*$block = array();
   $block['title'] = NULL;
-  $block['content'] =  $content;
+  $block['content'] =  $content;*/
 
   return $block;
 }
@@ -207,6 +245,24 @@ function tow_search_outer_view($type = 'apachesolr_search') {
  * Forms
  ****************************************************************************************************/
 
+ /**
+ * Create form elements for all pages search input block.
+ */
+function tow_search_outer_searchinput_form($form_state) {
+
+  $form['keywords'] = array(
+    '#type' => 'textfield',
+  ); 
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#title' => t('Search'),
+    '#value' => t('Search'),
+  ); 
+
+  return $form;
+}
+ 
 /**
  * Creates form elements for home page search block.
  */
@@ -297,7 +353,7 @@ function tow_search_outer_filter_form($form_state) {
 
   $form['categories'] = array(
     '#type' => 'select',
-    '#options' => tow_apachesolr_facet_menu('im_vid_2', tow_search_outer_filter_taxonomy()),
+    '#options' => tow_apachesolr_facet_menu('im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset categories'), tow_search_outer_filter_taxonomy()),
     '#title' => t('categories'),
   );
 
@@ -333,7 +389,7 @@ function tow_search_outer_filter_form($form_state) {
     }
     $query = apachesolr_current_query();
 
-    $vid1_block = apachesolr_search_taxonomy_facet_block($response, $query, 'im_vid_1');
+    $vid1_block = apachesolr_search_taxonomy_facet_block($response, $query, 'im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset tags'));
     if ($tags = $vid1_block['content']) {
       $form['tags'] = array(
         '#type' => 'item',
@@ -348,6 +404,25 @@ function tow_search_outer_filter_form($form_state) {
   drupal_add_js(drupal_get_path('module', 'tow') . '/js/outer_search.js');
   
   return $form;
+}
+
+/**
+ * Composes an URL upon submission of form at all pages dataset search input block
+ * URL is understandable by apachesolr and contains keyword parameter/
+ */
+function tow_search_outer_searchinput_form_submit($form, &$form_state) {
+
+  $form_state['rebuild'] = TRUE;
+
+  $fv = $form_state['values'];
+
+  $path = tow_search_outer_get_homepage_tab() . '/' . $fv['keywords'];
+  $query = 'filters=';
+
+  if ($query == 'filters=') $query = NULL;
+
+  drupal_goto('', $query, $path);
+  //drupal_goto($path, $query);
 }
 
 /**
@@ -410,7 +485,7 @@ function tow_search_outer_filter_taxonomy() {
   while ($term = db_fetch_array($res)) {
     $terms[$term['tid']] = $term['name'];
   }
-  
+
   return $terms;
 }
 
@@ -500,7 +575,7 @@ function tow_search_outer_get_homepage_tab() {
     // Note: support old GET format of searches for existing links.
     $path = explode('/', $_GET['q'], 2);
     $tab = $path[0];
-    if (!in_array($tab, array('featured', 'newest', 'popular', 'debated', 'search_dataset', 'search_inner_zoom_ajax'))) {
+    if (!in_array($tab, array('featured', 'newest', 'popular', 'debated', 'search_dataset', 'search_inner_zoom_ajax', 'user'))) {
       $tab = tow_search_outer_get_default_tab();
     }
   }
@@ -515,14 +590,17 @@ function tow_search_outer_get_keys() {
   static $return;
   
   if (!isset($return)) {
-  
+    if (arg(0) == 'user') {
+      return '';
+    }
+    
     // Extract keys as remainder of path
     // Note: support old GET format of searches for existing links.
     $path = explode('/', $_GET['q'], 2);
     $keys = empty($_REQUEST['keys']) ? '' : $_REQUEST['keys'];
     $return = count($path) == 2 ? $path[1] : $keys;
   }
-  
+
   return $return;
 }
 

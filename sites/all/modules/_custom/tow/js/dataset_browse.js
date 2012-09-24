@@ -1,5 +1,8 @@
 Drupal.behaviors.dataset_browse = function(context) {
-	
+  
+  
+
+  
   // 'Detail'-info for rows in DataTable.
   // Insert a 'details' column to the table.
   $('.views-table tr:last').remove();
@@ -67,6 +70,67 @@ Drupal.behaviors.dataset_browse = function(context) {
 			} );
   
 
+  // The same prcodure as above at the top
+  // for another table with another amount of columns (dataset page)
+  // 'Detail'-info for rows in DataTable.
+  // Insert a 'details' column to the table.
+if ($('#datatable-1 td img').size() == 0) {
+	var nCloneTh = document.createElement( 'th' );
+	var nCloneTd = document.createElement( 'td' );
+	nCloneTd.innerHTML = '<img src="../../misc/menu-collapsed.png">';
+
+	$('#datatable-1 thead tr').each(function() {
+    this.insertBefore(nCloneTh, this.childNodes[0]);
+  });
+
+	$('#datatable-1 tbody tr').each(function() {
+		this.insertBefore(nCloneTd.cloneNode(true), this.childNodes[0]);
+	});
+		
+	var oTable = $('#datatable-1').dataTable({
+    "aoColumnDefs": [
+			{"bSortable": false, "aTargets": [0]},
+			{"bVisible": false, "aTargets": [5]}
+		],
+		"aaSorting": [[1, 'asc']], 
+		"bFilter": false,
+		"bPaginate": false,
+		"bInfo": false,
+		"bRetrieve": true
+  });
+		
+		
+	function fnFormatDetails(oTable, nTr) {
+    var aData = oTable.fnGetData(nTr);
+		var sOut = '<table cellpadding="5" cellspacing="0" border="0" style="padding-left:50px;">';
+		sOut += '<tr><td>' + aData[5] + '</td></tr>';
+		sOut += '</table>';
+
+		return sOut;
+	}
+
+			/* Add event listener for opening and closing details
+			 * Note that the indicator for showing which row is open is not controlled by DataTables,
+			 * rather it is done here
+			 */
+			$('#datatable-1 tbody td img').live('click', function () {
+				var nTr = $(this).parents('tr')[0];
+				if ( oTable.fnIsOpen(nTr) )
+				{
+					// This row is already open - close it 
+					this.src = "../../misc/menu-collapsed.png";
+					oTable.fnClose( nTr );
+				}
+				else
+				{
+					/* Open this row */
+					this.src = "../../misc/menu-expanded.png";
+					oTable.fnOpen( nTr, fnFormatDetails(oTable, nTr), 'details' );
+				}
+			} );  
+			
+			
+	
 	
 
 
@@ -86,29 +150,6 @@ Drupal.behaviors.dataset_browse = function(context) {
 								
 				var tableRefresh = data.samples;
 				$('div.sample-tables').html(tableRefresh);
-				
-				
-			//	var oTable = $('#datatable-2').dataTable({
-												
-				//"sScrollY": "300",
-				
-				//"bServerSide": true,
-				
-				//"sAjaxSource": window.location.pathname + '/refresh_ajax?filters=' + filtersToSend,
-				//"sAjaxDataProp": "data.search",
-				//"sDom": "frtiS",
-				//"bStateSave": true,
-				//"bDeferRender": true,
-				//"bRetrieve": true,
-				//"bScrollInfinite": true,
-				//"bScrollCollapse": true,
-				//"bPaginate": false,
-				//"bFilter": true,
-				//"bSort": true,
-				//"bInfo": false,
-				//"sScrollX": "100%"
-					   
-			//	});
 				
 			  },
 			  dataType: 'json'
@@ -158,11 +199,14 @@ Drupal.behaviors.dataset_browse = function(context) {
 				'access':accessToSend
 			  },
 			  success: function(data) {
+				$('.administrator-tasks div.item-list').replaceWith(data.admin_tasks);
 				$('#edit-access-type').val(data.selected);
 				
 				var textToInsert = $('#edit-access-type option[value="'+data.selected+'"]').text();
 				var finalText = textAccess.replace(textToReplace,textToInsert);
 				$('#edit-access-type').parent().parent().children('div.form-item:first').text(finalText);
+				
+				$('.dt-at span').text(textToInsert.toLowerCase());
 			  },
 			  dataType: 'json'
 			});
@@ -170,8 +214,40 @@ Drupal.behaviors.dataset_browse = function(context) {
 	};
 	
 	
+	//AJAX bookmarks count
+	$(document).bind('flagGlobalAfterLinkUpdate', function(event, data) {
+  		refresh_bookmark_ajax();
+	});
 	
 	
+	var refresh_bookmark_ajax = function () {
+			var url = 'http://' + window.location.hostname + window.location.pathname + '/ajax/bookmark';
+			url = url.replace('node', 'dataset');
+			
+		$.ajax({
+			  url: url,
+			  success: function(data) {
+								
+				var bookmarkRefresh = data.bookmark_count;
+				$('div.starflag p').text('Bookmarks: ' + bookmarkRefresh);
+			  },
+			  dataType: 'json'
+		});
+
+	};
+	
+	//Show/hide Browse submenu with table links
+  $('ul.browse-submenu').hide();
+  $('ul.browse-submenu').prev().toggle(function(e) {
+	e.preventDefault();
+	$('ul.browse-submenu').show();
+  },
+  function(e) {
+    e.preventDefault();
+	$('ul.browse-submenu').hide();
+  });
+	
+}	
 	
   
 }

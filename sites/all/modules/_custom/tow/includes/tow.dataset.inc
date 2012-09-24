@@ -36,13 +36,33 @@ function tow_dataset_badge_block() {
   }
 
   // Prepare theming parametres.
-  $posted_by = t('Posted by ') . l($_tow_dataset->name, 'user/' . $_tow_dataset->uid);
+  $upoints = userpoints_get_current_points($_tow_dataset->uid, 'all');
+  $posted_by = t('Posted by ') . l($_tow_dataset->name, 'user/' . $_tow_dataset->uid) . ' (' . $upoints . ')';
   $count = $_tow_dataset_count_tables . t(' tables') . ' ' . $_tow_dataset_count_records . t(' rows');
-  $added = t('added ') . _tow_dataset_ago($_tow_dataset->created);
-  $updated = t('updated ') . _tow_dataset_ago($_tow_dataset->changed);
+  $added = t('Added ') . _tow_dataset_ago($_tow_dataset->created);
+  $updated = t('Updated ') . _tow_dataset_ago($_tow_dataset->changed);
+  $access = t('Access is <span>') . tow_access_get_access_status($_tow_dataset->field_access_type[0]['value']) . '</span>';
+  global $_tow_dataset_statistics;
+  $visits = $_tow_dataset_statistics['count'] . ' ' . t('views');
+  global $user;
+  if ($user->uid == $_tow_dataset->uid) {
+    $extrainfo = t('You are an administrator of this dataset');
+  }
+  elseif ($_tow_dataset->field_access_type[0]['value'] == 1) {
+    $extrainfo = t('Request access to this dataset');
+  }
 
   // Save the content of the block.
-  $block['content'] = theme('tow_theme_dataset_badge', $posted_by, $count, NULL, $added, $updated, NULL);
+  
+  $flag = flag_get_flag('bookmarks');
+  if ($flag) {
+    $block['content'] = '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<p>Bookmarks: ' . $flag->get_count($_tow_dataset->nid) . '</p></div>';
+  }
+  else {
+    $block['content'] = '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<p>Bookmarks: 0</p></div>';
+  }
+  
+  $block['content'] .= theme('tow_theme_dataset_badge', $posted_by, $count, NULL, $added, $updated, $access, $visits, $extrainfo);
 
   // Params for the user picture.
   $account = new stdClass;
@@ -55,6 +75,46 @@ function tow_dataset_badge_block() {
 
   return $block;
 }
+
+/**
+ * Returns "Share" block.
+ */
+function tow_dataset_share_block() {
+
+  // No block in case of not a dataset.
+  global $_tow_dataset;
+  if (!$_tow_dataset) {
+    return;
+  }
+  
+  // Return if there is no info on tables count.
+  global $_tow_dataset_count_tables;
+  if (!isset($_tow_dataset_count_tables)) {
+    return;
+  }
+
+  // The same with the records.
+  global $_tow_dataset_count_records;
+  if (!isset($_tow_dataset_count_records)) {
+    $_tow_dataset_count_records = 0;
+  }
+
+  // Prepare theming parametres.
+  $path = isset($_GET['q']) ? $_GET['q'] : '<front>';
+  $link = url($path, array('absolute' => TRUE));
+  $permalink = t('Permalink ') . l($link, $link);
+  $embedding = t('Embedding options are available from ') . l('search', 'search_dataset/' . $_tow_dataset->nid) . ' and ' . l('browse', 'dataset/' . $_tow_dataset->nid) . '.';
+  
+  // Save title and content of the block.
+  $block['title'] = 'Share';
+  $block['content'] = theme('tow_theme_dataset_share');
+  $block['content'] .= '<p>' . $permalink . '</p>';
+  $block['content'] .= '<p>' . $embedding . '</p>';
+
+  return $block;
+}
+
+
 
 /**
  * 'Create Table' block.
@@ -97,7 +157,7 @@ function tow_dataset_stats_block() {
     return;
   }
 
-  $block['title'] = t('Stats');
+  $block['title'] = t('Quick stats');
 
   // Set $_tow_dataset_statistics.
   global $_tow_dataset_statistics;
@@ -120,7 +180,9 @@ function tow_dataset_stats_block() {
  * Part of hook_form_alter() implementation.
  */
 function tow_dataset_form_alter(&$form, &$form_state) {
+  $form['buttons']['submit']['#value'] = t('Save and import data');
   $form['#validate'][] = 'tow_dataset_dont_validate_cancel';
+  $form['#submit'][] = 'tow_dataset_submit_redirect';
 }
 
 
@@ -334,6 +396,19 @@ function tow_dataset_maintenance_confirm_submit($form, &$form_state) {
   // Recursively perform the same action with tables and records.
   tow_maintanance_mode($dataset->status, $dataset->nid, 'dataset');
   $form_state['redirect'] = 'node/' . $dataset->nid;
+}
+
+function tow_dataset_submit_redirect($form, &$form_state) {
+  $dataset = (object)$form_state['values'];
+  
+  try {
+    node_save($dataset);
+  }
+  catch (Exception $e) {
+    watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
+  }
+  
+  drupal_goto('import/' . $dataset->nid);
 }
 
 
@@ -651,9 +726,28 @@ function tow_dataset_summary(&$node) {
       
       $ss_qty ++;
       
+      // Count saved searches views.
+      $ss_count = db_result(db_query("
+
+        SELECT 
+          tnvc.count AS count 
+
+          FROM 
+            {tow_node_views_counter} tnvc 
+
+          WHERE 
+            tnvc.nid = %d 
+
+      ", $ss_res['nid']));
+      
       // Limit list of titles size.
       if ($ss_qty <= 4) {
-        $ss_list[] = l($ss_res['title'], 'search_dataset/' . $node->nid . '#?filters=' . $ss_res['field_search_constraints_value']);
+        if ($ss_count) {
+          $ss_list[] = l($ss_res['title'], 'node/' . $ss_res['nid']) . ' (' . $ss_count . ')';//'search_dataset/' . $node->nid . '#?filters=' . $ss_res['field_search_constraints_value']);
+        }
+        else {
+          $ss_list[] = l($ss_res['title'], 'node/' . $ss_res['nid']) . ' (0)';
+        }
       }
     };
     
@@ -665,7 +759,6 @@ function tow_dataset_summary(&$node) {
   }
 
   tow_dataset_prepare_badge_block($node, count($tables_list));
-
 }
 
 /**
@@ -686,6 +779,9 @@ function tow_dataset_tables($dataset_nid) {
     ),
     array(
       'data' => t('Keys')
+    ),
+    array(
+      'data' => t('Description')
     )
   );
 
@@ -707,7 +803,7 @@ function tow_dataset_tables($dataset_nid) {
         t.field_dataset_value = %d 
 
   ", $dataset_nid);
-   
+
   // For each table...
   while ($rs = db_fetch_array($table_titles_res)) {
     
@@ -752,6 +848,15 @@ function tow_dataset_tables($dataset_nid) {
       'data' => ($key_fields) ? substr($key_fields, 0, -2) : '&mdash;'
     );
 
+    // Description fields.
+    $all_fields = '';
+    foreach ($table_fields as $key => $table_field) {
+      $all_fields .= $table_field['title'] . ', ';
+    }
+    $row[] = array(
+      'data' => 'Description: ' . $table_node->body . '</br>Fields: ' . substr($all_fields, 0, -2)
+    );
+
     // Add row to the table.
     $rows[] = array('data' => $row);
   }
@@ -763,6 +868,7 @@ function tow_dataset_tables($dataset_nid) {
     'bFilter' => FALSE,  
     'bSort' => FALSE,
     'bInfo' => FALSE,
+    'bRetrieve' => TRUE,
   );
 
   $output =  theme('datatable', $headers, $rows, $parameters);

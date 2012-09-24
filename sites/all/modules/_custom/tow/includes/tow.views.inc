@@ -20,13 +20,95 @@ module_load_include('inc', 'tow', 'includes/views/tow.views.default_views');
  */
 function tow_views_data() {
   
+  // 'ToW Terms Timestamps' table integration.
+  $data['tow_term_timestamps']['table']['group']  = t('Taxonomy');
+  
+  // Join term_data with tow_term_timestamps.
+  $data['tow_term_timestamps']['table']['join'] = array(
+    'term_data' => array(
+      'left_field' => 'tid',
+      'field' => 'tid',
+    ),
+  );
+  
+  // Creation time.
+  $data['tow_term_timestamps']['created'] = array(
+    'title' => t('Creation'), 
+    'help' => t('Tag\'s creation time.'),
+    'field' => array(
+      'handler' => 'tow_views_handler_field_taxonomy_timestamps',
+    ),
+    'sort' => array(
+      'handler' => 'tow_views_handler_sort_taxonomy_timestamps',
+    ),
+  );
+  
+  // Update time.
+  $data['tow_term_timestamps']['updated'] = array(
+    'title' => t('Update'), 
+    'help' => t('Tag\'s update time.'),
+    'field' => array(
+      'handler' => 'tow_views_handler_field_taxonomy_timestamps',
+    ),
+    'sort' => array(
+      'handler' => 'tow_views_handler_sort_taxonomy_timestamps',
+    ),
+  );
+  
+  // First usage.
+  $data['tow_term_timestamps']['first_used'] = array(
+    'title' => t('First Usage'), 
+    'help' => t('Tag\'s first usage.'),
+    'field' => array(
+      'handler' => 'tow_views_handler_field_taxonomy_timestamps',
+    ),
+    'sort' => array(
+      'handler' => 'tow_views_handler_sort_taxonomy_timestamps',
+    ),
+  );
+  
+  // Last usage.
+  $data['tow_term_timestamps']['last_used'] = array(
+    'title' => t('Last Usage'), 
+    'help' => t('Tag\'s last usage.'),
+    'field' => array(
+      'handler' => 'tow_views_handler_field_taxonomy_timestamps',
+    ),
+    'sort' => array(
+      'handler' => 'tow_views_handler_sort_taxonomy_timestamps',
+    ),
+  );
+  
+  // Taxonomy 'Term Amount' field.
+  $data['term_data']['term_amount'] = array(
+    'title' => t('Term Amount'), 
+    'help' => t('Tag\'s occurrence number.'),
+    'field' => array(
+      'handler' => 'tow_views_handler_field_taxonomy_term_amount',
+    ),
+    'sort' => array(
+      'handler' => 'tow_views_handler_sort_taxonomy_term_amount',
+    ),
+  );
   
   // User 'Top Taxonomy' field.
   $data['users']['top_taxonomy'] = array(
     'title' => t('Top Taxonomy'), 
     'help' => t('User\'s most usable taxonomy terms. The amount of terms and vocabularies can be specified.'),
     'field' => array(
-      'handler' => 'tow_views_handler_field_top_taxonomy',
+      'handler' => 'tow_views_handler_field_users_top_taxonomy',
+    ),
+  );
+  
+  // User 'Summary' field & filter.
+  $data['users']['summary'] = array(
+    'title' => t('Summary'), 
+    'help' => t('User\'s summary.'),
+    'field' => array(
+      'handler' => 'tow_views_handler_field_users_summary',
+    ),
+    'filter' => array(
+      'handler' => 'tow_views_handler_filter_users_summary',
     ), 
   );
   
@@ -35,7 +117,7 @@ function tow_views_data() {
     'title' => t('Creation Interval'), 
     'help' => t('User\'s creation interval.'),
     'filter' => array(
-      'handler' => 'tow_views_handler_filter_creation_interval',
+      'handler' => 'tow_views_handler_filter_users_creation_interval',
     ), 
   );
   
@@ -44,7 +126,7 @@ function tow_views_data() {
     'title' => t('Content Count'), 
     'help' => t('User\'s content amount.'),
     'sort' => array(
-      'handler' => 'tow_views_handler_sort_content_count',
+      'handler' => 'tow_views_handler_sort_users_content_count',
     ), 
   );
   
@@ -53,7 +135,7 @@ function tow_views_data() {
     'title' => t('Vote Count'), 
     'help' => t('User\'s votes amount.'),
     'sort' => array(
-      'handler' => 'tow_views_handler_sort_vote_count',
+      'handler' => 'tow_views_handler_sort_users_vote_count',
     ), 
   );
   
@@ -69,16 +151,34 @@ function tow_views_handlers() {
       'path' => drupal_get_path('module', 'tow') . '/includes/views/handlers',
     ),
     'handlers' => array(
-      'tow_views_handler_field_top_taxonomy' => array(
+      'tow_views_handler_field_taxonomy_timestamps' => array(
         'parent' => 'views_handler_field',
       ),
-      'tow_views_handler_filter_creation_interval' => array(
+      'tow_views_handler_field_taxonomy_term_amount' => array(
+        'parent' => 'views_handler_field',
+      ),
+      'tow_views_handler_field_users_summary' => array(
+        'parent' => 'views_handler_field',
+      ),
+      'tow_views_handler_field_users_top_taxonomy' => array(
+        'parent' => 'views_handler_field',
+      ),
+      'tow_views_handler_filter_users_creation_interval' => array(
         'parent' => 'views_handler_filter',
       ),
-      'tow_views_handler_sort_content_count' => array(
+      'tow_views_handler_filter_users_summary' => array(
+        'parent' => 'views_handler_filter_string',
+      ),
+      'tow_views_handler_sort_taxonomy_timestamps' => array(
         'parent' => 'views_handler_sort',
       ),
-      'tow_views_handler_sort_vote_count' => array(
+      'tow_views_handler_sort_taxonomy_term_amount' => array(
+        'parent' => 'views_handler_sort',
+      ),
+      'tow_views_handler_sort_users_content_count' => array(
+        'parent' => 'views_handler_sort',
+      ),
+      'tow_views_handler_sort_users_vote_count' => array(
         'parent' => 'views_handler_sort',
       ),
     ),

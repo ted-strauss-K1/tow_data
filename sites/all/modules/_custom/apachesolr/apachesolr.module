@@ -1776,7 +1776,7 @@ function theme_apachesolr_facet_link($facet_text, $path, $options = array(), $co
     $options['attributes']['class'][] = 'active';
   }
   $options['attributes']['class'] = implode(' ', $options['attributes']['class']);
-  return apachesolr_l($facet_text ." ($count)",  $path, $options);
+  return apachesolr_l($facet_text, $path, $options) . " ($count)";
 }
 
 /**

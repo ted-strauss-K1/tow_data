@@ -1,0 +1,9 @@
+name = Profile Rules
+description = Add user profile integration into rules.
+project = Rules
+dependencies[] = rules
+dependencies[] = profile
+core = 6.x
+php = 5.x
+
+//$Id$

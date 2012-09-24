@@ -611,6 +611,7 @@ function tow_table($node, $display_options = array()) {
     'bSort' => FALSE,
     'bInfo' => FALSE,
     'sScrollX' => '100%',
+    'bRetrieve' => TRUE,
   );
   
   // Full display parameters for dataTable theme.

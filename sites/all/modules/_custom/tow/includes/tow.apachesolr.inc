@@ -47,13 +47,23 @@ function tow_apachesolr_modify_query(&$query, &$params) {
 
   if ($current_tab == 'search_dataset') {
     
-    // Inner search
+    // Inner search.
     tow_apachesolr_record_modify_query($query, $params);
   } 
   elseif ($current_tab == 'newest' || $current_tab == 'debated' || $current_tab == 'featured' || $current_tab == 'popular') {
     
-    // Outer search
+    // Outer search.
     tow_apachesolr_dataset_modify_query($query, $params);
+  }
+  elseif ($current_tab == 'user') {
+    
+    // Outer search for user.
+    if (arg(2) == 'datasets') {
+      tow_apachesolr_dataset_user_modify_query($query, $params);
+    }
+    if (arg(2) == 'saved_searches') {
+      tow_apachesolr_saved_search_user_modify_query($query, $params);
+    }
   }
 }
 
@@ -61,10 +71,16 @@ function tow_apachesolr_modify_query(&$query, &$params) {
  * Implementation of hook_apachesolr_process_results().
  */
 function tow_apachesolr_process_results(&$results) {
+
   if ($results[0]['node']->type == 'dataset') {
   
     // If search was made for datasets.
     tow_apachesolr_dataset_process_results($results);
+  }
+  elseif ($results[0]['node']->type == 'saved_search') {
+  
+    // If search was made for saved searches.
+    tow_apachesolr_saved_search_process_results($results);
   }
   else {
     
@@ -204,6 +220,64 @@ function tow_apachesolr_update_index(&$document, $node) {
       }
     }
   }
+
+  elseif ($node->type == 'saved_search') {
+    $ss = node_load($node->nid);
+    $document->sis_tow_dataset_nid = db_result(db_query("
+    
+      SELECT 
+        ss.field_dataset_nid_value
+        
+        FROM 
+          {content_type_saved_search} ss
+        
+        WHERE 
+          ss.nid = %d
+    
+    ", $node->nid));
+    $dataset = node_load($document->sis_tow_dataset_nid);
+    $document->ss_tow_dataset_title = $dataset->title;
+    $document->ss_tow_dataset_path = 'node/' . $dataset->nid;
+    $document->ss_tow_table_nid = db_result(db_query("
+    
+      SELECT 
+        ss.field_table_nid_value
+        
+        FROM 
+          {content_type_saved_search} ss
+        
+        WHERE 
+          ss.nid = %d
+    
+    ", $node->nid));
+    $document->ss_tow_search_constraints = db_result(db_query("
+    
+      SELECT 
+        ss.field_search_constraints_value
+        
+        FROM 
+          {content_type_saved_search} ss
+        
+        WHERE 
+          ss.nid = %d
+    
+    ", $node->nid));
+    $document->ss_tow_saved_search_path = 'search_dataset/' . (($node->field_table_nid[0]['value'] == 0) ? $node->field_dataset_nid[0]['value'] : $node->field_table_nid[0]['value']) . (($node->field_search_constraints[0]['value'] == '') ? '' : '#?filters=' . $node->field_search_constraints[0]['value']);
+    $document->ss_tow_sc_hash = db_result(db_query("
+    
+      SELECT 
+        ss.field_sc_hash_value
+        
+        FROM 
+          {content_type_saved_search} ss
+        
+        WHERE 
+          ss.nid = %d
+    
+    ", $node->nid));
+    $document->ss_body = $ss->body;
+    $document->ss_teaser = ($ss->teaser == '' || $ss->teaser == NULL) ? node_teaser($ss->body) : $ss->teaser;
+  }
 }
 
 
@@ -218,19 +292,29 @@ function tow_apachesolr_update_index(&$document, $node) {
  */
 function tow_apachesolr_dataset_modify_query(&$query, &$params) {
   
+  $categories_vid = _tow_apachesolr_taxonomy_get_vid('Dataset tags');
+  $tags_vid = _tow_apachesolr_taxonomy_get_vid('Dataset categories');
+  
   // Extend params.
   $params['fl'] .= ',sis_tow_amount_tables';
   $params['fl'] .= ',sis_tow_amount_records';
   $params['fl'] .= ',sis_tow_amount_saved_searches';
   $params['fl'] .= ',sis_tow_count_views';
   $params['fl'] .= ',sis_cck_field_access_type';
-  $params['fl'] .= ',im_vid_1';
-  $params['fl'] .= ',im_vid_2';
+  $params['fl'] .= ',im_vid_' . $categories_vid;
+  $params['fl'] .= ',im_vid_' . $tags_vid;
   $params['fl'] .= ',ss_teaser';
   
   // Add filters.
   $query->add_filter('type', 'dataset');  
   $query->add_filter('-sis_cck_field_access_type', '2');  
+  
+  $params['fl'] .= ',tid';
+  $params['stats'] = 'true';
+  $params['facet.limit'] = 100;
+  $params['facet.missing'] = 'true';
+  $params['facet.field'][] = '{!ex=' . 'im_vid_' . $categories_vid . '}' . 'im_vid_' . $categories_vid;
+  $params['facet.field'][] = '{!ex=' . 'im_vid_' . $tags_vid . '}' . 'im_vid_' . $tags_vid;
   
   switch ($current_tab) {
     
@@ -251,11 +335,37 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
 }
 
 /**
+ * Part of hook_apachesolr_modify_query() implementation
+ * for the case of outer search (by user).
+ */
+function tow_apachesolr_dataset_user_modify_query(&$query, &$params) {
+  $user = user_load(arg(1));
+  
+  // Extend params.
+  $params['fl'] .= ',sis_tow_amount_tables';
+  $params['fl'] .= ',sis_tow_amount_records';
+  $params['fl'] .= ',sis_tow_amount_saved_searches';
+  $params['fl'] .= ',sis_tow_count_views';
+  $params['fl'] .= ',sis_cck_field_access_type';
+  $params['fl'] .= ',im_vid_' . $categories_vid;
+  $params['fl'] .= ',im_vid_' . $tags_vid;
+  $params['fl'] .= ',ss_teaser';
+  
+  // Add filters.
+  $query->add_filter('type', 'dataset');  
+  $query->add_filter('-sis_cck_field_access_type', '2');  
+  $query->add_filter('uid', $user->uid);
+  
+  $query->set_solrsort('created', 'desc');
+}
+
+/**
  * Part of hook_apachesolr_process_results() implementation
  * for the case of outer search (over all datasets).
  */
 function tow_apachesolr_dataset_process_results(&$results) {
-  
+  $current_tab = tow_search_outer_get_homepage_tab();
+
   foreach ($results as $key => $result) {
     
     // Add tables amount, records amount and post date.
@@ -263,26 +373,55 @@ function tow_apachesolr_dataset_process_results(&$results) {
     $results[$key]['amount_records'] = $result['node']->sis_tow_amount_records . t(' records');
     $results[$key]['posted_date'] = t('posted ') . date('M d, Y', $result['node']->created);
 
-    // User settings.
-    $account = new stdClass;
-    $account->uid = $result['node']->uid;
-    $account->name = $result['node']->name;
-    $account->picture = $result['node']->ss_picture;
+    if ($current_tab != 'user') {
+
+      // User settings.
+      $account = new stdClass;
+      $account->uid = $result['node']->uid;
+      $account->name = $result['node']->name;
+      $account->picture = $result['node']->ss_picture;
     
-    // Add picture and teaser.
-    $results[$key]['picture'] = theme('user_picture', $account);
+      // User points.
+      $results[$key]['points'] = userpoints_get_current_points($result['node']->uid, 'all');
+    
+    
+      // User picture.
+      $results[$key]['picture'] = theme('user_picture', $account);
+    }
+    else {
+      unset($results[$key]['user']);
+    }
+    
+    // Teaser.
     $results[$key]['teaser'] = $result['node']->ss_teaser;
 
     // Get term ID.
-    $tid = $result['fields']['im_vid_2']['0'];
+    $tid = $result['fields']['im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset categories')]['0'];
     
     // Add taxonomy.
     $results[$key]['category'] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
-    if (isset($result['fields']['im_vid_1']) && !is_null($result['fields']['im_vid_1'])) {
-      foreach ($result['fields']['im_vid_1'] as $tid) {
+    if (isset($result['fields']['im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset tags')]) && !is_null($result['fields']['im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset tags')])) {
+      foreach ($result['fields']['im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset tags')] as $tid) {
         $results[$key]['tags'][] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
       }
     }
+
+    // Add access type.
+    $results[$key]['access'] = tow_access_get_access_status($result['node']->sis_cck_field_access_type);
+    
+    // Add total votes.
+    $total_votes = _votingapi_get_standard_results('node', $result['node']->nid);
+    $results[$key]['votes'] = isset($total_votes['vote']['points']['sum']) ? $total_votes['vote']['points']['sum'] : 0;
+    
+    // Add total views.
+    tow_statistics_dataset_extract($result['node']->nid);
+    global $_tow_dataset_statistics;
+    $results[$key]['views'] = $_tow_dataset_statistics['count'];
+    
+    
+    // Add total saved searches.
+    $results[$key]['ssearches'] = $result['node']->sis_tow_amount_saved_searches;
+
   }
 }
 
@@ -462,6 +601,77 @@ function tow_apachesolr_record_process_results(&$results) {
   $results['rows'] = $rows;
 } 
 
+/**
+ * Part of hook_apachesolr_modify_query() implementation
+ * for the saved searches (by user).
+ */
+function tow_apachesolr_saved_search_user_modify_query(&$query, &$params) {
+  $user = user_load(arg(1));
+
+  // Extend params.
+  $params['fl'] .= ',sis_tow_dataset_nid';
+  $params['fl'] .= ',ss_tow_dataset_title';
+  $params['fl'] .= ',ss_tow_dataset_path';
+  $params['fl'] .= ',ss_tow_saved_search_path';
+  $params['fl'] .= ',ss_body';
+  $params['fl'] .= ',ss_teaser';
+  
+  // Add filters.
+  $query->add_filter('type', 'saved_search');  
+  $query->add_filter('uid', $user->uid);
+  
+  $query->set_solrsort('created', 'desc');
+}
+
+/**
+ * Part of hook_apachesolr_process_results() implementation
+ * for the case of saved searches.
+ */
+function tow_apachesolr_saved_search_process_results(&$results) {
+  global $base_url;
+  
+  $current_tab = tow_search_outer_get_homepage_tab();
+
+  foreach ($results as $key => $result) {
+    
+    // Add post date.
+    $results[$key]['posted_date'] = t('posted ') . _tow_dataset_ago($result['node']->created);
+
+    if ($current_tab != 'user') {
+
+      // User settings.
+      $account = new stdClass;
+      $account->uid = $result['node']->uid;
+      $account->name = $result['node']->name;
+      $account->picture = $result['node']->ss_picture;
+    
+      // User points.
+      $results[$key]['points'] = userpoints_get_current_points($result['node']->uid, 'all');
+    
+    
+      // User picture.
+      $results[$key]['picture'] = theme('user_picture', $account);
+    }
+    else {
+      unset($results[$key]['user']);
+    }
+    
+    // Teaser.
+    $results[$key]['teaser'] = $result['node']->ss_teaser;
+    
+    // Link.
+    $results[$key]['link'] = $base_url . '/' . $result['node']->ss_tow_saved_search_path;
+    
+    // Dataset.
+    $results[$key]['dataset_title'] = $result['node']->ss_tow_dataset_title;
+    $results[$key]['dataset_link'] = $base_url . '/' . $result['node']->ss_tow_dataset_path;
+    
+    // Add total votes.
+    $total_votes = _votingapi_get_standard_results('node', $result['node']->nid);
+    $results[$key]['votes'] = isset($total_votes['vote']['points']['sum']) ? $total_votes['vote']['points']['sum'] : 0;
+  }
+}
+
 
 
 /****************************************************************************************************
@@ -520,21 +730,19 @@ function tow_apachesolr_facets() {
  *   If TRUE, search is done through range [value TO *], strict value is searched otherwise.
  */
 function tow_apachesolr_facet_menu($facet_field, $values, $is_range = FALSE) {
-  
   $saved_response = apachesolr_static_response_cache();
   $saved_query = apachesolr_current_query();
   $query = clone $saved_query;
-  
-  
+
   $do_new_search = TRUE;
-  if ($facet_field == 'im_vid_2') {
+  if ($facet_field == 'im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset categories')) {
     foreach (tow_search_outer_filter_taxonomy() as $tid => $term) {
       if ($query->has_filter('tid', $tid)) {
         $query->remove_filter('tid', $tid);
         $do_new_search = TRUE;
       }
     }
-  } 
+  }
   else {
     foreach ($query->get_filters() as $set_filter) {
       if ($set_filter['#name'] == $facet_field) {
@@ -548,7 +756,7 @@ function tow_apachesolr_facet_menu($facet_field, $values, $is_range = FALSE) {
     $params = apachesolr_search_basic_params($query);
     apachesolr_search_add_facet_params($params, $query);
     apachesolr_search_add_boost_params($params, $query, apachesolr_get_solr());
-    
+
     $params['facet.limit'] = 100;
     list($final_query, $response) = apachesolr_do_query('apachesolr_search', $query, $params);
     if (empty($response)) {
@@ -956,6 +1164,20 @@ function _tow_apachesolr_solr_to_time(&$value) {
  */
 function _tow_apachesolr_solr_to_timestamp(&$value) {
   $value = date('Y-m-d H:i:s', $value);
+}
+
+/**
+ * Returns vocabulary ID by name.
+ */
+function _tow_apachesolr_taxonomy_get_vid($vocabulary_name) {
+  $query = db_query("SELECT v.vid AS vid FROM {vocabulary} v WHERE v.name = '%s'", $vocabulary_name);
+  
+  $vocabularies = array(); 
+  while ($record = db_fetch_object($query)) {
+    $vocabularies[] = $record->vid;
+  }
+  
+  return (empty($vocabularies) ? 0 : $vocabularies[0]);
 }
 
 /**

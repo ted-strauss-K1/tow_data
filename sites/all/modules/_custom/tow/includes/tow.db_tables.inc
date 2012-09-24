@@ -330,3 +330,50 @@ function tow_db_tables_tow_table_counter() {
     ),
   );
 }
+
+/**
+ * 'ToW Term Timestamps' table.
+ */
+function tow_db_tables_tow_term_timestamps() {
+  return array(
+    'fields' => array(
+      'tid' => array(
+        'type' => 'int',
+        'size' => 'normal',
+        'unsigned' => TRUE, 
+        'not null' => TRUE,
+      ),
+      'created' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'updated' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'first_used' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'last_used' => array(
+        'type' => 'int',
+        'size' => 'big',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array(
+      'tid',
+    ),
+  );
+}

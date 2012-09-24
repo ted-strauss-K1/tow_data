@@ -290,7 +290,7 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
     // should always work since '=' will be urlencoded anywhere else the
     // regex isn't expecting it.
     $queryString = preg_replace('/%5B(?:[0-9]|[1-9][0-9]+)%5D=/', '=', $queryString);
-
+//dpm(array($queryString));
     // Check string length of the query string, change method to POST
     // if longer than 4000 characters.
     if (strlen($queryString) > variable_get('apachesolr_search_post_threshold', 4000)) {

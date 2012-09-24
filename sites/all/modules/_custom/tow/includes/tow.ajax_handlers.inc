@@ -93,7 +93,22 @@ function tow_ajax_handlers_dataset_access_type($dnid) {
   
   // JSON.
   $json = array(
-    'selected' => $dataset->field_access_type[0]['value']
+    'selected' => $dataset->field_access_type[0]['value'],
+    'admin_tasks' => _tow_dataset_admin_tasks($dataset),
+  );
+  
+  return drupal_json($json);
+}
+
+/**
+ * Handles the change of bookmark count for the dataset with Ajax.
+ */
+function tow_ajax_handlers_dataset_bookmark_count($dnid) {
+ 
+  // JSON.
+  $flag = flag_get_flag('bookmarks');
+  $json = array(
+    'bookmark_count' => $flag->get_count($dnid),
   );
   
   return drupal_json($json);

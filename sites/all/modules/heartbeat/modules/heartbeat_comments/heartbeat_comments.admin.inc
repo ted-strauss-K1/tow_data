@@ -45,7 +45,7 @@ function heartbeat_comments_admin_overview() {
     array('data' => t('Reacted on'), 'field' => 'heartbeat_title'),
     array('data' => t('Time'), 'field' => 'timestamp', 'sort' => 'desc')
   ));
-  $result = pager_query('SELECT c.hcid, c.uid, c.uaid, c.message AS \'subject\', c.cleared, c.time, ha.message AS \'heartbeat_title\', u.name AS registered_name, u.uid  FROM {heartbeat_comments} c LEFT JOIN {heartbeat_activity} ha ON ha.uaid = c.uaid LEFT JOIN {users} u ON u.uid = c.uid '. tablesort_sql($form['header']['#value']), 50, 0, NULL);
+  $result = pager_query('SELECT c.hcid, c.uid, c.uaid, c.message AS subject, c.cleared, c.time, ha.message AS heartbeat_title, u.name AS registered_name, u.uid  FROM {heartbeat_comments} c LEFT JOIN {heartbeat_activity} ha ON ha.uaid = c.uaid LEFT JOIN {users} u ON u.uid = c.uid '. tablesort_sql($form['header']['#value']), 50, 0, NULL);
 
   // build a table listing the appropriate comments
   $destination = drupal_get_destination();

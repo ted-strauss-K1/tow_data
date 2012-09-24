@@ -1,0 +1,12 @@
+name = uLogin
+description = "uLogin integration to authenticate users through social networks."
+core = 6.x
+package = User interface
+dependencies[] = realname
+
+; Information added by drupal.org packaging script on 2012-06-11
+version = "6.x-1.3"
+core = "6.x"
+project = "ulogin"
+datestamp = "1339401732"
+

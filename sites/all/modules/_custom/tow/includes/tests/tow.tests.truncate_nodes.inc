@@ -61,7 +61,7 @@ function tow_tests_truncate_nodes_form_submit($form, &$form_state) {
     'node_counter',
     'node_revisions',
     'term_node',
-    'tow_dataset_counter',
+    'tow_node_views_counter',
     'tow_access_requests',
     'tow_field_info',
     'tow_invites',

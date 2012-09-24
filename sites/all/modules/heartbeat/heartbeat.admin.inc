@@ -51,7 +51,7 @@ function heartbeat_messages_admin_overview() {
     array('data' => t('Time'), 'field' => 'timestamp', 'sort' => 'desc'),
     array('data' => t('Operations'))
   ));
-  $result = pager_query('SELECT DISTINCT ha.message AS \'message\', ha.uaid, ha.timestamp, ha.language, u.name AS registered_name, u.uid FROM {heartbeat_activity} ha LEFT JOIN {users} u ON u.uid = ha.uid '. tablesort_sql($form['header']['#value']), 50, 0, NULL);
+  $result = pager_query('SELECT DISTINCT ha.message AS message, ha.uaid, ha.timestamp, ha.language, u.name AS registered_name, u.uid FROM {heartbeat_activity} ha LEFT JOIN {users} u ON u.uid = ha.uid '. tablesort_sql($form['header']['#value']), 50, 0, NULL);
 
   // build a table listing the appropriate comments
   $destination = drupal_get_destination();
