@@ -1,0 +1,63 @@
+/* $Id: ie7-fixes.css 6570 2010-02-25 01:20:58Z chris $ */
+
+/* IE7 */
+
+/* Sidebar block title */
+.sidebar-first h2.block-title {
+  width: 96%;
+}
+
+/* Search */
+#search-block-form .form-item{
+display: block;
+float: left;
+padding-right: 10px;
+}
+
+
+#search-box input.search_submit {
+  padding: 3px 0;
+}
+
+/* Primary menu */
+#primary-menu ul.menu{
+margin-left: -1px;
+}
+
+
+#primary-menu ul.menu li a:link,
+#primary-menu ul.menu li a:visited  {
+  /*margin-top: -2px;*/
+}
+
+
+#primary-menu ul.menu li ul.menu a:link,
+#primary-menu ul.menu li ul.menu a:visited  {
+  margin-top: -1px;
+}
+
+/* Margins for regions */
+#header-top,
+#header-group-inner,
+#site-info-wrapper {
+  margin-bottom: 1.5em;
+}
+
+.content-group-inner,
+.preface-top-inner.
+.postscript-top-inner,
+.postscript-bottom-inner {
+  padding-bottom: 1.5em;
+}
+
+/* Forms */
+.form-submit {
+  padding: 3px 2px;
+}
+
+/* Remove backgrounds and border on radios and checkboxes */
+.option,
+.option input {
+  background: none;
+  border: none !important;
+}
