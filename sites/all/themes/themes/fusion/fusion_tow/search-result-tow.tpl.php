@@ -48,6 +48,11 @@
           print $result['user']; 
         ?>
       </div>
+	  <div class="user-points">
+        <?php
+          print $result['points']; 
+        ?>
+      </div>
       <div class="user-picture">
         <?php
           print $result['picture']; 
@@ -71,6 +76,41 @@
       ?>
       
     </div>
+	
+	<div class="access">
+        <?php
+          print t('access: ') . $result['access'];
+        ?>
+    </div>
+	
+	<div class="votes">
+        <?php
+          if ($result['votes']) {
+		    print t('votes: ') . $result['votes'];
+		  }
+		  else {
+		    print t('votes: 0');
+		  }
+        ?>
+    </div>
+	
+	<div class="total-views">
+        <?php
+          if ($result['views']) {
+		    print t('views: ') . $result['views'];
+		  }
+		  else {
+		    print t('views: 0');
+		  }
+        ?>
+    </div>
+	
+	<div class="ssearches">
+        <?php
+          print t('saved searches: ') . $result['ssearches'];
+        ?>
+    </div>
+	
 </div>
 
 </dd>

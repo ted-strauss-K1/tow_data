@@ -20,8 +20,8 @@
   <div class="clear-block">
     <div class="meta">
     <?php if ($taxonomy): ?>
-      <div class="field-label">Keywords:&nbsp;</div>
-      <div class="terms"><?php print $terms ?></div>
+      <div class="field-label">Tags:&nbsp;</div>
+      <div class="terms"><?php print $terms; ?></div>
     <?php endif;?>
     <?php if ($summary['edit_categories']): ?>
       <span class="edit-link"><?php print $summary['edit_categories']; ?></span>

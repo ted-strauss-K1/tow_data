@@ -85,7 +85,7 @@ a:hover{
   
   
   
-#block-tow-pma_menu li.first{
+#block-tow-pma_menu li.first, #block-tow-search_outer_tabs li.first, #block-menu-secondary-links li.leaf, #block-menu-menu-browse-search-docs-forum ul.menu li{
 float: left;
 font-size: 130%;
 list-style: none;
