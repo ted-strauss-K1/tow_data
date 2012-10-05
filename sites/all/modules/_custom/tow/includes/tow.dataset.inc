@@ -54,15 +54,16 @@ function tow_dataset_badge_block() {
 
   // Save the content of the block.
   
+  $block['content'] = $_tow_dataset->content['vud_node_widget_display']['#value'];
   $flag = flag_get_flag('bookmarks');
   if ($flag) {
-    $block['content'] = '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<p>Bookmarks: ' . $flag->get_count($_tow_dataset->nid) . '</p></div>';
+    $block['content'] .= '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<b>' . $flag->get_count($_tow_dataset->nid) . '</b></div>';
   }
   else {
-    $block['content'] = '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<p>Bookmarks: 0</p></div>';
+    $block['content'] .= '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<b>0</b></div>';
   }
   
-  $block['content'] .= theme('tow_theme_dataset_badge', $posted_by, $count, NULL, $added, $updated, $access, $visits, $extrainfo);
+  $block['content'] .= theme('tow_theme_dataset_badge', $posted_by, $count, NULL, $added, $updated, $access, $visits);
 
   // Params for the user picture.
   $account = new stdClass;
@@ -71,7 +72,7 @@ function tow_dataset_badge_block() {
   $account->picture = $_tow_dataset->picture;
 
   // Add the picture.
-  $block['content'] .= theme('user_picture', $account);
+  $block['content'] .= theme('user_picture', $account) . '<div class="user-dataset">' . $extrainfo . '</div>';
 
   return $block;
 }
@@ -102,7 +103,7 @@ function tow_dataset_share_block() {
   // Prepare theming parametres.
   $path = isset($_GET['q']) ? $_GET['q'] : '<front>';
   $link = url($path, array('absolute' => TRUE));
-  $permalink = t('Permalink ') . l($link, $link);
+  $permalink = '<div class="permalink">' . t('Permalink ') . '</div>' . '<input value="' . $link . '"></input>';
   $embedding = t('Embedding options are available from ') . l('search', 'search_dataset/' . $_tow_dataset->nid) . ' and ' . l('browse', 'dataset/' . $_tow_dataset->nid) . '.';
   
   // Save title and content of the block.

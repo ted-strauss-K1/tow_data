@@ -1,0 +1,236 @@
+<?php
+
+/**
+ * Define module's variables. 
+ * It's possible to define them on your settings.php file.
+ */
+define('S3AUTOPUSH_MASK_DEFAULT', '\.(js|css|png|jpeg|jpg|gif|txt|zip|swf|flv|ico)');
+
+class s3autopush {
+  static public function _object() {
+    static $S3;
+
+    if (!class_exists('S3')) {
+      module_load_include('php', 's3autopush', 'includes/S3');
+      $S3 = new S3(
+        variable_get('s3autopush_access_key', ''),
+        variable_get('s3autopush_secret_key', ''),
+        $useSSL = FALSE
+      );
+    }
+
+    return $S3;
+  }
+
+  static public function _buildImageCacheFile($file) {
+    if (arg(0) !== 'batch' && strpos($file, 'files/imagecache/') !== FALSE) {
+      exec(sprintf("wget -O - -q -t 1 %s/{$file}", url('<front>', array('absolute' => TRUE))));
+      sleep(1);
+    }
+  }
+
+  static public function _buildMetaHeaders($file) {
+    if (substr($file, -3) === '.js') {
+      return array('Cache-Control:max-age=604800 Content-Type:application/x-javascript');
+    }
+
+    if (substr($file, -4) === '.css') {
+      return array('Cache-Control:max-age=604800 Content-Type:text/css');
+    }
+    
+    return array();
+  }
+
+  static public function push($file) {
+    $file = base_path() . $file;
+
+    # System path to the file
+    $file_path = $_SERVER['DOCUMENT_ROOT'] . $file;
+
+    # ...
+    self::_buildImageCacheFile($file);
+
+    # ...
+    $S3 = self::_object();
+
+    return $S3->putObjectFile(
+      $file_path,
+      variable_get('s3autopush_bucket', ''), 
+      trim($file, "/\\"),
+      S3::ACL_PUBLIC_READ,
+      self::_buildMetaHeaders($file)
+    );
+  }
+}
+
+/**
+ * Implements hook_perm().
+ */
+function s3autopush_perm() {
+  return array('administer s3autopush', 's3autopush sync');
+}
+
+/**
+ * Implements hook_menu()
+ */
+function s3autopush_menu() {
+  $items['admin/settings/s3autopush'] = array(
+    'title' => 'S3AutoPush',
+    'access arguments' => array('administer s3autopush'),
+    'file' => 'includes/s3autopush.admin.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('s3autopush_settings_form'),
+  );
+
+  $items['s3autopush-sync'] = array(
+    'title' => 's3autopush Sync',
+    'access arguments' => array('s3autopush sync'),
+    'file' => 'includes/s3autopush.pages.inc',
+    'page callback' => 's3autopush_sync_callback',
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+function __s3autopush_batch_process($name, &$context) {
+  $context['message']   = sprintf('Pushing %s to S3', $name);
+  s3autopush_sync_push_file($name);
+}
+
+/**
+ * Push a file to S3.
+ */
+function s3autopush_sync_push_file($path) {
+  global $s3autopush_files_to_push;
+
+  if (!isset($s3autopush_files_to_push[$path])) {
+    if (!isset($s3autopush_files_to_push)) {
+      $s3autopush_files_to_push = array();
+    }
+    
+    $s3autopush_files_to_push[$path] = TRUE;
+
+    !empty($_POST) && s3autopush_sync_push_files();
+  }
+}
+
+/**
+ * Push multiple files.
+ */
+function s3autopush_sync_push_files() {
+  global $base_path, $s3autopush_files_to_push, $s3autopush_files_rebuild;
+
+  if (empty($s3autopush_files_to_push)) {
+    return;
+  }
+
+  foreach (array_keys($s3autopush_files_to_push) as $path) {
+    unset($s3autopush_files_to_push[$path]);
+
+    // Is file was not pushed to S3
+    $pushed = s3autopush_pushed_file_lookup($path);
+    if (!$pushed) {
+      // Error, log to system and not record to database
+      if (FALSE === s3autopush::push($path)) {
+        watchdog(
+          's3autopush', 
+          'Output of file %path: %output', 
+          array('%path' => $path, '%output' => $output), 
+          WATCHDOG_ERROR
+        );
+      }
+      else {
+        // Tell s3autopush_pushed_file_lookup() rebuild the cache.
+        $s3autopush_files_rebuild = TRUE;
+
+        @db_query("INSERT INTO {s3autopush_files} (path) VALUES ('%s')", $path);
+      }
+    }
+  }
+
+  if (!empty($s3autopush_files_rebuild) && $s3autopush_files_rebuild === TRUE) {
+    // Rebuild cache
+    s3autopush_pushed_files_rebuild();
+
+    // Force sleep 1 second
+    sleep(1);
+  }
+}
+
+/**
+ * Look up a file, check if it was pushed or not.
+ */
+function s3autopush_pushed_file_lookup($path) {
+  static $cache;
+
+  if (empty($cache)) {
+    if ($cached = cache_get('s3autopush_files')) {
+      $cache = $cached->data;
+    }
+    else {
+      $cache = s3autopush_pushed_files_rebuild();
+    }
+  }
+
+  return isset($cache[$path]);
+}
+
+/**
+ * Cache pushed-files to single variable.
+ */
+function s3autopush_pushed_files_rebuild() {
+  $sql   = 'SELECT path FROM {s3autopush_files}';
+  $q     = db_query($sql);
+  $files = array();
+  while ($v = db_fetch_object($q)) {
+    $files[$v->path] = TRUE;
+  }
+
+  cache_set('s3autopush_files', $files);
+
+  return $files;
+}
+
+function __s3autopush_batch_finished($success, $results, $operations) {
+  $message = '';
+  if ($success) {
+    foreach ($results as $result) {
+      $message .= $result . '<br />';
+    }
+  }
+  else {
+    $error_operation = reset($operations); 
+    $message = 'An error occurred while processing ' . $error_operation[0] . ' with arguments :' . print_r($error_operation[0], TRUE);
+  }
+
+  drupal_set_message($message);
+}
+
+/**
+ * Implements hook_file_url_alter().
+ */
+function s3autopush_file_url_alter(&$path) {
+  if (variable_get('cdn_status', 0)) {
+    $cdn_path   = variable_get('s3autopush_bucket_url', '');
+    $local_path = str_replace($cdn_path, '', $path);
+    $cdn_path   = str_replace('http://', 'https://', $cdn_path);
+    $local_path = str_replace($cdn_path, '', $local_path);
+    $local_path = trim($local_path, '/');
+    s3autopush_sync_push_file($local_path);
+  }
+}
+
+/**
+ * Implements hook_footer().
+ */
+function s3autopush_footer() {
+  s3autopush_sync_push_files();
+}
+
+/**
+ * Implements hook_exit().
+ */
+function s3autopush_exit() {
+  s3autopush_sync_push_files();
+}

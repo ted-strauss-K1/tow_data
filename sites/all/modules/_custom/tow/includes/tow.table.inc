@@ -594,8 +594,8 @@ function tow_table($node, $display_options = array()) {
     }
     if ($show_actions) {
       $record_nid = $row[0]['data'];
-      $row[0]['data'] = l('edit', 'node/' . $record_nid . '/edit', array('query' => 'destination=table/' . $nid));
-      $row[0]['data'] .= ' ' . l('delete', 'node/' . $record_nid . '/delete', array('query' => 'destination=table/' . $nid));
+      $row[0]['data'] = l('edit', 'node/' . $record_nid . '/edit', array('query' => 'destination=table/' . $node->nid, 'attributes' => array('class' => 'edit-row')));
+      $row[0]['data'] .= ' ' . l('delete', 'node/' . $record_nid . '/delete', array('query' => 'destination=table/' . $node->nid, 'attributes' => array('class' => 'delete-row')));
     }
     else {
       array_shift($row); 

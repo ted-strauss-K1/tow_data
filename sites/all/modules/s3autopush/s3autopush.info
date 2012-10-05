@@ -1,0 +1,14 @@
+
+name = S3AutoPush
+version = VERSION
+description = "Auto pushing files to Amazon S3. Please install CDN module first."
+package = "Performance and scalability"
+core = 6.x
+dependencies[] = cdn
+
+; Information added by drupal.org packaging script on 2011-02-25
+version = "6.x-1.x-dev"
+core = "6.x"
+project = "s3autopush"
+datestamp = "1298620108"
+

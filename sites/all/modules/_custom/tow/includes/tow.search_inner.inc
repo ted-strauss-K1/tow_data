@@ -363,7 +363,7 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
       $options = array(
         'attributes' => array(
           'class' => 'tow-dataset-field-link',
-          'type' => $field['type'],
+          'f_type' => $field['type'],
         ),
       );
       if (in_array($field['title'] . '_' . $field['type'], $selected_fields)) {
@@ -372,10 +372,10 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
       
       // Fields as links or plain text according to selectedness and availability.
       if (empty($selected_tableset) || in_array($table_nid, $selected_tableset)) {
-        $fields[$table_nid][] = l($field['title'], "search_dataset/$nid_aux/refresh_ajax", $options);
+        $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="/search_dataset/' . $nid_aux . '/refresh_ajax" f_type="' . $options['attributes']['f_type'] . '">' . $field['title'] . '</button>'; //l($field['title'], "search_dataset/$nid_aux/refresh_ajax", $options);
       }
       else {
-        $fields[$table_nid][] = '<div class="tow-dataset-field-link unavailable">' . $field['title'] . '</div>';
+        $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini disabled">' . $field['title'] . '</button>';
       }
     }
   }
@@ -389,11 +389,16 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
       '#collapsible' => TRUE,
       '#collapsed' => (!(empty($selected_tableset) || in_array($table_nid, $selected_tableset))) ? TRUE : FALSE,
     );
-    $fields_list = '<ul>';
+    /*$fields_list = '<ul>';
     foreach ($table_fields as $f) {
       $fields_list .= '<li>' . $f . '</li>';
     }
-    $fields_list .= '</ul>';
+    $fields_list .= '</ul>';*/
+    $fields_list = '<div class="btn-group" data-toggle="buttons-checkbox">';
+    foreach ($table_fields as $f) {
+      $fields_list .= $f;
+    }
+    $fields_list .= '</div>';
     $form["tow_table_fields_$table_nid"]['fields_list'] = array(
       '#value' => $fields_list,
     );

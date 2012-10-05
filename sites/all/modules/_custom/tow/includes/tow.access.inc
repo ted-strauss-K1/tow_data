@@ -30,9 +30,14 @@ function tow_access_bypass_solr() {
   
   // Check if bypass is already set and return if so.
   if (!isset($bypass_solr)) {
+  
+    // Get local IP.
+    $ip = gethostbyname($_SERVER['HTTP_HOST']);
+    $localhost = '127.0.0.1';
     
     // Check if it's the local machine and return the value.
-    $bypass_solr = (ip_address() == '127.0.0.1') ? TRUE : FALSE;
+    $current_ip = ip_address();
+    $bypass_solr = ($current_ip == $ip || $current_ip == $localhost) ? TRUE : FALSE;
   }
   
   return ($bypass_solr) ? TRUE : FALSE;

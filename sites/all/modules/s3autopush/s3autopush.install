@@ -1,0 +1,45 @@
+<?php
+
+/**
+ * @file Install, uninstall functions.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function s3autopush_install() {
+  drupal_install_schema('s3autopush');
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function s3autopush_uninstall() {
+  drupal_uninstall_schema('s3autopush');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function s3autopush_schema() {
+  $schema['s3autopush_files'] = array(
+    'description' => 'Save path of the synced files.',
+    'fields' => array(
+      'path' => array(
+        'description' => 'Path to synced file',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => ''
+      ),
+    ),
+    'indexes' => array(
+      'i_path' => array('path'),
+    ),
+    'unique keys' => array(
+      'uk_path' => array('path')
+    ),
+  );
+
+  return $schema;
+}

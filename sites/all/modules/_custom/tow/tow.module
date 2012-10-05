@@ -808,6 +808,35 @@ function tow_nodeapi(&$node, $op) {
       $_tow_dataset = $node;
     }
   }
+
+  // Save current dataset to the global $_tow_dataset variable.
+  if ($op == 'view' && $node->type == 'saved_search') {
+  
+    // Creation time representation.
+    $node->content['searched']['#value'] = '<div class="user-data">' . '<div class="searched">' . 'Searched ' . date('M j, Y', $node->created) . ' at ' . date('H:i', $node->created) . '</div>';
+    $node->content['searched']['#weight'] = 1;
+    
+    // User settings.
+    $account = user_load($node->uid);
+  
+    // User picture.
+    $node->content['user_picture']['#value'] = theme('user_picture', $account);
+    $node->content['user_picture']['#weight'] = 2;
+    
+    // User link.
+    $node->content['user_link']['#value'] = '<div class="user-info">' . l($account->name, 'user/' . $account->uid);
+    $node->content['user_link']['#weight'] = 3;
+    
+    // User points.
+    $node->content['user_points']['#value'] = '<span>' . '(' . userpoints_get_current_points($result['node']->uid, 'all') . ')' . '</span>' . '</div>';
+    $node->content['user_points']['#weight'] = 4;
+    
+    // Views.
+    $views = db_result(db_query("SELECT t.count AS count FROM {tow_node_views_counter} t WHERE t.nid = %d LIMIT 1", $node->nid));
+    $views = ($views) ? $views : 0;
+    $node->content['views']['#value'] = '<div class="views-amount">' . $views . ' views' . '</div>' . '</div>';
+    $node->content['views']['#weight'] = 5;
+  }
   
   // Remove voting widgets for dataset for its further input within a theme.
   if ($op == 'alter' && $node->type == 'dataset') {
@@ -1109,7 +1138,6 @@ function tow_theme() {
         'updated' => NULL,
         'access' => NULL,
         'visits' => NULL,
-        'extrainfo' => NULL,
       ),
       'template' => 'templates/tow.theme.dataset_badge',
     ),

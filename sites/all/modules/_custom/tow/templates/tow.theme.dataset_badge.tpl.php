@@ -16,6 +16,5 @@
   <p><?php print $updated; ?></p>
   <p class="dt-at"><?php print $access; ?></p>
   <p><?php print $visits; ?></p>
-  <div class="extrainfo"><p><?php print $extrainfo; ?></p></div>
 </div>
 

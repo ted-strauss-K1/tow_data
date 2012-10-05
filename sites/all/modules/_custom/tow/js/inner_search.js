@@ -317,7 +317,7 @@ Drupal.behaviors.inner_search = function(context) {
     if (e.button == 2) {
       return;
     }
-    if ($(this).hasClass('unavailable')) {
+    if ($(this).hasClass('disabled')) {
       return;
     }
     
@@ -326,10 +326,10 @@ Drupal.behaviors.inner_search = function(context) {
     if ($(this).hasClass('selected')) {
       $(this).removeClass('selected');
       var text = $(this).text();
-      var type = $(this).attr('type');
+      var type = $(this).attr('f_type');
       delete selectedFields[text + '_' + type];
       $('.tow-dataset-field-link').each(function() {
-        if (($(this).text() == text) && ($(this).attr('type') == type)) {
+        if (($(this).text() == text) && ($(this).attr('f_type') == type)) {
           $(this).removeClass('selected');
           $('.' + text + ' .active').click();
         }
@@ -338,18 +338,18 @@ Drupal.behaviors.inner_search = function(context) {
     else {
       $(this).addClass('selected');
       var text = $(this).text();
-      var type = $(this).attr('type');
+      var type = $(this).attr('f_type');
       $('.tow-dataset-field-link').each(function() {
-        if ($(this).text() == text && ($(this).attr('type') == type)) {
+        if ($(this).text() == text && ($(this).attr('f_type') == type)) {
           $(this).addClass('selected');
         }
       });
     }
     
     $('.tow-dataset-field-link.selected').each(function() {
-      selectedFields[$(this).text() + '_' + $(this).attr('type')] = $(this).text() + '_' + $(this).attr('type');
+      selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
     });
-    
+
     inner_search_ajax();
     
     return false;

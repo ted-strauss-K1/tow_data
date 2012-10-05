@@ -237,15 +237,8 @@ if ($('#datatable-1 td img').size() == 0) {
 	};
 	
 	//Show/hide Browse submenu with table links
-  $('ul.browse-submenu').hide();
-  $('ul.browse-submenu').prev().toggle(function(e) {
-	e.preventDefault();
-	$('ul.browse-submenu').show();
-  },
-  function(e) {
-    e.preventDefault();
-	$('ul.browse-submenu').hide();
-  });
+  //$('ul.browse-submenu').hide();
+  //$('ul.browse-submenu').prev().toggle(function(e) {e.preventDefault();$('ul.browse-submenu').show();}, function(e) {e.preventDefault();$('ul.browse-submenu').hide();});
 	
 }	
 	

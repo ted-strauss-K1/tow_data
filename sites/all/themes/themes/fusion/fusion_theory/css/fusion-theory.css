@@ -310,7 +310,7 @@ div.tow-highcharts-handle {
 .sticky-table
 {
 	padding-left:0px !important;
-	width: 100% !important;
+	/*width: 100% !important;*/
 }
 .dataTables_scrollBody 
 {
@@ -913,4 +913,250 @@ div.tow-highcharts-handle {
 .tags_btns
 {
 	float:left;
+}
+
+#block-tow-search_inner_list_of_tables
+{
+}
+#block-tow-search_inner_list_of_tables h2.title
+{
+	text-align:left;
+}
+#block-tow-search_inner_field_list
+{
+}
+#block-tow-search_inner_field_list .collapsible legend
+{
+	padding: 1px;
+    width: 100%;
+	 background: none repeat scroll 0 0 #CCCCCC;
+}
+#block-tow-search_inner_field_list .collapsible legend a
+{
+	color:#000;
+}
+#block-tow-search_inner_field_list h2.title
+{
+	text-align:left;
+}
+#block-tow-search_inner_simple_search
+{
+}
+#block-tow-search_inner_simple_search h2.title
+{
+	text-align:left;
+}
+
+.starflag .flag-bookmarks .flag-action
+{
+	background: url("/sites/all/themes/themes/fusion/fusion_theory/img/book_mark.png") no-repeat scroll 0 0 transparent;
+    float: left;
+    font-size: 0;
+    height: 31px;
+    overflow: hidden;
+    width: 33px;
+}
+.starflag .flag-bookmarks .unflag-action
+{
+		background: url("/sites/all/themes/themes/fusion/fusion_theory/img/book_mark.png") no-repeat scroll 0 -40px transparent;
+    float: left;
+    font-size: 0;
+    height: 31px;
+    overflow: hidden;
+    width: 33px;
+}
+.tow-saved-search-block-item .user-data
+{
+	 background: none repeat scroll 0 0 #CCCCCC;
+    float: right;
+    line-height: 15px;
+    margin-right: 50px;
+    padding: 10px 12px;
+    width: 170px;
+}
+.tow-saved-search-block-item .user-data .picture
+{
+	 float: left;
+    height: 30px;
+    margin-right: 7px;
+    padding-top: 0;
+    width: 30px;
+}
+.tow-saved-search-block-item .user-data .user-info
+{
+	 display: block;
+    float: left;
+    width: 120px;
+}
+.tow-saved-search-block-item .user-data .user-info a
+{
+	padding-right:2px;
+}
+.tow-saved-search-block-item .user-data .views-amount
+{
+	display: block;
+    float: left;
+    width: 120px;
+}
+
+
+.profile .picture {
+    float: left;
+    margin: 0 1em 1em 0;
+    min-height: 200px;
+    padding-top: 0;
+}
+.profile dl {
+    float: left;
+    margin: 0;
+    width: 828px;
+}
+.profile dt {
+    float: left;
+    margin: 0;
+    padding: 0 5px;
+    text-align: left;
+    width: 100px;
+}
+.profile h3 {
+    border-bottom: 0 solid #CCCCCC;
+    margin: 0;
+	display:none;
+}
+.profile dd {
+    margin: 0;
+}
+.page-user .secondary
+{
+	margin:0px;
+	border-bottom:1px solid #DDDDDD;
+}
+.page-user .secondary li
+{
+	padding:0px;
+}
+.page-user .secondary a
+{
+	  padding: 8px;
+	  margin-right: 2px;
+	  padding-left:12px;
+	  padding-right:12px;
+  line-height: 20px;
+  border: 1px solid transparent;
+  -webkit-border-radius: 4px 4px 0 0;
+     -moz-border-radius: 4px 4px 0 0;
+          border-radius: 4px 4px 0 0;
+}
+.page-user .secondary a:hover {
+    background-color: #EEEEEE;
+	padding-bottom:7px;
+    text-decoration: none;
+}
+.page-user ul.secondary a.active {
+    border-bottom: 0px solid #999999;
+}
+.page-user .secondary a:hover {
+  border-color: #eeeeee #eeeeee #dddddd;
+}
+
+.page-user .secondary .active > a,
+.page-user .secondary .active > a:hover {
+  color: #555555;
+  cursor: default;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-bottom-color: transparent;
+}
+.page-user #content-tabs-inner
+{
+	margin:0px;
+}
+.page-user .content-tabs
+{
+   border-right: 0 none;
+    float: left;
+    margin-bottom: -1px;
+    padding-bottom: 8px;
+    padding-top: 8px;
+}
+.page-user ul.secondary li
+{
+	border-right:0px;
+	float:left;
+}
+.page-user ul.secondary
+{
+	 float: left;
+    line-height: 34px;
+    padding-bottom: 6px;
+	width: 100%;
+}
+.page-user .rec_detail 
+{
+    float: left;
+    width: 585px;
+}
+.page-user .primary
+{
+	margin-bottom:20px;
+}
+.page-user #content-group
+{
+}
+.edit-row
+{
+	 background: url("/sites/all/themes/themes/fusion/fusion_theory/img/edit_data.png") no-repeat scroll 0 0 transparent;
+    float: left;
+    font-size: 0;
+    height: 16px;
+    width: 16px;
+	margin-right: 5px;
+    margin-top: 3px;
+}
+.delete-row
+{
+	 background: url("/sites/all/themes/themes/fusion/fusion_theory/img/del_data.png") no-repeat scroll 0 0 transparent;
+    float: left;
+    font-size: 0;
+    height:17px;
+    width: 12px;
+	margin-top: 3px;
+}
+#block-tow-table_display_switch
+{
+	 float: right;
+    width: 120px;
+}
+.starflag .flag-bookmarks
+{
+	  float: left;
+    position: relative;
+}
+.starflag b
+{
+	  display: block;
+    color: grey;
+    font-weight: bold;
+	clear:both;
+    padding-left: 13px;
+}
+.starflag
+{
+	float: left;
+    overflow: hidden;
+    width: 150px;
+	 padding: 3px;
+}
+.user-dataset
+{
+	 background: none repeat scroll 0 0 #CCCCCC;
+    border: 1px solid;
+    clear: both;
+    float: left;
+    font-size: 16px;
+    margin-top: 20px;
+    overflow: hidden;
+    padding: 5px 20px;
+    text-align: center;
+    width: 198px;
 }

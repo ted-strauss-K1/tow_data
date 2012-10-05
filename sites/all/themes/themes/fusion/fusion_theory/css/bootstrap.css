@@ -158,7 +158,8 @@ textarea {
 
 body {
   margin: 0;
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /*font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;*/
+  font-family:Calibri,sans-serif;
   font-size: 14px;
   line-height: 20px;
   color: #333333;
@@ -638,7 +639,6 @@ h1 {
 }
 
 h2 {
-  font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
     font-size: 18px;
     font-weight: normal;
     text-align: center;
@@ -881,9 +881,9 @@ legend {
   display: block;
   width: 100%;
   padding: 0;
-  margin-bottom: 20px;
+ /* margin-bottom: 20px;
   font-size: 21px;
-  line-height: 40px;
+  line-height: 40px;*/
   color: #333333;
   border: 0;
   border-bottom: 1px solid #e5e5e5;
@@ -1733,10 +1733,10 @@ legend + .control-group {
 }
 
 table {
-  max-width: 100%;
+  /*max-width: 100%;*/
   background-color: transparent;
   border-collapse: separate;
-  border-spacing: 5px;
+ /* border-spacing: 5px;*/
   width:100%;
 }
 
@@ -1746,28 +1746,45 @@ table {
 }
 
 table th {
-  padding: 4px;
+ /* padding: 4px;
   padding-right:15px;
   line-height: 20px;
   text-align: left;
   vertical-align: top;
   border-bottom:2px solid #CCCCCC;
-  font-size: 12px;
+  font-size: 12px;*/
+  border-bottom: 2px solid #CCCCCC;
+    font-size: 12px;
+    line-height: 15px;
+    padding: 0 15px 5px 0;
+    text-align: left;
+    vertical-align: top;
 }
 table td {
-  padding: 4px;
+ /* padding: 4px;
   padding-right:15px;
   line-height: 20px;
   text-align: left;
   vertical-align: top;
-  /*border-top: 1px solid #dddddd;*/
-  font-size: 12px;
+  border-top: 1px solid #dddddd;
+  font-size: 12px;*/
+   font-size: 12px;
+    line-height: 20px;
+    padding: 0;
+    text-align: left;
+    vertical-align: top;
 }
 .table th {
   font-size: 12px;
     font-weight: bold;
 }
-
+tr.odd td.sorting_1
+{
+	background-color: #FFFFFF;
+}
+tr.even td.sorting_1 {
+    background-color: #FFFFFF;
+}
 .table thead th {
   vertical-align: bottom;
 }
@@ -1799,6 +1816,10 @@ table td {
      -moz-border-radius: 4px;
           border-radius: 4px;*/
 }
+.dataTables_scroll
+{
+	clear:both;
+}
 .dataTable table {
  /* border: 1px solid #dddddd;
   border-collapse: separate;
@@ -1820,7 +1841,7 @@ table {
 
 table th,
 table td {
-/*  border-left: 1px solid #dddddd;*/
+  /*border-left: 1px solid #dddddd;*/
 }
 
 .table-bordered caption + thead tr:first-child th,
@@ -3356,7 +3377,7 @@ input[type="submit"].btn.btn-mini {
   position: relative;
   *margin-left: .3em;
   font-size: 0;
-  white-space: nowrap;
+  white-space: normal;
 }
 
 .btn-group:first-child {
@@ -4137,6 +4158,7 @@ input[type="submit"].btn.btn-mini {
 
 .navbar .btn-group .btn {
   margin: 0;
+  margin-bottom:5px;
 }
 
 .navbar-form {
