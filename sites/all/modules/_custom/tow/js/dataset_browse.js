@@ -1,8 +1,5 @@
 Drupal.behaviors.dataset_browse = function(context) {
-  
-  
-
-  
+ 
   // 'Detail'-info for rows in DataTable.
   // Insert a 'details' column to the table.
   $('.views-table tr:last').remove();
@@ -40,15 +37,6 @@ Drupal.behaviors.dataset_browse = function(context) {
 		return sOut;
 	}
 
-	// Initialse DataTables, with no sorting on the 'details' column
-			
-			/*var oTable = $('#datatable-1').dataTable( {
-				"aoColumnDefs": [
-					{ "bSortable": false, "aTargets": [ 0 ] }
-				],
-				"aaSorting": [[1, 'asc']]
-			});*/
-			
 			/* Add event listener for opening and closing details
 			 * Note that the indicator for showing which row is open is not controlled by DataTables,
 			 * rather it is done here
@@ -235,11 +223,7 @@ if ($('#datatable-1 td img').size() == 0) {
 		});
 
 	};
-	
-	//Show/hide Browse submenu with table links
-  //$('ul.browse-submenu').hide();
-  //$('ul.browse-submenu').prev().toggle(function(e) {e.preventDefault();$('ul.browse-submenu').show();}, function(e) {e.preventDefault();$('ul.browse-submenu').hide();});
-	
+
 }	
 	
   

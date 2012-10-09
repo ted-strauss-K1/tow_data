@@ -14,3 +14,7 @@
 .comment .vud-widget-upanddown .down-score {
   display: none;
 }
+
+.hidden {
+  display: none;
+}
