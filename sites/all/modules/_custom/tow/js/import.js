@@ -7,16 +7,16 @@
 Drupal.behaviors.Import = function(context) {
   
   // Hide and show table select dependently on user choice (whether import to dataset or to table).
-  $('#edit-to-table').hide();
+  $('#edit-to-table').addClass('hidden');
   $('#edit-to-way-1-wrapper').change(function() {
-    $('#edit-to-table').show();
+    $('#edit-to-table').removeClass('hidden');
   });
   $('#edit-to-way-0-wrapper').change(function() {
-    $('#edit-to-table').hide();
+    $('#edit-to-table').addClass('hidden');
   });
   
   // Hide progress bar.
-  $('.progress-bar').hide();
+  $('.progress-bar').addClass('hidden');
   
   // Hide submit button.
   var hash;
@@ -40,7 +40,7 @@ Drupal.behaviors.Import = function(context) {
     dragFile(hash);
   }
   else {
-    $('#edit-upload-wrapper div.description').hide();
+    $('#edit-upload-wrapper div.description').addClass('hidden');
   }
   
   $('#edit-upload').change(function() {
@@ -74,7 +74,7 @@ Drupal.behaviors.Import = function(context) {
         url: 'http://' + location.host + '/?q=import_grab/' + hash + '/' + dataset + '/' + table,
         data: {grab_url : grab_url},
         beforeSend: function() {
-          $('.progress-bar').show();
+          $('.progress-bar').removeClass('hidden');
           lpStart(hash, 1, 0);
         }
       });
@@ -135,7 +135,7 @@ Drupal.behaviors.Import = function(context) {
           
           if (response !== '-1') {
             $('.progress-table tr.' + stage + ' td.message').text(response);
-            $('.progress-table tr.' + stage).show();
+            $('.progress-table tr.' + stage).removeClass('hidden');
           }
           nextStage++;
         }
@@ -166,8 +166,8 @@ Drupal.behaviors.Import = function(context) {
           $('.progress-table tr.6 td.message').html(message);
           $('.progress-table tr.6 td.status').text('ok');
           $('.progress-table tr.6 td.status').addClass('ok');
-          $('.progress-table tr.6').show();
-          $('.progress-table tr.7').show();
+          $('.progress-table tr.6').removeClass('hidden');
+          $('.progress-table tr.7').removeClass('hidden');
         
           return;
         }
@@ -202,7 +202,7 @@ Drupal.behaviors.Import = function(context) {
         dataset: dataset         
       },
       uploadStarted: function(i, file, len){
-        $('.progress-bar').show();
+        $('.progress-bar').removeClass('hidden');
         lpStart(hash, 1, 0);
       },
       maxfiles: 1,
@@ -225,7 +225,7 @@ Drupal.behaviors.Import = function(context) {
     var xhr = new XMLHttpRequest();
 
     xhr.open("POST", uri, true);
-    $('.progress-bar').show();
+    $('.progress-bar').removeClass('hidden');
     lpStart(hash, 1, 0);
 
     if (typeof FormData != 'undefined'){
@@ -268,7 +268,7 @@ Drupal.behaviors.Import = function(context) {
   cycle = 0;
   
   function fileUploaded(hash) {
-    $('.progress-bar').show();
+    $('.progress-bar').removeClass('hidden');
     var stage  =1;
     var cycle = 0;
     

@@ -6,8 +6,8 @@
  *            type of the field
  */
 function tow_display_filter_operator(type) {
-  $('#edit-filters-filter-items-wrapper-filter-items-operator option:[value*="' + type + '"]').show();
-  $('#edit-filters-filter-items-wrapper-filter-items-operator option:not([value*="' + type + '"])').hide();
+  $('#edit-filters-filter-items-wrapper-filter-items-operator option:[value*="' + type + '"]').removeClass('hidden');
+  $('#edit-filters-filter-items-wrapper-filter-items-operator option:not([value*="' + type + '"])').addClass('hidden');
 
   operator_value = $('#edit-filters-filter-items-wrapper-filter-items-operator option:[value*="' + type + '"]').val();
 
@@ -29,55 +29,55 @@ function tow_display_input_fields_for_operator(operator_value) {
   if (operator_value.match("text") || operator_value.match("char") || operator_value.match("float") || operator_value.match("int")) {
     
     // Display only one input field,
-    $('#edit-filters-filter-items-wrapper-filter-items-value-1-wrapper').show();
+    $('#edit-filters-filter-items-wrapper-filter-items-value-1-wrapper').removeClass('hidden');
     
     // Hide all date and enum fields.
     if (operator_value.match("int-between")) {
-      $('#edit-filters-filter-items-wrapper-filter-items-value-2-wrapper').show();
+      $('#edit-filters-filter-items-wrapper-filter-items-value-2-wrapper').removeClass('hidden');
     } 
     else {
-      $('#edit-filters-filter-items-wrapper-filter-items-value-2-wrapper').hide();
+      $('#edit-filters-filter-items-wrapper-filter-items-value-2-wrapper').addClass('hidden');
     }
-    $('#edit-filters-filter-items-wrapper-filter-items-date-within-wrapper').hide();
-    $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-wrapper').hide();
-    $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-day-wrapper').hide();
-    $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-wrapper').hide();
-    $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-day-wrapper').hide();
-    $('#edit-filters-filter-items-wrapper-filter-items-enum-list-wrapper').hide();
+    $('#edit-filters-filter-items-wrapper-filter-items-date-within-wrapper').addClass('hidden');
+    $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-wrapper').addClass('hidden');
+    $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-day-wrapper').addClass('hidden');
+    $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-wrapper').addClass('hidden');
+    $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-day-wrapper').addClass('hidden');
+    $('#edit-filters-filter-items-wrapper-filter-items-enum-list-wrapper').addClass('hidden');
 
   }
   else {
     if (operator_value.match("date")) {
-      $('#edit-filters-filter-items-wrapper-filter-items-value-1-wrapper').hide();
-      $('#edit-filters-filter-items-wrapper-filter-items-value-2-wrapper').hide();
+      $('#edit-filters-filter-items-wrapper-filter-items-value-1-wrapper').addClass('hidden');
+      $('#edit-filters-filter-items-wrapper-filter-items-value-2-wrapper').addClass('hidden');
       if (operator_value.match("date-within")) {
-        $('#edit-filters-filter-items-wrapper-filter-items-date-within-wrapper').show();
+        $('#edit-filters-filter-items-wrapper-filter-items-date-within-wrapper').removeClass('hidden');
       }
       else {
-        $('#edit-filters-filter-items-wrapper-filter-items-date-within-wrapper').hide();
+        $('#edit-filters-filter-items-wrapper-filter-items-date-within-wrapper').addClass('hidden');
       }
-      $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-wrapper').show();
-      $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-day-wrapper').show();
+      $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-wrapper').removeClass('hidden');
+      $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-day-wrapper').removeClass('hidden');
       if (operator_value.match("date-between")) {
-        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-wrapper').show();
-        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-day-wrapper').show();
+        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-wrapper').removeClass('hidden');
+        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-day-wrapper').removeClass('hidden');
       }
       else {
-        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-wrapper').hide();
-        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-day-wrapper').hide();
+        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-wrapper').addClass('hidden');
+        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-day-wrapper').addClass('hidden');
       }
-      $('#edit-filters-filter-items-wrapper-filter-items-enum-list-wrapper').hide();
+      $('#edit-filters-filter-items-wrapper-filter-items-enum-list-wrapper').addClass('hidden');
     }
     else {
       if (operator_value.match("enum")) {
-        $('#edit-filters-filter-items-wrapper-filter-items-value-1-wrapper').hide();
-        $('#edit-filters-filter-items-wrapper-filter-items-value-2-wrapper').hide();
-        $('#edit-filters-filter-items-wrapper-filter-items-date-within-wrapper').hide();
-        $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-wrapper').hide();
-        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-wrapper').hide();
-        $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-day-wrapper').hide();
-        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-day-wrapper').hide();
-        $('#edit-filters-filter-items-wrapper-filter-items-enum-list-wrapper').show();
+        $('#edit-filters-filter-items-wrapper-filter-items-value-1-wrapper').addClass('hidden');
+        $('#edit-filters-filter-items-wrapper-filter-items-value-2-wrapper').addClass('hidden');
+        $('#edit-filters-filter-items-wrapper-filter-items-date-within-wrapper').addClass('hidden');
+        $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-wrapper').addClass('hidden');
+        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-wrapper').addClass('hidden');
+        $('#edit-filters-filter-items-wrapper-filter-items-date-value-1-day-wrapper').addClass('hidden');
+        $('#edit-filters-filter-items-wrapper-filter-items-date-value-2-day-wrapper').addClass('hidden');
+        $('#edit-filters-filter-items-wrapper-filter-items-enum-list-wrapper').removeClass('hidden');
         if (operator_value.match("enum-anyof")) {
           $('#edit-filters-filter-items-wrapper-filter-items-enum-list').attr('multiple', 'multiple');
         } 
@@ -122,7 +122,7 @@ Drupal.behaviors.Search = function(context) {
   // -------- Filters Block ---------
   // Remove filter block.
   $('.remove-filter').click(function() {
-    $(this).parent().hide();
+    $(this).parent().addClass('hidden');
   });
 
   // When changing filter field.
@@ -135,7 +135,7 @@ Drupal.behaviors.Search = function(context) {
     $('input.form-text').val('');
     $('input.form-checkbox').attr('checked', false);
     $('option:selected').removeAttr('selected');
-    $('#filter-items-wrapper').children().slice(1).hide();
+    $('#filter-items-wrapper').children().slice(1).addClass('hidden');
   });
 
   // Behavior on searched table select: show only selected tables and
@@ -148,30 +148,30 @@ Drupal.behaviors.Search = function(context) {
       
       // Hide tables to be displayed.
       id = "#edit-fields-select-tables-" + $(this).val() + "-wrapper";
-      $(id).hide();
+      $(id).addClass('hidden');
       
       // Hide fields to be displayed.
       id = 'div[id*="t' + $(this).val() + '"]';
-      $(id).hide();
+      $(id).addClass('hidden');
       
       // Hide constraint fields.
       id = 'option[value*="t' + $(this).val() + '"]';
-      $(id).hide();
+      $(id).addClass('hidden');
     });
 
     $("#edit-tables-select option:selected").each(function() {
       
       // Show tables to be displayed.
       id = "#edit-fields-select-tables-" + $(this).val() + "-wrapper";
-      $(id).show();
+      $(id).removeClass('hidden');
       
       // Show fields to be displayed.
       id = 'div[id*="t' + $(this).val() + '"]';
-      $(id).show();
+      $(id).removeClass('hidden');
       
       // Show constraint fields.
       id = 'option[value*="t' + $(this).val() + '"]';
-      $(id).show();
+      $(id).removeClass('hidden');
       
       // Set first field value.
       $('#edit-filters-filter-items-wrapper-filter-items-field').val($(id).val());

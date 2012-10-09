@@ -79,10 +79,10 @@ function tow_saved_searches_list_block($nid = NULL) {
     }
   
     $output = '<div class="tow-saved-search-block-item">';
-    $output .= node_view($node);
-    foreach ($comments as $comment) {
+    $output .= node_show($node, null);
+    /*foreach ($comments as $comment) {
       $output .= theme('comment_view', $comment, $node);
-    }
+    }*/
     $output .= '</div>';
     
     $block['content'] .= $output;

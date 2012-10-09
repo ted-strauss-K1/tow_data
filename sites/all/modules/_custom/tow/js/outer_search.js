@@ -2,16 +2,16 @@ Drupal.behaviors.outer_search = function(context) {
   var default_tab = '#newest';
   
   // Hide hidden facets.
-  $('.apachesolr-hidden-facet', context).hide();
+  $('.apachesolr-hidden-facet', context).addClass('hidden');
   
   // Add Show more/fewer link.
   $('<a href="#" class="apachesolr-showhide"></a>').text(Drupal.t('Show more')).click(function() {
     if ($(this).parent().find('.apachesolr-hidden-facet:visible').length == 0) {
-      $(this).parent().find('.apachesolr-hidden-facet').show();
+      $(this).parent().find('.apachesolr-hidden-facet').removeClass('hidden');
       $(this).text(Drupal.t('Show fewer'));
     }
     else {
-      $(this).parent().find('.apachesolr-hidden-facet').hide();
+      $(this).parent().find('.apachesolr-hidden-facet').addClass('hidden');
       $(this).text(Drupal.t('Show more'));
     }
     return false;
@@ -99,15 +99,15 @@ Drupal.behaviors.outer_search = function(context) {
           build_query_and_search();
         });
         
-        $('.apachesolr-hidden-facet', context).hide();
+        $('.apachesolr-hidden-facet', context).addClass('hidden');
         
         $('<a href="#" class="apachesolr-showhide"></a>').text(Drupal.t('Show more')).click(function() {
           if ($(this).parent().find('.apachesolr-hidden-facet:visible').length == 0) {
-            $(this).parent().find('.apachesolr-hidden-facet').show();
+            $(this).parent().find('.apachesolr-hidden-facet').removeClass('hidden');
             $(this).text(Drupal.t('Show fewer'));
           }
           else {
-            $(this).parent().find('.apachesolr-hidden-facet').hide();
+            $(this).parent().find('.apachesolr-hidden-facet').addClass('hidden');
             $(this).text(Drupal.t('Show more'));
           }
           return false;

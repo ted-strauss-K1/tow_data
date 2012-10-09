@@ -14,17 +14,17 @@ Drupal.behaviors.inner_search = function(context) {
   var arrayOfCollapse = {};
 
   // Hide hidden facets.
-  $('.apachesolr-hidden-facet', context).hide();
+  $('.apachesolr-hidden-facet', context).addClass('hidden');
   
   // Add 'Show more/fewer' link.
   var show_more_fewer = function() {
     $('<a href="#" class="apachesolr-showhide"></a>').text(Drupal.t('Show more')).click(function() {
       if ($(this).parent().find('.apachesolr-hidden-facet:visible').length == 0) {
-        $(this).parent().find('.apachesolr-hidden-facet').show();
+        $(this).parent().find('.apachesolr-hidden-facet').removeClass('hidden');
         $(this).text(Drupal.t('Show fewer'));
       }
       else {
-        $(this).parent().find('.apachesolr-hidden-facet').hide();
+        $(this).parent().find('.apachesolr-hidden-facet').addClass('hidden');
         $(this).text(Drupal.t('Show more'));
       }
       return false;
@@ -409,7 +409,7 @@ Drupal.behaviors.inner_search = function(context) {
         });	
 		
         initialArray = $('.tow-inner-search-widget').get();
-        $('.apachesolr-hidden-facet', context).hide();
+        $('.apachesolr-hidden-facet', context).addClass('hidden');
 
         show_more_fewer();
 		
@@ -702,7 +702,7 @@ Drupal.behaviors.inner_search = function(context) {
             // Listen to the selection event on the master chart to update the
             // extremes of the detail chart.
             selection: function(event) {
-              $('#' + id +'-waiting').show();
+              $('#' + id +'-waiting').removeClass('hidden');
               var extremesObject = event.xAxis[0];
               var min = extremesObject.min;
               var max = extremesObject.max;
@@ -726,7 +726,7 @@ Drupal.behaviors.inner_search = function(context) {
                 },
                 dataType: 'json',
                 success: function(data) {
-                  $('#' + id +'-waiting').hide();
+                  $('#' + id +'-waiting').addClass('hidden');
                   detailChart.series[0].setData(data.data, false);
                   $(window).css('cursor', 'auto');
                   newVisibleRange(min, max);
@@ -830,7 +830,7 @@ Drupal.behaviors.inner_search = function(context) {
           .css('top', top)
           .css('height', height)
           .css('pointer-events', 'none')
-          .hide()
+          .addClass('hidden')
           .append('<div id="' + masterChart.container.id + '-visible-handle' + '">');
 
         $('<div>')
@@ -976,7 +976,7 @@ Drupal.behaviors.inner_search = function(context) {
             .css('background-color', 'rgba(255,255,255, 0.8)')
             .css('z-index', 20)
             .appendTo('#' + detailChart.container.id)
-            .hide();
+            .addClass('hidden');
 
           $('<div>')
             .attr('id', id +'-noresult')
@@ -993,7 +993,7 @@ Drupal.behaviors.inner_search = function(context) {
             .html('No results found')
             .appendTo('#' + detailChart.container.id);
             if (yMax) {
-              $('#' + id +'-noresult').hide();
+              $('#' + id +'-noresult').addClass('hidden');
             }
             
           $('#' + detailChart.container.id).mousedown(function(e) {
@@ -1144,7 +1144,7 @@ Drupal.behaviors.inner_search = function(context) {
       left = left - 2 * visibleHandleBorder;
       
       $('#' + masterChart.container.id + '-visible')
-        .show()
+        .removeClass('hidden')
         .css('left', left)
         .css('width', width);
 
@@ -1152,7 +1152,7 @@ Drupal.behaviors.inner_search = function(context) {
         .css('right', visibleHandleOffset);      
       
       if (Math.abs(min - globalMin) <= globalRandewidth / 200 && Math.abs(max - globalMax) <= globalRandewidth / 200) {
-        $('#' + masterChart.container.id + '-visible').hide();
+        $('#' + masterChart.container.id + '-visible').addClass('hidden');
       }
       if (redrawDetail != false) {
         newVisibleRange(min, max);
@@ -1224,10 +1224,10 @@ Drupal.behaviors.inner_search = function(context) {
       }
       displaySummary();
       if (screenX < detailLeft - 1 || screenX > detailRight + 1) {
-        $('#' + handle_id).hide();
+        $('#' + handle_id).addClass('hidden');
       }
       else {
-        $('#' + handle_id).show();
+        $('#' + handle_id).removeClass('hidden');
       }
     };
     
