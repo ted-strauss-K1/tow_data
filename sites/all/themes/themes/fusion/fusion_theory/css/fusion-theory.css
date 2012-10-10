@@ -227,7 +227,7 @@ div.view-content {
 }
 #pid-newest #content-group {
 	margin-right: 10px;
-    width: 750px;
+    width: 750px !important;
 }
 #sidebar-last
 {
@@ -1162,7 +1162,7 @@ div.tow-highcharts-handle {
 }
 .grid16-13 
 {
-    width: 710px;
+    width: 710px !important;
 	margin-right: 10px;
 }
 .views-exposed-form .views-exposed-widget .form-submit
@@ -1366,10 +1366,15 @@ div.tow-highcharts-handle {
     font-weight: normal;
 	line-height: 25px;
 }
-table td
+
+.view-tags table td 
 {
-	border-bottom: 1px dotted #CCCCCC;
-	padding: 10px 0 !important;
+    border-bottom: 1px dotted #E0E0E0;
+    padding-bottom: 12px;
+    padding-right: 6px;
+    padding-top: 6px;
+    vertical-align: top;
+    width: 230px;
 }
 .view-tags .views-field-description
 {
@@ -1392,4 +1397,151 @@ table td
 .view-tags .views-exposed-form
 {
 	margin-top: 20px;
+}
+
+/*Tags menu css*/
+
+#block-menu-menu-tags .inner
+{
+	margin:0px;
+}
+#block-menu-menu-tags div.content {
+	border-bottom: 4px solid black;
+	 font-size: 17px;
+	 font-weight:normal;
+}
+#block-menu-menu-tags div.content b
+{
+	font-weight:normal;
+}
+#block-menu-menu-tags .inner
+{
+	margin-left:0px;
+	margin-right:0px;
+}
+#block-menu-menu-tags ul
+{
+	margin:0px;
+	padding:0px;
+}
+#block-menu-menu-tags li {
+	color: #000000;
+	float: left;
+	font-size: 17px;
+	padding-left: 5px;
+	padding-right: 5px;
+	text-decoration: none;
+	list-style:none;
+	font-weight:normal;
+	line-height: 150%;
+}
+#block-menu-menu-tags li a {
+	color: #000000;
+	float: left;
+	font-size: 17px;
+	padding-left: 10px;
+	padding-right: 10px;
+	text-decoration: none;
+	font-weight:normal;
+}
+#block-menu-menu-tags li a.active
+{
+	font-weight:bold;
+}
+#block-menu-menu-tags li a:hover {
+    color: #979797;
+}
+
+
+/*User menu css*/
+
+#block-menu-menu-users .inner
+{
+	margin:0px;
+}
+#block-menu-menu-users div.content {
+	border-bottom: 4px solid black;
+	 font-size: 17px;
+	 font-weight:normal;
+}
+#block-menu-menu-users div.content b
+{
+	font-weight:normal;
+}
+block-menu-menu-users .inner
+{
+	margin-left:0px;
+	margin-right:0px;
+}
+#block-menu-menu-users ul
+{
+	margin:0px;
+	padding:0px;
+}
+#block-menu-menu-users li {
+	color: #000000;
+	float: left;
+	font-size: 17px;
+	padding-left: 5px;
+	padding-right: 5px;
+	text-decoration: none;
+	list-style:none;
+	font-weight:normal;
+	line-height: 150%;
+}
+#block-menu-menu-users li a {
+	color: #000000;
+	float: left;
+	font-size: 17px;
+	padding-left: 10px;
+	padding-right: 10px;
+	text-decoration: none;
+	font-weight:normal;
+}
+#block-menu-menu-users li a:hover {
+    color: #979797;
+}
+#block-menu-menu-users li a.active
+{
+	font-weight:bold;
+}
+.view-Users select, input[type="file"] {
+    border-radius: 3px 0 0 3px;
+    height: 22px;
+    line-height: 22px;
+    padding-right: 0;
+}
+.view-Users .views-exposed-form .views-exposed-widget {
+    float: left;
+    padding: 0 5px 0 0;
+}
+.view-Users .views-exposed-widget .form-submit
+{
+	margin-top: 24px;
+}
+
+.view-Users table tr td 
+{
+    overflow: hidden;
+}
+.view-Users table tr td 
+{
+    clear: both;
+    height: 85px;
+    margin: 8px 5px;
+    width: 230px;
+}
+.view-Users .picture
+{
+	float:left;
+		width:48px;
+	height:48px;
+	margin-right:5px;
+	padding-top:0px;
+}
+.view-Users .picture img
+{
+	float:left;
+	 border-collapse: separate;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }

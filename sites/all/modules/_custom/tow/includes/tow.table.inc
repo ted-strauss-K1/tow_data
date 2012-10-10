@@ -624,6 +624,7 @@ function tow_table($node, $display_options = array()) {
     'sScrollX' => '100%',
     'sScrollY' => '300',
     'bScrollCollapse' => TRUE,
+	'bRetrieve' => TRUE,
   );
 
   // Theme dataTable.

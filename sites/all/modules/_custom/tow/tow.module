@@ -359,6 +359,14 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
     case 'user_register':
       # tow_register_form_alter($form, $form_state);
       break;
+	
+	// Comment form.
+    case 'comment_form':
+      dpm($form);
+	  unset($form['preview']);
+	  $form['comment_filter']['format'] = NULL;
+      break;
+	
   }
   
   // Altering deletion and truncation forms.

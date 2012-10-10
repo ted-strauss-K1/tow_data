@@ -18,3 +18,13 @@
 .hidden {
   display: none;
 }
+
+.pos-rel {
+  position: relative;
+}
+
+.comcom {
+  height: auto !important;
+  background-color: transparent !important;
+  border: none !important;
+}

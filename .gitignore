@@ -1,8 +1,5 @@
 .svn*
-Import Functionality*
-Manuals*
 .htaccess
-files_move.zip
 README.md
-sites/all/modules/apachesolr.old.tar.gz
 sites/default*
+tmp*

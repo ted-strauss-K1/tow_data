@@ -450,6 +450,7 @@ Drupal.behaviors.inner_search = function(context) {
           "bFilter": true,
           "bSort": true,
           "bInfo": false,
+		  "bRetrieve": true,
           "sScrollX": "100%"
         });
       },
