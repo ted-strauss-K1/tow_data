@@ -1884,5 +1884,9 @@ button:active {
 	margin-left: 50px;
     width: 630px;
 }
-
+#block-tow-saved_searches_list div.comment h3.title {
+    font-size: 18px;
+    font-weight: normal;
+    margin: 0;
+}
 
