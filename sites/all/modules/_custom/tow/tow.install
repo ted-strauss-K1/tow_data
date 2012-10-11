@@ -100,7 +100,7 @@ function tow_uninstall() {
   
   // Define the CCK fields to be deleted.
   $fields = array();
-  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search');
+  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search', 'document');
   foreach ($types as $type_name) {
     $query = db_query("SELECT cnfi.field_name AS field_name FROM {content_node_field_instance} cnfi WHERE cnfi.type_name = '%s'", $type_name);
     while ($record = db_fetch_object($query)) {
