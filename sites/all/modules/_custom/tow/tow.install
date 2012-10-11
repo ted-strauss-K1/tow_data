@@ -12,6 +12,7 @@
  * Requirements
  ****************************************************************************************************/
 
+module_load_include('inc', 'content', 'includes/content.crud');
 module_load_include('inc', 'tow', 'includes/tow.db_tables');
 module_load_include('inc', 'tow', 'includes/tow.cck');
 
@@ -49,9 +50,6 @@ function tow_install() {
   drupal_install_schema('tow');
   
   $fields = tow_install_fields();
-
-  // Need to load the CCK include file where content_field_instance_create() is defined.
-  module_load_include('inc', 'content', 'includes/content.crud');
 
   // Create several fields at a time.
   foreach ($fields as $field) {
@@ -99,7 +97,6 @@ function tow_install() {
  * Implementation of hook_uninstall().
  */
 function tow_uninstall() {
-  module_load_include('inc', 'content', 'includes/content.crud');
   
   // Define the CCK fields to be deleted.
   $fields = array();
@@ -147,10 +144,85 @@ function tow_uninstall() {
  ****************************************************************************************************/
 
 /**
+ * Creates dataset categories if necessary.
+ */
+function tow_create_dataset_categories() {
+  
+  // Get 'Dataset categories' vocabulary ID.
+  $vid = db_result(db_query("
+  
+    SELECT 
+      v.vid AS vid 
+      
+      FROM 
+        {vocabulary} v
+      
+      WHERE 
+        v.name = '%s' 
+
+  ", 'Dataset categories'));
+
+  // If does not exist.
+  if (!$vid) {
+    $empty = TRUE;
+    $not_created = TRUE;
+  }
+  
+  // Check empty.
+  else {
+    $not_created = FALSE;
+    $empty = (db_result(db_query("
+  
+      SELECT 
+        COUNT(*) 
+      
+        FROM 
+          {term_data} td 
+        
+        WHERE 
+          td.vid = %d 
+
+    ", $vid))) ? FALSE : TRUE;
+  }
+
+  // Needs to be filled.
+  if ($empty) {
+
+    // Needs in creation.
+    if ($not_created) {
+      $vocabulary = array(
+        'name' => t('Dataset categories'),
+        'description' => '',
+        'help' => '',
+        'relations' => 1,
+        'hierarchy' => 0,
+        'multiple' => 0,
+        'required' => 0,
+        'tags' => 0,
+        'module' => 'tow',
+        'weight' => 0,
+        'nodes' => array('dataset' => 'dataset'),
+      );
+      taxonomy_save_vocabulary($vocabulary);
+      $vid = $vocabulary['vid'];
+    }
+  
+    // Create terms.
+    $names = _tow_taxonomy_dataset_categories();
+    foreach ($names as $name) {
+      $term = array(
+        'vid' => $vid,
+        'name' => $name,
+      );
+      taxonomy_save_term($term);
+    }
+  }
+}
+
+/**
  * This function defines premie's fields.
  */
 function tow_install_fields() {
-  module_load_include('inc', 'tow', 'tow.cck');
   
   // Initialisation.
   $fields = array();
