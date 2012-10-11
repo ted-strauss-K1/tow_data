@@ -523,3 +523,118 @@ function tow_cck_datetime($name, $type, $title, $weight, $format, $exclude, $req
   
   return $field;
 }
+
+/**
+ * CCK Image field.
+ */
+function tow_cck_image($name, $type, $title, $weight, $format, $exclude, $required = 0, $multiple = 1) {
+  module_load_include('inc', 'imagefield', 'imagefield_widget');
+  module_load_include('inc', 'filefield', 'filefield_widget');
+
+  $field = array (
+  'field_name' => $name,
+  'type_name' => $type,
+  'display_settings' => 
+  array (
+    'weight' => $weight,
+    'parent' => '',
+    'label' => 
+    array (
+      'format' => $format['label'],
+    ),
+    'teaser' => 
+    array (
+      'format' => $format['teaser'],
+      'exclude' => $exclude['teaser'],
+    ),
+    'full' => 
+    array (
+      'format' => $format['full'],
+      'exclude' => $exclude['full'],
+    ),
+    4 => 
+    array (
+      'format' => $format[4],
+      'exclude' => $exclude[4],
+    ),
+    2 => 
+    array (
+      'format' => $format[2],
+      'exclude' => $exclude[2],
+    ),
+    3 => 
+    array (
+      'format' => $format[3],
+      'exclude' => $exclude[3],
+    ),
+    'token' => 
+    array (
+      'format' => $format['token'],
+      'exclude' => $exclude['token'],
+    ),
+  ),
+  'widget_active' => '1',
+  'type' => 'filefield',
+  'required' => $required,
+  'multiple' => $multiple,
+  'db_storage' => '1',
+  'module' => 'filefield',
+  'active' => '1',
+  'locked' => '0',
+  'columns' => 
+  array (
+    'fid' => 
+    array (
+      'type' => 'int',
+      'not null' => false,
+      'views' => true,
+    ),
+    'list' => 
+    array (
+      'type' => 'int',
+      'size' => 'tiny',
+      'not null' => false,
+      'views' => true,
+    ),
+    'data' => 
+    array (
+      'type' => 'text',
+      'serialize' => true,
+      'views' => true,
+    ),
+  ),
+  'list_field' => '0',
+  'list_default' => 1,
+  'description_field' => '0',
+  'widget' => 
+  array (
+    'file_extensions' => 'png gif jpg jpeg',
+    'file_path' => '',
+    'progress_indicator' => 'bar',
+    'max_filesize_per_file' => '',
+    'max_filesize_per_node' => '',
+    'max_resolution' => '0',
+    'min_resolution' => '0',
+    'alt' => '',
+    'custom_alt' => 0,
+    'title' => '',
+    'custom_title' => 0,
+    'title_type' => 'textfield',
+    'default_image' => NULL,
+    'use_default_image' => 0,
+    'label' => $title,
+    'weight' => $weight,
+    'description' => '',
+    'type' => 'imagefield_widget',
+    'module' => 'imagefield',
+  ),
+);
+  
+  if (module_exists('imagefield_tokens')) {
+    $field['alt'] = '[title]';
+    $field['title'] = '[title]';
+  }
+
+  return $field;
+}
+

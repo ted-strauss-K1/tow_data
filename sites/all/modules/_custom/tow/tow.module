@@ -362,9 +362,10 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
 	
 	// Comment form.
     case 'comment_form':
-      dpm($form);
-	  unset($form['preview']);
-	  $form['comment_filter']['format'] = NULL;
+      unset($form['preview']);
+      $form['_author'] = NULL;
+      $form['_author'] = NULL;
+      $form['comment_filter']['format'] = NULL;
       break;
 	
   }
@@ -937,7 +938,7 @@ function tow_nodeapi(&$node, $op) {
   if ($node->type == 'record' && $op == 'presave') {
     
     if (!isset($node->nid)) {
-      
+
       // Check if create.
       $available_positions = db_result(db_query("SELECT ctt.field_available_positions_value AS fapv FROM {content_type_table} ctt WHERE ctt.nid = %d", $node->field_table[0]['value']));
       $available_positions = unserialize($available_positions);
@@ -1035,6 +1036,16 @@ function tow_node_info() {
       'modified' => TRUE,
       'locked' => FALSE
     ),
+	
+	// Document.
+    'document' => array(
+      'name' => t('Document'),
+      'module' => 'tow',
+      'description' => "A text document that describes the dataset.",
+      'custom' => TRUE,
+      'modified' => TRUE,
+      'locked' => FALSE
+    ),
   );
 }
 
@@ -1045,7 +1056,7 @@ function tow_perm() {
   $permissions = array();
   
   // Node types implemented in this module.
-  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search');
+  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search', 'document');
   
   // Define basic node permissions for each of the types.
   foreach ($types as $type) {

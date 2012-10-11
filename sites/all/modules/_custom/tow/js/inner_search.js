@@ -650,14 +650,14 @@ Drupal.behaviors.inner_search = function(context) {
     var detailRight;
     
     var $container = $('#' + id)
-      .css('position', 'relative');
+      .addClass('pos-rel');
 
     var $detailContainer = $('<div id="' + id + '-detail" class="detail-container">')
-      .css({ position: 'absolute', top: 0, height: 128, width: '100%'})
+      .addClass('pos-abs t0h128w100')
       .appendTo($container);
 
     var $masterContainer = $('<div id="' + id + '-master">')
-      .css({ position: 'absolute', top: 128, height: 40, width: '100%'})
+      .addClass('pos-abs t128h40w100')
       .appendTo($container);
     
     var minorTickInterval;
@@ -823,40 +823,31 @@ Drupal.behaviors.inner_search = function(context) {
         });
         
         $('#' + masterChart.container.id + '-visible')
-          .css('position', 'absolute')
-          .css('border-style', 'solid')
+          .addClass('pos-abs bs-solid pe-none')
           .css('border-width', visibleBoxBorder)
           .css('left', left)
           .css('width', width)
           .css('top', top)
           .css('height', height)
-          .css('pointer-events', 'none')
           .addClass('hidden')
           .append('<div id="' + masterChart.container.id + '-visible-handle' + '">');
 
         $('<div>')
-          .css('position', 'absolute')
-          .css('border-style', 'solid')
-          .css('border-color', 'grey')
+          .addClass('pos-abs bs-solid pe-none bc-grey')
           .css('border-width', visibleBoxBorder)
           .css('left', masterChart.plotLeft - 2)
           .css('width', masterChart.plotWidth + 3)
           .css('top', masterChart.plotTop - 2)
           .css('height', masterChart.plotHeight + 3)
-          .css('pointer-events', 'none')
           .appendTo('#' + masterChart.container.id);
         
         $('#' + masterChart.container.id + '-visible-handle')
-          .css('position', 'absolute')
-          .css('border-style', 'solid')
+          .addClass('pos-abs bs-solid bgc-white pe-vis cur-e')
           .css('border-width', visibleHandleBorder)
-          .css('background-color', 'white')
           .css('right', width - visibleHandleOffset)
           .css('width', visibleHandleWidth)
           .css('top', height - visibleHandleHeight / 2 - visibleHandleBorder)
           .css('height', visibleHandleHeight)
-          .css('pointer-events', 'visible')
-          .css('cursor', 'e-resize')
           .mousedown(function(e) {
             isMouseDown = true;
             currentObj = 'box';
@@ -966,31 +957,23 @@ Drupal.behaviors.inner_search = function(context) {
           
           $('<div>')
             .attr('id', id +'-waiting')
-            .css('position', 'absolute')
+            .addClass('pos-abs bgp-center z20 bgr-no')
             .css('left', detailChart.plotLeft)
             .css('top', detailChart.plotTop)
             .css('width', detailChart.plotWidth)
             .css('height', detailChart.plotHeight)
-            .css("background-image", "url('http://" + location.host + "/sites/all/modules/_custom/tow/images/waiting.gif')")
-            .css('background-repeat', 'no-repeat')
-            .css('background-position', 'center center')
+            .css("background-image", "url('../images/waiting.gif')")
             .css('background-color', 'rgba(255,255,255, 0.8)')
-            .css('z-index', 20)
             .appendTo('#' + detailChart.container.id)
             .addClass('hidden');
 
           $('<div>')
             .attr('id', id +'-noresult')
-            .css('position', 'absolute')
+            .addClass('pos-abs bgp-center z9 ta-center va-middle fs10')
             .css('left', detailChart.plotLeft)
             .css('top', detailChart.plotTop)
             .css('width', detailChart.plotWidth)
             .css('margin-top', detailChart.plotHeight/2-10)
-            .css('background-position', 'center center')
-            .css('z-index', 9)
-            .css('text-align', 'center')
-            .css('vertical-align', 'middle')
-            .css('font-size', '10')
             .html('No results found')
             .appendTo('#' + detailChart.container.id);
             if (yMax) {
@@ -1057,16 +1040,11 @@ Drupal.behaviors.inner_search = function(context) {
         top = (top - handleHeight) / 2;
         $('#' + detailChart.container.id).after('<div id="' + handle_id + '">');
         $('#' + handle_id)
-          .css('position', 'absolute')  
+          .addClass('pos-abs bs-solid bgc-white z10 cur-e bw1')
           .css('top', top)  
           .css('left', x - handleWidth/2)  
           .css('height', handleHeight)  
           .css('width', handleWidth)
-          .css('z-index', 10)
-          .css('background-color', 'white')
-          .css('border-style', 'solid')
-          .css('border-width', '1px')
-          .css('cursor', 'e-resize')
           .mousedown(function(e) {
             isMouseDown = true;
             currentIndex = index;

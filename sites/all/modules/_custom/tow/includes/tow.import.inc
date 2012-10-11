@@ -126,32 +126,29 @@ function tow_import_form($form_state, $nid) {
   foreach ($messages as $message) {
     $i++;
     $rows[] = array(
-      'class' => t(strtolower($message)) . ' ' . ($i + 1),
+      'class' => t(strtolower($message)) . ' ' . ($i + 1) . ' hidden',
       'data' => array(
         t($message) . ':',
         array('class' => 'message', 'data' => NULL)
       ),
-      'style' => 'display: none'
     );
   }
   $rows[] = array(
-    'class' => '6',
+    'class' => '6 hidden',
     'data' => array(
       '4. ' . t('Done'),
       array('class' => 'message', 'data' => NULL),
       array('class' => 'status', 'data' => NULL),
     ),
-    'style' => 'display: none'
   );
   $rows[] = array(
-    'class' => '7',
+    'class' => '7 hidden',
     'data' => array(l('New import', 'import/' . $_tow_dataset->nid) . t(' or back to your ') . l('dataset', 'dataset/' . $_tow_dataset->nid)    ),
-    'style' => 'display: none'
   );
 
   // Progress.
   $form['progress'] = array(
-    '#prefix' => '<div class="progress-bar" style="display: none"><label class="progress-label">' . t('Progress') . '</label>',
+    '#prefix' => '<div class="progress-bar hidden"><label class="progress-label">' . t('Progress') . '</label>',
     '#value' => theme('table', array(), $rows, array('class' => 'progress-table')),
     '#suffix' => '</div>'
   );
@@ -930,12 +927,12 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
 function _tow_import_file_process_test_phpexcel(&$hash, &$import_action, &$imported_file_name, &$warning_messages) {
   // PHPExcel_IOFactory data reading engine.
   require_once 'sites/all/libraries/PHPExcelExtension/PHPExcel/IOFactory.php';
-  error_reporting(E_ALL);
-
+  
   // Reading files.
   // Automatically detect filetype and load it into the $obj_php_excel object.
   // Detect filetype.
   $cache_method = PHPExcel_CachedObjectStorageFactory::cache_to_phpTemp;
+  $cache_settings = array();
   PHPExcel_Settings::setCacheStorageMethod($cache_method, $cache_settings);
 
   $input_file_type = PHPExcel_IOFactory::identify("$imported_file_name");

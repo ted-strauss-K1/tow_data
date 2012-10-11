@@ -145,7 +145,7 @@ Drupal.behaviors.Import = function(context) {
 
           var ind = response.indexOf("/");
           var message = response.slice(0, ind) + ' ';
-          vartables = response.slice(ind + 1);
+          var tables = response.slice(ind + 1);
 
           ind = tables.indexOf("/");
 

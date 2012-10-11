@@ -15,6 +15,8 @@
   display: none;
 }
 
+
+/* js hide() css() class substitutes*/
 .hidden {
   display: none;
 }
@@ -23,6 +25,84 @@
   position: relative;
 }
 
+.pos-abs {
+  position: absolute;
+}
+
+.bs-solid {
+  border-style: solid;
+}
+
+.bc-grey {
+  border-color: grey;
+}
+
+.bw1 {
+  border-width: 1px;
+}
+
+.pe-none {
+  pointer-events: none;
+}
+
+.pe-vis {
+  pointer-events: visible;
+}
+
+.bgp-center {
+  background-position: center center;
+}
+
+.bgc-white {
+  background-color: white;
+}
+
+.bgr-no {
+  background-repeat: no-repeat;
+}
+
+.z9 {
+  z-index: 9;
+}
+
+.z10 {
+  z-index: 10;
+}
+
+.z20 {
+  z-index: 20;
+}
+
+.cur-e {
+  cursor: e-resize;
+}
+
+.t0h128w100 {
+  top: 0;
+  height: 128;
+  width: 100%;
+}
+
+.t128h40w100 {
+  top: 128;
+  height: 40;
+  width: 100%;
+}
+
+.ta-center {
+  text-align: center;
+}
+
+.va-middle {
+  vertical-align: middle;
+}
+
+.fs10 {
+  font-size: 10;
+}
+
+
+/*Box with comment form*/
 .comcom {
   height: auto !important;
   background-color: transparent !important;

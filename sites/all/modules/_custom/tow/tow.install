@@ -237,6 +237,13 @@ function tow_install_fields() {
   $fields[] = tow_cck_textfield('field_table_nid', 'saved_search', t('Table NID'), $weight++, $format, $exclude);
   $fields[] = tow_cck_textarea('field_search_constraints', 'saved_search', t('Search Constraints'), $weight++, $format, $exclude);
   $fields[] = tow_cck_textfield('field_sc_hash', 'saved_search', t('SC Hash'), $weight++, $format, $exclude);
+  
+  /* Document fields. */
+  $fields[] = tow_cck_integer('field_doc_dataset_nid', 'document', t('Dataset NID'), $weight++, $format, $exclude, 'number', 1);
+  $format = array(1 => 'image_plain', 2 => 'image_plain', 3 => 'image_plain', 4 => 'image_plain', 'full' => 'image_plain', 'teaser' => 'image_plain', 'label' => 'hidden', 'token' => 'image_plain');
+  $exclude = array(1 => 0, 2 => 0, 3 => 0, 4 => 0, 'full' => 0, 'teaser' => 0, 'token' => 0);
+  $fields[] = tow_cck_image('field_doc_image', 'document', t('Image'), $weight++, $format, $exclude);
+  
 
   return $fields;
 }
