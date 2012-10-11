@@ -28,6 +28,7 @@ module_load_include('inc', 'tow', 'includes/tow.dataset');
 module_load_include('inc', 'tow', 'includes/tow.debug');
 module_load_include('inc', 'tow', 'includes/tow.field');
 module_load_include('inc', 'tow', 'includes/tow.import');
+module_load_include('inc', 'tow', 'includes/tow.install');
 module_load_include('inc', 'tow', 'includes/tow.invite');
 module_load_include('inc', 'tow', 'includes/tow.pma_menu');
 module_load_include('inc', 'tow', 'includes/tow.record');
@@ -293,7 +294,7 @@ function tow_block($op = 'list', $delta = 0) {
 function tow_cron() {
   
   // Create dataset categories if necessary.
-  tow_create_dataset_categories();
+  tow_install_create_dataset_categories();
   
   // Search part of the cron.
   tow_search_cron();
