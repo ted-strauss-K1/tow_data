@@ -41,11 +41,7 @@
                 <?php
 				if($result['category'])
 				{
-					 print '<div class="btn btn-inverse btn-small">' . $result['category'] . '</div>';
-				}
-				else
-				{
-					echo "test";
+					 print '<div class="btn_cate">' . $result['category'] . '</div>';
 				}
 				?>
                 	<?php

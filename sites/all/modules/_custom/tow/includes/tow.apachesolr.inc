@@ -399,7 +399,9 @@ function tow_apachesolr_dataset_process_results(&$results) {
     $tid = $result['fields']['im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset categories')]['0'];
     
     // Add taxonomy.
-    $results[$key]['category'] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
+    if (isset($tid)) {
+      $results[$key]['category'] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);
+    }
     if (isset($result['fields']['im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset tags')]) && !is_null($result['fields']['im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset tags')])) {
       foreach ($result['fields']['im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset tags')] as $tid) {
         $results[$key]['tags'][] = l(taxonomy_get_term($tid)->name, 'taxonomy/term/' . $tid);

@@ -10,7 +10,6 @@
 <?php endif; ?>
 
   <div class="content clear-block">
-    <!-- <div class=field-label">Description:&nbsp;</div> -->
     <div class="dataset-description"><?php print $content ?></div>
     <?php if ($summary['edit_description']): ?>
       <span class="edit-link"><?php print $summary['edit_description']; ?></span>
@@ -70,14 +69,14 @@
            print($summary['view_table'][1]['table']); 
           ?>
         </div>
-      <?php endif; ?>
     </div>
+	<?php endif; ?>
   </div>
   
   <div class="clear-block">
     <?php if ($summary['saved_searches']): ?>
       <div class="saved-searches">
-    	<span class="saved-searches-label">Saved searches (<?php print $summary['saved_searches']['link_to_full_list']?>)<span>     
+    	<span class="saved-searches-label">Saved searches (<?php print $summary['saved_searches']['link_to_full_list']?>)</span>     
         <?php print $summary['saved_searches']['short_list']; ?>
       </div>
     <?php endif; ?>
