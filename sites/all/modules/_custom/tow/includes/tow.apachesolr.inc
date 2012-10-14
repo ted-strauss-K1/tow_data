@@ -43,7 +43,8 @@ function tow_apachesolr_ajax_settings() {
  * Implementation of hook_apachesolr_modify_query().
  */
 function tow_apachesolr_modify_query(&$query, &$params) {
-  $current_tab = tow_search_outer_get_homepage_tab(); 
+  $current_tab = tow_search_outer_get_homepage_tab();
+  $params['fl'] .= ',ss_teaser';
 
   if ($current_tab == 'search_dataset') {
     
@@ -93,6 +94,9 @@ function tow_apachesolr_process_results(&$results) {
  * Implementation of hook_apachesolr_update_index(). 
  **/ 
 function tow_apachesolr_update_index(&$document, $node) {
+  
+  // Host.
+  $document->ss_host = $_SERVER['HTTP_HOST'];
   
   // Dataset processing.
   if ($node->type == 'dataset') {
