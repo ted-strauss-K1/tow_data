@@ -338,6 +338,15 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
     $form['#submit'][] = 'tow_submit_maintanance_mode';
   }
   
+  //Add scripts for document node form 'stackoverflow style live preview'
+  if ($form_id == 'document_node_form') {
+	drupal_add_css(drupal_get_path('module', 'tow') . '/js/wmd/wmd.css');
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/document_preview.js');
+	$form['body_field']['body']['#resizable'] = FALSE;
+	$form['body_field']['#suffix'] = '<script type="text/javascript" src="/' . drupal_get_path('module', 'tow') . '/js/wmd/wmd.js"></script></div>';
+  }
+  
   // Call special callbacks for some kinds of forms.
   switch ($form_id) {
     
@@ -360,6 +369,15 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
     case 'user_register':
       # tow_register_form_alter($form, $form_state);
       break;
+	  
+	// User login form
+	case 'user_login':
+	  drupal_add_js(drupal_get_path('module', 'tow') . '/js/log_sign_tabs.js');
+	  $form['#prefix'] = '<div class="login-signup-tab"><div class="log-tab">Log in</div><div class="sign-tab">Sign up</div></div>';
+	    if(empty($form_state['storage'])) {
+          $form['#suffix'] = drupal_get_form('user_register');
+        }
+	  break;
 	
 	// Comment form.
     case 'comment_form':
@@ -431,7 +449,7 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_init().
  */
 function tow_init() {
-  
+
   // Add dataTables representation to the dataset search page.
   if (arg(0) == 'search_dataset' && arg(1)) {
     $node = node_load(arg(1));

@@ -109,13 +109,23 @@ function tow_pma_menu_breadcrumbs() {
       }
     }
   }
-  $bc[] = $_tow_dataset->title;
+  
+  global $_tow_dataset_search;
+  if ($_tow_dataset_search === TRUE) {
+	$bc[] = l($_tow_dataset->title, 'dataset/' . $_tow_dataset->nid);
+	$bc[] = 'search';
+  }
+  
+  else {
+    $bc[] = $_tow_dataset->title;
+  }
 
   // Extend breadcrumbs.
   global $_tow_bc_attachment;
   if ($_tow_bc_attachment) {
     $bc[count($bc) - 1] .= $_tow_bc_attachment;
   }
-
+  
+  
   drupal_set_breadcrumb($bc);
 }

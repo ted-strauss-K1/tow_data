@@ -67,6 +67,10 @@ function tow_user_menu_alter(&$items) {
   $items['user/%user/ulogin/delete']['type'] = MENU_CALLBACK;
   $items['user/%user/view']['type'] = MENU_CALLBACK;
   $items['user/%user_category/edit']['weight'] = 6;
+  
+  // Login/register.
+  $items['user/register']['page arguments'] = array('user_login');
+  unset($items['user/register']['file']);
 }
 
 

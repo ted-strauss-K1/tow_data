@@ -20,7 +20,6 @@
                 	<?php
 					  print '<b>' . $result['ssearches'] . '</b>' . '</br>' . t('<span>searches</span> ');
 					?>
-                <!--<b>18</b><br/><span>Searches</span>-->
                 </div>
                 <div class="rec_views">
                 	<?php
@@ -66,7 +65,9 @@
                     </div>
                 </div>
                 
-                <span class="rec_info"><span class="label"><?php print $result['amount_tables']; ?></span> - <span class="label"><?php print $result['amount_records'];  ?></span> - <span class="label"><?php print t('access: ') . $result['access']; ?></span></span>
+                <?php if ($result['access']): ?>
+				<span class="rec_info"><span class="label"><?php print $result['amount_tables']; ?></span> - <span class="label"><?php print $result['amount_records'];  ?></span> - <span class="label"><?php print t('access: ') . $result['access']; ?></span></span>
+				<?php endif ?>
                 
             </div>
 </div>

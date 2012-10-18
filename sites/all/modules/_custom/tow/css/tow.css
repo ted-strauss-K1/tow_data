@@ -79,13 +79,13 @@
 
 .t0h128w100 {
   top: 0;
-  height: 128;
+  height: 128px;
   width: 100%;
 }
 
 .t128h40w100 {
-  top: 128;
-  height: 40;
+  top: 128px;
+  height: 40px;
   width: 100%;
 }
 
@@ -98,7 +98,7 @@
 }
 
 .fs10 {
-  font-size: 10;
+  font-size: 10px;
 }
 
 

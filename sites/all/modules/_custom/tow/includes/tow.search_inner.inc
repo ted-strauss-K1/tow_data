@@ -223,6 +223,12 @@ function tow_search_inner_widgets_block() {
  */
 function tow_search_inner_within_dataset_callback($nid) {
   
+  global $_tow_dataset;
+  $_tow_dataset = node_load($nid);
+  
+  global $_tow_dataset_search;
+  $_tow_dataset_search = TRUE;
+  
   // Check for redirect.
   if (!is_numeric($nid)) {
   

@@ -270,7 +270,8 @@ function tow_search_outer_filter_form($form_state) {
   $values = tow_search_outer_get_filters();
   
   $nopost = (count($form_state['post']) == 0);
-
+  
+  //Keywords
   $form['keywords'] = array(
     '#type' => 'textfield',
     '#title' => t('keywords'),
@@ -285,10 +286,11 @@ function tow_search_outer_filter_form($form_state) {
   if ($nopost && $keys = trim(tow_search_outer_get_keys())) {
     $form['keywords']['#value'] = $keys;
   }
-
-  $form['size'] = array(
-    '#type' => 'select',
-    '#options' => tow_apachesolr_facet_menu_solr_range('sis_tow_amount_records', array(
+  
+  //Rows
+  $options = tow_apachesolr_facet_menu_solr_range(
+    'sis_tow_amount_records', 
+    array(
       '0' => t('any'),
       '10' => t('10+'),
       '100' => t('100+'),
@@ -296,76 +298,125 @@ function tow_search_outer_filter_form($form_state) {
       '1000' => t('1000+'),
       '2000' => t('2000+'),
       '5000' => t('5000+'),
-    ), TRUE),
-    '#title' => t('# rows'),  
+    ), 
+    TRUE
+  );
+  $value = '<ul class="dropdown-menu">';
+  foreach ($options as $op) {
+    $value .= '<li>' . $op . '</li>';
+  }
+  $value .= '</ul>';
+  $form['size'] = array(
+    '#title' => t('# rows'),
+    '#value' => $value,
+    '#type' => 'item',
   );
     
   if ($nopost && $value = $values['size']) {
     $form['size']['#value'] = $value;
   } 
   
-  $form['saved_searches'] = array(
-    '#type' => 'select',
-    '#options' => tow_apachesolr_facet_menu_solr_range('sis_tow_amount_saved_searches', array(
+  //Searches
+  $options = tow_apachesolr_facet_menu_solr_range(
+    'sis_tow_amount_saved_searches',
+	array(
       '0' => t('any'),
       '1' => t('1+'),
       '5' => t('5+'),
       '10' => t('10+'),
       '20' => t('20+'),
       '50' => t('50+'),
-    ), TRUE),
+    ),
+	TRUE
+  );
+  $value = '<ul class="dropdown-menu">';
+  foreach ($options as $op) {
+    $value .= '<li>' . $op . '</li>';
+  }
+  $value .= '</ul>';
+  $form['saved_searches'] = array(
     '#title' => t('# searches'),
+    '#value' => $value,
+    '#type' => 'item',
   );
   
   if ($nopost && $value = $values['saved_searches']) {
     $form['saved_searches']['#value'] = $value;
   }
   
-  $form['access_status'] = array(
-    '#type' => 'select',
-    '#options' => tow_apachesolr_facet_menu('sis_cck_field_access_type', array(
+  //Access
+  $options = tow_apachesolr_facet_menu(
+  'sis_cck_field_access_type',
+  array(
       'any' => t('any'),
       '0' => t('open'),
       '1' => t('by request'),
-    )),
+  ));
+  $value = '<ul class="dropdown-menu">';
+  foreach ($options as $op) {
+    $value .= '<li>' . $op . '</li>';
+  }
+  $value .= '</ul>';
+  $form['access_status'] = array(
     '#title' => t('access'),
+    '#value' => $value,
+    '#type' => 'item',
   );
 
   if ($nopost && $values['access_status'] !== FALSE) {
     $form['access_status']['#value'] = $values['access_status'];
   }
   
-  $form['forum'] = array(
-    '#type' => 'select',
-    '#options' => array(
+  //Forum
+  $options = array(
       t('any'),
       t('active'),
-    ),
-    '#title' => t('forum'),
-    '#disabled' => TRUE,
   );
-
+  $value = '<ul class="dropdown-menu">';
+  foreach ($options as $op) {
+    $value .= '<li>' . $op . '</li>';
+  }
+  $value .= '</ul>';
+  $form['forum'] = array(
+    '#title' => t('forum'),
+    '#value' => $value,
+    '#type' => 'item',
+	'#disabled' => TRUE,
+  );
+  
+  //Docs
   $form['docs'] = array(
     '#type' => 'checkbox',
     '#title' => t('docs'),
     '#disabled' => TRUE,
   );
-
+  
+  //Categories
+  $options = tow_apachesolr_facet_menu(
+  'im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset categories'),
+  tow_search_outer_filter_taxonomy()
+  );
+  $value = '<ul class="dropdown-menu">';
+  foreach ($options as $op) {
+    $value .= '<li>' . $op . '</li>';
+  }
+  $value .= '</ul>';
   $form['categories'] = array(
-    '#type' => 'select',
-    '#options' => tow_apachesolr_facet_menu('im_vid_' . _tow_apachesolr_taxonomy_get_vid('Dataset categories'), tow_search_outer_filter_taxonomy()),
     '#title' => t('categories'),
+    '#value' => $value,
+    '#type' => 'item',
   );
 
   if ($nopost && $value = $values['categories']) {
     $form['categories']['#value'] = $value;
   }
   
+  //Tags
   $form['tags_query'] = array(
     '#type' => 'hidden',
     '#value' => $values['tags_query'],
   ); 
-
+  
   $form['search_placeholder'] = array(
     '#type' => 'hidden',
     '#value' => t('Searching...'),

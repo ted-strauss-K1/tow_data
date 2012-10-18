@@ -44,7 +44,7 @@ function tow_apachesolr_ajax_settings() {
  */
 function tow_apachesolr_modify_query(&$query, &$params) {
   $current_tab = tow_search_outer_get_homepage_tab();
-  $params['fl'] .= ',ss_teaser';
+  $query->add_filter('hash', apachesolr_site_hash());
 
   if ($current_tab == 'search_dataset') {
     
@@ -95,9 +95,6 @@ function tow_apachesolr_process_results(&$results) {
  **/ 
 function tow_apachesolr_update_index(&$document, $node) {
   
-  // Host.
-  $document->ss_host = $_SERVER['HTTP_HOST'];
-  
   // Dataset processing.
   if ($node->type == 'dataset') {
     $document->sis_tow_amount_tables = db_result(db_query("
@@ -112,6 +109,7 @@ function tow_apachesolr_update_index(&$document, $node) {
           field_dataset_value = %d
     
     ", $node->nid));
+    $document->sis_tow_amount_tables = (isset($document->sis_tow_amount_tables) && $document->sis_tow_amount_tables) ? $document->sis_tow_amount_tables : 0;
     
     // Get amount of records.
     $document->sis_tow_amount_records = db_result(db_query("
@@ -129,6 +127,7 @@ function tow_apachesolr_update_index(&$document, $node) {
                 t.field_dataset_value = %d
     
     ", $node->nid));
+    $document->sis_tow_amount_records = (isset($document->sis_tow_amount_records) && $document->sis_tow_amount_records) ? $document->sis_tow_amount_records : 0;
     
     // Get amount of saved searches.
     $document->sis_tow_amount_saved_searches = db_result(db_query("
@@ -143,6 +142,7 @@ function tow_apachesolr_update_index(&$document, $node) {
           field_dataset_nid_value = %d
     
     ", $node->nid));
+    $document->sis_tow_amount_saved_searches = (isset($document->sis_tow_amount_saved_searches) && $document->sis_tow_amount_saved_searches) ? $document->sis_tow_amount_saved_searches : 0;
 
     // Get teaser.
     $document->ss_picture = $node->picture;
@@ -345,6 +345,9 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
 function tow_apachesolr_dataset_user_modify_query(&$query, &$params) {
   $user = user_load(arg(1));
   
+  $categories_vid = _tow_apachesolr_taxonomy_get_vid('Dataset tags');
+  $tags_vid = _tow_apachesolr_taxonomy_get_vid('Dataset categories');
+  
   // Extend params.
   $params['fl'] .= ',sis_tow_amount_tables';
   $params['fl'] .= ',sis_tow_amount_records';
@@ -427,8 +430,8 @@ function tow_apachesolr_dataset_process_results(&$results) {
     
     // Add total saved searches.
     $results[$key]['ssearches'] = $result['node']->sis_tow_amount_saved_searches;
-
   }
+  
 }
 
 /**

@@ -2054,3 +2054,97 @@ dt.profile-profile_bio
 {
 	 margin:0px;
 }
+.tow-saved-search-block-item
+{
+	clear:both;
+}
+.tow-saved-search-block-item #comments textarea
+{
+	height:40px;
+}
+.tow-saved-search-block-item #comments .comcom h2
+{
+	display:none;
+}
+.tow-saved-search-block-item #comments .comcom
+{
+	padding:0px;
+}
+.tow-saved-search-block-item #comments h2.comments-header
+{
+	text-align:left;
+}
+.tow-saved-search-block-item #comments textarea
+{
+	width:600px;
+}
+
+/*login pop up box*/
+
+.modalframe-page-content .log-tab
+{
+	float:left;
+	margin-right:10px;
+	 border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    line-height: 20px;
+	 margin-right: 2px;
+	margin-left:30px;
+	padding:8px 40px;
+	border:1px solid #ccc;
+	border-bottom:0px;
+}
+
+.modalframe-page-content .log-tab:hover 
+{
+    border-color: #EEEEEE #EEEEEE #DDDDDD;
+	 background-color: #EEEEEE;
+    text-decoration: none;
+	cursor:pointer;
+}
+.modalframe-page-content .sign-tab:hover 
+{
+    border-color: #EEEEEE #EEEEEE #DDDDDD;
+	 background-color: #EEEEEE;
+    text-decoration: none;
+	cursor:pointer;
+}
+
+.modalframe-page-content .sign-tab
+{
+	float:left;
+	margin-right:10px;
+	 border: 1px solid transparent;
+    border-radius: 4px 4px 0 0;
+    line-height: 20px;
+	 margin-right: 2px;
+   	padding:8px 40px;
+}
+
+#user-register
+{
+	 border-top: 1px solid #CCCCCC;
+    clear: both;
+	 padding: 20px;
+}
+#user-login
+{
+	 border-top: 1px solid #CCCCCC;
+    clear: both;
+	 padding: 20px;
+}
+
+
+/*Search page table css*/
+.dataTables_scroll table thead td, table tbody tr td
+{
+    width:100px;
+    padding:3px;
+    border: 1px solid red;
+	 overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+
+
