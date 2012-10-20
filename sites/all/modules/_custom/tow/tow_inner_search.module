@@ -63,6 +63,13 @@ function tow_inner_search_search_page($results) {
   );
   
   // DataTable theming.
+  
+  foreach ($results['rows'] as $index => $row) {
+    foreach ($row['data'] as $key => $value) {
+	  $results['rows'][$index]['data'][$key]['data'] = '<span>' . $value['data'] . '</span>';
+	}
+  }
+  
   $output = theme('datatable', $results['headers'], $results['rows'], $parameters_full);
   
   return $output;

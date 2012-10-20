@@ -54,7 +54,7 @@ function tow_pma_menu_block() {
   // Define menu items.
   $items = array();
   //$items['summary'] = l('Overview', 'node/' . $_tow_dataset->nid);
-  $items['browse'] = ($_tow_grey_pma_menu) ? t('Browse') : (($_tow_table) ? l('Browse', 'table/' . $_tow_table->nid) : l('Browse', 'dataset/' . $_tow_dataset->nid));
+  $items['browse'] = ($_tow_grey_pma_menu) ? t('Browse') : /*(($_tow_table) ? l('Browse', 'table/' . $_tow_table->nid) : */l('Browse', 'node/' . $_tow_dataset->nid)/*)*/;
   $items['browse'] .= '<ul class="browse-submenu">' . $subitems . '</ul>';
   $items['search'] = ($_tow_grey_pma_menu) ? t('Search') : l('Search', 'search_dataset/' . $_tow_dataset->nid);
   $items['docs'] = l('Docs', 'docs');
@@ -112,8 +112,13 @@ function tow_pma_menu_breadcrumbs() {
   
   global $_tow_dataset_search;
   if ($_tow_dataset_search === TRUE) {
-	$bc[] = l($_tow_dataset->title, 'dataset/' . $_tow_dataset->nid);
+	$bc[] = l($_tow_dataset->title, 'node/' . $_tow_dataset->nid);
 	$bc[] = 'search';
+  }
+  
+  else if ($_tow_table) {
+	$bc[] = l($_tow_dataset->title, 'node/' . $_tow_dataset->nid);
+	$bc[] = $_tow_table->title;
   }
   
   else {

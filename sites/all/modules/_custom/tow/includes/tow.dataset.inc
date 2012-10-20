@@ -22,7 +22,7 @@ function tow_dataset_badge_block() {
   if (!$_tow_dataset) {
     return;
   }
-
+  
   // Return if there is no info on tables count.
   global $_tow_dataset_count_tables;
   if (!isset($_tow_dataset_count_tables)) {
@@ -34,7 +34,7 @@ function tow_dataset_badge_block() {
   if (!isset($_tow_dataset_count_records)) {
     $_tow_dataset_count_records = 0;
   }
-
+  
   // Prepare theming parametres.
   $upoints = userpoints_get_current_points($_tow_dataset->uid, 'all');
   $posted_by = t('Posted by ') . l($_tow_dataset->name, 'user/' . $_tow_dataset->uid) . ' (' . $upoints . ')';
@@ -53,8 +53,8 @@ function tow_dataset_badge_block() {
   }
 
   // Save the content of the block.
-  
-  $block['content'] = $_tow_dataset->content['vud_node_widget_display']['#value'];
+  $block['content'] = '';
+  $block['content'] .= $_tow_dataset->content['vud_node_widget_display']['#value'];
   $flag = flag_get_flag('bookmarks');
   if ($flag) {
     $block['content'] .= '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<b>' . $flag->get_count($_tow_dataset->nid) . '</b></div>';
@@ -73,7 +73,7 @@ function tow_dataset_badge_block() {
 
   // Add the picture.
   $block['content'] .= theme('user_picture', $account) . '<div class="user-dataset">' . $extrainfo . '</div>';
-
+  
   return $block;
 }
 
@@ -104,7 +104,7 @@ function tow_dataset_share_block() {
   $path = isset($_GET['q']) ? $_GET['q'] : '<front>';
   $link = url($path, array('absolute' => TRUE));
   $permalink = '<div class="permalink">' . t('Permalink ') . '</div>' . '<input value="' . $link . '"></input>';
-  $embedding = t('Embedding options are available from ') . l('search', 'search_dataset/' . $_tow_dataset->nid) . ' and ' . l('browse', 'dataset/' . $_tow_dataset->nid) . '.';
+  $embedding = t('Embedding options are available from ') . l('search', 'search_dataset/' . $_tow_dataset->nid) . ' and ' . l('browse', 'node/' . $_tow_dataset->nid) . '.';
   
   // Save title and content of the block.
   $block['title'] = 'Share';
@@ -682,20 +682,24 @@ function tow_dataset_summary(&$node) {
           $first_record_id = rand(0, $table['count'] - 3);
           $display_options['sort'] = array(
             'sort_index' => 'nid', 
-            'sort_order' => 'ASC'
+            'sort_order' => 'ASC',
           );
           $display_options['limits'] = array(
             'first_elem_no' => $first_record_id, 
-            'total_elements' => 3
+            'total_elements' => 3,
           );
+		  /*$display_options += array(
+            'full_view' => TRUE,
+            'paged_view' => FALSE,
+          );*/
 
           $table_node = node_load($table['nid']);
 
           $node->summary['view_table'][] = array(
             'title' => l($table_node->title, 'table/' . $table['nid']) . t(' table'),
-            'table' => tow_table($table_node, $display_options)
+            'table' => tow_table($table_node, $display_options),
           );
-        }
+		}
       }
     }
 
@@ -871,6 +875,12 @@ function tow_dataset_tables($dataset_nid) {
     'bInfo' => FALSE,
     'bRetrieve' => TRUE,
   );
+
+  foreach ($rows as $index => $row) {
+    foreach ($row['data'] as $key => $value) {
+	  $rows[$index]['data'][$key]['data'] = '<span>' . $value['data'] . '</span>';
+	}
+  }
 
   $output =  theme('datatable', $headers, $rows, $parameters);
 

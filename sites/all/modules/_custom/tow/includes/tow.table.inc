@@ -50,7 +50,7 @@ function tow_table_display_switch_block() {
   // Define links.
   $items[] = l('Content', 'table/' . $_tow_table->nid);
   $items[] = l('Structure', 'node/' . $_tow_table->nid);
-  $items[] = l('Search', 'search_dataset/' . $_tow_table->nid);
+  //$items[] = l('Search', 'search_dataset/' . $_tow_table->nid);
   
   // Generate the content of the block.
   $block['content'] = theme_item_list($items, NULL, 'ul');
@@ -469,7 +469,7 @@ function tow_table_page_callback($nid) {
   if ($user->uid == $_tow_dataset->uid) {
     $output .= _tow_table_actions_list($node->nid, 'edit');
   }
-  
+
   return $output;
 }
 
@@ -628,6 +628,12 @@ function tow_table($node, $display_options = array()) {
   );
 
   // Theme dataTable.
+  foreach ($rows as $index => $row) {
+    foreach ($row['data'] as $key => $value) {
+	  $rows[$index]['data'][$key]['data'] = '<span>' . $value['data'] . '</span>';
+	}
+  }
+  
   if ($full_view) {
     $output =  theme('datatable', $headers, $rows, $parameters_full);
   } 
@@ -881,8 +887,8 @@ function tow_table_construct_table_query($node, $display_options = '') {
   if (!($display_options['paged_view']) && ($display_options['limits'])) {
     $query = $query . "LIMIT " . "%d" . " OFFSET " . "%d";
 
-    $argmts[] = $display_options['limits']['first_elem_no'];
     $argmts[] = $display_options['limits']['total_elements'];
+    $argmts[] = $display_options['limits']['first_elem_no'];
   }
 
   // 8. Output

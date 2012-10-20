@@ -396,6 +396,7 @@ Drupal.behaviors.inner_search = function(context) {
 
         $('div#block-tow-search_inner_facets div.content').html(data.widgets);
         $('div#block-tow-search_inner_field_list div.content').html(data.fields);
+		$('div#block-tow-saved_searches_save_search div.content').html(data.save_search);
         
         // Returns collapsibility.
         Drupal.behaviors.collapse();
@@ -1391,11 +1392,13 @@ Drupal.behaviors.inner_search = function(context) {
     var urlSS = 'http://' + window.location.hostname + window.location.pathname + '/ajax/save_search';
     var filters = $('#edit-filters').val();
     var rows_amount = $('#edit-rows-amount').val();
+	var ss_comment = $('#edit-comment').val();
     $.ajax({
       url: urlSS,
       data: {
         'filters' : filters,
         'rows_amount' : rows_amount,
+		'ss_comment' : ss_comment,
 			},
       success: function(data) {
         if (!data.saved) {

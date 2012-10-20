@@ -37,8 +37,11 @@ function tow_ajax_handlers_create_saved_search($nid) {
   // Selected fields.
   $selected_fields = (isset($_GET['selected_fields'])) ? json_decode($_GET['selected_fields'], TRUE) : array();
   
+  //Saved search comment (title)
+  $ss_comment = $_GET['ss_comment'];
+  
   // Create saved search.
-  $saved_search = tow_saved_searches_saved_search_create($node, $filters, $rows_amount, $selected_fields);
+  $saved_search = tow_saved_searches_saved_search_create($node, $filters, $rows_amount, $selected_fields, $ss_comment);
   
   // Validation.
   if ($saved_search == NULL) {
@@ -329,11 +332,15 @@ function tow_ajax_handlers_refresh_search_results($nid) {
   // Generate new widgets block output.
   $widgets = tow_search_inner_widgets_block();
   
+  // Generate new Save this search block output.
+  $save_search = tow_saved_searches_save_search_block();
+  
   // JSON.
   $json = array(
     'search' => $search, 
     'widgets' => $widgets['content'],
     'fields' => $fields['content'],
+	'save_search' => $save_search['content'],
   );
   
   return drupal_json($json);

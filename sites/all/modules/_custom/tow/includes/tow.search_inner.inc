@@ -213,7 +213,7 @@ function tow_search_inner_widgets_block() {
     }
 
   }
-  $block['content'] .= drupal_get_form('tow_saved_searches_save_search_form', $rows_amount);
+  //$block['content'] .= drupal_get_form('tow_saved_searches_save_search_form', $rows_amount);
   
   return $block;
 }

@@ -97,6 +97,7 @@ function tow_block($op = 'list', $delta = 0) {
     $blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables of a dataset');
     $blocks['search_inner_field_list']['info'] = t('Inner search: field list');
     $blocks['saved_searches_list']['info'] = t('Saved Searches');
+	$blocks['saved_searches_save_search']['info'] = t('Save this search');
     $blocks['search_outer_sponsored']['info'] = t('Outer search: Sponsored');
     $blocks['search_outer_searchinput']['info'] = t('Outer search: Search input');
     $blocks['user_view']['info'] = t('User');
@@ -255,6 +256,11 @@ function tow_block($op = 'list', $delta = 0) {
       // 'Saved Searches' block.
       if ($delta == 'saved_searches_list') {
         return tow_saved_searches_list_block();
+      }
+	  
+	  // 'Save this search' block.
+      if ($delta == 'saved_searches_save_search') {
+        return tow_saved_searches_save_search_block();
       }
       
       // 'User' block.
@@ -839,7 +845,7 @@ function tow_nodeapi(&$node, $op) {
 
   // Save current dataset to the global $_tow_dataset variable.
   if ($op == 'view' && $node->type == 'saved_search') {
-  
+	
     // Creation time representation.
     $node->content['searched']['#value'] = '<div class="user-data">' . '<div class="searched">' . 'Searched ' . date('M j, Y', $node->created) . ' at ' . date('H:i', $node->created) . '</div>';
     $node->content['searched']['#weight'] = 1;

@@ -61,30 +61,12 @@ function tow_saved_searches_list_block($nid = NULL) {
   $block['content'] = '';
   
   foreach ($saved_searches as $node) {
-    $query = db_query("
-
-      SELECT 
-        c.cid AS cid 
-        
-        FROM 
-          {comments} c 
-
-        WHERE 
-          c.nid = %d 
-
-    ", $node->nid);
-    $comments = array();
-    while ($result = db_fetch_object($query)) {
-      $comments[] = _comment_load($result->cid);
-    }
-  
+    
     $output = '<div class="tow-saved-search-block-item">';
-    $output .= node_show($node, null);
-	#$output .= node_view($node);
-    /*foreach ($comments as $comment) {
-      $output .= theme('comment_view', $comment, $node);
-    }*/
-	
+	$output .= node_view($node);
+	if (function_exists('comment_render') && $node->comment) {
+		$output .= comment_render($node, NULL);
+	}
     $output .= '</div>';
     
     $block['content'] .= $output;
@@ -92,6 +74,25 @@ function tow_saved_searches_list_block($nid = NULL) {
 
   return $block;
 }
+
+/**
+ * Save this search block.
+ */
+function tow_saved_searches_save_search_block() {
+
+  // Construct block.
+  $block = array();
+  $block['title'] = NULL;
+  
+  $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+  $rows_amount = $saved_response->response->numFound;
+  
+  $block['content'] = drupal_get_form('tow_saved_searches_save_search_form', $rows_amount);
+
+  return $block;
+}
+
+
 
 /****************************************************************************************************
  * Forms
@@ -107,6 +108,15 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
   $table_nid = arg(1);
   $selected_fields = (isset($_GET['selected_fields'])) ? json_decode($_GET['selected_fields'], TRUE) : array();
   
+  //Saved search comment(title)
+  $form['comment'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Share your findings by given a description and posting it'),
+	'#attributes' => array(
+		'placeholder' => t('What\'s the story in this data?'),
+	),
+  );
+  
   // Filters.
   $form['filters'] = array(
     '#type' => 'hidden',
@@ -119,13 +129,13 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
     '#value' => $rows_amount,
   );
   
-  // Rows amount.
+  // Selected fields.
   $form['selected_fields'] = array(
     '#type' => 'hidden',
     '#value' => serialize($selected_fields),
   );
   
-  // Rows amount.
+  // Summary.
   $form['summary'] = array(
     '#value' => tow_saved_searches_summary($table_nid, $filters, $rows_amount, $selected_fields),
   );
@@ -179,13 +189,16 @@ function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
   $form_state['values']['rows_amount'] = $form['rows_amount']['#value'];
   $rows_amount = $form_state['values']['rows_amount'];
   
-  // Rows amount.
+  // Selected fields.
   $form['selected_fields']['#value'] = $form['selected_fields']['#post']['selected_fields'];
   $form_state['values']['selected_fields'] = $form['selected_fields']['#value'];
   $selected_fields = unserialize($form_state['values']['selected_fields']);
   
+  //Saved search comment(title)
+  $ss_comment = $form['comment']['#value'];
+  
   // Create saved search.
-  $saved_search = tow_saved_searches_saved_search_create($node, $filters, $rows_amount, $selected_fields);
+  $saved_search = tow_saved_searches_saved_search_create($node, $filters, $rows_amount, $selected_fields, $ss_comment);
   
   // Put it to the form.
   $form_state['#saved_search'] = $saved_search;
@@ -290,13 +303,13 @@ function tow_saved_searches_get_constraints($filters) {
 /**
  * Constructs a Saved Search node object.
  */
-function tow_saved_searches_saved_search_create($node, $filters, $rows_amount = 0, $selected_fields = array()) {
+function tow_saved_searches_saved_search_create($node, $filters, $rows_amount = 0, $selected_fields = array(), $ss_comment) {
   module_load_include('inc', 'node', 'node.pages');
   
   // Prepare a new Saved Search object.
   $saved_search = new stdClass;
   $saved_search->type = 'saved_search';
-  $saved_search->title = 'New Saved Search';
+  $saved_search->title = ($ss_comment) ? $ss_comment : t('New Saved Search');
   node_object_prepare($saved_search);
   
   // Do this if the search belongs to a whole dataset.
