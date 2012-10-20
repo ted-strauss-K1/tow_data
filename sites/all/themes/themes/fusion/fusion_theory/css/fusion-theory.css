@@ -2081,70 +2081,117 @@ dt.profile-profile_bio
 
 /*login pop up box*/
 
+.login-signup-tab .user-login
+{
+	 border: 1px solid #ccc;
+	 border-bottom:0px;
+}
+
 .modalframe-page-content .log-tab
 {
-	float:left;
-	margin-right:10px;
-	 border: 1px solid transparent;
+	background: none repeat scroll 0 0 #FFFFFF;
     border-radius: 4px 4px 0 0;
+    float: left;
     line-height: 20px;
-	 margin-right: 2px;
-	margin-left:30px;
-	padding:8px 40px;
-	border:1px solid #ccc;
-	border-bottom:0px;
+    margin-left: 30px;
+    margin-right: 2px;
+    overflow: hidden;
+    padding: 8px 40px;
+    position: relative;
+    top: 1px;
+	cursor:pointer;
 }
 
 .modalframe-page-content .log-tab:hover 
 {
-    border-color: #EEEEEE #EEEEEE #DDDDDD;
-	 background-color: #EEEEEE;
-    text-decoration: none;
-	cursor:pointer;
+
 }
 .modalframe-page-content .sign-tab:hover 
 {
-    border-color: #EEEEEE #EEEEEE #DDDDDD;
-	 background-color: #EEEEEE;
-    text-decoration: none;
-	cursor:pointer;
+
 }
 
 .modalframe-page-content .sign-tab
 {
-	float:left;
-	margin-right:10px;
-	 border: 1px solid transparent;
+	background: none repeat scroll 0 0 #FFFFFF;
     border-radius: 4px 4px 0 0;
+    float: left;
     line-height: 20px;
-	 margin-right: 2px;
-   	padding:8px 40px;
+    margin-right: 2px;
+    overflow: hidden;
+    padding: 8px 40px;
+    position: relative;
+    top: 1px;
+	cursor:pointer;
 }
 
 #user-register
 {
 	 border-top: 1px solid #CCCCCC;
     clear: both;
-	 padding: 20px;
+	 padding:20px 30px;
+}
+#user-register #uLogin-1
+{
+	 margin-top: -40px;
+    position: absolute;
+    top: 0;
+}
+#user-login #uLogin-2
+{
+	 margin-top: -40px;
+    position: absolute;
+    top: 0;
+}
+.modalframe-page-content
+{
+	padding:0px;
+	  position: relative;
+    top: 50px;
 }
 #user-login
 {
 	 border-top: 1px solid #CCCCCC;
     clear: both;
-	 padding: 20px;
+	 padding:20px 30px;
 }
 
 
 /*Search page table css*/
-.dataTables_scroll table thead td, table tbody tr td
+.dataTables_scroll table thead td span
 {
     width:100px;
-    padding:3px;
-    border: 1px solid red;
+    padding:2px;
+    border: 0px solid red;
 	 overflow: hidden;
 	text-overflow: ellipsis;
+	display:block;
 	white-space: nowrap;
 }
 
+.dataTables_scroll table tbody tr td span
+{
+    width:100px;
+    padding:2px;
+    border: 0px solid red;
+	 overflow: hidden;
+	text-overflow: ellipsis;
+	display:block;
+	white-space: nowrap;
+}
 
-
+.dataTables_scroll table thead td span:hover {
+    background: none repeat scroll 0 0 #EEEEEE;
+    display: block;
+    overflow: visible;
+    white-space: normal;
+	cursor:pointer;
+}
+.dataTables_scroll table tbody tr td span:hover 
+{
+    background: none repeat scroll 0 0 #EEEEEE;
+    display: block;
+    overflow: visible;
+    white-space: normal;
+	cursor:pointer;
+}
