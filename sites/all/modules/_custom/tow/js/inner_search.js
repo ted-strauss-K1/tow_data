@@ -12,6 +12,7 @@ Drupal.behaviors.inner_search = function(context) {
   var arrayOfCharts = {};
   var arrayOfZooms = {};
   var arrayOfCollapse = {};
+  var currentHash = location.hash;
 
   // Hide hidden facets.
   $('.apachesolr-hidden-facet', context).addClass('hidden');
@@ -463,10 +464,17 @@ Drupal.behaviors.inner_search = function(context) {
   // Hashchange.
   $(window).hashchange(function() {
     hash = location.hash;
-    var equal = hash.indexOf("=");
+	var equal = hash.indexOf("=");
     var selectedHref = hash.substr(equal + 1);
     filtersToSend = decodeURIComponent(selectedHref);
-    inner_search_ajax();
+	if (hash != currentHash) {
+      inner_search_ajax();
+	}
+	else if (hash == currentHash) {
+	  $(window).load(function (){
+        inner_search_ajax();
+      });
+	}
   });
   $(window).hashchange();
   
@@ -963,7 +971,7 @@ Drupal.behaviors.inner_search = function(context) {
             .css('top', detailChart.plotTop)
             .css('width', detailChart.plotWidth)
             .css('height', detailChart.plotHeight)
-            .css("background-image", "url('../images/waiting.gif')")
+            .addClass('bgi-w')//css("background-image", "url(../images/waiting.gif)")
             .css('background-color', 'rgba(255,255,255, 0.8)')
             .appendTo('#' + detailChart.container.id)
             .addClass('hidden');
