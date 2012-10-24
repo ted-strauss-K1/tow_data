@@ -28,7 +28,7 @@
 function tow_access_bypass_solr() {
   static $bypass_solr;
   global $_tow_user;
-  tow_debug_watchdog($_tow_user);
+
   // Check if bypass is already set and return if so.
   if (!isset($bypass_solr)) {
   
