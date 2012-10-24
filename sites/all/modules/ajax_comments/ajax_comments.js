@@ -225,6 +225,7 @@ function ajax_comments_delete_click() {
       $.ajax({
         type: "GET",
         url: action,
+		cache: false,
         success: function(result){
           if (result == 'OK') {
             ajax_comments_close_form();
@@ -328,6 +329,7 @@ function ajax_comments_reload_form(pid) {
   $.ajax({
     type: "GET",
     url: action,
+	cache: false,
     success: function(result) {
       saved_class = $('#comment-form').attr('class');
       $('#comment-form-content').html(result);
