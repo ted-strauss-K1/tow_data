@@ -86,6 +86,7 @@ function tow_saved_searches_save_search_block() {
   
   $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
   $rows_amount = $saved_response->response->numFound;
+  //dpm($rows_amount);
   
   $block['content'] = drupal_get_form('tow_saved_searches_save_search_form', $rows_amount);
 

@@ -389,8 +389,8 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
     case 'comment_form':
       unset($form['preview']);
       $form['_author'] = NULL;
-      $form['_author'] = NULL;
       $form['comment_filter']['format'] = NULL;
+	  $form['comment_filter']['comment']['#resizable'] = FALSE;
       break;
 	
   }
