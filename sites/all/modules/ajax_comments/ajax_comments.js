@@ -4,6 +4,7 @@ var last_submit;
 var speed = 'fast';
 var ahah = false;
 var firsttime_init = true;
+var submitted = false; //PD For proper work ctrl+Enter combination
 
 /**
  * Attaches the ahah behavior to each ahah form element.
@@ -225,7 +226,6 @@ function ajax_comments_delete_click() {
       $.ajax({
         type: "GET",
         url: action,
-		cache: false,
         success: function(result){
           if (result == 'OK') {
             ajax_comments_close_form();
@@ -329,7 +329,6 @@ function ajax_comments_reload_form(pid) {
   $.ajax({
     type: "GET",
     url: action,
-	cache: false,
     success: function(result) {
       saved_class = $('#comment-form').attr('class');
       $('#comment-form-content').html(result);
