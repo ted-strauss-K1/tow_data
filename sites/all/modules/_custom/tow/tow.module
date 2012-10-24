@@ -455,7 +455,9 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_init().
  */
 function tow_init() {
-
+  global $user, $_tow_user;
+  $_tow_user = $user;
+  
   // Add dataTables representation to the dataset search page.
   if (arg(0) == 'search_dataset' && arg(1)) {
     $node = node_load(arg(1));

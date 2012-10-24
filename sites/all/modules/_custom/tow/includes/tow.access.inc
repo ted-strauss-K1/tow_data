@@ -27,17 +27,19 @@
  */
 function tow_access_bypass_solr() {
   static $bypass_solr;
-  
+  global $_tow_user;
+  tow_debug_watchdog($_tow_user);
   // Check if bypass is already set and return if so.
   if (!isset($bypass_solr)) {
   
     // Get local IP.
     $ip = gethostbyname($_SERVER['HTTP_HOST']);
     $localhost = '127.0.0.1';
+    $is_admin = (in_array('administrator', $_tow_user->roles) || ($_tow_user->uid == 1));
     
     // Check if it's the local machine and return the value.
     $current_ip = ip_address();
-    $bypass_solr = ($current_ip == $ip || $current_ip == $localhost) ? TRUE : FALSE;
+    $bypass_solr = (($current_ip == $ip) || ($current_ip == $localhost) || $is_admin) ? TRUE : FALSE;
   }
   
   return ($bypass_solr) ? TRUE : FALSE;
