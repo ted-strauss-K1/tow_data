@@ -4,7 +4,7 @@ var last_submit;
 var speed = 'fast';
 var ahah = false;
 var firsttime_init = true;
-var submitted = false; //PD For proper work ctrl+Enter combination
+var submitted = false; //PD For proper work ctrl+Enter combination(1 line)
 
 /**
  * Attaches the ahah behavior to each ahah form element.
