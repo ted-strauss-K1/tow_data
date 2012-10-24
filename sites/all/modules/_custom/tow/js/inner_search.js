@@ -457,7 +457,7 @@ Drupal.behaviors.inner_search = function(context) {
       },
       dataType: 'json'
     });
-
+	
   };
   
   // Hashchange.
@@ -471,7 +471,7 @@ Drupal.behaviors.inner_search = function(context) {
   $(window).hashchange();
   
   // AJAX text fields search.
-  $('.form-text').live('change', function() {
+  $('#block-tow-search_inner_facets .form-text').live('change', function() {
     if ($(this).val() != '') {
       var field = $(this).parent().parent().children('[name="field"]').val();
       var url = $(this).parent().parent().children('[name="url"]').val();
