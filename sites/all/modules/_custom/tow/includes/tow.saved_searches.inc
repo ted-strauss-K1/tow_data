@@ -58,6 +58,7 @@ function tow_saved_searches_list_block($nid = NULL) {
     $saved_searches[] = node_load($result->nid);
   }
   
+  $block['title'] = t('User analyses');
   $block['content'] = '';
   
   foreach ($saved_searches as $node) {
@@ -93,6 +94,26 @@ function tow_saved_searches_save_search_block() {
   return $block;
 }
 
+/**
+ * Search description block.
+ */
+function tow_saved_searches_description_block() {
+
+  // Construct block.
+  $block = array();
+  $block['title'] = t('Search description');
+  
+  $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+  $rows_amount = $saved_response->response->numFound;
+  $ssd_form = tow_saved_searches_save_search_form(&$form_state, $rows_amount);
+  $block['content'] = 'Choose your search parameters';
+  if ($ssd_form['summary']['#value']) {
+    $block['content'] = $ssd_form['summary']['#value'];
+  }
+
+  return $block;
+}
+
 
 
 /****************************************************************************************************
@@ -111,10 +132,12 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
   
   //Saved search comment(title)
   $form['comment'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Share your findings by given a description and posting it'),
+    '#type' => 'textarea',
+    '#title' => NULL,//t('Share your findings by given a description and posting it'),
+	'#rows' => 2,
+	'#resizable' => false,
 	'#attributes' => array(
-		'placeholder' => t('What\'s the story in this data?'),
+		'placeholder' => t('Explain your findings...'),
 	),
   );
   
@@ -144,7 +167,7 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
   // Button.
   $form['save_search'] = array(
     '#type' => 'submit',
-    '#value' => t('Save this search'),
+    '#value' => t('Share analysis'),
     '#validate' => array('tow_saved_searches_save_search_form_validate'),
     '#submit' => array('tow_saved_searches_save_search_form_submit'),
   );

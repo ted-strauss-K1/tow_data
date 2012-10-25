@@ -99,7 +99,7 @@ function tow_search_inner_widgets_block() {
 
   // Define the block.
   $block = array();
-  $block['title'] = 'Filters';
+  $block['title'] = 'Search widgets';
 
   // Get info from ApacheSolr.
   $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');

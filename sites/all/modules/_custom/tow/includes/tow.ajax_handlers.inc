@@ -333,7 +333,7 @@ function tow_ajax_handlers_refresh_search_results($nid) {
   $widgets = tow_search_inner_widgets_block();
   
   // Generate new Save this search block output.
-  $save_search = tow_saved_searches_save_search_block();
+  $save_search = tow_saved_searches_description_block();//tow_saved_searches_save_search_block();
   
   // JSON.
   $json = array(
