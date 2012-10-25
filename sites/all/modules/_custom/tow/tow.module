@@ -482,6 +482,18 @@ function tow_init() {
     }
   }
   
+  // Add datepicker jquery ui.
+  if (arg(0) == 'node' && arg(1)) {
+    $node = node_load(arg(1));
+    if ($node->type == 'record') {
+	  drupal_add_js(base_path() . 'sites/all/libraries/jquery.ui/ui/ui.datepicker.js');
+	  drupal_add_js(base_path() . 'sites/all/libraries/jquery.ui/ui/jquery-ui-timepicker-addon.js');
+	  drupal_add_css(base_path() . 'sites/all/libraries/jquery.ui/themes/base/jquery-ui-timepicker-addon.css');
+	  drupal_add_css(base_path() . 'sites/all/libraries/jquery.ui/themes/base/ui.datepicker.css');
+	  drupal_add_js(drupal_get_path('module', 'tow') . '/js/record_datepicker.js');
+    }
+  }
+  
   // Redirect to the front page with filtering by term instead of going to the term view page.
   if (arg(0) == 'taxonomy' && arg(1) == 'term' && arg(2) && is_numeric(arg(2)) && !arg(3)) {
     drupal_goto('', NULL, 'newest/?filters=tid:' . arg(2));
