@@ -90,7 +90,7 @@ function tow_saved_searches_save_search_block() {
   //dpm($rows_amount);
   
   $block['content'] = drupal_get_form('tow_saved_searches_save_search_form', $rows_amount);
-
+  
   return $block;
 }
 
@@ -103,14 +103,18 @@ function tow_saved_searches_description_block() {
   $block = array();
   $block['title'] = t('Search description');
   
-  $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
-  $rows_amount = $saved_response->response->numFound;
-  $ssd_form = tow_saved_searches_save_search_form(&$form_state, $rows_amount);
-  $block['content'] = 'Choose your search parameters';
-  if ($ssd_form['summary']['#value']) {
-    $block['content'] = $ssd_form['summary']['#value'];
+  if (arg(1) != 'search_dataset') {
+    $block['content'] = '';
   }
-
+  else {
+	  $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+	  $rows_amount = $saved_response->response->numFound;
+	  $ssd_form = tow_saved_searches_save_search_form(&$form_state, $rows_amount);
+	  $block['content'] = 'Choose your search parameters';
+	  if ($ssd_form['summary']['#value']) {
+      $block['content'] = $ssd_form['summary']['#value'];
+	  }
+  }
   return $block;
 }
 

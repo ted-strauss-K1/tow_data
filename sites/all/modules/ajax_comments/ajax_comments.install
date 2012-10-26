@@ -1,5 +1,9 @@
 <?php
-// $Id: ajax_comments.install,v 1.1 2008/12/18 19:00:33 neochief Exp $
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the ajax_comments module.
+ */
 
 /**
  * Implementaton of hook_install
@@ -12,6 +16,6 @@ function ajax_comments_install() {
  * Implementaton of hook_uninstall
  */
 function ajax_comments_uninstall() {
-  db_query("DELETE FROM {variable} WHERE name LIKE 'ajax_comments_%'");
+  db_query("DELETE FROM {variable} WHERE name LIKE 'ajax_comments_%%'");
   db_query("DELETE FROM {system} WHERE name = 'ajax_comments'");
 }

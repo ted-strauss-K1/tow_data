@@ -333,7 +333,10 @@ function tow_ajax_handlers_refresh_search_results($nid) {
   $widgets = tow_search_inner_widgets_block();
   
   // Generate new Save this search block output.
-  $save_search = tow_saved_searches_description_block();//tow_saved_searches_save_search_block();
+  $save_this_search = tow_saved_searches_save_search_block();
+  
+  // Generate new Search description block output.
+  $save_search = tow_saved_searches_description_block();
   
   // JSON.
   $json = array(
@@ -341,6 +344,7 @@ function tow_ajax_handlers_refresh_search_results($nid) {
     'widgets' => $widgets['content'],
     'fields' => $fields['content'],
 	'save_search' => $save_search['content'],
+	'save_this_search' => $save_this_search['content'],
   );
   
   return drupal_json($json);
