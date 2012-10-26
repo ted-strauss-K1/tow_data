@@ -103,7 +103,7 @@ function tow_saved_searches_description_block() {
   $block = array();
   $block['title'] = t('Search description');
   
-  if (arg(1) != 'search_dataset') {
+  if (arg(0) != 'search_dataset') {
     $block['content'] = '';
   }
   else {
