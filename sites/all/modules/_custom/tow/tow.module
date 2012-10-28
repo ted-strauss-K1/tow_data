@@ -2,7 +2,7 @@
 
 /**
  * @file
- * 
+ *
  * Custom code for Theory on Wheels.
  */
 /* * **************************************************************************************************
@@ -114,7 +114,7 @@ function tow_block($op = 'list', $delta = 0) {
         // Extra options: Inner search: field list.
         $blocks['search_inner_field_list']['visibility'] = 2;
         $blocks['search_inner_field_list']['pages'] = '
-      <?php  
+      <?php
         if (arg(0) != "search_dataset") {
           return FALSE;
         }
@@ -135,7 +135,7 @@ function tow_block($op = 'list', $delta = 0) {
         $blocks['saved_searches_list']['visibility'] = 2;
         $blocks['saved_searches_list']['pages'] =
                 '
-      <?php  
+      <?php
         return (arg(0) != "search_dataset") ? FALSE : TRUE;
       ?>
     ';
@@ -814,29 +814,29 @@ function tow_nodeapi(&$node, $op) {
             foreach ($children_types as $children_type) {
                 if ($children_type == 'saved_search') {
                     $res = db_query("
-          
-            SELECT 
-              n.nid AS nid 
-              
-              FROM 
-                {content_type_%s} n 
-                
-              WHERE 
+
+            SELECT
+              n.nid AS nid
+
+              FROM
+                {content_type_%s} n
+
+              WHERE
                 n.field_{%s}_nid_value = %d
-          
+
           ", $children_type, $node->type, $node->nid);
                 } else {
                     $res = db_query("
-          
-            SELECT 
-              n.nid AS nid 
-              
-              FROM 
-                {content_type_%s} n 
-              
-              WHERE 
+
+            SELECT
+              n.nid AS nid
+
+              FROM
+                {content_type_%s} n
+
+              WHERE
                 n.field_{%s}_value = %d
-          
+
           ", $children_type, $node->type, $node->nid);
                 }
                 while ($node_to_delete = db_fetch_object($res))
@@ -1004,7 +1004,7 @@ function tow_nodeapi(&$node, $op) {
         tow_search_inner_linked_queue_record_linking($node, $op);
     }
 
-    // Set available record's position for a table. 
+    // Set available record's position for a table.
     if ($node->type == 'record' && $op == 'delete') {
         $available_positions = db_result(db_query("SELECT ctt.field_available_positions_value AS fapv FROM {content_type_table} ctt WHERE ctt.nid = %d", $node->field_table[0]['value']));
         $available_positions = unserialize($available_positions);
@@ -1360,32 +1360,32 @@ function tow_maintanance_mode($status, $nid, $type) {
             // Case Saved search.
             if ($children_type == 'saved_search') {
                 $res = db_query("
-        
-          SELECT 
-            n.nid AS nid 
-            
-            FROM 
-              {content_type_%s} n 
-              
-            WHERE 
+
+          SELECT
+            n.nid AS nid
+
+            FROM
+              {content_type_%s} n
+
+            WHERE
               n.field_{%s}_nid_value = %d
-        
+
         ", $children_type, $type, $nid);
             }
 
             // Case any other type.
             else {
                 $res = db_query("
-        
-          SELECT 
-            n.nid AS nid 
-            
-            FROM 
-              {content_type_%s} n 
-              
-            WHERE 
+
+          SELECT
+            n.nid AS nid
+
+            FROM
+              {content_type_%s} n
+
+            WHERE
               n.field_{%s}_value = %d
-        
+
         ", $children_type, $type, $nid);
             }
 
@@ -1431,15 +1431,15 @@ function tow_possible_fields() {
 function tow_search_cron() {
 
     $res = db_query("
-  
-    SELECT 
-      n.nid AS nid 
-      
-      FROM 
-        {node} n 
-        
-      WHERE 
-        n.type = '%s' 
+
+    SELECT
+      n.nid AS nid
+
+      FROM
+        {node} n
+
+      WHERE
+        n.type = '%s'
 
   ", 'dataset');
 
@@ -1453,14 +1453,14 @@ function tow_search_cron() {
 
         // Delete content cache for the datasets.
         db_query("
-      
-      DELETE 
-        FROM 
-          {cache_content} 
-          
-        WHERE 
+
+      DELETE
+        FROM
+          {cache_content}
+
+        WHERE
           cid = 'content:%s:%s'
-          
+
     ", $node->nid, $node->nid);
     }
 }
@@ -1473,19 +1473,19 @@ function tow_search_cron() {
 function tow_table_list($nid) {
 
     $tables_res = db_query("
-    
-    SELECT 
-      n.nid AS nid, 
-      n.title AS title 
-      
-      FROM 
-          {content_type_table} t 
-        LEFT JOIN 
-          {node} n
-          ON t.nid = n.nid 
 
-      WHERE 
-        t.field_dataset_value = %d 
+    SELECT
+      n.nid AS nid,
+      n.title AS title
+
+      FROM
+          {content_type_table} t
+        LEFT JOIN
+          {node} n
+          ON t.nid = n.nid
+
+      WHERE
+        t.field_dataset_value = %d
 
     ", $nid);
 
@@ -1550,8 +1550,8 @@ function _tow_format_bool($value) {
 }
 
 /**
- * Reads information about table fields, including their title, types, units, 
- * and puts them in the correct order according to the wights array.   
+ * Reads information about table fields, including their title, types, units,
+ * and puts them in the correct order according to the wights array.
  */
 function _tow_get_table_fields($table_node) {
     $aux_array = array();

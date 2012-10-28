@@ -2,7 +2,7 @@
 
 /**
  * @file
- * 
+ *
  * Ajax handlers.
  */
 /* * **************************************************************************************************
@@ -158,35 +158,35 @@ function tow_ajax_handlers_field_zooming() {
         $field = $_GET['field'];
 
         db_query("
-    
-      UPDATE 
-        {tow_apachesolr_requests} 
-      
-        SET 
-          timestamp = '%s' 
-        
-        WHERE 
-            rid = %d 
-          AND 
+
+      UPDATE
+        {tow_apachesolr_requests}
+
+        SET
+          timestamp = '%s'
+
+        WHERE
+            rid = %d
+          AND
             hash = %d
-    
+
     ", time(), $rid, $hash);
 
         $result = db_fetch_array(db_query("
-    
-      SELECT 
-        t.query AS query, 
-        t.stats AS stats, 
+
+      SELECT
+        t.query AS query,
+        t.stats AS stats,
         t.tnid AS tnid
-        
-        FROM 
-          {tow_apachesolr_requests} t 
-        
-        WHERE 
-            t.rid = %d 
-          AND 
+
+        FROM
+          {tow_apachesolr_requests} t
+
+        WHERE
+            t.rid = %d
+          AND
             hash = %d
-    
+
     ", $rid, $hash));
 
         $serialized_query = $result['query'];
@@ -241,14 +241,14 @@ function tow_ajax_handlers_field_zooming() {
         return drupal_json($json);
     } else {
         db_query("
-    
-      DELETE 
-        FROM 
-          {tow_apachesolr_requests} 
-      
-        WHERE 
-            rid = %d 
-          AND 
+
+      DELETE
+        FROM
+          {tow_apachesolr_requests}
+
+        WHERE
+            rid = %d
+          AND
             hash = %d
     ", $rid, $hash);
     }
@@ -311,35 +311,35 @@ function tow_ajax_handlers_register_add_more() {
  * Refresh search results according to filters set with Ajax.
  */
 function tow_ajax_handlers_refresh_search_results($nid) {
-  
-  // Fields list block content.
-  $fields = tow_search_inner_field_list_block();
-  
-  // Emulate we are on the search page.
-  $_GET['q'] = str_replace('/refresh_ajax', '', $_GET['q']);
-  
-  // Define search data.
-  $search = tow_search_inner_within_dataset_callback($nid);
-  
-  // Generate new widgets block output.
-  $widgets = tow_search_inner_widgets_block();
-  
-  // Generate new Save this search block output.
-  $save_this_search = tow_saved_searches_save_search_block();
-  
-  // Generate new Search description block output.
-  $save_search = tow_saved_searches_description_block();
-  
-  // JSON.
-  $json = array(
-    'search' => $search, 
-    'widgets' => $widgets['content'],
-    'fields' => $fields['content'],
-	'save_search' => $save_search['content'],
-	'save_this_search' => $save_this_search['content'],
-  );
-  
-  return drupal_json($json);
+
+    // Fields list block content.
+    $fields = tow_search_inner_field_list_block();
+
+    // Emulate we are on the search page.
+    $_GET['q'] = str_replace('/refresh_ajax', '', $_GET['q']);
+
+    // Define search data.
+    $search = tow_search_inner_within_dataset_callback($nid);
+
+    // Generate new widgets block output.
+    $widgets = tow_search_inner_widgets_block();
+
+    // Generate new Save this search block output.
+    $save_this_search = tow_saved_searches_save_search_block();
+
+    // Generate new Search description block output.
+    $save_search = tow_saved_searches_description_block();
+
+    // JSON.
+    $json = array(
+        'search' => $search,
+        'widgets' => $widgets['content'],
+        'fields' => $fields['content'],
+        'save_search' => $save_search['content'],
+        'save_this_search' => $save_this_search['content'],
+    );
+
+    return drupal_json($json);
 }
 
 /**

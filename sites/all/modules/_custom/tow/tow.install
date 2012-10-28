@@ -2,15 +2,12 @@
 
 /**
  * @file
- * 
+ *
  * Install and uninstall functions for the fortissimmo Property module.
  */
-
-
-
-/****************************************************************************************************
+/* * **************************************************************************************************
  * Requirements
- ****************************************************************************************************/
+ * ************************************************************************************************** */
 
 module_load_include('inc', 'content', 'includes/content.crud');
 module_load_include('inc', 'tow', 'includes/tow.db_tables');
@@ -19,121 +16,121 @@ module_load_include('inc', 'tow', 'includes/tow.cck');
 
 
 
-/**************************************************************************************************** 
- * Hooks 
- ****************************************************************************************************/
+/* * **************************************************************************************************
+ * Hooks
+ * ************************************************************************************************** */
 
 /**
  * Implementation of hook_schema().
  */
 function tow_schema() {
-  
-  $schema = array();
 
-  // Node tables.
-  $schema['tow_access_requests'] = tow_db_tables_tow_access_requests();
-  $schema['tow_apachesolr_requests'] = tow_db_tables_tow_apachesolr_requests();
-  $schema['tow_node_views_counter'] = tow_db_tables_tow_dataset_counter();
-  $schema['tow_field_info'] = tow_db_tables_tow_field_info();
-  $schema['tow_import_progress'] = tow_db_tables_tow_import_progress();
-  $schema['tow_invites'] = tow_db_tables_tow_invites();
-  $schema['tow_link_tables'] = tow_db_tables_tow_link_tables();
-  $schema['tow_table_counter'] = tow_db_tables_tow_table_counter();
-  $schema['tow_term_timestamps'] = tow_db_tables_tow_term_timestamps();
-  
-  return $schema;
+    $schema = array();
+
+    // Node tables.
+    $schema['tow_access_requests'] = tow_db_tables_tow_access_requests();
+    $schema['tow_apachesolr_requests'] = tow_db_tables_tow_apachesolr_requests();
+    $schema['tow_node_views_counter'] = tow_db_tables_tow_dataset_counter();
+    $schema['tow_field_info'] = tow_db_tables_tow_field_info();
+    $schema['tow_import_progress'] = tow_db_tables_tow_import_progress();
+    $schema['tow_invites'] = tow_db_tables_tow_invites();
+    $schema['tow_link_tables'] = tow_db_tables_tow_link_tables();
+    $schema['tow_table_counter'] = tow_db_tables_tow_table_counter();
+    $schema['tow_term_timestamps'] = tow_db_tables_tow_term_timestamps();
+
+    return $schema;
 }
 
 /**
  * Implementation of hook_install().
  */
 function tow_install() {
-  drupal_install_schema('tow');
-  
-  $fields = tow_install_fields();
+    drupal_install_schema('tow');
 
-  // Create several fields at a time.
-  foreach ($fields as $field) {
-    content_field_instance_create($field, FALSE);
-  }
-  
-  // Create taxonomy.
-  $vocabulary = array(
-    'name' => t('Dataset categories'),
-    'description' => '',
-    'help' => '',
-    'relations' => 1,
-    'hierarchy' => 0,
-    'multiple' => 0,
-    'required' => 0,
-    'tags' => 0,
-    'module' => 'tow',
-    'weight' => 0,
-    'nodes' => array('dataset' => 'dataset'),
-  );
-  taxonomy_save_vocabulary($vocabulary);
-  tow_install_create_dataset_categories();
+    $fields = tow_install_fields();
 
-  $vocabulary = array(
-    'name' => t('Dataset tags'),
-    'description' => '',
-    'help' => '',
-    'relations' => 1,
-    'hierarchy' => 1,
-    'multiple' => 0,
-    'required' => 0,
-    'tags' => 1,
-    'module' => 'tow',
-    'weight' => 0,
-    'nodes' => array('dataset' => 'dataset'),
-  );
-  taxonomy_save_vocabulary($vocabulary);
+    // Create several fields at a time.
+    foreach ($fields as $field) {
+        content_field_instance_create($field, FALSE);
+    }
 
-  // Clear caches and rebuild menu.
-  content_clear_type_cache(TRUE);
-  menu_rebuild();
+    // Create taxonomy.
+    $vocabulary = array(
+        'name' => t('Dataset categories'),
+        'description' => '',
+        'help' => '',
+        'relations' => 1,
+        'hierarchy' => 0,
+        'multiple' => 0,
+        'required' => 0,
+        'tags' => 0,
+        'module' => 'tow',
+        'weight' => 0,
+        'nodes' => array('dataset' => 'dataset'),
+    );
+    taxonomy_save_vocabulary($vocabulary);
+    tow_install_create_dataset_categories();
+
+    $vocabulary = array(
+        'name' => t('Dataset tags'),
+        'description' => '',
+        'help' => '',
+        'relations' => 1,
+        'hierarchy' => 1,
+        'multiple' => 0,
+        'required' => 0,
+        'tags' => 1,
+        'module' => 'tow',
+        'weight' => 0,
+        'nodes' => array('dataset' => 'dataset'),
+    );
+    taxonomy_save_vocabulary($vocabulary);
+
+    // Clear caches and rebuild menu.
+    content_clear_type_cache(TRUE);
+    menu_rebuild();
 }
 
 /**
  * Implementation of hook_uninstall().
  */
 function tow_uninstall() {
-  
-  // Define the CCK fields to be deleted.
-  $fields = array();
-  $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search', 'document');
-  foreach ($types as $type_name) {
-    $query = db_query("SELECT cnfi.field_name AS field_name FROM {content_node_field_instance} cnfi WHERE cnfi.type_name = '%s'", $type_name);
-    while ($record = db_fetch_object($query)) {
-      $fields[] = $record->field_name;
-    }
-  
-    // Need to load the CCK include file where content_field_instance_create() is defined.
-    foreach ($fields as $field_name) {
-      content_field_instance_delete($field_name, $type_name);
-    }
-  
-    // Delete all the Fortissimmo Property nodes.
-    $query = db_query(db_rewrite_sql("SELECT n.nid AS nid FROM {node} n WHERE n.type = '%s'"), $type_name);
-    while ($nid = db_fetch_object($query)->nid) {
-      node_delete($nid);
-    }
-  
-    // Delete 'tow' node type.
-    node_type_delete($type_name);
-    node_types_rebuild();
-  }
-  
-  // Delete taxonomy.
-  $query = db_query("SELECT v.vid AS vid FROM {vocabulary} v WHERE v.name = '%s' OR v.name = '%s'", 'Dataset categories', 'Dataset tags');
-  while ($vocab = db_fetch_object($query)) {
-    taxonomy_del_vocabulary($vocab->vid);
-  }
 
-  // Drop tables.
-  drupal_uninstall_schema('tow');
-  
-  // Delete all the variables connected with menutotax
-  db_query("DELETE FROM {variable} WHERE name LIKE 'tow_%'");
-  cache_clear_all('variables', 'cache');
+    // Define the CCK fields to be deleted.
+    $fields = array();
+    $types = array('dataset', 'table', 'record', 'linked_record', 'saved_search', 'document');
+    foreach ($types as $type_name) {
+        $query = db_query("SELECT cnfi.field_name AS field_name FROM {content_node_field_instance} cnfi WHERE cnfi.type_name = '%s'", $type_name);
+        while ($record = db_fetch_object($query)) {
+            $fields[] = $record->field_name;
+        }
+
+        // Need to load the CCK include file where content_field_instance_create() is defined.
+        foreach ($fields as $field_name) {
+            content_field_instance_delete($field_name, $type_name);
+        }
+
+        // Delete all the Fortissimmo Property nodes.
+        $query = db_query(db_rewrite_sql("SELECT n.nid AS nid FROM {node} n WHERE n.type = '%s'"), $type_name);
+        while ($nid = db_fetch_object($query)->nid) {
+            node_delete($nid);
+        }
+
+        // Delete 'tow' node type.
+        node_type_delete($type_name);
+        node_types_rebuild();
+    }
+
+    // Delete taxonomy.
+    $query = db_query("SELECT v.vid AS vid FROM {vocabulary} v WHERE v.name = '%s' OR v.name = '%s'", 'Dataset categories', 'Dataset tags');
+    while ($vocab = db_fetch_object($query)) {
+        taxonomy_del_vocabulary($vocab->vid);
+    }
+
+    // Drop tables.
+    drupal_uninstall_schema('tow');
+
+    // Delete all the variables connected with menutotax
+    db_query("DELETE FROM {variable} WHERE name LIKE 'tow_%'");
+    cache_clear_all('variables', 'cache');
 }

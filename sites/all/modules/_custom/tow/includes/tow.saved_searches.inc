@@ -25,27 +25,27 @@ function tow_saved_searches_list_block($nid = NULL) {
     if ($is_dataset) {
         $query = db_query("
 
-      SELECT 
-        ctss.nid AS nid 
-        
-        FROM 
-          {content_type_saved_search} ctss 
+      SELECT
+        ctss.nid AS nid
 
-        WHERE 
-          ctss.field_dataset_nid_value = %d 
+        FROM
+          {content_type_saved_search} ctss
+
+        WHERE
+          ctss.field_dataset_nid_value = %d
 
     ", $nid);
     } else {
         $query = db_query("
 
-      SELECT 
-        ctss.nid AS nid 
-        
-        FROM 
-          {content_type_saved_search} ctss 
+      SELECT
+        ctss.nid AS nid
 
-        WHERE 
-          ctss.field_table_nid_value = '%s' 
+        FROM
+          {content_type_saved_search} ctss
+
+        WHERE
+          ctss.field_table_nid_value = '%s'
 
     ", $nid);
     }
@@ -260,15 +260,15 @@ function tow_saved_searches_check_exists($saved_search) {
     // Get all the saerches previously saved for the current dataset.
     $dataset_all_saved_searches = array();
     $query = db_query("
-    
-    SELECT 
-      t.nid AS nid 
-      
-      FROM 
-        {content_type_saved_search} t 
-      
-      WHERE 
-        t.field_dataset_nid_value = %d 
+
+    SELECT
+      t.nid AS nid
+
+      FROM
+        {content_type_saved_search} t
+
+      WHERE
+        t.field_dataset_nid_value = %d
 
   ", $dataset_nid);
     while ($record = db_fetch_object($query)) {

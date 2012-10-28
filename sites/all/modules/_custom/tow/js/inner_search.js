@@ -1,5 +1,5 @@
 Drupal.behaviors.inner_search = function(context) {
-  
+
     // Variables.
     var handleHeight = 15;
     var handleWidth = 6;
@@ -15,7 +15,7 @@ Drupal.behaviors.inner_search = function(context) {
 
     // Hide hidden facets.
     $('.apachesolr-hidden-facet', context).addClass('hidden');
-  
+
     // Add 'Show more/fewer' link.
     var show_more_fewer = function() {
         $('<a href="#" class="apachesolr-showhide"></a>').text(Drupal.t('Show more')).click(function() {
@@ -51,27 +51,27 @@ Drupal.behaviors.inner_search = function(context) {
             if (type == 'int' || type == 'float' || type == 'time' || type == 'date' || type == 'datetime' || type == 'timestamp') {
                 var min = $(this).parent().find('[name="min"]').val();
                 var max = $(this).parent().find('[name="max"]').val();
-        
+
                 switch (type) {
                     case 'date':
                         to_str = '[' + min + 'T00:00:00Z TO ' + max + 'T00:00:00Z]';
                         break;
-          
+
                     case 'time':
                         to_str = '[0001-01-01T' + min + 'Z TO 0001-01-01T' + max + 'Z]';
                         break;
-          
+
                     case 'datetime':
                         to_str = '[' + min.replace(' ', 'T') + 'Z TO ' + max.replace(' ', 'T') + 'Z]';
                         break;
-          
+
                     default:
                         to_str = '[' + min + ' TO ' + max + ']';
                         break;
                 }
-        
+
                 url = url.replace(from_str, to_str);
-        
+
                 var equal = url.indexOf("=");
                 var amper = url.indexOf("&");
                 var selectedHref = url.substring(equal + 1, amper);
@@ -83,7 +83,7 @@ Drupal.behaviors.inner_search = function(context) {
                 if (type == 'length') {
                     var option = $(this).parent().children('.form-item').children('[name="option"]').val();
                     var value = parseInt($(this).parent().children('.form-item').children('[name="value"]').val());
-          
+
                     if (option.indexOf('[* TO #]') > -1) {
                         value -= 1;
                     }
@@ -92,7 +92,7 @@ Drupal.behaviors.inner_search = function(context) {
                             value += 1;
                         }
                     }
-        
+
                     query = option.replace('#', value);
                     to_str = query;
                     from_str = '%3A' + from_str;
@@ -130,16 +130,16 @@ Drupal.behaviors.inner_search = function(context) {
             }
         }
     });
-  
+
     // Reset.
     $('.active').live('click', function(e) {
         if ($(this).text() == 'Reset') {
             e.preventDefault();
-      
+
             var myHref = $(this).attr('href');
             var equal = myHref.indexOf("=");
             var selectedHref = myHref.substr(equal + 1);
-      
+
             if (equal != -1) {
                 filtersToSend = decodeURIComponent(selectedHref);
                 hash = '?filters=' + selectedHref;
@@ -158,7 +158,7 @@ Drupal.behaviors.inner_search = function(context) {
     var max_cur;
     var sortA = $('.tow-inner-search-widget').get();
     var div_to_put = $('#tow-search-inner-hash-form');
-  
+
     // Sorting by title.
     var title_sort1 = function() {
         title_sort = 'asc';
@@ -182,7 +182,7 @@ Drupal.behaviors.inner_search = function(context) {
             $('#tow-search-inner-hash-form').after(form);
         });
     };
-  
+
     var title_sort2 = function() {
         title_sort = 'desc';
         type_sort = '';
@@ -220,15 +220,15 @@ Drupal.behaviors.inner_search = function(context) {
     var type_sort1 = function() {
         title_sort = '';
         type_sort = 'asc';
-    
+
         $('.tow-inner-search-widget-sort a[href*=title]').text('title');
         $('.tow-inner-search-widget-sort a[href*=type]').text('type (asc)');
-    
+
         var sortArray = $('.tow-inner-search-widget').get();
         sortArray.sort(function(a,b) {
             var keyA = $(a).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
             var keyB = $(b).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
-      
+
             if (keyA > keyB) {
                 return -1;
             }
@@ -241,12 +241,12 @@ Drupal.behaviors.inner_search = function(context) {
             $('#tow-search-inner-hash-form').after(form);
         });
     };
-  
+
     var type_sort2 = function() {
         title_sort = '';
         type_sort = 'desc';
         $('.tow-inner-search-widget-sort a[href*=title]').text('title');
-    
+
         $('.tow-inner-search-widget-sort a[href*=type]').text('type (desc)');
         var sortArray = $('.tow-inner-search-widget').get();
         sortArray.sort(function(a,b) {
@@ -275,7 +275,7 @@ Drupal.behaviors.inner_search = function(context) {
             type_sort1();
         }
     });
-  
+
     // Sort: reset all.
     $('.sort-link-reset').live('click', function(e) {
         title_sort = '';
@@ -283,7 +283,7 @@ Drupal.behaviors.inner_search = function(context) {
         e.preventDefault();
         $('.tow-inner-search-widget-sort a[href*=title]').text('title');
         $('.tow-inner-search-widget-sort a[href*=type]').text('type');
-    
+
         $('#tow-search-inner-hash-form').after(initialArray);
     });
 
@@ -310,9 +310,9 @@ Drupal.behaviors.inner_search = function(context) {
             $('#edit-filters').value = filtersToSend;
         });
     };
-  
+
     href_substr();
-  
+
     $('.tow-dataset-field-link').live('click', function(e) {
         if (e.button == 2) {
             return;
@@ -320,7 +320,7 @@ Drupal.behaviors.inner_search = function(context) {
         if ($(this).hasClass('disabled')) {
             return;
         }
-    
+
         url = 'http://' + window.location.hostname + $(this).attr("href");
 
         if ($(this).hasClass('selected')) {
@@ -345,18 +345,18 @@ Drupal.behaviors.inner_search = function(context) {
                 }
             });
         }
-    
+
         $('.tow-dataset-field-link.selected').each(function() {
             selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
         });
 
         inner_search_ajax();
-    
+
         return false;
     });
 
     var inner_search_ajax = function() {
-  
+
         var selectedFieldsToSend = JSON.stringify(selectedFields);
 
         // Disabling other widget choice while AJAX proceed.
@@ -381,14 +381,14 @@ Drupal.behaviors.inner_search = function(context) {
                 $('.tow-inner-search-widget fieldset').each(function() {
                     var field = $(this).find('[name="field"]').val();
                     var collapsed;
-          
+
                     if ($(this).hasClass('collapsed')) {
                         collapsed = true;
                     }
                     else {
                         collapsed = false;
                     }
-          
+
                     arrayOfCollapse[field] = {
                         'collapsed': collapsed
                     };
@@ -399,17 +399,17 @@ Drupal.behaviors.inner_search = function(context) {
                 $('div#block-tow-search_inner_facets div.content').html(data.widgets);
                 $('div#block-tow-search_inner_field_list div.content').html(data.fields);
                 $('div#block-tow-saved_searches_save_search div.content').html(data.save_search);
-        
+
                 // Returns collapsibility.
                 Drupal.behaviors.collapse();
-        
+
                 // Returning user-selected collapsibility.
                 $('.tow-inner-search-widget fieldset').each(function() {
                     var field = $(this).find('[name="field"]').val();
                     if ((typeof arrayOfCollapse[field] != "undefined") && (arrayOfCollapse[field]['collapsed'] == true)) {
                         $(this).addClass('collapsed');
                     }
-                });	
+                });
 
                 initialArray = $('.tow-inner-search-widget').get();
                 $('.apachesolr-hidden-facet', context).addClass('hidden');
@@ -428,7 +428,7 @@ Drupal.behaviors.inner_search = function(context) {
                 if (type_sort == 'desc') {
                     type_sort2();
                 }
-        
+
                 href_substr();
                 testChart();
 
@@ -438,7 +438,7 @@ Drupal.behaviors.inner_search = function(context) {
                 // Number of rows in searchtable.
                 var numberOfRows = $('#datatable-1 tbody tr').size();
                 $('#tow-search-inner-save-search-form').children('div').children('[name="rows_amount"]').val(numberOfRows);
-        
+
                 var oTable = $('#datatable-1').dataTable({
                     "sDom": 'C<"clear">frti',
                     "oColVis": {
@@ -461,7 +461,7 @@ Drupal.behaviors.inner_search = function(context) {
         });
 
     };
-  
+
     // Hashchange.
     $(window).hashchange(function() {
         hash = location.hash;
@@ -471,7 +471,7 @@ Drupal.behaviors.inner_search = function(context) {
         inner_search_ajax();
     });
     $(window).hashchange();
-  
+
     // AJAX text fields search.
     $('.form-text').live('change', function() {
         if ($(this).val() != '') {
@@ -484,7 +484,7 @@ Drupal.behaviors.inner_search = function(context) {
             if (type == 'length') {
                 var option = $(this).parent().parent().children('.form-item').children('[name="option"]').val();
                 var value = parseInt($(this).parent().parent().children('.form-item').children('[name="value"]').val());
-        
+
                 if (option.indexOf('[* TO #]') > -1) {
                     value -= 1;
                 }
@@ -493,7 +493,7 @@ Drupal.behaviors.inner_search = function(context) {
                         value += 1;
                     }
                 }
-        
+
                 query = option.replace('#', value);
                 to_str = query;
                 from_str = '%3A' + from_str;
@@ -528,7 +528,7 @@ Drupal.behaviors.inner_search = function(context) {
             }
         }
     });
-  
+
     // AJAX highcharts "on-line" reloading.
     $('.tow-inner-search-highcharts-container .detail-container').live('mouseup', function(e) {
         var field = $(this).closest('.tow-inner-search-widget').find('[name="field"]').val();
@@ -563,7 +563,7 @@ Drupal.behaviors.inner_search = function(context) {
                         to_str = '[' + min + ' TO ' + max + ']';
                         break;
                 }
-        
+
                 url = url.replace(from_str, to_str);
                 var equal = url.indexOf("=");
                 var amper = url.indexOf("&");
@@ -576,7 +576,7 @@ Drupal.behaviors.inner_search = function(context) {
             max_cur = max;
         }
     });
- 
+
     // Disabling page reload on submit.
     $('[name="include_empty"]').live('click', function(e) {
         if (e.button == 0) {
@@ -588,22 +588,22 @@ Drupal.behaviors.inner_search = function(context) {
                 filtersToSend = decodeURIComponent(selectedHref);
                 hash = '?filters=' + selectedHref;
                 location.hash = hash;
-            }	
+            }
             else {
                 location.hash = '';
             }
         }
     });
-  
+
     var testChart = function() {
         $('div.tow-inner-search-highcharts-container').each(function(index) {
             var id = $(this).attr('id');
-    
+
             var datastring = $(this).parent().children('div').children('[name="data"]').val();
             var namestring = $(this).parent().children('div').children('[name="tooltips"]').val();
             var fieldtype = $(this).parent().children('div').children('[name="fieldtype"]').val();
             var fieldname = $(this).parent().children('div').children('[name="field"]').val();
-      
+
             var min = $(this).parent().find('[name="global_min"]').val();
             var max = $(this).parent().find('[name="global_max"]').val();
             var selection_min = $(this).parent().find('[name="selection_min"]').val();
@@ -633,7 +633,7 @@ Drupal.behaviors.inner_search = function(context) {
         });
     };
     testChart();
-  
+
     function plotChart(id, data, axistype, fieldname, fieldtype, globalMin, globalMax, yMax, selectionMin, selectionMax) {
         var masterChart;
         var detailChart;
@@ -648,16 +648,16 @@ Drupal.behaviors.inner_search = function(context) {
         var detailBorder;
         var ratio;
         var screenSelRange = {
-            min: null, 
+            min: null,
             max: null
         };
         var plotSelRange = {
-            min: null, 
+            min: null,
             max: null
         };
         var detailLeft;
         var detailRight;
-    
+
         var $container = $('#' + id)
         .addClass('pos-rel');
 
@@ -668,10 +668,10 @@ Drupal.behaviors.inner_search = function(context) {
         var $masterContainer = $('<div id="' + id + '-master">')
         .addClass('pos-abs t128h40w100')
         .appendTo($container);
-    
+
         var minorTickInterval;
         var tickInterval;
-    
+
         if (yMax >= 6) {
             minorTickInterval = Math.floor(yMax/6);
             tickInterval = minorTickInterval * 2;
@@ -685,13 +685,13 @@ Drupal.behaviors.inner_search = function(context) {
                 tickInterval = 1;
             }
         }
-    
+
         // Create master and in its callback, create the detail chart.
         createMaster();
 
         $container.before('<div class="tow-highcharts-summary" id="' + id + '-summary"></div>');
         displaySummary();
-    
+
         // Create the master chart callback.
         function createMaster() {
             masterChart = new Highcharts.Chart({
@@ -718,14 +718,14 @@ Drupal.behaviors.inner_search = function(context) {
                             var max = extremesObject.max;
 
                             arrayOfZooms[id] = {
-                                'min' : min, 
+                                'min' : min,
                                 'max' : max
                             };
                             $(window).css('cursor', 'wait');
                             var url = 'http://' + location.host + '/search_inner_zoom_ajax?XDEBUG_SESSION_START=ajax';
                             var searchRid = $('#tow-search-inner-hash-form #edit-rid').val();
                             var searchHash = $('#tow-search-inner-hash-form #edit-hash').val();
-              
+
                             $.ajax({
                                 url: url,
                                 data: {
@@ -745,7 +745,7 @@ Drupal.behaviors.inner_search = function(context) {
                                     newVisibleRange(min, max);
                                 },
                             });
-              
+
                             newVisibleBox(min, max, false);
                             return false;
                         }
@@ -833,7 +833,7 @@ Drupal.behaviors.inner_search = function(context) {
                     resetZoom();
                     arrayOfZooms[id] = undefined;
                 });
-        
+
                 $('#' + masterChart.container.id + '-visible')
                 .addClass('pos-abs bs-solid pe-none')
                 .css('border-width', visibleBoxBorder)
@@ -852,7 +852,7 @@ Drupal.behaviors.inner_search = function(context) {
                 .css('top', masterChart.plotTop - 2)
                 .css('height', masterChart.plotHeight + 3)
                 .appendTo('#' + masterChart.container.id);
-        
+
                 $('#' + masterChart.container.id + '-visible-handle')
                 .addClass('pos-abs bs-solid bgc-white pe-vis cur-e')
                 .css('border-width', visibleHandleBorder)
@@ -870,7 +870,7 @@ Drupal.behaviors.inner_search = function(context) {
                     ratio = one - zero;
                     return false;
                 });
-          
+
                 createDetail(masterChart);
             });
         };
@@ -966,7 +966,7 @@ shadow: false,
                     data: data
                 }]
             }, function(detailChart) {
-          
+
                 $('<div>')
                 .attr('id', id +'-waiting')
                 .addClass('pos-abs bgp-center z20 bgr-no')
@@ -991,7 +991,7 @@ shadow: false,
                 if (yMax) {
                     $('#' + id +'-noresult').addClass('hidden');
                 }
-            
+
                 $('#' + detailChart.container.id).mousedown(function(e) {
                     isMouseDown = true;
                     currentObj = 'detail';
@@ -1010,10 +1010,10 @@ shadow: false,
                 towHighchartsNavigator(detailChart, masterChart);
             });
         };
-    
+
         // Preserving zoom after AJAX.
         arrayOfCharts[id] = {
-            'master': masterChart, 
+            'master': masterChart,
             'detail' : detailChart
         };
 
@@ -1027,10 +1027,10 @@ shadow: false,
         function towHighchartsNavigator(detailChart, masterChart) {
             add_mask(masterChart);
             add_mask(detailChart);
-      
+
             detailLeft = detailChart.xAxis[0].translate(visible_min, false) + detailChart.plotLeft;
             detailRight = detailChart.xAxis[0].translate(visible_max, false) + detailChart.plotLeft;
-      
+
             screenSelRange = {
                 min: detailChart.xAxis[0].translate(selectionMin, false) + detailChart.plotLeft,
                 max: detailChart.xAxis[0].translate(selectionMax, false) + detailChart.plotLeft
@@ -1043,12 +1043,12 @@ shadow: false,
 
             draw_handle(0, screenSelRange.min);
             draw_handle(1, screenSelRange.max);
-      
+
             function add_mask(chart) {
                 changeMask(chart, 0, selectionMin);
                 changeMask(chart, 1, selectionMax);
             }
-      
+
             function draw_handle(index, x) {
                 var top = $('#' + detailChart.container.id).height();
                 var handle_id = detailChart.container.id + '-handle-' + index;
@@ -1094,7 +1094,7 @@ shadow: false,
                         lastMousePos = e.clientX;
                         newVisibleBox(min, max);
                         arrayOfZooms[id] = {
-                            'min' : min, 
+                            'min' : min,
                             'max' : max
                         };
                         return false;
@@ -1105,7 +1105,7 @@ shadow: false,
                         lastMousePos = e.clientX;
                         newVisibleBox(min, max);
                         arrayOfZooms[id] = {
-                            'min' : min, 
+                            'min' : min,
                             'max' : max
                         };
                         break;
@@ -1116,7 +1116,7 @@ shadow: false,
             }
             return false;
         });
-    
+
         $(document).mouseup(function(e) {
             isMouseDown = false;
         });
@@ -1125,7 +1125,7 @@ shadow: false,
             detailChart.series[0].setData(data, false);
             newVisibleBox(globalMin, globalMax);
         }
-    
+
         function newVisibleBox(min, max, redrawDetail) {
             var rangewidth = max - min;
             var globalRandewidth = globalMax - globalMin;
@@ -1137,12 +1137,12 @@ shadow: false,
                 max = globalMax;
                 min = globalMax - rangewidth;
             }
-      
+
             // Move visible box on master.
             var left = masterChart.xAxis[0].translate(min, false) + masterChart.plotLeft;
             var width = masterChart.xAxis[0].translate(max, false) + masterChart.plotLeft - left;
             left = left - 2 * visibleHandleBorder;
-      
+
             $('#' + masterChart.container.id + '-visible')
             .removeClass('hidden')
             .css('left', left)
@@ -1150,7 +1150,7 @@ shadow: false,
 
             $('#' + masterChart.container.id + '-visible-handle')
             .css('right', visibleHandleOffset);
-      
+
             if (Math.abs(min - globalMin) <= globalRandewidth / 200 && Math.abs(max - globalMax) <= globalRandewidth / 200) {
                 $('#' + masterChart.container.id + '-visible').addClass('hidden');
             }
@@ -1158,26 +1158,26 @@ shadow: false,
                 newVisibleRange(min, max);
             }
         }
-    
+
         function newVisibleRange(min, max) {
-      
+
             // Setting extremes on master.
             detailChart.xAxis[0].setExtremes(min, max, true, false);
-      
+
             // Setting constants.
             visible_min = min;
             visible_max = max;
 
             detailLeft = detailChart.xAxis[0].translate(min, false) + detailChart.plotLeft;
             detailRight = detailChart.xAxis[0].translate(max, false) + detailChart.plotLeft;
-      
+
             // Redraw handles.
             currentIndex = 0;
             moveHandle(detailChart.xAxis[0].translate(plotSelRange.min, false) + detailChart.plotLeft, true);
             currentIndex = 1;
             moveHandle(detailChart.xAxis[0].translate(plotSelRange.max, false) + detailChart.plotLeft, true);
         }
-    
+
         function newHandlePos(newPos) {
             if (newPos > detailRight) {
                 return detailRight;
@@ -1201,7 +1201,7 @@ shadow: false,
             }
             return newPos;
         };
-    
+
         // Moves handle defined by currentIndex to screen position screenX,
         // and also moves masks on both charts.
         function moveHandle(screenX, same) {
@@ -1230,7 +1230,7 @@ shadow: false,
                 $('#' + handle_id).removeClass('hidden');
             }
         };
-    
+
         function displaySummary() {
             var new_min = limit2display(fieldtype, plotSelRange.min);
             var new_max = limit2display(fieldtype, plotSelRange.max);
@@ -1244,7 +1244,7 @@ shadow: false,
             $('#' + id).parent().find('[name="min"]').val(new_min);
             $('#' + id).parent().find('[name="max"]').val(new_max);
         };
-    
+
         function changeMask(chart,index, x) {
             var maskId = 'mask-' + index;
             var from;
@@ -1267,7 +1267,7 @@ shadow: false,
             });
         }
     }
-  
+
     $('div.tow-inner-search-highcharts-bar-container').each(function(index) {
         var id = $(this).attr('id');
         var datastring = $(this).parent().children('form').children('div').children('[name="data"]').val();
@@ -1278,13 +1278,13 @@ shadow: false,
         var selection_max = $(this).parent().find('[name="selection_max"]').val();
         var global_min = $(this).parent().find('[name="global_min"]').val();
         var global_max = $(this).parent().find('[name="global_max"]').val();
-    
+
         var active = true;
-    
+
         if (global_min == selection_min && global_max == selection_max) {
             active = false;
         }
-    
+
         datastring = datastring.substring(2, datastring.length - 2);
         datastring = datastring.split(', ');
         namestring = namestring.substring(3, namestring.length - 3);
@@ -1323,7 +1323,7 @@ shadow: false,
         $container
         .before('<div class="tow-highcharts-summary" id="' + id + '-summary"></div>');
         displaySummary();
-    
+
         return new Highcharts.Chart({
             chart: {
                 renderTo: id,
@@ -1399,7 +1399,7 @@ shadow: false,
                 }
             }
         });
-    
+
         function displaySummary() {
             var min = $('#' + id).parent().find('[name="selection_min"]').val(),
             max = $('#' + id).parent().find('[name="selection_max"]').val(),
@@ -1432,7 +1432,7 @@ shadow: false,
             },
             dataType: 'json'
         });
-    
+
         return false;
     });
 }

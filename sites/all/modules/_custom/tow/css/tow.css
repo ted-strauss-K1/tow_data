@@ -1,114 +1,114 @@
 .tow-dataset-field-link {
-  background: white;
+    background: white;
 }
 
 .tow-dataset-field-link.selected {
-  background: black;
-  color: white;
+    background: black;
+    color: white;
 }
 
 .tow-dataset-field-link.unavailable {
-  color: lightgrey;
+    color: lightgrey;
 }
 
 .comment .vud-widget-upanddown .down-score {
-  display: none;
+    display: none;
 }
 
 
 /* js hide() css() class substitutes*/
 .hidden {
-  display: none;
+    display: none;
 }
 
 .pos-rel {
-  position: relative;
+    position: relative;
 }
 
 .pos-abs {
-  position: absolute;
+    position: absolute;
 }
 
 .bs-solid {
-  border-style: solid;
+    border-style: solid;
 }
 
 .bc-grey {
-  border-color: grey;
+    border-color: grey;
 }
 
 .bw1 {
-  border-width: 1px;
+    border-width: 1px;
 }
 
 .pe-none {
-  pointer-events: none;
+    pointer-events: none;
 }
 
 .pe-vis {
-  pointer-events: visible;
+    pointer-events: visible;
 }
 
 .bgp-center {
-  background-position: center center;
+    background-position: center center;
 }
 
 .bgc-white {
-  background-color: white;
+    background-color: white;
 }
 
 .bgr-no {
-  background-repeat: no-repeat;
+    background-repeat: no-repeat;
 }
 
 .bgi-w {
-  background-image: url(../images/waiting.gif);
+    background-image: url(../images/waiting.gif);
 }
 
 .z9 {
-  z-index: 9;
+    z-index: 9;
 }
 
 .z10 {
-  z-index: 10;
+    z-index: 10;
 }
 
 .z20 {
-  z-index: 20;
+    z-index: 20;
 }
 
 .cur-e {
-  cursor: e-resize;
+    cursor: e-resize;
 }
 
 .t0h128w100 {
-  top: 0;
-  height: 128px;
-  width: 100%;
+    top: 0;
+    height: 128px;
+    width: 100%;
 }
 
 .t128h40w100 {
-  top: 128px;
-  height: 40px;
-  width: 100%;
+    top: 128px;
+    height: 40px;
+    width: 100%;
 }
 
 .ta-center {
-  text-align: center;
+    text-align: center;
 }
 
 .va-middle {
-  vertical-align: middle;
+    vertical-align: middle;
 }
 
 .fs10 {
-  font-size: 10px;
+    font-size: 10px;
 }
 
 
 /*Box with comment form*/
 .comcom {
-  height: auto !important;
-  background-color: transparent !important;
-  border: none !important;
+    height: auto !important;
+    background-color: transparent !important;
+    border: none !important;
 }
