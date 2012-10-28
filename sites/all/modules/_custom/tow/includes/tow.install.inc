@@ -177,6 +177,7 @@ function tow_install_fields() {
   $fields[] = tow_cck_integer('field_dataset_nid', 'saved_search', t('Dataset NID'), $weight++, $format, $exclude, 'number', 1);
   $fields[] = tow_cck_textfield('field_table_nid', 'saved_search', t('Table NID'), $weight++, $format, $exclude);
   $fields[] = tow_cck_textarea('field_search_constraints', 'saved_search', t('Search Constraints'), $weight++, $format, $exclude);
+  $fields[] = tow_cck_textarea('field_selected_fields', 'saved_search', t('Selected Fields'), $weight++, $format, $exclude);
   $fields[] = tow_cck_textfield('field_sc_hash', 'saved_search', t('SC Hash'), $weight++, $format, $exclude);
   
   /* Document fields. */
