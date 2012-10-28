@@ -1,5 +1,4 @@
 <?php
-// $Id: ajax_comments.admin.inc,v 1.1.2.2 2009/07/16 09:34:49 neochief Exp $
 
 /**
  * @file
@@ -25,6 +24,11 @@ function ajax_comments_settings() {
     '#title' => t('Blink new comment'),
     '#description' => t('This effect helps to find new comment after replying to long threads.'),
     '#default_value' => variable_get('ajax_comments_blink_new', TRUE),
+  );
+  $form['settings']['comment_bonus_api_fold_comments'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Display only first level of comments, fold replies'),
+    '#default_value' => variable_get('comment_bonus_api_fold_comments', FALSE),
   );
   $form['settings']['ajax_comments_default_row_count'] = array(
     '#type' => 'textfield',

@@ -54,6 +54,7 @@ function tow_saved_searches_list_block($nid = NULL) {
         $saved_searches[] = node_load($result->nid);
     }
 
+    $block['title'] = t('User analysis');
     $block['content'] = '';
 
     foreach ($saved_searches as $node) {
@@ -88,6 +89,30 @@ function tow_saved_searches_save_search_block() {
     return $block;
 }
 
+/**
+ * Search description block.
+ */
+function tow_saved_searches_description_block() {
+
+    // Construct block.
+    $block = array();
+    $block['title'] = t('Search description');
+
+    if (arg(0) != 'search_dataset') {
+        $block['content'] = '';
+    } else {
+        $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+        $rows_amount = $saved_response->response->numFound;
+        $ssd_form = tow_saved_searches_save_search_form(&$form_state, $rows_amount);
+        $block['content'] = 'Choose your search parameters';
+        if ($ssd_form['summary']['#value']) {
+            $block['content'] = $ssd_form['summary']['#value'];
+        }
+    }
+
+    return $block;
+}
+
 /* * **************************************************************************************************
  * Forms
  * ************************************************************************************************** */
@@ -104,10 +129,12 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
 
     // Saved search comment(title).
     $form['comment'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Share your findings by given a description and posting it'),
+        '#type' => 'textarea',
+        '#title' => NULL,
+        '#rows' => 2,
+        '#resizable' => false,
         '#attributes' => array(
-            'placeholder' => t('What\'s the story in this data?'),
+            'placeholder' => t('Explain your findings...'),
         ),
     );
 
@@ -137,7 +164,7 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
     // Button.
     $form['save_search'] = array(
         '#type' => 'submit',
-        '#value' => t('Save this search'),
+        '#value' => t('Share analysis'),
         '#validate' => array('tow_saved_searches_save_search_form_validate'),
         '#submit' => array('tow_saved_searches_save_search_form_submit'),
     );
@@ -327,13 +354,13 @@ function tow_saved_searches_saved_search_create($node, $ss_comment, $filters, $s
         $saved_search->body = tow_saved_searches_summary($node->nid, $filters, $selected_fields, $rows_amount);
         $saved_search->teaser = node_teaser($saved_search->body);
     }
-    
+
     // Save search constraints.
     $filters = tow_saved_searches_sort_constraints($filters);
     $selected_fields = tow_saved_searches_sort_selected_fields($selected_fields);
     $saved_search->field_search_constraints[0]['value'] = $filters;
     $saved_search->field_selected_fields[0]['value'] = $selected_fields;
-    
+
     // Calculate a hash.
     $saved_search->field_sc_hash[0]['value'] = md5($saved_search->field_search_constraints[0]['value'] . ' ' . $saved_search->field_selected_fields[0]['value']);
 

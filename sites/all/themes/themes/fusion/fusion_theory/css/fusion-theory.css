@@ -929,7 +929,7 @@ div.tow-highcharts-handle {
 {
 	padding: 1px;
     width: 100%;
-	 background: none repeat scroll 0 0 #CCCCCC;
+	 background:#666;
 }
 #block-tow-search_inner_field_list .collapsible legend a
 {

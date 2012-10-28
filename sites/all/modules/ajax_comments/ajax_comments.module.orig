@@ -109,17 +109,7 @@ function ajax_comments_post_comment_render($node, $cid) {
 /**
  * Implementation of hook_form_FORM_ID_alter().
  */
-function ajax_comments_form_comment_form_alter(&$form, $form_state) {	
-  // Add class for multiply comments form selection
-  $form['#attributes']['class'] = 'comment-form';
-  // Change form id for single/multiply comment form processing
-  if ($form['#id'] == 'comment-form') {
-    $form['#id'] = 'comment-form-1';
-    $form_num = 1;
-  } else {
-    $form_num = substr($form['#id'], strrpos($form['#id'], '-') + 1);   
-  }
-  	
+function ajax_comments_form_comment_form_alter(&$form, $form_state) {
   if ($form['nid']['#value']) {
     $node = node_load($form['nid']['#value']);
   }
@@ -141,7 +131,7 @@ function ajax_comments_form_comment_form_alter(&$form, $form_state) {
 
   if ($all_allowed || isset($allowed_node_types[$node->type]) && $allowed_node_types[$node->type]) {
     if ((arg(1) != 'edit') && (arg(1) != 'reply') && (arg(2) != 'edit') && (arg(2) != 'reply')) {
-      $form['#prefix'] = '<div id="comment-preview-' . $form_num . '"></div>';
+      $form['#prefix'] = '<div id="comment-preview"></div>';
 
       // Overriding PID param so it will appear on the form.
       $form['pid']['#type'] = 'hidden';
@@ -156,7 +146,7 @@ function ajax_comments_form_comment_form_alter(&$form, $form_state) {
 
       // We should set specific ID to let ahah wrapper know what to wrap on ajax
       // loaded comment-form even if we have many submit buttons on the page.
-      $form['preview']['#id'] = "ajax-comments-preview-" . $form_num;
+      $form['preview']['#id'] = "ajax-comments-preview";
       $form['preview']['#ahah'] = array(
         'path' => 'ajax_comments/js',
         'wrapper' => 'comment-preview',
@@ -166,7 +156,7 @@ function ajax_comments_form_comment_form_alter(&$form, $form_state) {
         'progress' => array('type' => '1bar', 'message' => t('Please wait...')),
       );
 
-      $form['submit']['#id'] = "ajax-comments-submit-" . $form_num;
+      $form['submit']['#id'] = "ajax-comments-submit";
       $form['submit']['#submit'] = array('ajax_comments_submit');
       $form['submit']['#ahah'] = array(
         'path' => 'ajax_comments/js',

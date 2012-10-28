@@ -95,6 +95,7 @@ function tow_block($op = 'list', $delta = 0) {
         $blocks['search_inner_field_list']['info'] = t('Inner search: field list');
         $blocks['saved_searches_list']['info'] = t('Saved Searches');
         $blocks['saved_searches_save_search']['info'] = t('Save this search');
+        $blocks['saved_searches_description']['info'] = t('Saved search description');
         $blocks['search_outer_sponsored']['info'] = t('Outer search: Sponsored');
         $blocks['search_outer_searchinput']['info'] = t('Outer search: Search input');
         $blocks['user_view']['info'] = t('User');
@@ -241,6 +242,11 @@ function tow_block($op = 'list', $delta = 0) {
                 return tow_saved_searches_save_search_block();
             }
 
+            // 'Search description' block.
+            if ($delta == 'saved_searches_description') {
+                return tow_saved_searches_description_block();
+            }
+
             // 'User' block.
             if ($delta == 'user_view') {
                 return tow_user_view_block();
@@ -322,7 +328,7 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
         $form['#submit'][] = 'tow_submit_maintanance_mode';
     }
 
-    //Add scripts for document node form 'stackoverflow style live preview'
+    // Add scripts for document node form 'stackoverflow style live preview'.
     if ($form_id == 'document_node_form') {
         drupal_add_css(drupal_get_path('module', 'tow') . '/js/wmd/wmd.css');
         drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');
@@ -448,6 +454,19 @@ function tow_init() {
         $node = node_load(arg(1));
         if ($node->type == 'dataset') {
             drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
+        }
+    }
+
+    // Add datepicker jquery ui.
+    if (arg(0) == 'node' && arg(1)) {
+        $node = node_load(arg(1));
+        if ($node->type == 'record') {
+            drupal_add_css('sites/all/libraries/jquery.ui/themes/base/jquery-ui.css');
+            drupal_add_css('sites/all/libraries/jquery.ui/themes/base/ui.datepicker.css');
+            drupal_add_css('sites/all/libraries/jquery.ui/themes/base/jquery-ui-timepicker-addon.css');
+            drupal_add_js(base_path() . 'sites/all/libraries/jquery.ui/ui/ui.datepicker.js');
+            drupal_add_js(base_path() . 'sites/all/libraries/jquery.ui/ui/jquery-ui-timepicker-addon.js');
+            drupal_add_js(drupal_get_path('module', 'tow') . '/js/record_datepicker.js');
         }
     }
 
