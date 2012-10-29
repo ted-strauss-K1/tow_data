@@ -12,6 +12,7 @@ Drupal.behaviors.inner_search = function(context) {
     var arrayOfCharts = {};
     var arrayOfZooms = {};
     var arrayOfCollapse = {};
+    var currentHash = location.hash;
 
     // Hide hidden facets.
     $('.apachesolr-hidden-facet', context).addClass('hidden');
@@ -398,7 +399,9 @@ Drupal.behaviors.inner_search = function(context) {
 
                 $('div#block-tow-search_inner_facets div.content').html(data.widgets);
                 $('div#block-tow-search_inner_field_list div.content').html(data.fields);
-                $('div#block-tow-saved_searches_save_search div.content').html(data.save_search);
+                $('div#block-tow-saved_searches_description div.content').html(data.save_search);
+                var html_sts = data.save_this_search.replace(data.save_search,'');
+                $('div#block-tow-saved_searches_save_search div.content').html(html_sts);
 
                 // Returns collapsibility.
                 Drupal.behaviors.collapse();
@@ -468,12 +471,19 @@ Drupal.behaviors.inner_search = function(context) {
         var equal = hash.indexOf("=");
         var selectedHref = hash.substr(equal + 1);
         filtersToSend = decodeURIComponent(selectedHref);
-        inner_search_ajax();
+        if (hash != currentHash) {
+            inner_search_ajax();
+        }
+        else if (hash == currentHash) {
+            $(window).load(function (){
+                inner_search_ajax();
+            });
+        }
     });
     $(window).hashchange();
 
     // AJAX text fields search.
-    $('.form-text').live('change', function() {
+    $('#block-tow-search_inner_facets .form-text').live('change', function() {
         if ($(this).val() != '') {
             var field = $(this).parent().parent().children('[name="field"]').val();
             var url = $(this).parent().parent().children('[name="url"]').val();
@@ -648,11 +658,11 @@ Drupal.behaviors.inner_search = function(context) {
         var detailBorder;
         var ratio;
         var screenSelRange = {
-            min: null,
+            min: null, 
             max: null
         };
         var plotSelRange = {
-            min: null,
+            min: null, 
             max: null
         };
         var detailLeft;
@@ -718,7 +728,7 @@ Drupal.behaviors.inner_search = function(context) {
                             var max = extremesObject.max;
 
                             arrayOfZooms[id] = {
-                                'min' : min,
+                                'min' : min, 
                                 'max' : max
                             };
                             $(window).css('cursor', 'wait');
@@ -974,7 +984,7 @@ shadow: false,
                 .css('top', detailChart.plotTop)
                 .css('width', detailChart.plotWidth)
                 .css('height', detailChart.plotHeight)
-                .css("background-image", "url('../images/waiting.gif')")
+                .addClass('bgi-w')//css("background-image", "url(../images/waiting.gif)")
                 .css('background-color', 'rgba(255,255,255, 0.8)')
                 .appendTo('#' + detailChart.container.id)
                 .addClass('hidden');
@@ -1013,7 +1023,7 @@ shadow: false,
 
         // Preserving zoom after AJAX.
         arrayOfCharts[id] = {
-            'master': masterChart,
+            'master': masterChart, 
             'detail' : detailChart
         };
 
@@ -1094,7 +1104,7 @@ shadow: false,
                         lastMousePos = e.clientX;
                         newVisibleBox(min, max);
                         arrayOfZooms[id] = {
-                            'min' : min,
+                            'min' : min, 
                             'max' : max
                         };
                         return false;
@@ -1105,7 +1115,7 @@ shadow: false,
                         lastMousePos = e.clientX;
                         newVisibleBox(min, max);
                         arrayOfZooms[id] = {
-                            'min' : min,
+                            'min' : min, 
                             'max' : max
                         };
                         break;
@@ -1488,4 +1498,3 @@ function time(timestamp) {
     var seconds = ('0' + date.getUTCSeconds()).slice(-2);
     return hours + ':' + minutes + ':' + seconds;
 }
-
