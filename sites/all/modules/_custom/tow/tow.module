@@ -345,6 +345,10 @@ Describe your analysis methods.
 
 You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.';
         }
+        if (is_numeric($_GET['dataset'])) {
+          $form['field_doc_dataset_nid'][0]['#default_value']['value'] = $_GET['dataset'];
+          $form['field_doc_dataset_nid']['#access'] = false;
+        }
     }
 
     // Call special callbacks for some kinds of forms.
