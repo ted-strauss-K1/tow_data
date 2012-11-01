@@ -317,8 +317,6 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
       $subquery->add_filter('sis_cck_field_access_type', 1);
       $query->add_subquery($subquery, 'OR');
     }
-      
-    //  $query->add_filter('-sis_cck_field_access_type', '2');
     
     $params['fl'] .= ',tid';
     $params['stats'] = 'true';
@@ -350,7 +348,7 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
  * for the case of outer search (by user).
  */
 function tow_apachesolr_dataset_user_modify_query(&$query, &$params) {
-    $user = user_load(arg(1));
+    $viewed_user = user_load(arg(1));
 
     $categories_vid = _tow_apachesolr_taxonomy_get_vid('Dataset tags');
     $tags_vid = _tow_apachesolr_taxonomy_get_vid('Dataset categories');
@@ -367,9 +365,14 @@ function tow_apachesolr_dataset_user_modify_query(&$query, &$params) {
 
     // Add filters.
     $query->add_filter('type', 'dataset');
-    $query->add_filter('-sis_cck_field_access_type', '2');
-    $query->add_filter('uid', $user->uid);
-
+    $query->add_filter('uid', $viewed_user->uid);
+    
+    global $user;
+    $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1));
+    if (($user->uid != $viewed_user->uid) && !$is_admin) {
+      $query->add_filter('sis_cck_field_access_type', 2, TRUE);
+    }
+ 
     $query->set_solrsort('created', 'desc');
 }
 
