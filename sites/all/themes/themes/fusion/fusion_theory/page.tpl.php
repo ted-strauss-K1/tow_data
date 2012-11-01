@@ -35,7 +35,21 @@ $("#block-menu-menu-login-register-username").show();
 });
 });
 </script>
+<script>
+$(function() {
+   var access = $(".page-table table.dataTable:first"), pos = access.offset();
+   console.log('pos: ', pos.top);
+   
+    $(window).scroll(function() { 
+     if ($(this).scrollTop() > 450) {
+ access.addClass('fixed_head');
+     } else {
+        access.removeClass('fixed_head');
+     }
+   })
 
+});
+</script>
 
 
 

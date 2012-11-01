@@ -1,0 +1,2202 @@
+<?php
+/**
+ * @file
+ * HTTP Parallel Request Library module.
+ *
+ */
+
+/**
+ * Error code indicating that the request made by httprl_request() exceeded
+ * the maximum allowed redirects without reaching the final target.
+ */
+define('HTTPRL_REQUEST_ALLOWED_REDIRECTS_EXHAUSTED', -2);
+
+/**
+ * Error code indicating that the request made by httprl_request() exceeded
+ * the maximum allowed redirects without reaching the final target.
+ */
+define('HTTPRL_REQUEST_FWRITE_FAIL', -3);
+
+/**
+ * Error code indicating that all requests made by httprl_send_request()
+ * exceeded the specified timeout.
+ */
+define('HTTPRL_FUNCTION_TIMEOUT', -4);
+
+/**
+ * Error code indicating that this request made by stream_select() couldn't
+ * open a read and/or write steam after a minimum of ~2.5 seconds.
+ */
+define('HTTPRL_STREAM_SELECT_TIMEOUT', -5);
+
+/**
+ * parse_url() was unable to parse the given url.
+ */
+define('HTTPRL_URL_PARSE_ERROR', -1001);
+
+/**
+ * Given URL is missing a schema (http, https, feed).
+ */
+define('HTTPRL_URL_MISSING_SCHEMA', -1002);
+
+/**
+ * Invalid schema. Only http, feed, and https allowed currently.
+ */
+define('HTTPRL_URL_INVALID_SCHEMA', -1003);
+
+/**
+ * An error occurred before the system connect() call. This is most likely due
+ * to a problem initializing the stream.
+ */
+define('HTTPRL_ERROR_INITIALIZING_STREAM', -1004);
+
+/**
+ * Error code indicating that software caused the connection to be aborted.
+ *
+ * @see http://msdn.microsoft.com/en-us/library/aa924071.aspx
+ */
+define('HTTPRL_REQUEST_ABORTED', -10053);
+
+/**
+ * Error code indicating that the request exceeded the specified timeout.
+ *
+ * @see http://msdn.microsoft.com/en-us/library/aa924071.aspx
+ */
+define('HTTPRL_REQUEST_TIMEOUT', -10060);
+
+/**
+ * Error code indicating that the endpoint server has refused or dropped the
+ * connection.
+ *
+ * @see http://msdn.microsoft.com/en-us/library/aa924071.aspx
+ */
+define('HTTPRL_CONNECTION_REFUSED', -10061);
+
+/**
+ * Implement hook_menu().
+ */
+function httprl_menu() {
+  $items = array();
+
+  // Non blocking test URL.
+  $items['admin/httprl-test'] = array(
+    'title' => 'HTTPRL',
+    'page callback' => 'httprl_nonblockingtest_page',
+    'access callback' => TRUE,
+    'description' => 'Test URL to make sure non blocking requests work.',
+    'type' => MENU_CALLBACK,
+    'file' => 'httprl.nonblocktest.inc',
+  );
+
+  // Admin page.
+  if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+    $config_url = 'admin/config/development/httprl';
+  }
+  else {
+    $config_url = 'admin/settings/httprl';
+  }
+  $items[$config_url] = array(
+    'title' => 'HTTPRL',
+    'description' => 'Configure HTTPRL Settings.',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('httprl_admin_settings_form'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'httprl.admin.inc',
+  );
+
+  // Async Function Callback.
+  $items['httprl_async_function_callback'] = array(
+    'title' => 'HTTPRL',
+    'page callback' => 'httprl_async_page',
+    'access callback' => TRUE,
+    'description' => 'URL for async function workers.',
+    'type' => MENU_CALLBACK,
+    'file' => 'httprl.async.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implement hook_cron().
+ *
+ * This hook should be ran about once a day to once an hour.
+ */
+function httprl_cron() {
+  // Let expiration times vary by 30 seconds or so.
+  $fuzz_factor = 30;
+
+  // Remove expired locks from the semaphore database table.
+  if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+    db_delete('semaphore')
+      ->condition('value', 'httprl')
+      ->condition('expire', REQUEST_TIME - $fuzz_factor, '<')
+      ->execute();
+  }
+  else {
+    db_query("DELETE FROM semaphore WHERE value = 'httprl' AND expire < %f", time() - $fuzz_factor);
+  }
+}
+
+/**
+ * Helper function to build an URL for asynchronous requests to self.
+ *
+ * @param $path
+ *   Path to a URI excluding everything to the left and including the base path.
+ * @param $detect_schema
+ *   If TRUE it will see if this request is https; if so, it will set the full
+ *   url to be https as well.
+ */
+function httprl_build_url_self($path = '', $detect_schema = FALSE) {
+  global $base_path, $conf;
+  static $variable_loaded = FALSE;
+
+  // Server auth.
+  $auth = '';
+  if (isset($_SERVER['AUTH_TYPE']) && $_SERVER['AUTH_TYPE'] == 'Basic') {
+    $auth = $_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW'] . '@';
+  }
+
+  // Pull in the httprl_server_addr variable from the DB.
+  if (!isset($conf['httprl_server_addr']) && empty($variable_loaded)) {
+    if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+      $result = db_query('SELECT value FROM {variable} WHERE name = :name', array(':name' => 'httprl_server_addr'))->fetchAssoc();
+      if (!empty($result)) {
+        $conf['httprl_server_addr'] = unserialize($result['value']);
+      }
+    }
+    else {
+      $result = db_query("SELECT value FROM {variable} WHERE name = '%s'", 'httprl_server_addr');
+      if (!empty($result)) {
+        $conf['httprl_server_addr'] = unserialize(db_result($result));
+      }
+    }
+    $variable_loaded = TRUE;
+  }
+
+  // Host.
+  $ip = variable_get('httprl_server_addr', FALSE);
+  if ($ip == -1) {
+    $ip = $_SERVER['HTTP_HOST'];
+  }
+  elseif (empty($ip)) {
+    $ip = empty($_SERVER['SERVER_ADDR']) ? '127.0.0.1' : $_SERVER['SERVER_ADDR'];
+    // Check for IPv6. If IPv6 convert to IPv4 if possible.
+    if (strpos($ip, ':') !== FALSE) {
+      if ($_SERVER['SERVER_ADDR'] == '::1') {
+        $ip = "127.0.0.1";
+      }
+      elseif (preg_match('/^::\d+.\d+.\d+.\d+$/', $ip)) {
+        $ip = substr($ip, 2);
+      }
+      elseif (!empty($_SERVER['HTTP_HOST'])) {
+        // Last option is to use the IP from the host name.
+        $ip = gethostbyname($_SERVER['HTTP_HOST']);
+      }
+    }
+  }
+
+  // Port.
+  $port = '';
+//   if (   isset($_SERVER['SERVER_PORT'])
+//       && is_numeric($_SERVER['SERVER_PORT'])
+//       && ($_SERVER['SERVER_PORT'] != 80 || $_SERVER['SERVER_PORT'] != 443)
+//         ) {
+//     $port = ':' . $_SERVER['SERVER_PORT'];
+//   }
+
+  // http or https.
+  $schema = httprl_get_server_schema() . '://';
+
+  return $schema . $auth . $ip . $port . $base_path . $path;
+}
+
+/**
+ * Run parse_url and handle any errors.
+ *
+ * @param $url
+ *   String containing the URL to be parsed by parse_url().
+ * @param &$result
+ *   Result object; used only for error handling in this function.
+ * @param &$return
+ *   Return array; used only for error handling in this function.
+ * @param $options
+ *   Options array; used only for error handling in this function.
+ *
+ * @return $uri
+ *   Array from parse_url().
+ */
+function httprl_parse_url($url, &$result, &$return, $options) {
+  // Parse the URL and make sure we can handle the schema.
+  $uri = @parse_url($url);
+
+  if (empty($uri)) {
+    $result->error = 'Unable to parse URL.';
+    $result->code = HTTPRL_URL_PARSE_ERROR;
+
+    // Add in failed request to the output.
+    // Continue if the URL passed in is bad.
+    $return[$url] = httprl_send_request(FALSE, $url, $result, $options);
+    return FALSE;
+  }
+  if (!isset($uri['scheme'])) {
+    $result->error = 'Missing schema.';
+    $result->code = HTTPRL_URL_MISSING_SCHEMA;
+
+    // Add in failed request to the output.
+    // Continue if no scheme was passed in.
+    $return[$url] = httprl_send_request(FALSE, $url, $result, $options);
+    return FALSE;
+  }
+
+  return $uri;
+}
+
+/**
+ * Set the default options in the $options array.
+ *
+ * @param &$options
+ *   Array containing options.
+ */
+function httprl_set_default_options(&$options) {
+  global $base_root;
+
+  // Merge the default options.
+  $options += array(
+    'headers' => array(),
+    'method' => 'GET',
+    'data' => NULL,
+    'max_redirects' => 3,
+    'timeout' => 30.0,
+    'context' => NULL,
+    'blocking' => TRUE,
+    'version' => '1.0',
+    'referrer' => FALSE,
+    'domain_connections' => 8,
+    'global_connections' => 128,
+    'global_timeout' => 120.0,
+    'chunk_size_read' => 32768,
+    'chunk_size_write' => 1024,
+    'async_connect' => TRUE,
+  );
+
+  // Merge the default headers.
+  // Set user agent to drupal.
+  // Set connection to closed to prevent keep-alive from causing a timeout.
+  $options['headers'] += array(
+    'User-Agent' => 'Drupal (+http://drupal.org/)',
+    'Connection' => 'close',
+  );
+
+  // Set referrer to current page.
+  if (!isset($options['headers']['Referer']) && !empty($options['referrer'])) {
+    $options['headers']['Referer'] = $base_root . request_uri();
+  }
+
+  // stream_socket_client() requires timeout to be a float.
+  $options['timeout'] = (float) $options['timeout'];
+}
+
+/**
+ * If server uses a proxy, change the request to utilize said proxy.
+ *
+ * @param &$uri
+ *   Array from parse_url().
+ * @param &$options
+ *   Array containing options.
+ * @param $url
+ *   String containing the URL.
+ *
+ * @return $proxy_server
+ *   String containing the proxy servers host name if one is to be used.
+ */
+function httprl_setup_proxy(&$uri, &$options, $url) {
+  // Proxy setup
+  $proxy_server = variable_get('proxy_server', '');
+  // Use a proxy if one is defined and the host is not on the excluded list.
+  if ($proxy_server && _httprl_use_proxy($uri['host'])) {
+    // Set the scheme so we open a socket to the proxy server.
+    $uri['scheme'] = 'proxy';
+    // Set the path to be the full URL.
+    $uri['path'] = $url;
+    // Since the full URL is passed as the path, we won't use the parsed query.
+    unset($uri['query']);
+
+    // Add in username and password to Proxy-Authorization header if needed.
+    if ($proxy_username = variable_get('proxy_username', '')) {
+      $proxy_password = variable_get('proxy_password', '');
+      $options['headers']['Proxy-Authorization'] = 'Basic ' . base64_encode($proxy_username . (!empty($proxy_password) ? ":" . $proxy_password : ''));
+    }
+    // Some proxies reject requests with any User-Agent headers, while others
+    // require a specific one.
+    $proxy_user_agent = variable_get('proxy_user_agent', '');
+    // The default value matches neither condition.
+    if (is_null($proxy_user_agent)) {
+      unset($options['headers']['User-Agent']);
+    }
+    elseif ($proxy_user_agent) {
+      $options['headers']['User-Agent'] = $proxy_user_agent;
+    }
+  }
+  return $proxy_server;
+}
+
+/**
+ * Create the TCP/SSL socket connection string.
+ *
+ * @param $uri
+ *   Array from parse_url().
+ * @param &$options
+ *   Array containing options.
+ * @param $proxy_server
+ *   String containing the proxy servers host name if one is to be used.
+ * @param &$result
+ *   Result object; used only for error handling in this function.
+ * @param &$return
+ *   Return array; used only for error handling in this function.
+ * @param $url
+ *   String containing the URL.
+ *
+ * @return $socket
+ *   String containing the TCP/SSL socket connection URI.
+ */
+function httprl_set_socket($uri, &$options, $proxy_server, &$result, &$return, $url) {
+  switch ($uri['scheme']) {
+    case 'proxy':
+      // Make the socket connection to a proxy server.
+      $socket = 'tcp://' . $proxy_server . ':' . variable_get('proxy_port', 8080);
+      // The Host header still needs to match the real request.
+      $options['headers']['Host'] = $uri['host'];
+      $options['headers']['Host'] .= isset($uri['port']) && $uri['port'] != 80 ? ':' . $uri['port'] : '';
+      break;
+
+    case 'http':
+    case 'feed':
+      $port = isset($uri['port']) ? $uri['port'] : 80;
+      $socket = 'tcp://' . $uri['host'] . ':' . $port;
+      // RFC 2616: "non-standard ports MUST, default ports MAY be included".
+      // We don't add the standard port to prevent from breaking rewrite rules
+      // checking the host that do not take into account the port number.
+      if (empty($options['headers']['Host'])) {
+        $options['headers']['Host'] = $uri['host'];
+      }
+      if ($port != 80) {
+        $options['headers']['Host'] .= ':' . $port;
+      }
+      break;
+
+    case 'https':
+      // Note: Only works when PHP is compiled with OpenSSL support.
+      $port = isset($uri['port']) ? $uri['port'] : 443;
+      $socket = 'ssl://' . $uri['host'] . ':' . $port;
+      if (empty($options['headers']['Host'])) {
+        $options['headers']['Host'] = $uri['host'];
+      }
+      if ($port != 443) {
+        $options['headers']['Host'] .= ':' . $port;
+      }
+      break;
+
+    default:
+      $result->error = 'Invalid schema ' . $uri['scheme'] . '.';
+      $result->code = HTTPRL_URL_INVALID_SCHEMA;
+
+      // Add in failed request to the output.
+      // Continue if an invalid scheme was passed in.
+      $return[$url] = httprl_send_request(FALSE, $url, $result, $options);
+      return FALSE;
+  }
+
+  return $socket;
+}
+
+/**
+ * Select which connect flags to use in stream_socket_client().
+ *
+ * @param &$options
+ *   Array containing options.
+ * @param $uri
+ *   Array from parse_url().
+ *
+ * @return $flags
+ *   STREAM_CLIENT_CONNECT or STREAM_CLIENT_ASYNC_CONNECT|STREAM_CLIENT_CONNECT.
+ */
+function httprl_set_connection_flag(&$options, $uri) {
+  // Set connection flag.
+  if ($options['async_connect']) {
+    // Workaround for PHP bug with STREAM_CLIENT_ASYNC_CONNECT and SSL
+    // https://bugs.php.net/bug.php?id=48182 - Fixed in PHP 5.2.11 and 5.3.1
+    if ($uri['scheme'] == 'https' && (version_compare(PHP_VERSION, '5.2.11', '<') || version_compare(PHP_VERSION, '5.3.0', '='))) {
+      $flags = STREAM_CLIENT_CONNECT;
+      $options['async_connect'] = FALSE;
+    }
+    else {
+      $flags = STREAM_CLIENT_ASYNC_CONNECT|STREAM_CLIENT_CONNECT;
+    }
+  }
+  else {
+    $flags = STREAM_CLIENT_CONNECT;
+  }
+  return $flags;
+}
+
+/**
+ * If data is being sent out in this request, handle it correctly.
+ *
+ * If $options['data'] is not a string, convert it to a string using
+ * http_build_query(). Set the Content-Length header correctly. Set the
+ * Content-Type to application/x-www-form-urlencoded if not already set and
+ * using method is POST.
+ *
+ * @param &$options
+ *   Array containing options.
+ */
+function httprl_handle_data(&$options) {
+  // Encode data if not already done.
+  if (!is_null($options['data']) && !is_string($options['data'])) {
+    $options['data'] = http_build_query($options['data'], '', '&');
+  }
+
+  // Only add Content-Length if we actually have any content or if it is a POST
+  // or PUT request. Some non-standard servers get confused by Content-Length in
+  // at least HEAD/GET requests, and Squid always requires Content-Length in
+  // POST/PUT requests.
+  $content_length = httprl_strlen($options['data']);
+  if ($content_length > 0 || $options['method'] == 'POST' || $options['method'] == 'PUT') {
+    $options['headers']['Content-Length'] = $content_length;
+  }
+
+  // Set the Content-Type to application/x-www-form-urlencoded if the data is
+  // not empty, the Content-Type is not set, and the method is POST.
+  if ($content_length > 0 && !isset($options['headers']['Content-Type']) && $options['method'] == 'POST') {
+    $options['headers']['Content-Type'] = 'application/x-www-form-urlencoded';
+  }
+}
+
+/**
+ * Set the Authorization header if a user is set in the URI.
+ *
+ * @param $uri
+ *   Array from parse_url().
+ * @param &$options
+ *   Array containing options.
+ */
+function httprl_basic_auth($uri, &$options) {
+  // If the server URL has a user then attempt to use basic authentication.
+  if (isset($uri['user'])) {
+    $options['headers']['Authorization'] = 'Basic ' . base64_encode($uri['user'] . (!empty($uri['pass']) ? ":" . $uri['pass'] : ''));
+  }
+}
+
+/**
+ * Build the request string.
+ *
+ * This string is what gets sent to the server once a connection has been made.
+ *
+ * @param $uri
+ *   Array from parse_url().
+ * @param $options
+ *   Array containing options.
+ *
+ * @return $request
+ *   String containing the data that will be written to the server.
+ */
+function httprl_build_request_string($uri, $options) {
+  // Construct the path to act on.
+  $path = isset($uri['path']) ? $uri['path'] : '/';
+  if (isset($uri['query'])) {
+    $path .= '?' . $uri['query'];
+  }
+
+  // Assemble the request together. HTTP version requires to be a float.
+  $request = $options['method'] . ' ' . $path . ' HTTP/' . sprintf("%.1F", $options['version']) . "\r\n";
+  foreach ($options['headers'] as $name => $value) {
+    $request .= $name . ': ' . trim($value) . "\r\n";
+  }
+  $request .= "\r\n" . $options['data'];
+
+  return $request;
+}
+
+/**
+ * Queue up a HTTP request in httprl_send_request().
+ *
+ * @see drupal_http_request()
+ *
+ * This is a flexible and powerful HTTP client implementation. Correctly
+ * handles GET, POST, PUT or any other HTTP requests.
+ *
+ * @param $urls
+ *   A string or an array containing a fully qualified URI(s).
+ * @param array $options
+ *   (optional) An array that can have one or more of the following elements:
+ *   - headers: An array containing request headers to send as name/value pairs.
+ *     Some of the more useful headers:
+ *     - For POST: 'Content-Type' => 'application/x-www-form-urlencoded',
+ *     - Limit number of bytes server sends back: 'Range' => 'bytes=0-1024',
+ *     - Compression: 'Accept-Encoding' => 'gzip, deflate',
+ *     - Let server know where request came from: 'Referer' => 'example.com',
+ *     - Content-Types that are acceptable: 'Accept' => 'text/plain',
+ *     - Send Cookies: 'Cookie' => 'key1=value1; key2=value2;',
+ *     - Skip the cache: 'Cache-Control' => 'no-cache',
+ *     - Skip the cache: 'Pragma' => 'no-cache',
+ *     List of headers: http://en.wikipedia.org/wiki/List_of_HTTP_header_fields
+ *   - method: A string containing the request method. Defaults to 'GET'.
+ *   - data: A string containing the request body, formatted as
+ *     'param=value&param=value&...'. Defaults to NULL.
+ *   - max_redirects: An integer representing how many times a redirect
+ *     may be followed. Defaults to 3.
+ *   - timeout: A float representing the maximum number of seconds a connection
+ *     may take. The default is 30 seconds. If a timeout occurs, the error code
+ *     is set to the HTTPRL_REQUEST_TIMEOUT constant.
+ *   - context: A context resource created with stream_context_create().
+ *   - blocking: set to FALSE to make this not care about the returned data.
+ *   - version: HTTP Version 1.0 or 1.1. Default is 1.0 for a good reason.
+ *   - referrer: TRUE - send current page; FALSE - do not send current
+ *     page. Default is FALSE.
+ *   - domain_connections: Maximum number of simultaneous connections to a given
+ *     domain name. Default is 8.
+ *   - global_connections: Maximum number of simultaneous connections that can
+ *     be open on the server. Default is 128.
+ *   - global_timeout: A float representing the maximum number of seconds the
+ *     function call may take. The default is 30 seconds. If a timeout occurs,
+ *     the error code is set to the HTTPRL_FUNCTION_TIMEOUT constant. Default is
+ *     120 seconds.
+ *   - chunk_size_write: max size of what will be written in fwrite().
+ *   - chunk_size_read: max size of what will be read from fread().
+ *   - async_connect: default is TRUE. FALSE may give more info on errors but is
+ *     generally slower.
+ *   - callback: Array where the first value is an array of options; the result
+ *     is passed to the callback function as the first argument, the other
+ *     options passed in this array are passed in after the result. The options
+ *     array needs to contain the function name and the target variable for the
+ *     result of the function.
+ *   - background_callback: Array where the first value is an array of options;
+ *     the result is passed to the callback function as the first argument, the
+ *     other options passed in this array are passed in after the result. The
+ *     options array needs to contain the function name. If the return or
+ *     printed keys are not defined this function will run in non blocking mode
+ *     and the parent will not be able to get the result; if the return or
+ *     printed keys defined then this function will run in blocking mode and the
+ *     returned and printed data as well as any variables passed by reference
+ *     will be available to the parent.
+ *   - alter_all_streams_function: Function name. This function runs at the end
+ *     of httprl_post_processing() so that one can alter the $responses and
+ *     $streams variables inside of httprl_send_request(). Defined function
+ *     should have the following parameters:
+ *       ($id, &$responses, &$streams, $current_time).
+ *
+ * @return array
+ *   Array where key is the URL and the value is the return value from
+ *   httprl_send_request().
+ */
+function httprl_request($urls, $options = array()) {
+  // See if a full bootstrap has been done given the Drupal version.
+  if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+    $level = drupal_bootstrap();
+    $full_bootstrap = ($level == DRUPAL_BOOTSTRAP_FULL) ? TRUE : FALSE;
+  }
+  else {
+    $full_bootstrap = isset($GLOBALS['multibyte']) ? TRUE : FALSE;
+  }
+
+  // Transform string to an array.
+  if (!is_array($urls)) {
+    $temp = $urls;
+    unset($urls);
+    $urls = array($temp);
+    unset($temp);
+  }
+
+  if ($full_bootstrap) {
+    // Allow other modules to alter things before we get started.
+    // Run hook_pre_httprl_request_alter().
+    $data = array($urls, $options);
+    drupal_alter('pre_httprl_request', $data);
+    list($urls, $options) = $data;
+  }
+
+  $connections = array();
+  $return = array();
+  // Set things up; but do not perform any IO.
+  foreach ($urls as $url) {
+    $result = new stdClass();
+
+    // Parse the given URL and skip if an error occurred.
+    $uri = httprl_parse_url($url, $result, $return, $options);
+    if (empty($uri)) {
+      continue;
+    }
+    // Setup the default options.
+    httprl_set_default_options($options);
+
+    // Set the proxy server if one is required.
+    $proxy_server = httprl_setup_proxy($uri, $options, $url);
+    // Create the socket string and skip if an error occurred.
+    $socket = httprl_set_socket($uri, $options, $proxy_server, $result, $return, $url);
+    if (empty($socket)) {
+      continue;
+    }
+
+    // Use a sync of async connection.
+    $flags = httprl_set_connection_flag($options, $uri);
+    // If any data is given, do the right things to this request so it works.
+    httprl_handle_data($options);
+    // Build the request string.
+    $request = httprl_build_request_string($uri, $options);
+
+    // Put all variables into an array for easy alterations.
+    $connections[] = array($socket, $flags, $uri, $url, $options, $result, $request);
+  }
+
+  if ($full_bootstrap) {
+    // Allow other programs to alter the connections before they are made.
+    // run hook_httprl_request_alter().
+    drupal_alter('httprl_request', $connections);
+  }
+
+  // Make the connection and queue up the request.
+  foreach ($connections as $connection) {
+    list($socket, $flags, $uri, $url, $options, $result, $request) = $connection;
+
+    if (isset($result->error)) {
+      // Add in failed request to the output.
+      // Continue if an error was triggered in the alter hook.
+      $return[$url] =  httprl_send_request(FALSE, $url, $result, $options);
+      continue;
+    }
+
+    // Start the timer.
+    $timer_name = mt_rand();
+    timer_start($timer_name);
+    $fp = FALSE;
+
+    // Connection loop.
+    $count = 0;
+    while (!$fp) {
+      // Try the connection again not using async if in https mode.
+      if ($count > 0) {
+        if ($flags === STREAM_CLIENT_ASYNC_CONNECT|STREAM_CLIENT_CONNECT && $uri['scheme'] == 'https') {
+          $flags = STREAM_CLIENT_CONNECT;
+          $options['async_connect'] = FALSE;
+        }
+        else {
+          // Break out of while loop if we can't connect.
+          break;
+        }
+      }
+
+      // Open the connection.
+      if (empty($options['context'])) {
+        $fp = @stream_socket_client($socket, $errno, $errstr, $options['timeout'], $flags);
+      }
+      else {
+        // Create a stream with context. Allows verification of a SSL certificate.
+        $fp = @stream_socket_client($socket, $errno, $errstr, $options['timeout'], $flags, $options['context']);
+      }
+      $count++;
+    }
+
+    // Stop the timer.
+    $options['timeout'] = $options['timeout'] - timer_read($timer_name) / 1000;
+    timer_stop($timer_name);
+
+    // Make sure the socket opened properly.
+    if (!$fp) {
+      // Make sure drupal_convert_to_utf8() is available.
+      if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+        require_once DRUPAL_ROOT . '/includes/unicode.inc';
+      }
+      else {
+        require_once './includes/unicode.inc';
+      }
+      // Convert error message to utf-8. Using ISO-8859-1 (Latin-1) as source
+      // encoding could be wrong; it is a simple workaround :)
+      $errstr = trim(drupal_convert_to_utf8($errstr, 'ISO-8859-1'));
+      if (!$errno) {
+        // If $errno is 0, it is an indication that the error occurred
+        // before the connect() call. This is most likely due to a problem
+        // initializing the stream.
+        $result->code = HTTPRL_ERROR_INITIALIZING_STREAM;
+        $result->error = !empty($errstr) ? $errstr : t('Error initializing socket @socket.', array('@socket' => $socket));
+      }
+      else {
+        // When a network error occurs, we use a negative number so it does not
+        // clash with the HTTP status codes.
+        $result->code = (int) -$errno;
+        $result->error = !empty($errstr) ? $errstr : t('Error opening socket @socket.', array('@socket' => $socket));
+      }
+
+      // Add in failed request to the output.
+      // Continue if a stream was not created.
+      $return[$url] = httprl_send_request(FALSE, $url, $result, $options);
+      continue;
+    }
+
+    // Set the stream to be non blocking.
+    stream_set_blocking($fp, 0);
+
+    // Put this request into the queue to be processed.
+    $return[$url] = httprl_send_request($fp, $url, $request, $options);
+    continue;
+  }
+  return $return;
+}
+
+/**
+ * Perform many HTTP requests.
+ *
+ * @see drupal_http_request()
+ *
+ * This is a flexible and powerful HTTP client implementation. Correctly
+ * handles GET, POST, PUT or any other HTTP requests.
+ *
+ * @param $fp
+ *   (optional) A file pointer.
+ * @param $request
+ *   (optional) A string containing the request headers to send to the server.
+  * @param $timeout
+ *   (optional) An integer holding the stream timeout value.
+ * @return bool
+ *   TRUE if function worked as planed.
+ */
+function httprl_send_request($fp = NULL, $url = '', $request = '', $options = '') {
+  static $responses = array();
+  static $streams = array();
+  static $global_timeout = 0;
+  static $counter = 0;
+  static $stream_write_count = 0;
+  static $global_connection_count = 0;
+  static $global_connection_limit = 0;
+  static $domain_connection_count = array();
+  static $domain_connection_limit = array();
+
+  // If given a file pointer, store data in a static and exit.
+  if (!is_null($fp)) {
+    $result = new stdClass();
+    $result->url = $url;
+    $result->request = $request;
+    $result->status = 'in progress';
+    $result->data = '';
+    $result->options = $options;
+    $result->chunk_size = 1024;
+    $responses[$counter] = $result;
+
+    // If file pointer is not empty add it to the connection pool.
+    if (!empty($fp)) {
+      $streams[$counter] = $fp;
+      $stream_write_count++;
+      $counter++;
+      $global_timeout = max(1, $options['global_timeout']);
+      $global_connection_limit = max(1, $options['global_connections']);
+      $domain_connection_limit[$options['headers']['Host']] = max(1, $options['domain_connections']);
+      return TRUE;
+    }
+    // Connection was never made.
+    else {
+      $result->status = 'Connection not made.';
+      $result->code = $request->code;
+      $result->error = $request->error;
+      $counter++;
+      return FALSE;
+    }
+  }
+
+  // Exit if there is nothing to do.
+  if (empty($responses)) {
+    return FALSE;
+  }
+
+  // Start the timer.
+  $timer_name = mt_rand();
+  timer_start($timer_name);
+
+  // Run the loop as long as we have a stream to read/write to.
+  $empty_runs = 0;
+  $stream_select_timeout = 1;
+  while (!empty($streams)) {
+
+    // Get time.
+    $current_time = timer_read($timer_name) / 1000;
+    $global_time = $global_timeout - timer_read($timer_name) / 1000;
+
+    // Initialize connection limits.
+    $this_run = array();
+    $global_connection_count = 0;
+    $domain_connection_count = array();
+
+    // Inspect each stream, checking for timeouts and connection limits.
+    foreach ($streams as $id => $fp) {
+      // Calculate how much time is left of the original timeout value.
+      $timeout = $responses[$id]->options['timeout'] - $current_time;
+      if ($timeout <= 0) {
+        // Stream timed out & the request is not done.
+        if ($responses[$id]->status == 'in progress') {
+          $responses[$id]->error = 'Request timed out. Write.';
+          // If stream is not done writing, then remove one from the write count.
+          $stream_write_count--;
+        }
+        else {
+          $responses[$id]->error = 'Request timed out.';
+        }
+        $responses[$id]->code = HTTPRL_REQUEST_TIMEOUT;
+        $responses[$id]->status = 'Done.';
+        $responses[$id]->options['timeout'] = $timeout;
+        fclose($fp);
+        unset($streams[$id]);
+
+        // Do post processing on the stream.
+        httprl_post_processing($id, $responses, $streams, $timer_name);
+        continue;
+      }
+
+      // See if function timed out.
+      if ($global_time <= 0) {
+        // Function timed out & the request is not done.
+        if ($responses[$id]->status == 'in progress') {
+          $responses[$id]->error = 'Function timed out. Write.';
+          // If stream is not done writing, then remove one from the write count.
+          $stream_write_count--;
+        }
+        else {
+          $responses[$id]->error = 'Function timed out.';
+        }
+        $responses[$id]->code = HTTPRL_FUNCTION_TIMEOUT;
+        $responses[$id]->status = 'Done.';
+        $responses[$id]->options['timeout'] = $global_time;
+        fclose($fp);
+        unset($streams[$id]);
+
+        // Do post processing on the stream.
+        httprl_post_processing($id, $responses, $streams, $timer_name);
+        continue;
+      }
+
+      // See if end server has dropped the connection.
+      if ($empty_runs > 10) {
+        $socket_name = stream_socket_get_name($fp, TRUE);
+        if (empty($socket_name)) {
+          // Connection was dropped.
+          if ($responses[$id]->status == 'in progress') {
+            // If stream is not done writing, then remove one from the write count.
+            $responses[$id]->error = 'Connection refused by destination. Write.';
+            $stream_write_count--;
+          }
+          else {
+            $responses[$id]->error = 'Connection refused by destination.';
+          }
+          $responses[$id]->code = HTTPRL_CONNECTION_REFUSED;
+          $responses[$id]->status = 'Done.';
+          $responses[$id]->options['timeout'] = $timeout;
+          fclose($fp);
+          unset($streams[$id]);
+
+          // Do post processing on the stream.
+          httprl_post_processing($id, $responses, $streams, $timer_name);
+          continue;
+        }
+      }
+
+      // Set the connection limits for this run.
+      // Get the host name.
+      $host = $responses[$id]->options['headers']['Host'];
+      // Count up the number of connections.
+      $global_connection_count++;
+      if (empty($domain_connection_count[$host])) {
+        $domain_connection_count[$host] = 1;
+      }
+      else {
+        $domain_connection_count[$host]++;
+      }
+      // If the conditions are correct, let the stream be ran in this loop.
+      if ($global_connection_limit >= $global_connection_count && $domain_connection_limit[$host] >= $domain_connection_count[$host]) {
+        $this_run[$id] = $fp;
+      }
+    }
+
+    // All streams removed; exit loop.
+    if (empty($this_run) || empty($streams)) {
+      break;
+    }
+
+    // Set the read and write vars to the streams var.
+    $read = $write = $this_run;
+    $except = array();
+    // Do some voodoo and open all streams at once. Wait 25ms for streams to
+    // respond.
+    $n = stream_select($read, $write, $except, $stream_select_timeout, 25000);
+    $stream_select_timeout = 0;
+
+    // We have some streams to read/write to.
+    $rw_done = FALSE;
+    if (!empty($n)) {
+      $empty_runs = 0;
+
+      // Readable sockets either have data for us, or are failed connection
+      // attempts.
+      foreach ($read as $r) {
+        $id = array_search($r, $streams);
+        // Make sure ID is in the streams.
+        if ($id === FALSE) {
+          continue;
+        }
+        // Do not read from the non blocking sockets.
+        if (empty($responses[$id]->options['blocking'])) {
+          fclose($r);
+          continue;
+        }
+
+        // Read socket.
+        $chunk = fread($r, $responses[$id]->chunk_size);
+        if (httprl_strlen($chunk) > 0) {
+          $rw_done = TRUE;
+        }
+        $responses[$id]->data .= $chunk;
+
+        // Process the headers if we have some data.
+        if (!empty($responses[$id]->data) && empty($responses[$id]->headers) &&
+            (    strpos($responses[$id]->data, "\r\n\r\n")
+              || strpos($responses[$id]->data, "\n\n")
+              || strpos($responses[$id]->data, "\r\r")
+                )
+                  ) {
+          // See if the headers are in the data stream.
+          httprl_parse_data($responses[$id]);
+          if (!empty($responses[$id]->headers)) {
+            // Stream was a redirect, kill & close this connection; redirect is
+            // being followed now.
+            if (!empty($responses[$id]->options['internal_states']['kill'])) {
+              fclose($r);
+              unset($streams[$id]);
+              unset($responses[$id]);
+              continue;
+            }
+
+            // Now that we have the headers, increase the chunk size.
+            $responses[$id]->chunk_size = $responses[$id]->options['chunk_size_read'];
+          }
+        }
+
+        // Get stream data.
+        $info = stream_get_meta_data($r);
+        $alive = !$info['eof'] && !feof($r) && !$info['timed_out'] && httprl_strlen($chunk);
+        if (!$alive) {
+          if ($responses[$id]->status == 'in progress') {
+            $responses[$id]->error = 'Connection refused by destination. Write.';
+            $responses[$id]->code = HTTPRL_CONNECTION_REFUSED;
+          }
+          $responses[$id]->status = 'Done.';
+          $responses[$id]->options['timeout'] = $responses[$id]->options['timeout'] - $current_time;
+          fclose($r);
+          unset($streams[$id]);
+
+          // Do post processing on the stream.
+          httprl_post_processing($id, $responses, $streams, $timer_name);
+        }
+        else {
+          $responses[$id]->status = 'Reading data';
+        }
+      }
+
+      // Write to each stream if it is available.
+      if ($stream_write_count > 0) {
+        foreach ($write as $w) {
+          $id = array_search($w, $streams);
+          // Make sure ID is in the streams & status is for writing.
+          if ($id === FALSE || empty($responses[$id]->status) || $responses[$id]->status != 'in progress') {
+            continue;
+          }
+
+          // Calculate the number of bytes we need to write to the stream.
+          if (!empty($responses[$id]->request_left)) {
+            $data_to_send = $responses[$id]->request_left;
+          }
+          else {
+            $data_to_send = $responses[$id]->request;
+          }
+          $len = httprl_strlen($data_to_send);
+          if ($len > 0) {
+            // Write to the stream.
+            $bytes = fwrite($w, $data_to_send, min($responses[$id]->options['chunk_size_write'], $len));
+          }
+          else {
+            // Nothing to write.
+            $bytes = $len;
+          }
+
+          // See if we are done with writing.
+          if ($bytes === FALSE) {
+            // fwrite failed.
+            $responses[$id]->error = 'fwrite() failed.';
+            $responses[$id]->code = HTTPRL_REQUEST_FWRITE_FAIL;
+            $responses[$id]->status = 'Done.';
+            $responses[$id]->options['timeout'] = $responses[$id]->options['timeout'] - $current_time;
+            $stream_write_count--;
+            @fclose($w);
+            unset($streams[$id]);
+
+            // Do post processing on the stream.
+            httprl_post_processing($id, $responses, $streams, $timer_name);
+          }
+          elseif ($bytes >= $len) {
+            $stream_write_count--;
+
+            // Clear out the request_left variable.
+            if (isset($responses[$id]->request_left)) {
+              unset($responses[$id]->request_left);
+            }
+
+            // If this is a non blocking request then close the connection and destroy the stream.
+            if (empty($responses[$id]->options['blocking'])) {
+              $responses[$id]->options['timeout'] = $responses[$id]->options['timeout'] - $current_time;
+              fclose($w);
+              unset($streams[$id]);
+              $responses[$id]->status = 'Non-Blocking request sent out. Not waiting for the response.';
+            }
+            else {
+              // All data has been written to the socket. We are read only from here on out.
+              $responses[$id]->status = "Request sent, waiting for response.";
+            }
+            $rw_done = TRUE;
+          }
+          else {
+            // There is more data to write to this socket. Cut what was sent
+            // across the stream and resend whats left next time in the loop.
+            $responses[$id]->request_left = substr($data_to_send, $bytes);
+            $rw_done = TRUE;
+          }
+        }
+      }
+    }
+    else {
+      $empty_runs++;
+    }
+    if ($empty_runs > 100) {
+      // If stream_select hasn't returned a valid read or write stream after
+      // 2.5+ seconds, error out.
+      foreach ($streams as $id => $fp) {
+        // stream_select timed out & the request is not done.
+        $responses[$id]->error = 'stream_select() timed out.';
+        $responses[$id]->code = HTTPRL_STREAM_SELECT_TIMEOUT;
+        $responses[$id]->status = 'Done.';
+        $responses[$id]->options['timeout'] = $responses[$id]->options['timeout'] - $current_time;
+        fclose($fp);
+        unset($streams[$id]);
+
+        // Do post processing on the stream.
+        httprl_post_processing($id, $responses, $streams, $timer_name);
+      }
+      break;
+    }
+  }
+
+  // Stop the timer.
+  timer_stop($timer_name);
+
+  $output = array();
+  foreach ($responses as $id => &$result) {
+    if (isset($result->options['internal_states']['background_function_return'])) {
+      continue;
+    }
+    // Copy the result to the output array.
+    if (isset($result->url)) {
+      $output[$result->url] = $result;
+    }
+  }
+
+  // Free memory/reset static variables.
+  $responses = array();
+  $streams = array();
+  $global_timeout = 0;
+  $counter = 0;
+  $stream_write_count = 0;
+  $global_connection_count = 0;
+  $global_connection_limit = 0;
+  $domain_connection_count = array();
+  $domain_connection_limit = array();
+
+  return $output;
+}
+
+/**
+ * Extract the header and meta data from the http data stream.
+ *
+ * @see drupal_http_request()
+ *
+ * @param $result
+ *   An object from httprl_send_request.
+ */
+function httprl_parse_data(&$result) {
+  // If in non blocking mode, skip.
+  if (empty($result->options['blocking'])) {
+    continue;
+  }
+
+  // If the headers are already parsed, skip.
+  if (!empty($result->headers)) {
+    continue;
+  }
+
+  // Parse response headers from the response body.
+  // Be tolerant of malformed HTTP responses that separate header and body with
+  // \n\n or \r\r instead of \r\n\r\n.
+  $response = $result->data;
+  list($response, $result->data) = preg_split("/\r\n\r\n|\n\n|\r\r/", $response, 2);
+  $response = preg_split("/\r\n|\n|\r/", $response);
+
+  // Parse the response status line.
+  $protocol_code_array = explode(' ', trim(array_shift($response)), 3);
+  $result->protocol = $protocol_code_array[0];
+  $code = (int) $protocol_code_array[1];
+  // If the response does not include a description, don't try to process it.
+  $result->status_message = isset($protocol_code_array[2]) ? $protocol_code_array[2] : '';
+  unset($protocol_code_array);
+
+  $result->headers = array();
+
+  // Parse the response headers.
+  $cookie_primary_counter = 0;
+  while ($line = trim(array_shift($response))) {
+    list($name, $value) = explode(':', $line, 2);
+    $name = strtolower($name);
+
+    // Parse cookies before they get added to the header.
+    if ($name == 'set-cookie') {
+      // Extract the key value pairs for this cookie.
+      foreach (explode(';', $value) as $cookie_name_value) {
+        $temp = explode('=', trim($cookie_name_value));
+        $cookie_key = trim($temp[0]);
+        $cookie_value = isset($temp[1]) ? trim($temp[1]) : '';
+        unset($temp);
+        // The cookie name-value pair always comes first (RFC 2109 4.2.2).
+        if (!isset($result->cookies[$cookie_primary_counter])) {
+          $result->cookies[$cookie_primary_counter] = array(
+            'name' => $cookie_key,
+            'value' => $cookie_value,
+          );
+        }
+        // Extract the rest of the attribute-value pairs.
+        else {
+          $result->cookies[$cookie_primary_counter] += array(
+            $cookie_key => $cookie_value,
+          );
+        }
+      }
+      $cookie_primary_counter++;
+    }
+
+    // Add key value pairs to the header; including cookies.
+    if (isset($result->headers[$name]) && $name == 'set-cookie') {
+      // RFC 2109: the Set-Cookie response header comprises the token Set-
+      // Cookie:, followed by a comma-separated list of one or more cookies.
+      $result->headers[$name] .= ',' . trim($value);
+    }
+    else {
+      $result->headers[$name] = trim($value);
+    }
+  }
+
+  $responses = array(
+    100 => 'Continue',
+    101 => 'Switching Protocols',
+    200 => 'OK',
+    201 => 'Created',
+    202 => 'Accepted',
+    203 => 'Non-Authoritative Information',
+    204 => 'No Content',
+    205 => 'Reset Content',
+    206 => 'Partial Content',
+    300 => 'Multiple Choices',
+    301 => 'Moved Permanently',
+    302 => 'Found',
+    303 => 'See Other',
+    304 => 'Not Modified',
+    305 => 'Use Proxy',
+    307 => 'Temporary Redirect',
+    400 => 'Bad Request',
+    401 => 'Unauthorized',
+    402 => 'Payment Required',
+    403 => 'Forbidden',
+    404 => 'Not Found',
+    405 => 'Method Not Allowed',
+    406 => 'Not Acceptable',
+    407 => 'Proxy Authentication Required',
+    408 => 'Request Time-out',
+    409 => 'Conflict',
+    410 => 'Gone',
+    411 => 'Length Required',
+    412 => 'Precondition Failed',
+    413 => 'Request Entity Too Large',
+    414 => 'Request-URI Too Large',
+    415 => 'Unsupported Media Type',
+    416 => 'Requested range not satisfiable',
+    417 => 'Expectation Failed',
+    500 => 'Internal Server Error',
+    501 => 'Not Implemented',
+    502 => 'Bad Gateway',
+    503 => 'Service Unavailable',
+    504 => 'Gateway Time-out',
+    505 => 'HTTP Version not supported',
+  );
+  // RFC 2616 states that all unknown HTTP codes must be treated the same as the
+  // base code in their class.
+  if (!isset($responses[$code])) {
+    $code = floor($code / 100) * 100;
+  }
+  $result->code = $code;
+
+  switch ($code) {
+    case 200: // OK
+    case 304: // Not modified
+      break;
+
+    case 301: // Moved permanently
+    case 302: // Moved temporarily
+    case 307: // Moved temporarily
+      $location = @parse_url($result->headers['location']);
+
+      // If location isn't fully qualified URL (as per W3 RFC2616), build one.
+      if (empty($location['scheme']) || empty($location['host'])) {
+        // Get the important parts from the original request.
+        $original_location = @parse_url($result->url);
+        // Assume request is to self if none of this was setup correctly.
+        $location['scheme'] = !empty($location['scheme']) ? $location['scheme'] : $original_location['scheme'];
+        $location['host'] = !empty($location['host']) ? $location['host'] : !empty($original_location['host']) ? $original_location['host'] : $_SERVER['HTTP_HOST'];
+        $location['port'] = !empty($location['port']) ? $location['port'] : !empty($original_location['port']) ? $original_location['port'] : '';
+        $location = httprl_glue_url($location);
+      }
+      else {
+        $location = $result->headers['location'];
+      }
+
+      // Set internal redirect states.
+      $result->options['internal_states']['redirect_code_array'][] = $code;
+      $result->options['internal_states']['redirect_url_array'][] = $location;
+      if (!isset($result->options['internal_states']['original_url'])) {
+        $result->options['internal_states']['original_url'] = $result->url;
+      }
+
+      // Error out if we hit the max redirect.
+      if ($result->options['max_redirects'] <= 0) {
+        $result->code = HTTPRL_REQUEST_ALLOWED_REDIRECTS_EXHAUSTED;
+        $result->error = 'Maximum allowed redirects exhausted.';
+      }
+      else {
+        // Redirect to the new location.
+        // TODO: Send cookies in the redirect request if domain/path match.
+        $result->options['max_redirects']--;
+        if (isset($result->options['headers']['Referer'])) {
+          $result->options['headers']['Referer'] = $result->url;
+        }
+        // Remove the host from the header.
+        unset($result->options['headers']['Host']);
+        // Send new request.
+        httprl_request($location, $result->options);
+        // Kill this request.
+        $result->options['internal_states']['kill'] = TRUE;
+      }
+
+      break;
+
+    default:
+      $result->error = $result->status_message;
+  }
+}
+
+/**
+ * Run post processing on the request if we are done reading.
+ *
+ * Decode transfer-encoding and content-encoding.
+ * Reconstruct the internal redirect arrays.
+ *
+ * @param $result
+ *   An object from httprl_send_request.
+ */
+function httprl_post_processing($id, &$responses, &$streams, $timer_name) {
+  // Create the result reference.
+  $result = &$responses[$id];
+
+  // Assemble redirects.
+  httprl_reconstruct_redirects($result);
+
+  // Decode chunked transfer-encoding and gzip/deflate content-encoding if we
+  // have a successful read; code is greater than 0.
+  if ($result->code > 0) {
+    httprl_decode_data($result);
+  }
+
+  // If this is a background callback request, extract the data and return.
+  if (isset($result->options['internal_states']['background_function_return']) && isset($result->headers['content-type']) && $result->headers['content-type'] == 'application/x-www-form-urlencoded') {
+    httprl_extract_background_callback_data($result);
+    return;
+  }
+
+  // See if a full bootstrap has been done given the Drupal version.
+  if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+    $level = drupal_bootstrap();
+    $full_bootstrap = ($level == DRUPAL_BOOTSTRAP_FULL) ? TRUE : FALSE;
+  }
+  else {
+    $full_bootstrap = isset($GLOBALS['multibyte']) ? TRUE : FALSE;
+  }
+  // Allow other modules to alter the result.
+  if ($full_bootstrap) {
+    // Call hook_httprl_post_processing_alter().
+    drupal_alter('httprl_post_processing', $result);
+  }
+
+  // Run callback so other modules can do stuff in the event loop.
+  if (   $full_bootstrap
+      && !empty($result->options['callback'])
+      && is_array($result->options['callback'])
+        ) {
+    httprl_run_callback($result);
+  }
+
+  // Run background_callback.
+  if (   !empty($result->options['background_callback'])
+      && is_array($result->options['background_callback'])
+        ) {
+    httprl_queue_background_callback($result->options['background_callback'], $result);
+  }
+
+  // Allow a user defined function to alter all $responses and $streams.
+  if ($full_bootstrap && !empty($result->options['alter_all_streams_function']) && function_exists($result->options['alter_all_streams_function'])) {
+    $current_time = timer_read($timer_name) / 1000;
+    $result->options['alter_all_streams_function']($id, $responses, $streams, $current_time);
+  }
+}
+
+/**
+ * Set the return and printed values & any pass by reference values from a
+ * background callback operation.
+ *
+ * @param $result
+ *   An object from httprl_send_request.
+ */
+function httprl_extract_background_callback_data(&$result) {
+  // Extract data from string.
+  $data = array();
+  parse_str($result->data, $data);
+  $data = unserialize(current($data));
+
+  // Set return and printed values.
+  if (isset($data['return'])) {
+    $result->options['internal_states']['background_function_return'] = $data['return'];
+  }
+  if (isset($data['printed'])) {
+    $result->options['internal_states']['background_function_printed'] = $data['printed'];
+  }
+
+  // Set any pass by reference values.
+  httprl_recursive_array_reference_extract($result->options['internal_states']['background_function_args'], $data['args']);
+}
+
+/**
+ * Replace data in place so pass by reference sill works.
+ *
+ * @param $array
+ *   An array containing the references if any.
+ * @param $data
+ *   An array that has the new values to copy into $array.
+ * @param $depth
+ *   Only go 10 levels deep. Prevent infinite loops.
+ */
+function httprl_recursive_array_reference_extract(&$array, $data, $depth = 0) {
+  $depth++;
+  foreach ($array as $key => &$value) {
+    if (isset($data[$key])) {
+      if (is_array($data[$key]) && is_array($value) && $depth < 10) {
+        $value = httprl_recursive_array_reference_extract($value, $data[$key], $depth);
+      }
+      else {
+        $value = $data[$key];
+      }
+    }
+    else {
+      $value = NULL;
+    }
+  }
+  // Copy new keys into the data structure.
+  foreach ($data as $key => $value) {
+    if (isset($array[$key])) {
+      continue;
+    }
+    $array[$key] = $value;
+  }
+}
+
+/**
+ * Will run the given callback returning values and what might have been
+ * printed by that function, as well as respecting any pass by reference values.
+ *
+ * @param $result
+ *   An object from httprl_send_request.
+ */
+function httprl_run_callback(&$result) {
+  // Get options.
+  $callback_options = $result->options['callback'][0];
+  // Merge in values by reference.
+  $result->options['callback'][0] = &$result;
+
+  // Capture anything printed out.
+  if (array_key_exists('printed', $callback_options)) {
+    ob_start();
+  }
+  // Call function.
+  $callback_options['return'] = call_user_func_array($callback_options['function'], $result->options['callback']);
+  if (array_key_exists('printed', $callback_options)) {
+    $callback_options['printed'] = ob_get_contents();
+    ob_end_clean();
+  }
+
+  // Add options back into the callback array.
+  if (isset($result->options['callback'])) {
+    array_unshift($result->options['callback'], $callback_options);
+  }
+}
+
+/**
+ * Will run the given callback returning values and what might have been
+ * printed by that function, as well as respecting any pass by reference values.
+ *
+ * @param $args
+ *   An array of arguments, first key value pair is used to control the
+ *   callback function. The rest of the key value pairs will be arguments for
+ *   the callback function.
+ * @param $result
+ *   (optional) An object from httprl_send_request. If this is set, this will
+ *   be the first argument of the function.
+ */
+function httprl_queue_background_callback(&$args, &$result = NULL) {
+  // Use a counter to prevent key collisions in httprl_send_request().
+  static $counter;
+  if (!isset($counter)) {
+    $counter = 0;
+  }
+  $counter++;
+
+  // Get options.
+  $callback_options = $args[0];
+
+  if (is_null($result)) {
+    array_shift($args);
+  }
+  else {
+    // Merge in this request by reference.
+    $args[0] = &$result;
+  }
+
+  // Set blocking mode.
+  if (isset($callback_options['return']) || isset($callback_options['printed'])) {
+    $mode = TRUE;
+  }
+  else {
+    $mode = FALSE;
+  }
+  // Make sure some array keys exist.
+  if (!isset($callback_options['return'])) {
+    $callback_options['return'] = '';
+  }
+  if (!isset($callback_options['function'])) {
+    $callback_options['function'] = '';
+  }
+
+  // Acquire lock for this run.
+  $locked = FALSE;
+  $counter = 0;
+  while (!$locked && $counter < 20) {
+    $id = 'httprl_' . hash('sha512', mt_rand() . time());
+    $locked = lock_acquire($id);
+  }
+
+  // Make sure lock exists after this process is dead.
+  if (empty($mode)) {
+    // Remove from the global locks variable.
+    global $locks;
+    unset($locks[$id]);
+
+    // Remove the lock_id reference in the database.
+    if (variable_get('lock_inc', './includes/lock.inc') === './includes/lock.inc') {
+      if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+        db_update('semaphore')
+          ->fields(array('value' => 'httprl'))
+          ->condition('name', $id)
+          ->condition('value', _lock_id())
+          ->execute();
+      }
+      else {
+        db_query("UPDATE {semaphore} SET value = '%s' WHERE name = '%s' AND value = '%s'", 'httprl', $id, _lock_id());
+      }
+    }
+  }
+
+  // Get URL to call function in background.
+  if (empty($callback_options['url'])) {
+    $url = httprl_build_url_self('httprl_async_function_callback?count=' . $counter);
+  }
+  else {
+    $url = $callback_options['url'];
+  }
+  // Create data array and options for request.
+  $options = array(
+    'data' => array(
+      'master_key' => hash('sha512', drupal_get_private_key()),
+      'temp_key' => $id,
+      'mode' => $mode,
+      'function' => $callback_options['function'],
+      'args' => serialize($args),
+    ),
+    'internal_states' => array(
+      'background_function_return' => &$callback_options['return'],
+      'background_function_args' => &$args,
+    ),
+    'blocking' => $mode,
+    'method' => 'POST',
+  );
+  if (isset($callback_options['printed'])) {
+    $options['internal_states']['background_function_printed'] = &$callback_options['printed'];
+  }
+  if (isset($callback_options['options']) && is_array($callback_options['options'])) {
+    $options += $callback_options['options'];
+  }
+  // Send Request.
+  httprl_request($url, $options);
+}
+
+/**
+ * Will decode chunked transfer-encoding and gzip/deflate content-encoding.
+ *
+ * @param $result
+ *   An object from httprl_send_request.
+ */
+function httprl_decode_data(&$result) {
+  if (isset($result->headers['transfer-encoding']) && $result->headers['transfer-encoding'] == 'chunked') {
+    $stream_position = 0;
+    $output = '';
+    $data = $result->data;
+    while ($stream_position < httprl_strlen($data)) {
+      // Get the number of bytes to read for this chunk.
+      $rawnum = substr($data, $stream_position, strpos(substr($data, $stream_position), "\r\n") + 2);
+      $num = hexdec(trim($rawnum));
+      // Get the position to read from.
+      $stream_position += httprl_strlen($rawnum);
+      // Extract the chunk.
+      $chunk = substr($data, $stream_position, $num);
+      // Decompress if compressed.
+      if (isset($result->headers['content-encoding'])) {
+        if ($result->headers['content-encoding'] == 'gzip') {
+          $chunk = gzinflate(substr($chunk, 10));
+        }
+        elseif ($result->headers['content-encoding'] == 'deflate') {
+          $chunk = gzinflate($chunk);
+        }
+      }
+      // Glue the chunks together.
+      $output .= $chunk;
+      $stream_position += httprl_strlen($chunk);
+    }
+    $result->data = $output;
+  }
+  // Decompress if compressed.
+  elseif (isset($result->headers['content-encoding'])) {
+    if ($result->headers['content-encoding'] == 'gzip') {
+      $result->data = gzinflate(substr($result->data, 10));
+    }
+    elseif ($result->headers['content-encoding'] == 'deflate') {
+      $result->data = gzinflate($result->data);
+    }
+  }
+}
+
+/**
+ * Reconstruct the internal redirect arrays.
+ *
+ * @param $result
+ *   An object from httprl_send_request.
+ */
+function httprl_reconstruct_redirects(&$result) {
+  // Return if original_url is not set.
+  if (empty($result->options['internal_states']['original_url'])) {
+    return;
+  }
+  // Set the original url.
+  $result->url = $result->options['internal_states']['original_url'];
+
+  // Set the redirect code.
+  $result->redirect_code_array = $result->options['internal_states']['redirect_code_array'];
+  $result->redirect_code = array_pop($result->options['internal_states']['redirect_code_array']);
+
+  // Set the redirect url.
+  $result->redirect_url_array = $result->options['internal_states']['redirect_url_array'];
+  $result->redirect_url = array_pop($result->options['internal_states']['redirect_url_array']);
+
+  // Cleanup.
+  unset($result->options['internal_states']['original_url'], $result->options['internal_states']['redirect_code_array'], $result->options['internal_states']['redirect_url_array']);
+  if (empty($result->options['internal_states'])) {
+    unset($result->options['internal_states']);
+  }
+}
+
+/**
+ * Output text, close connection, continue processing in the background.
+ *
+ * @param $output
+ *  string - Text to output to open connection.
+ * @param $wait
+ *  bool - Wait 1 second?
+ * @param $content_type
+ *  string - Content type header.
+ * @param $length
+ *  int - Content length.
+ */
+function httprl_background_processing($output, $wait = TRUE, $content_type = "text/html; charset=utf-8", $length = 0) {
+  // Can't do background processing if headers are already sent.
+  if (headers_sent()) {
+    return FALSE;
+  }
+
+  // Calculate Content Length
+  if ($length == 0) {
+    $output .= "\n";
+    $length = (httprl_strlen($output)-1);
+  }
+  // Prime php for background operations
+  $loop = 0;
+  while (ob_get_level() && $loop < 25) {
+    ob_end_clean();
+    $loop++;
+  }
+  header("Connection: close");
+  ignore_user_abort();
+
+  // Output headers & data
+  ob_start();
+  header("Content-type: " . $content_type);
+  header("Expires: Sun, 19 Nov 1978 05:00:00 GMT");
+  header("Cache-Control: no-cache");
+  header("Cache-Control: must-revalidate");
+  header("Content-Length: " . $length);
+  header("Connection: close");
+  print($output);
+  ob_end_flush();
+  flush();
+  // wait for 1 second
+  if ($wait) {
+    sleep(1);
+  }
+
+  // text returned and connection closed.
+  // Do background processing. Time taken after should not effect page load times.
+  return TRUE;
+}
+
+/**
+ * Get the length of a string in bytes.
+ *
+ * @param $string
+ *   get string length
+ */
+function httprl_strlen($string) {
+  static $mb_strlen;
+  if (!isset($mb_strlen)) {
+    $mb_strlen = function_exists('mb_strlen');
+  }
+  if ($mb_strlen) {
+    return mb_strlen($string, '8bit');
+  }
+  else {
+    return strlen($string);
+  }
+}
+
+/**
+ * Alt to http_build_url().
+ *
+ * @see http://php.net/parse-url#85963
+ *
+ * @param $parsed
+ *   array from parse_url()
+ * @return string
+ *   URI is returned.
+ */
+function httprl_glue_url($parsed) {
+  if (!is_array($parsed)) {
+    return FALSE;
+  }
+
+  $uri = isset($parsed['scheme']) ? $parsed['scheme'] . ':' . ((strtolower($parsed['scheme']) == 'mailto') ? '' : '//') : '';
+  $uri .= isset($parsed['user']) ? $parsed['user'] . (isset($parsed['pass']) ? ':' . $parsed['pass'] : '') . '@' : '';
+  $uri .= isset($parsed['host']) ? $parsed['host'] : '';
+  $uri .= !empty($parsed['port']) ? ':' . $parsed['port'] : '';
+
+  if (isset($parsed['path'])) {
+    $uri .= (substr($parsed['path'], 0, 1) == '/') ? $parsed['path'] : ((!empty($uri) ? '/' : '' ) . $parsed['path']);
+  }
+
+  $uri .= isset($parsed['query']) ? '?' . $parsed['query'] : '';
+  $uri .= isset($parsed['fragment']) ? '#' . $parsed['fragment'] : '';
+
+  return $uri;
+}
+
+/**
+ * Return the server schema (http or https).
+ *
+ * @return string
+ *   http OR https.
+ */
+function httprl_get_server_schema() {
+  return (   (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on')
+          || (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] == 'https')
+          || (isset($_SERVER['HTTP_HTTPS']) && $_SERVER['HTTP_HTTPS'] == 'on')
+            ) ? 'https' : 'http';
+}
+
+/**
+ * Send out a fast 403 and exit.
+ */
+function httprl_fast403() {
+  global $base_path;
+
+  // Set headers.
+  if (!headers_sent()) {
+    header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
+    header('X-HTTPRL: Forbidden.');
+  }
+
+  // Print simple 403 page.
+  print '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">' . "\n";
+  print '<html>';
+  print '<head><title>403 Forbidden</title></head>';
+  print '<body><h1>Forbidden</h1>';
+  print '<p>You are not authorized to access this page.</p>';
+  print '<p><a href="' . $base_path . '">Home</a></p>';
+  print '<!-- httprl_fast403 -->';
+  print '</body></html>';
+
+  // Exit Script.
+  httprl_call_exit();
+}
+
+/**
+ * Release a lock previously acquired by lock_acquire().
+ *
+ * This will release the named lock.
+ *
+ * @param $name
+ *   The name of the lock.
+ */
+function httprl_lock_release($name) {
+  if (variable_get('lock_inc', './includes/lock.inc') !== './includes/lock.inc') {
+    lock_release($name);
+  }
+  else {
+    global $locks;
+
+    unset($locks[$name]);
+    if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+      db_delete('semaphore')
+        ->condition('name', $name)
+        ->execute();
+    }
+    else {
+      db_query("DELETE FROM {semaphore} WHERE name = '%s'", $name);
+    }
+  }
+}
+
+/**
+ * Pretty print data.
+ *
+ * @param $data
+ *   Data In.
+ * @return
+ *   Human readable HTML version of the data.
+ */
+function httprl_pr($data) {
+  // Get extra arguments passed in.
+  $data = func_get_args();
+  if (count($data) == 1) {
+    $data = array_pop($data);
+  }
+
+  // Remove non UTF-8 Characters, escape HTML markup, remove extra new lines.
+  $output = array_filter(explode("\n", htmlentities(iconv('utf-8', 'utf-8//IGNORE', print_r($data, TRUE)), ENT_QUOTES, 'UTF-8')));
+
+  // Whitespace compression.
+  foreach ($output as $key => $value) {
+    if (str_replace('    ', '', $value) == "(") {
+      $output[$key-1] .= ' (';
+      unset($output[$key]);
+    }
+  }
+
+  // Replace whitespace with html markup.
+  $output = str_replace('    ', '&nbsp;&nbsp;&nbsp;&nbsp;', nl2br(implode("\n", $output))) . '<br />';
+  return $output;
+}
+
+/**
+ * Helper function for determining hosts excluded from needing a proxy.
+ *
+ * @return
+ *   TRUE if a proxy should be used for this host.
+ */
+function _httprl_use_proxy($host) {
+  $proxy_exceptions = variable_get('proxy_exceptions', array('localhost', '127.0.0.1'));
+  return !in_array(strtolower($host), $proxy_exceptions, TRUE);
+}
+
+/**
+ * Returns a persistent variable.
+ *
+ * This version ignores the $conf global and reads directly from the database.
+ *
+ * Case-sensitivity of the variable_* functions depends on the database
+ * collation used. To avoid problems, always use lower case for persistent
+ * variable names.
+ *
+ * @param $name
+ *   The name of the variable to return.
+ * @param $default
+ *   The default value to use if this variable has never been set.
+ * @return
+ *   The value of the variable.
+ *
+ * @see variable_del(), variable_set()
+ */
+function httprl_variable_get($name, $default = NULL) {
+  if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+    $variables = array_map('unserialize', db_query('SELECT name, value FROM {variable} WHERE name = :name', array(':name' => $name))->fetchAllKeyed());
+    return isset($variables[$name]) ? $variables[$name] : $default;
+  }
+  else {
+    $result = db_query("SELECT value FROM {variable} WHERE name = '%s'", $name);
+    if (!empty($result)) {
+      $result = db_result($result);
+      if (!empty($result)) {
+        $value = unserialize($result);
+      }
+    }
+    return isset($value) ? $value : $default;
+  }
+}
+
+/**
+ * Run multiple functions or methods independently or chained.
+ *
+ * Example for running a Drupal 6 Database query.
+ * @code
+ * // Run 2 queries and get it's result.
+ * $max = db_result(db_query('SELECT MAX(wid) FROM {watchdog}'));
+ * $min = db_result(db_query('SELECT MIN(wid) FROM {watchdog}'));
+ * echo $max . ' ' . $min;
+ *
+ * // Doing the same thing as above but with a set of arrays.
+ * $max = '';
+ * $min = '';
+ * $args = array(
+ *   array(
+ *     'type' => 'function',
+ *     'call' => 'db_query',
+ *     'args' => array('SELECT MAX(wid) FROM {watchdog}'),
+ *   ),
+ *   array(
+ *     'type' => 'function',
+ *     'call' => 'db_result',
+ *     'args' => array('last' => NULL),
+ *     'return' => &$max,
+ *   ),
+ *   array(
+ *     'type' => 'function',
+ *     'call' => 'db_query',
+ *     'args' => array('SELECT MIN(wid) FROM {watchdog}'),
+ *   ),
+ *   array(
+ *     'type' => 'function',
+ *     'call' => 'db_result',
+ *     'args' => array('last' => NULL),
+ *     'return' => &$min,
+ *   ),
+ * );
+ * httprl_run_array($args);
+ * echo $max . ' ' . $min;
+ * @endcode
+ *
+ * Example for running a Drupal 7 Database query.
+ * @code
+ * // Run a query and get it's result.
+ * $min = db_select('watchdog', 'w')
+ *  ->fields('w', array('wid'))
+ *  ->orderBy('wid', 'DESC')
+ *  ->range(999, 1)
+ *  ->execute()
+ *  ->fetchField();
+ * echo $min;
+ *
+ * // Doing the same thing as above but with a set of arrays.
+ * $min = '';
+ * $args = array(
+ *   array(
+ *     'type' => 'function',
+ *     'call' => 'db_select',
+ *     'args' => array('watchdog', 'w',),
+ *    ),
+ *   array(
+ *     'type' => 'method',
+ *     'call' => 'fields',
+ *     'args' => array('w', array('wid')),
+ *   ),
+ *   array(
+ *     'type' => 'method',
+ *     'call' => 'orderBy',
+ *     'args' => array('wid', 'DESC'),
+ *   ),
+ *   array(
+ *     'type' => 'method',
+ *     'call' => 'range',
+ *     'args' => array(999, 1),
+ *   ),
+ *   array(
+ *     'type' => 'method',
+ *     'call' => 'execute',
+ *     'args' => array(),
+ *   ),
+ *   array(
+ *     'type' => 'method',
+ *     'call' => 'fetchField',
+ *     'args' => array(),
+ *     'return' => &$min,
+ *   ),
+ * );
+ * httprl_run_array($args);
+ * echo $min;
+ * @endcode
+ *
+ * @param $array
+ *   2 dimensional array
+ *   array(
+ *     array(
+ *       'type' => function or method
+ *       'call' => function name or name of object method
+ *       'args' => array(
+ *          List of arguments to pass in. If you set the key to last, the return
+ *          value of the last thing ran will be put in this place.
+ *          'last' => NULL
+ *        ),
+ *       'return' => what was returned from this call.
+ *       'printed' => what was printed from this call.
+ *       'error' => any errors that might have occurred.
+ *       'last' => set the last variable to anything.
+ *     )
+ *   )
+ */
+function httprl_run_array(&$array) {
+  $last = NULL;
+  foreach ($array as &$data) {
+    // Skip if no type is set.
+    if (!isset($data['type'])) {
+      continue;
+    }
+
+    // Set the last variable if so desired.
+    if (isset($data['last'])) {
+      $last = $data['last'];
+    }
+
+    // Replace the last key with the last thing that has been returned.
+    if (isset($data['args']) && array_key_exists('last', $data['args'])) {
+      $data['args']['last'] = $last;
+      $data['args'] = array_values($data['args']);
+    }
+
+    // Capture output if requested.
+    if (array_key_exists('printed', $data)) {
+      ob_start();
+    }
+
+    // Pass by reference trick for call_user_func_array().
+    $args = array();
+    if (isset($data['args']) && is_array($data['args'])) {
+      foreach ($data['args'] as &$arg) {
+        $args[] = &$arg;
+      }
+    }
+
+    // Start to capture errors.
+    $track_errors = ini_set('track_errors', '1');
+    $php_errormsg = '';
+
+    // Call a function or a method.
+    switch ($data['type']) {
+      case 'function':
+        if (function_exists($data['call'])) {
+          $last = call_user_func_array($data['call'], $args);
+        }
+        else {
+          $php_errormsg = 'Recoverable Fatal error: Call to undefined function ' . $data['call'] . '()';
+        }
+      break;
+
+      case 'method':
+        if (method_exists($last, $data['call'])) {
+          $last = call_user_func_array(array($last, $data['call']), $args);
+        }
+        else {
+          $php_errormsg = 'Recoverable Fatal error: Call to undefined method ' . get_class($last) . '::' . $data['call'] . '()';
+        }
+        break;
+
+    }
+
+    // Set any errors if any where thrown.
+    if (!empty($php_errormsg)) {
+      $data['error'] = $php_errormsg;
+      ini_set('track_errors', $track_errors);
+      watchdog('httprl', 'Error thrown in httprl_run_array(). <br /> @error', array('@error' => $php_errormsg),  WATCHDOG_ERROR);
+    }
+
+    // End capture.
+    if (array_key_exists('printed', $data)) {
+      $data['printed'] = ob_get_contents();
+      ob_end_clean();
+    }
+
+    // Set what was returned from each call.
+    if (array_key_exists('return', $data)) {
+      $data['return'] = $last;
+    }
+  }
+
+  return array('args' => array($array));
+}
+
+/**
+ * Run a single function.
+ *
+ * @param $function
+ *   Name of function to run.
+ * @param $input_args
+ *   list of arguments to pass along to the function.
+ */
+function httprl_run_function($function, &$input_args) {
+  // Pass by reference trick for call_user_func_array().
+  $args = array();
+  foreach ($input_args as &$arg) {
+    $args[] = &$arg;
+  }
+
+  // Capture anything printed out.
+  ob_start();
+
+  // Start to capture errors.
+  $track_errors = ini_set('track_errors', '1');
+  $php_errormsg = '';
+
+  // Run function.
+  if (function_exists($function)) {
+    $return = call_user_func_array($function, $args);
+  }
+  else {
+    $php_errormsg = 'Recoverable Fatal error: Call to undefined function ' . $function . '()';
+  }
+
+  $printed = ob_get_contents();
+  ob_end_clean();
+
+  // Create data array.
+  $data = array('return' => $return, 'args' => $args, 'printed' => $printed);
+
+  // Set any errors if any where thrown.
+  if (!empty($php_errormsg)) {
+    $data['error'] = $php_errormsg;
+    ini_set('track_errors', $track_errors);
+    watchdog('httprl', 'Error thrown in httprl_run_function(). <br /> @error', array('@error' => $php_errormsg),  WATCHDOG_ERROR);
+  }
+
+  return $data;
+}
+
+function httprl_boot() {
+  global $base_root;
+  $full_url = $base_root . request_uri();
+
+  // Return if this is not a httprl_async_function_callback request.
+  if (   strpos($full_url, '/httprl_async_function_callback') === FALSE
+      || $_SERVER['REQUEST_METHOD'] !== 'POST'
+      || empty($_POST['master_key'])
+      || empty($_POST['temp_key'])
+      || strpos($_POST['temp_key'], 'httprl_') !== 0
+      || !empty($_POST['function'])
+        ) {
+    return NULL;
+  }
+
+  // Load httprl.async.inc.
+  if (defined('DRUPAL_ROOT')) {
+    require_once DRUPAL_ROOT . '/' . dirname(drupal_get_filename('module', 'httprl')) . '/httprl.async.inc';
+  }
+  else {
+    require_once './' . dirname(drupal_get_filename('module', 'httprl')) . '/httprl.async.inc';
+  }
+  httprl_async_page();
+}
+
+/**
+ * Gets the private key variable.
+ *
+ * @return
+ *   The private key.
+ */
+function httprl_drupal_get_private_key() {
+  // See if a full bootstrap has been done given the Drupal version.
+  if (defined('VERSION') && substr(VERSION, 0, 1) >= 7) {
+    $level = drupal_bootstrap();
+    $full_bootstrap = ($level == DRUPAL_BOOTSTRAP_FULL) ? TRUE : FALSE;
+  }
+  else {
+    $full_bootstrap = isset($GLOBALS['multibyte']) ? TRUE : FALSE;
+  }
+
+  $private_key = $full_bootstrap ? drupal_get_private_key() : httprl_variable_get('drupal_private_key', 0);
+  return $private_key;
+}
+
+/**
+ * Performs end-of-request tasks and/or call exit directly.
+ */
+function httprl_call_exit() {
+  if (defined('VERSION') && substr(VERSION, 0, 1) >= 7 && drupal_get_bootstrap_phase() == DRUPAL_BOOTSTRAP_FULL) {
+    drupal_exit();
+  }
+  else {
+    exit;
+  }
+}
+
+/**
+ * Sets the global user to the given user ID.
+ *
+ * @param $uid
+ *   Integer specifying the user ID to load.
+ */
+function httprl_set_user($uid) {
+  global $user;
+  $account = user_load($uid);
+  if (!empty($account)) {
+    $user = $account;
+    return TRUE;
+  }
+}
+
+/**
+ * Sets the global $_GET['q'] parameter.
+ *
+ * @param $q
+ *   Internal URL.
+ */
+function httprl_set_q($q) {
+  $_GET['q'] = $q;
+}
