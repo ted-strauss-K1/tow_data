@@ -1,3 +1,4 @@
+
 #comment-form-content, #comment-form-content form {
   position:relative;
   zoom:1;
@@ -40,8 +41,17 @@
   filter: alpha(opacity=80);
 }
 
-.ajax-comments-processed a.pressed {
+.ajax-comments-title-processed a.pressed {
   text-decoration:none;
   border-bottom:1px dotted;
   outline:0;
+}
+
+/* Animated throbber for links and spans */
+html.js a.throbber,
+html.js span.throbber,
+a.throbber,
+span.throbber {
+  background: url(images/throbber-active.gif) no-repeat right center;  /* LTR */
+  padding-right: 16px;  /* LTR */
 }

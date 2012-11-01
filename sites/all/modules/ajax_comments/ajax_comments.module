@@ -1,77 +1,36 @@
 <?php
-// $Id: ajax_comments.module,v 1.1.2.33 2009/08/25 23:30:40 neochief Exp $
 
 /**
- * Implementation of hook_form_FORM_ID_alter().
+ * @file
+ * Implements AJAX handling for Drupal comment forms.
+ *
+ * This module implements AJAX handling for the Drupal comment forms. This
+ * includes AJAX submits, paging, and display of newly submitted comments.
  */
-function ajax_comments_form_comment_form_alter(&$form, $form_state) {
-  $node = menu_get_object();
 
-  if (!isset($node) && arg(0) == 'ajax_comments') {
-    $node = node_load(arg(2));
+/**
+ * Implementation of hook_help().
+ */
+function ajax_comments_help($path, $arg) {
+  if (!module_exists('comment_bonus_api') && user_access('administer site configuration')) {
+    drupal_set_message(t('<a href="http://drupal.org/project/comment_bonus_api">Comments bonus API</a> is required to run AJAX Comments module. Please, download and install it.'), 'error');
   }
-  $allowed_node_types = variable_get('ajax_comments_node_types', array());
-  $all_allowed = TRUE;
-  foreach ($allowed_node_types as $type) {
-    if ($type) {
-      $all_allowed = FALSE;
-      break;
+}
+
+
+/**
+ * Implementation of hook_requirements().
+ */
+function ajax_comments_requirements($phase) {
+  if ($phase == 'runtime') {
+    if (!module_exists('comment_bonus_api')) {
+      $requirements['comment_bonus_api']['title'] = t('Required module is not found');
+      $requirements['comment_bonus_api']['value'] = t('<a href="http://drupal.org/project/comment_bonus_api">Comments bonus API</a> is required to run AJAX Comments module. Please, download and install it (don\'t forget to flush Drupal\'s cache after it).');
+      $requirements['comment_bonus_api']['severity'] = REQUIREMENT_ERROR;
+      $requirements['comment_bonus_api']['reason'] = UPDATE_UNKNOWN;
+      drupal_set_message($requirements['comment_bonus_api']['value'], 'error');
     }
-  }
-
-  if ($all_allowed || isset($allowed_node_types[$node->type]) && $allowed_node_types[$node->type]) {
-    if ((arg(1) != 'edit') && (arg(1) != 'reply') && (arg(2) != 'edit') && (arg(2) != 'reply')) {
-      $form['#prefix'] = '<div id="comment-preview"></div>';
-
-      // Overriding PID param so it will appear on the form.
-      $form['pid']['#type'] = 'hidden';
-      $form['pid']['#default_value'] = $form['pid']['#value'];
-      unset($form['pid']['#value']);
-
-      // We should set specific ID to let ahah wrapper know what to wrap on ajax
-      // loaded comment-form even if we have many submit buttons on the page.
-      $form['preview']['#id'] = "ajax-comments-preview";
-      $form['preview']['#ahah'] = array(
-        'path' => 'ajax_comments/js',
-        'wrapper' => 'comment-preview',
-        'event' => 'click',
-        'method' => 'append',
-        'effect' => 'ajaxCommentsPreview',
-        'progress' => array('type' => '1bar', 'message' => t('Please wait...')),
-      );
-      
-      $form['submit']['#id'] = "ajax-comments-submit";
-      $form['submit']['#submit'] = array('ajax_comments_submit');
-      $form['submit']['#ahah'] = array(
-        'path' => 'ajax_comments/js',
-        'wrapper' => 'comment-form-content',
-        'event' => 'click',
-        'method' => 'before',
-        'effect' => 'ajaxCommentsSubmit',
-        'progress' => array('type' => '1bar', 'message' => t('Please wait...')),
-      );
-
-      $path = drupal_get_path('module', 'ajax_comments');
-      drupal_add_css($path .'/ajax_comments.css');
-
-      // Language settings
-      $mode = variable_get('language_negotiation', LANGUAGE_NEGOTIATION_NONE);
-      $languages = language_list('enabled');
-      $languages = $languages[1];
-
-      drupal_add_js('misc/jquery.form.js');
-      drupal_add_js($path .'/ajax_comments.js', 'module');
-      drupal_add_js(array(
-        'language_mode' => $mode,
-        'language_list' => $languages,
-        'clean_url' => variable_get('clean_url', 0),
-        'rows_in_reply' => variable_get('ajax_comments_reply_row_count', 3),
-        'rows_default' => variable_get('ajax_comments_default_row_count', 5),
-        'always_expand_main_form' => variable_get('ajax_comments_always_expand_form', TRUE),
-        'blink_new' => variable_get('ajax_comments_blink_new', TRUE),
-        'comment_preview_required' => variable_get('comment_preview_'. $node->type, COMMENT_PREVIEW_REQUIRED) == COMMENT_PREVIEW_REQUIRED
-      ), 'setting');
-    }
+    return $requirements;
   }
 }
 
@@ -86,75 +45,128 @@ function ajax_comments_menu() {
     'page arguments' => array('ajax_comments_settings'),
     'access arguments' => array('administer site configuration'),
     'file' => 'ajax_comments.admin.inc',
-   );
-  $items['ajax_comments/instant_delete/%'] = array(
-    'page callback' => 'ajax_comments_instant_delete',
-    'page arguments' => array(2),
-    'access arguments' => array('administer comments'),
-    'type' => MENU_CALLBACK,
   );
   $items['ajax_comments/js'] = array(
     'page callback' => 'ajax_comments_js',
     'access arguments' => array('access content'),
+    'file' => 'ajax_comments.pages.inc',
     'type' => MENU_CALLBACK,
-   );
+  );
   $items['ajax_comments/js_reload/%'] = array(
     'page callback' => 'ajax_comments_js_reload_form',
-    'page arguments' => array(2, 3),
+    'page arguments' => array(2, 3, 4),
     'access arguments' => array('access content'),
+    'file' => 'ajax_comments.pages.inc',
     'type' => MENU_CALLBACK,
-   );
+  );
+  $items['ajax_comments/js_load_thread/%'] = array(
+    'page callback' => 'ajax_comments_js_load_thread',
+    'page arguments' => array(2),
+    'access arguments' => array('access content'),
+    'file' => 'ajax_comments.pages.inc',
+    'type' => MENU_CALLBACK,
+  );
+  $items['ajax_comments/instant_delete/%'] = array(
+    'page callback' => 'ajax_comments_instant_delete',
+    'page arguments' => array(2),
+    'access arguments' => array('administer comments'),
+    'file' => 'ajax_comments.pages.inc',
+    'type' => MENU_CALLBACK,
+  );
   return $items;
 }
 
+/**
+ * Implementation of hook_post_comment_render().
+ * Add ajax comments scripts on the page after comments being rendered.
+ * @see comment_bonus_api_comment_render()
+ */
+function ajax_comments_post_comment_render($node, $cid) {
+  $path = drupal_get_path('module', 'ajax_comments');
+  drupal_add_css($path .'/ajax_comments.css');
+
+  // Language settings
+  $mode = variable_get('language_negotiation', LANGUAGE_NEGOTIATION_NONE);
+  $languages = language_list('enabled');
+  $languages = $languages[1];
+
+  drupal_add_js('misc/jquery.form.js');
+  drupal_add_js($path .'/ajax_comments.js', 'module');
+  drupal_add_js(array(
+    'language_mode' => $mode,
+    'language_list' => $languages,
+    'clean_url' => variable_get('clean_url', 0),
+    'comment_preview_required' => variable_get('comment_preview_'. $node->type, COMMENT_PREVIEW_REQUIRED) == COMMENT_PREVIEW_REQUIRED,
+    'ajax_comments_rows_in_reply' => variable_get('ajax_comments_reply_row_count', 3),
+    'ajax_comments_rows_default' => variable_get('ajax_comments_default_row_count', 5),
+    'ajax_comments_always_expand_form' => variable_get('ajax_comments_always_expand_form', TRUE),
+    'ajax_comments_blink_new' => variable_get('ajax_comments_blink_new', TRUE),
+    'comment_bonus_api_fold_comments' => variable_get('comment_bonus_api_fold_comments', FALSE),
+    'ajax_comments_nid' => $node->nid,
+  ), 'setting');
+}
 
 /**
- * AHAH callback.
+ * Implementation of hook_form_FORM_ID_alter().
  */
-function ajax_comments_js() {
-  $form_state = array('storage' => NULL, 'submitted' => FALSE);
-  $form_build_id = $_POST['form_build_id'];
-  $form = ajax_comments_form_get_cache($form_build_id, $form_state);
-  $args = $form['#parameters'];
-  $form_id = array_shift($args);
-  $form_state['post'] = $form['#post'] = $_POST;
-  $form['#programmed'] = $form['#redirect'] = FALSE;
-  
-  if ($form_state['post']['op'] == t('Preview')) {
-    $form['#after_build'] = array('comment_form_add_preview');
+function ajax_comments_form_comment_form_alter(&$form, $form_state) {	
+  // Add class for multiply comments form selection
+  $form['#attributes']['class'] = 'comment-form';
+  // Change form id for single/multiply comment form processing
+  if ($form['#id'] == 'comment-form') {
+    $form['#id'] = 'comment-form-1';
+    $form_num = 1;
+  } else {
+    $form_num = substr($form['#id'], strrpos($form['#id'], '-') + 1);   
+  }
+  	
+  if ($form['nid']['#value']) {
+    $node = node_load($form['nid']['#value']);
   }
   else {
-    unset($form['#after_build']);
+    $node = menu_get_object();
+    if ((!isset($node) || !$node->nid) && arg(0) == 'ajax_comments') {
+      $node = node_load(arg(2));
+    }
   }
-  drupal_process_form($form_id, $form, $form_state);
 
-
-  $errors = form_get_errors();
-
-  if (!$errors) {
-    // Prepare output
-    if ($form_state['values']['op'] == t('Preview')) {
-      $output = '<div class="preview-item">'. $form['comment_preview']['#value'] .'</div>';
-      if ($output && $form_state['values']['pid']) {
-        $output = '<div class="indented">'. $output .'<div>';
-      }
+  $allowed_node_types = variable_get('ajax_comments_node_types', array());
+  $all_allowed = TRUE;
+  foreach ($allowed_node_types as $type) {
+    if ($type) {
+      $all_allowed = FALSE;
+      break;
     }
-    elseif ($form_state['values']['op'] == t('Save')) {
-      $output = '<div class="comment-new-success">'. $form_state['storage']['ajax_comment'] .'</div>';
-    }
-    $form = form_builder($form_id, $form, $form_state);
+  }
 
-    // Add Submit button if preview was required
-    $node = node_load($form_state['values']['nid']);
-    $op = $form_state['values']['op'];
-    if (variable_get('comment_preview_'. $node->type, COMMENT_PREVIEW_REQUIRED) == COMMENT_PREVIEW_REQUIRED && ($op == t('Preview') || $op == t('Save'))) {
-      $form['submit'] = array(
-        '#type' => 'submit',
-        '#value' => t('Save'),
-        '#weight' => 19,
-        '#executes_submit_callback' => TRUE,
+  if ($all_allowed || isset($allowed_node_types[$node->type]) && $allowed_node_types[$node->type]) {
+    if ((arg(1) != 'edit') && (arg(1) != 'reply') && (arg(2) != 'edit') && (arg(2) != 'reply')) {
+      $form['#prefix'] = '<div id="comment-preview-' . $form_num . '"></div>';
+
+      // Overriding PID param so it will appear on the form.
+      $form['pid']['#type'] = 'hidden';
+      $form['pid']['#default_value'] = $form['pid']['#value'];
+      unset($form['pid']['#value']);
+
+      // Node id for rebuilding form if needed
+      $form['nid'] = array(
+        '#type' => 'hidden',
+        '#default_value' => $node->nid,
       );
-      $form['submit']['#id'] = "ajax-comments-submit";
+
+      // We should set specific ID to let ahah wrapper know what to wrap on ajax
+      // loaded comment-form even if we have many submit buttons on the page.
+      $form['preview']['#id'] = "ajax-comments-preview-" . $form_num;
+      $form['preview']['#ahah'] = array(
+        'path' => 'ajax_comments/js',
+        'wrapper' => 'comment-preview',
+        'event' => 'click',
+        'method' => 'append',
+        'effect' => 'ajaxCommentsPreview',
+        'progress' => array('type' => '1bar', 'message' => t('Please wait...')),
+      );
+
+      $form['submit']['#id'] = "ajax-comments-submit-" . $form_num;
       $form['submit']['#submit'] = array('ajax_comments_submit');
       $form['submit']['#ahah'] = array(
         'path' => 'ajax_comments/js',
@@ -164,83 +176,8 @@ function ajax_comments_js() {
         'effect' => 'ajaxCommentsSubmit',
         'progress' => array('type' => '1bar', 'message' => t('Please wait...')),
       );
-      $form = form_builder($form_id, $form, $form_state);
-      form_set_cache($form_build_id, $form, $form_state);
     }
   }
-  unset($form['#suffix']);
-  unset($form['#prefix']);
-  $output = theme('status_messages') . $output;
-
-
-  if ($output) {
-    $javascript = drupal_add_js(NULL, NULL);
-    if (isset($javascript['setting'])) {
-      $output .= '<script type="text/javascript">jQuery.extend(Drupal.settings, '. drupal_to_js(call_user_func_array('array_merge_recursive', $javascript['setting'])) .');</script>';
-    }
-
-    drupal_json(array(
-      'status'   => TRUE,
-      'data'     => $output,
-    ));
-  }
-}
-
-/**
- * Fetch a form from cache.
- */
-function ajax_comments_form_get_cache($form_build_id, &$form_state) {
-  global $user;
-  if ($cached = ajax_comments_cache_get('form_'. $form_build_id, 'cache_form')) {
-    $form = $cached->data;
-    if ((isset($form['#cache_token']) && drupal_valid_token($form['#cache_token'])) || (!isset($form['#cache_token']) && !$user->uid)) {
-      if ($cached = ajax_comments_cache_get('storage_'. $form_build_id, 'cache_form')) {
-        $form_state['storage'] = $cached->data;
-      }
-      return $form;
-    }
-  }
-}
-
-/**
- * This one differs from standard by loading even expired cache instances.
- */
-function ajax_comments_cache_get($cid, $table = 'cache') {
-  global $user;
-
-  // Garbage collection necessary when enforcing a minimum cache lifetime
-  $cache_flush = variable_get('cache_flush', 0);
-  if ($cache_flush && ($cache_flush + variable_get('cache_lifetime', 0) <= time())) {
-    // Reset the variable immediately to prevent a meltdown in heavy load situations.
-    variable_set('cache_flush', 0);
-    // Time to flush old cache data
-    db_query("DELETE FROM {". $table ."} WHERE expire != %d AND expire <= %d", CACHE_PERMANENT, $cache_flush);
-  }
-
-  $cache = db_fetch_object(db_query("SELECT data, created, headers, expire, serialized FROM {". $table ."} WHERE cid = '%s'", $cid));
-  if (isset($cache->data)) {
-    $cache->data = db_decode_blob($cache->data);
-    if ($cache->serialized) {
-      $cache->data = unserialize($cache->data);
-    }
-    return $cache;
-  }
-  return 0;
-}
-
-
-/**
- * Delivers a new comments form after comment have been submitted.
- */
-function ajax_comments_js_reload_form($nid, $pid = NULL) {
-  drupal_set_header('Content-type: text/javascript; charset=utf-8');
-
-  $edit = array('nid' => $nid);
-  if (isset($pid)) {
-    $edit['pid'] = $pid;
-  }
-  print(drupal_get_form('comment_form', $edit, $title));
-  exit();
 }
 
 /**
@@ -257,7 +194,7 @@ function ajax_comments_submit($form, &$form_state) {
   }
   //execute all others
   form_execute_handlers('submit', $form, $form_state);
-  
+
   //save comment just like comments module do it
   $edit = $form_state['values'];
   _comment_form_submit($edit);
@@ -267,9 +204,9 @@ function ajax_comments_submit($form, &$form_state) {
       $node = node_load($edit['nid']);
 
       // update node stats
-      _comment_update_node_statistics($node->nid);
-      node_tag_new($node->nid);
-      
+      //_comment_update_node_statistics($node->nid);
+      //node_tag_new($node->nid);
+
       $query = 'SELECT c.cid, c.pid, c.nid, c.subject, c.comment, c.format, c.timestamp, c.name, c.mail, c.homepage, u.uid, u.name AS registered_name, u.signature, u.picture, u.data, c.status FROM {comments} c INNER JOIN {users} u ON c.uid = u.uid WHERE c.cid = %d';
       $query_args = array($cid);
       if (!user_access('administer comments')) {
@@ -295,29 +232,9 @@ function ajax_comments_submit($form, &$form_state) {
 }
 
 /**
- * Comments delete callback.
- */
-function ajax_comments_instant_delete($cid = 0){
-  // Check token to avoid CSRF attack.
-  if ($cid && isset($_GET['token']) && drupal_valid_token($_GET['token'], $cid)) {
-    drupal_set_header('Content-type: text/javascript; charset=utf-8');
-    module_load_include('inc', 'comment', 'comment.admin');
-    $comment = _comment_load($cid);
-    // Delete comment and its replies.
-    _comment_delete_thread($comment);
-    _comment_update_node_statistics($comment->nid);
-    // Clear the cache so an anonymous user sees that his comment was deleted.
-    cache_clear_all();
-    
-    print('OK');
-  }
-  exit();
-}
-
-/**
  * Implementation of hook_link_alter().
  */
-function ajax_comments_link_alter(&$links, $comment) {
+function ajax_comments_link_alter(&$links, $node, $comment = NULL) {
   $node = menu_get_object();
   $allowed_node_types = variable_get('ajax_comments_node_types', array());
   $all_allowed = TRUE;
@@ -329,7 +246,7 @@ function ajax_comments_link_alter(&$links, $comment) {
   }
 
   if ($all_allowed || isset($allowed_node_types[$node->type]) && $allowed_node_types[$node->type]) {
-    if (is_array($links) && isset($links['comment_delete'])) {
+    if (is_array($links) && isset($links['comment_delete']) && isset($comment->cid)) {
       $links['comment_delete'] = array(
         'title' => t('delete'),
         'href' => 'comment/delete/'. $comment->cid,
@@ -361,6 +278,6 @@ function ajax_comments_preprocess_comment(&$variables) {
     $variables['comment']->new = TRUE;
   }
   else {
-    $variables['title'] = l($comment->subject, 'node/'.$comment->nid, array('attributes' => array('class' => 'active'), 'fragment' => "comment-$comment->cid"));
+    $variables['title'] = l($comment->subject, 'node/' . $comment->nid, array('attributes' => array('class' => 'active'), 'fragment' => "comment-$comment->cid"));
   }
 }
