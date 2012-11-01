@@ -552,7 +552,8 @@ function tow_table($node, $display_options = array()) {
     }
     while ($rs = db_fetch_array($result)) {
         $row = array();
-        foreach ($rs as $key => $value) {
+        foreach ($rs as $col_key => $value) {
+        $key = substr($col_key, 4);
             $table_types_key = isset($user_table['titles']['types'][$key]) ? $user_table['titles']['types'][$key] : '';
             if ($table_types_key == 'bool') {
                 $row[] = array('data' => _tow_format_bool($value));

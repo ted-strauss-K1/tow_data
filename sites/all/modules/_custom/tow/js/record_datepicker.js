@@ -1,21 +1,23 @@
 Drupal.behaviors.record_datepicker = function(context) {
-  //Date and datetime datetimepicker
+  //Check each input date/datetime
   $('div.form-item input.form-text').each(function() {
     var inputType = $(this).closest('tr').children('td').eq(1).text();
 	inputTypeToCheck = $.trim(inputType);
-    
+  
+  //date: hide hh:mm:ss, apply datepicker
 	if (inputTypeToCheck == 'date') {
-	  $(this).datetimepicker({ 
-		dateFormat: "yy-mm-dd",
-		timeFormat: "hh:mm:ss",
-		hourMin: 0,
-		hourMax: 0,
-		minuteMin: 0,
-	    minuteMax: 0
+    var curFormat = $(this).val();
+    var coolFormat = curFormat.substr(0,10);
+    $(this).val(coolFormat);
+	  
+    $(this).datepicker({ 
+		dateFormat: "yy-mm-dd"
       });
     }
-	else if (inputTypeToCheck == 'datetime') {
-	  $(this).datetimepicker({ 
+	//datetime: apply datetimepicker
+  else if (inputTypeToCheck == 'datetime') {
+	  
+    $(this).datetimepicker({ 
 		dateFormat: "yy-mm-dd",
 		timeFormat: "hh:mm:ss",
       });
