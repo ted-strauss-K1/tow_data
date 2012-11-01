@@ -40,6 +40,7 @@ function tow_apachesolr_ajax_settings() {
  * Implementation of hook_apachesolr_modify_query().
  */
 function tow_apachesolr_modify_query(&$query, &$params) {
+
     $current_tab = tow_search_outer_get_homepage_tab();
     $query->add_filter('hash', apachesolr_site_hash());
 
@@ -71,7 +72,13 @@ function tow_apachesolr_process_results(&$results) {
     if ($results[0]['node']->type == 'dataset') {
 
         // If search was made for datasets.
+        //foreach ($results as $key => $result) {
+        //if ($results[$key]['node']->sis_cck_field_access_type == 2) {
+        //unset ($results[$key]);
+        //}
+        //}
         tow_apachesolr_dataset_process_results($results);
+        
     } elseif ($results[0]['node']->type == 'saved_search') {
 
         // If search was made for saved searches.
@@ -300,8 +307,19 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
 
     // Add filters.
     $query->add_filter('type', 'dataset');
-    $query->add_filter('-sis_cck_field_access_type', '2');
-
+    
+    global $_tow_user;
+    $is_admin = (in_array('administrator', $_tow_user->roles) || ($_tow_user->uid == 1));
+    if (!$is_admin) {
+      $subquery = apachesolr_drupal_query();
+      $subquery->add_filter('uid', $_tow_user->uid);
+      $subquery->add_filter('sis_cck_field_access_type', 0);
+      $subquery->add_filter('sis_cck_field_access_type', 1);
+      $query->add_subquery($subquery, 'OR');
+    }
+      
+    //  $query->add_filter('-sis_cck_field_access_type', '2');
+    
     $params['fl'] .= ',tid';
     $params['stats'] = 'true';
     $params['facet.limit'] = 100;
