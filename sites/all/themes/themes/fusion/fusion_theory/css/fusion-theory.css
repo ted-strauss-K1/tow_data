@@ -314,7 +314,11 @@ div.tow-highcharts-handle {
 }
 .dataTables_scrollBody 
 {
-	height:550px !important;
+	height:auto !important;
+}
+.page-table .dataTables_scrollBody 
+{
+	height:500px; !important;
 }
 #block-menu-primary-links .inner
 {

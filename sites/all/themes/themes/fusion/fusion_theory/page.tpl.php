@@ -37,7 +37,7 @@ $("#block-menu-menu-login-register-username").show();
 </script>
 <script>
 $(function() {
-   var access = $("table.dataTable:first"), pos = access.offset();
+   var access = $(".page-table table.dataTable:first"), pos = access.offset();
    console.log('pos: ', pos.top);
    
     $(window).scroll(function() { 
