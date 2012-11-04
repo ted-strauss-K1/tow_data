@@ -2814,12 +2814,3 @@ return ($views === 0) ? TRUE : FALSE;',
     ),
   );
 }
-
-/**
- * Implementation of hook_views_api().
- */
-function tow_rules_userpoints_feature_views_api() {
-  return array(
-    'api' => '2',
-  );
-}
