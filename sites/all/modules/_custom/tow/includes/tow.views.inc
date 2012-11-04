@@ -6,7 +6,6 @@
  * Interface between tow.module and views.module.
  * Api documentation is at http://views.doc.logrus.com/
  */
-module_load_include('inc', 'tow', 'includes/views/tow.views.default_views');
 
 
 
