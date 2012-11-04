@@ -6,9 +6,9 @@
 function tow_views_users_feature_views_default_views() {
   $views = array();
 
-  // Exported view: Users
+  // Exported view: users
   $view = new view;
-  $view->name = 'Users';
+  $view->name = 'users';
   $view->description = '';
   $view->tag = '';
   $view->base_table = 'users';
