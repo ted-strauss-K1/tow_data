@@ -219,10 +219,10 @@ function tow_search_inner_within_dataset_callback($nid) {
     $_tow_dataset = node_load($nid);
     
     //Don't allow page loading 'search_dataset/nid' if node type isn't dataset
-    if ($_tow_dataset->type != 'dataset') {
+    /*if ($_tow_dataset->type != 'dataset') {
       drupal_not_found();
       die();
-    }
+    }*/
     
     global $_tow_dataset_search;
     $_tow_dataset_search = TRUE;
