@@ -24,32 +24,18 @@ $("#edit-keywords-1-wrapper .form-text").keypress(function(e){
 $(this).width(400);
 $("#tow-search-outer-searchinput-form").width(470);
 $("#block-tow-search_outer_searchinput").width(500);
-$("#block-menu-menu-login-register-username").hide();
+$("#block-menu-menu-signing").hide();
 });
 
 $("#edit-keywords-1-wrapper .form-text").blur(function(){
 $(this).width(180);
 $("#tow-search-outer-searchinput-form").width(245);
 $("#block-tow-search_outer_searchinput").width(250);
-$("#block-menu-menu-login-register-username").show();
+$("#block-menu-menu-signing").show();
 });
 });
 </script>
-<script>
-$(function() {
-   var access = $(".page-table table.dataTable:first"), pos = access.offset();
-   console.log('pos: ', pos.top);
-   
-    $(window).scroll(function() { 
-     if ($(this).scrollTop() > 450) {
- access.addClass('fixed_head');
-     } else {
-        access.removeClass('fixed_head');
-     }
-   })
 
-});
-</script>
 
 
 

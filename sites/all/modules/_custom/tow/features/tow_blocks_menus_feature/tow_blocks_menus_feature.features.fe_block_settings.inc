@@ -9,12 +9,12 @@ function tow_blocks_menus_feature_default_fe_block_settings() {
   // fusion_theory
   $theme = array();
 
-  $theme['menu-menu-login-register-username'] = array(
+  $theme['menu-menu-signing'] = array(
     'module' => 'menu',
-    'delta' => 'menu-login-register-username',
+    'delta' => 'menu-signing',
     'theme' => 'fusion_theory',
     'status' => '1',
-    'weight' => '-23',
+    'weight' => '0',
     'region' => 'header_top',
     'custom' => '0',
     'throttle' => '0',
@@ -59,7 +59,7 @@ function tow_blocks_menus_feature_default_fe_block_settings() {
     'delta' => 'primary-links',
     'theme' => 'fusion_theory',
     'status' => '1',
-    'weight' => '-25',
+    'weight' => '-29',
     'region' => 'header_top',
     'custom' => '0',
     'throttle' => '0',
@@ -93,13 +93,13 @@ debated',
   // fusion_tow
   $theme = array();
 
-  $theme['menu-menu-login-register-username'] = array(
+  $theme['menu-menu-signing'] = array(
     'module' => 'menu',
-    'delta' => 'menu-login-register-username',
+    'delta' => 'menu-signing',
     'theme' => 'fusion_tow',
-    'status' => '1',
-    'weight' => '-23',
-    'region' => 'header_top',
+    'status' => 0,
+    'weight' => '0',
+    'region' => '',
     'custom' => '0',
     'throttle' => '0',
     'visibility' => '0',

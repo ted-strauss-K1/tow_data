@@ -316,10 +316,6 @@ div.tow-highcharts-handle {
 {
 	height:auto !important;
 }
-.page-table .dataTables_scrollBody 
-{
-	height:500px; !important;
-}
 #block-menu-primary-links .inner
 {
 	margin-left:0px;
@@ -652,30 +648,30 @@ div.tow-highcharts-handle {
 {
 	width: 408px;
 }
-#block-menu-menu-login-register-username
+#block-menu-menu-signing
 {
 	float:right;
 	width: 300px;
 }
-#block-menu-menu-login-register-username .inner
+#block-menu-menu-signing .inner
 {
 	margin:0px;
 }
-#block-menu-menu-login-register-username .title
+#block-menu-menu-signing .title
 {
 	display:none;
 }
-#block-menu-menu-login-register-username ul
+#block-menu-menu-signing ul
 {
 	margin:0px;
 	padding:0px;
 	text-align: right;
 }
-#block-menu-menu-login-register-username ul li
+#block-menu-menu-signing ul li
 {
 	display: inline;
 }
-#block-menu-menu-login-register-username ul li a
+#block-menu-menu-signing ul li a
 {
 	 color: #676767;
     float: none;
@@ -685,7 +681,7 @@ div.tow-highcharts-handle {
     padding: 9px 10px 11px;
     text-decoration: none;
 }
-#block-menu-menu-login-register-username ul li a:hover
+#block-menu-menu-signing ul li a:hover
 {
 	color: #000000;
 	border-top: 3px solid;
@@ -931,25 +927,9 @@ div.tow-highcharts-handle {
 }
 #block-tow-search_inner_field_list .collapsible legend
 {
-/*	padding: 1px;
+	padding: 1px;
     width: 100%;
-	 background:#666;*/
-	   border: 1px solid #E5E5E5;
-    border-radius: 4px 4px 0 0;
-    font-size: 13px;
-    padding: 8px 10px;
-    width: 95%;
-}
-#block-tow-search_inner_field_list .collapsible .fieldset-wrapper
-{
-	padding: 8px 10px;
-	border: 1px solid #E5E5E5;
-	border-top:0px;
-	width: 95%;
-}
-#block-tow-search_inner_field_list .collapsible
-{
-	margin-bottom: 5px;
+	 background:#666;
 }
 #block-tow-search_inner_field_list .collapsible legend a
 {
@@ -2096,7 +2076,7 @@ dt.profile-profile_bio
 }
 .tow-saved-search-block-item #comments textarea
 {
-	width:180px;
+	width:600px;
 }
 
 /*login pop up box*/
@@ -2183,7 +2163,7 @@ dt.profile-profile_bio
     width:100px;
     padding:2px;
     border: 0px solid red;
-	overflow: hidden;
+	 overflow: hidden;
 	text-overflow: ellipsis;
 	display:block;
 	white-space: nowrap;
@@ -2192,10 +2172,9 @@ dt.profile-profile_bio
 .dataTables_scroll table tbody tr td span
 {
     width:100px;
-    padding: 0 1px;
-	line-height:21px;
+    padding:2px;
     border: 0px solid red;
-	overflow: hidden;
+	 overflow: hidden;
 	text-overflow: ellipsis;
 	display:block;
 	white-space: nowrap;
@@ -2215,29 +2194,4 @@ dt.profile-profile_bio
     overflow: visible;
     white-space: normal;
 	cursor:pointer;
-}
-#block-tow-search_inner_facets
-{
-	width:700px !important;
-}
-#block-tow-saved_searches_description
-{
-	width:700px !important;
-}
-#block-tow-saved_searches_description h2
-{
-	text-align:left;
-}
-#block-tow-search_inner_facets div.tow-inner-search-widget
-{
-	float: left;
-    margin-right: 10px;
-    min-height: 350px;
-	width: 215px;
-}
-.fixed_head
-{
-	position:fixed;
-	top:0px;
-	background:#fff;
 }
