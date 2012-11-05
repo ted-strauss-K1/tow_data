@@ -1113,6 +1113,10 @@ div.tow-highcharts-handle {
 	margin-right: 5px;
     margin-top: 3px;
 }
+.edit-row:hover
+{
+	 background: url("/sites/all/themes/themes/fusion/fusion_theory/img/edit_data_hr.png") no-repeat scroll 0 0 transparent;
+}
 .delete-row
 {
 	 background: url("/sites/all/themes/themes/fusion/fusion_theory/img/del_data.png") no-repeat scroll 0 0 transparent;
@@ -1122,6 +1126,11 @@ div.tow-highcharts-handle {
     width: 12px;
 	margin-top: 3px;
 }
+.delete-row:hover
+{
+	background: url("/sites/all/themes/themes/fusion/fusion_theory/img/del_data_hr.png") no-repeat scroll 0 0 transparent;
+}
+
 .starflag .flag-bookmarks
 {
 	  float: left;
