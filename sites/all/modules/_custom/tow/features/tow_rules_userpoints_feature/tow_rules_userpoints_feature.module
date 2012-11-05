@@ -1,0 +1,3 @@
+<?php
+
+include_once('tow_rules_userpoints_feature.features.inc');
