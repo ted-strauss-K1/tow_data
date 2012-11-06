@@ -1,4 +1,0 @@
-- pressing the enter key on the auto complete submits the form which is a bit of a pain
-- calendar displays weird sometimes... not sure what's up
-- time reverts when using the text field view and select a date from the calendar
-- support for date/time format string
