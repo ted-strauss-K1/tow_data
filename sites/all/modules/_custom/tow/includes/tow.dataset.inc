@@ -50,14 +50,6 @@ function tow_dataset_badge_block() {
 
     // Save the content of the block.
     $block['content'] = '';
-    $block['content'] .= $_tow_dataset->content['vud_node_widget_display']['#value'];
-    $flag = flag_get_flag('bookmarks');
-    if ($flag) {
-        $block['content'] .= '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<b>' . $flag->get_count($_tow_dataset->nid) . '</b></div>';
-    } else {
-        $block['content'] .= '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<b>0</b></div>';
-    }
-
     $block['content'] .= theme('tow_theme_dataset_badge', $posted_by, $count, NULL, $added, $updated, $access, $visits);
 
     // Params for the user picture.
@@ -106,6 +98,34 @@ function tow_dataset_share_block() {
     $block['content'] = theme('tow_theme_dataset_share');
     $block['content'] .= '<p>' . $permalink . '</p>';
     $block['content'] .= '<p>' . $embedding . '</p>';
+
+    return $block;
+}
+
+/**
+ * Returns "Dataset votes" block.
+ */
+function tow_dataset_votes_block() {
+
+    // No block in case of not a dataset.
+    global $_tow_dataset;
+    if (!$_tow_dataset) {
+        return;
+    }
+
+    // Save the content of the block.
+    $block['content'] = '';
+    //Output voting widget
+    $tag = variable_get('vud_tag', 'vote');
+    $widget = variable_get('vud_node_widget', 'plain');
+    $block['content'] .= theme('vud_widget', arg(1), 'node', $tag, $widget);
+    //Output bookmark star
+    $flag = flag_get_flag('bookmarks');
+    if ($flag) {
+        $block['content'] .= '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<b>' . $flag->get_count($_tow_dataset->nid) . '</b></div>';
+    } else {
+        $block['content'] .= '<div class="starflag">' . flag_create_link('bookmarks', $_tow_dataset->nid) . '<b>0</b></div>';
+    }
 
     return $block;
 }

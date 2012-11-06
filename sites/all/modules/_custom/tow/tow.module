@@ -84,6 +84,7 @@ function tow_block($op = 'list', $delta = 0) {
         $blocks['dataset_badge']['info'] = t('Dataset badge');
         $blocks['dataset_share']['info'] = t('Dataset share');
         $blocks['dataset_stats']['info'] = t('Dataset statistics');
+        $blocks['dataset_votes']['info'] = t('Dataset votes');
         $blocks['table_display_switch']['info'] = t('Table Content/Structure switch');
         $blocks['search_outer_results']['info'] = t('Outer search: Results');
         $blocks['search_outer_filter']['info'] = t('Outer search: Filters');
@@ -174,6 +175,11 @@ function tow_block($op = 'list', $delta = 0) {
             // 'Dataset statistics' block.
             if ($delta == 'dataset_stats') {
                 return tow_dataset_stats_block();
+            }
+            
+            // 'Dataset votes' block.
+            if ($delta == 'dataset_votes') {
+                return tow_dataset_votes_block();
             }
 
             // 'Table Content/Structure switch' block.
@@ -705,7 +711,7 @@ function tow_menu() {
 
     // Page for inner search within dataset.
     $items['search_dataset'] = array(
-        'page callback' => 'tow_search_inner_within_dataset_callback2',
+        'page callback' => 'tow_search_inner_within_dataset_callback',
         'page arguments' => array(1),
         'access arguments' => array('access content'),
         'file' => 'includes/tow.search_inner.inc',
