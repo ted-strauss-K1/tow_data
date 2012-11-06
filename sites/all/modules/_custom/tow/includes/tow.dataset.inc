@@ -109,7 +109,8 @@ function tow_dataset_votes_block() {
 
     // No block in case of not a dataset.
     global $_tow_dataset;
-    if (!$_tow_dataset) {
+    $viewed_dataset = node_load(arg(1));
+    if ($viewed_dataset->type != 'dataset') {
         return;
     }
 
@@ -118,7 +119,7 @@ function tow_dataset_votes_block() {
     //Output voting widget
     $tag = variable_get('vud_tag', 'vote');
     $widget = variable_get('vud_node_widget', 'plain');
-    $block['content'] .= theme('vud_widget', arg(1), 'node', $tag, $widget);
+    $block['content'] .= theme('vud_widget', $viewed_dataset->nid, 'node', $tag, $widget);
     //Output bookmark star
     $flag = flag_get_flag('bookmarks');
     if ($flag) {
