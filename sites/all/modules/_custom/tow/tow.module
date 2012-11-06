@@ -486,7 +486,7 @@ function tow_init() {
     }
 
     // Add Ajax handling to "Overview dataset" page.
-    if (arg(0) == 'node' && arg(1)) {
+    if (arg(0) == 'node' && arg(1) && (arg(2) != 'edit')) {
         $node = node_load(arg(1));
         if ($node->type == 'dataset') {
             drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
@@ -705,7 +705,7 @@ function tow_menu() {
 
     // Page for inner search within dataset.
     $items['search_dataset'] = array(
-        'page callback' => 'tow_search_inner_within_dataset_callback',
+        'page callback' => 'tow_search_inner_within_dataset_callback2',
         'page arguments' => array(1),
         'access arguments' => array('access content'),
         'file' => 'includes/tow.search_inner.inc',
