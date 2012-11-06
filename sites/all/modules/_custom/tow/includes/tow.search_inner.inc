@@ -213,17 +213,11 @@ function tow_search_inner_widgets_block() {
 /**
  * Page for inner search within dataset menu callback.
  */
-function tow_search_inner_within_dataset_callback($nid) {
+function tow_search_inner_within_dataset($nid) {
 
     global $_tow_dataset;
     $_tow_dataset = node_load($nid);
-    
-    //Don't allow page loading 'search_dataset/nid' if node type isn't dataset
-    /*if ($_tow_dataset->type != 'dataset') {
-      drupal_not_found();
-      die();
-    }*/
-    
+
     global $_tow_dataset_search;
     $_tow_dataset_search = TRUE;
 
@@ -267,6 +261,53 @@ function tow_search_inner_within_dataset_callback($nid) {
         $log .= 'filters=' . $filters;
     }
 
+    // Collect the search results:
+    $results = search_data($keys, 'tow_inner_search');
+
+    // Add javascript.
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/jquery.ba-hashchange.min.js');
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/highcharts.js');
+    drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/Scroller/media/js/dataTables.scroller.js');
+    drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/ColVis/media/js/ColVis.js');
+
+    // Return results.
+    if ($results) {
+        return $results;
+    } else {
+        return theme('box', t('Your search yielded no results'), variable_get('apachesolr_search_noresults', apachesolr_search_noresults()));
+    }
+}
+
+//Additional callback function to check if nid->type is dataset (almost totally copied previous function)
+function tow_search_inner_within_dataset_callback($nid) {
+
+    global $_tow_dataset;
+    $_tow_dataset = node_load($nid);
+    
+    //Don't allow page loading 'search_dataset/nid' if node type isn't dataset
+    if ($_tow_dataset->type != 'dataset') {
+      drupal_not_found();
+      die();
+    }
+    
+    global $_tow_dataset_search;
+    $_tow_dataset_search = TRUE;
+
+    $type = 'apachesolr_search';
+    $keys = trim(_tow_search_inner_get_keys());
+
+    // We did not redirect, so run the search if needed.
+/*    $results = '';
+
+    $filters = trim($_GET['filters']);
+
+    // Log the search keys:
+    $log = $keys;
+    if ($filters) {
+        $log .= 'filters=' . $filters;
+    }
+*/
     // Collect the search results:
     $results = search_data($keys, 'tow_inner_search');
 
