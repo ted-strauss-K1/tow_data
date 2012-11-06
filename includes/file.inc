@@ -34,19 +34,52 @@ define('FILE_STATUS_PERMANENT', 1);
 /**
  * Create the download path to a file.
  *
- * @param $path A string containing the path of the file to generate URL for.
- * @return A string containing a URL that can be used to download the file.
+ * There are two kinds of local files:
+ * - "created files", i.e. those in the files directory (which is stored in
+ *   the file_directory_path variable and can be retrieved using
+ *   file_directory_path()). These are files that have either been uploaded by
+ *   users or were generated automatically (for example through CSS
+ *   aggregation).
+ * - "shipped files", i.e. those outside of the files directory, which ship as
+ *   part of Drupal core or contributed modules or themes.
+ *
+ * @param $path
+ *   A string containing the Drupal path (i.e. path relative to the Drupal
+ *   root directory) of the file to generate the URL for.
+ * @return
+ *   A string containing a URL that can be used to access the file.
  */
 function file_create_url($path) {
-  // Strip file_directory_path from $path. We only include relative paths in urls.
-  if (strpos($path, file_directory_path() .'/') === 0) {
-    $path = trim(substr($path, strlen(file_directory_path())), '\\/');
+  // Clean up Windows paths.
+  $old_path = $path = str_replace('\\', '/', $path);
+
+  drupal_alter('file_url', $path);
+
+  // Return path if it was altered by any module, or if it already is a
+  // root-relative or a protocol-relative URL.
+  if ($path != $old_path || drupal_substr($path, 0, 1) == '/' || drupal_substr($path, 0, 2) == '//') {
+    return $path;
   }
-  switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
-    case FILE_DOWNLOADS_PUBLIC:
-      return $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
-    case FILE_DOWNLOADS_PRIVATE:
-      return url('system/files/'. $path, array('absolute' => TRUE));
+
+  // Shipped files.
+  if (preg_match("#^(/?)(misc|modules|sites|themes)/#i", $path) && (strpos($path, file_directory_path() . '/') !== 0)) {
+    return base_path() . $path;
+  }
+  // Created files.
+  else {
+    switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
+      case FILE_DOWNLOADS_PUBLIC:
+        return $GLOBALS['base_url'] . '/' . $path;
+      case FILE_DOWNLOADS_PRIVATE:
+        // Strip file_directory_path from $path. Private downloads' URLs are
+        // rewritten to be served relatively to system/files (which is a menu
+        // callback that streams the file) instead of relatively to the file
+        // directory path.
+        if (strpos($path, file_directory_path() . '/') === 0) {
+          $path = trim(substr($path, strlen(file_directory_path())), '\\/');
+        }
+        return url('system/files/' . $path, array('absolute' => TRUE));
+    }
   }
 }
 
