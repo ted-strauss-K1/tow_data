@@ -436,7 +436,7 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
     // Get the values for ecah constraint into an array.
     $info = array();
     foreach ($fields as $field) {
-        if (empty($selected_fields) || in_array($field['title'] . '_' . $field['type'], $selected_fields)) {
+        if (empty($selected_fields) || in_array($field['title'] . '_' . $field['type'], (array)$selected_fields)) {
             $info[$field['name']] = $field;
         }
     }
