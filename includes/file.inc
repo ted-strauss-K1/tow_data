@@ -1,5 +1,4 @@
 <?php
-// $Id: file.inc,v 1.121.2.14 2010/12/13 19:02:09 goba Exp $
 
 /**
  * @file
@@ -35,52 +34,19 @@ define('FILE_STATUS_PERMANENT', 1);
 /**
  * Create the download path to a file.
  *
- * There are two kinds of local files:
- * - "created files", i.e. those in the files directory (which is stored in
- *   the file_directory_path variable and can be retrieved using
- *   file_directory_path()). These are files that have either been uploaded by
- *   users or were generated automatically (for example through CSS
- *   aggregation).
- * - "shipped files", i.e. those outside of the files directory, which ship as
- *   part of Drupal core or contributed modules or themes.
- *
- * @param $path
- *   A string containing the Drupal path (i.e. path relative to the Drupal
- *   root directory) of the file to generate the URL for.
- * @return
- *   A string containing a URL that can be used to access the file.
+ * @param $path A string containing the path of the file to generate URL for.
+ * @return A string containing a URL that can be used to download the file.
  */
 function file_create_url($path) {
-  // Clean up Windows paths.
-  $old_path = $path = str_replace('\\', '/', $path);
-
-  drupal_alter('file_url', $path);
-
-  // Return path if it was altered by any module, or if it already is a
-  // root-relative or a protocol-relative URL.
-  if ($path != $old_path || drupal_substr($path, 0, 1) == '/' || drupal_substr($path, 0, 2) == '//') {
-    return $path;
+  // Strip file_directory_path from $path. We only include relative paths in urls.
+  if (strpos($path, file_directory_path() .'/') === 0) {
+    $path = trim(substr($path, strlen(file_directory_path())), '\\/');
   }
-
-  // Shipped files.
-  if (preg_match("#^(/?)(misc|modules|sites|themes)/#i", $path) && (strpos($path, file_directory_path() . '/') !== 0)) {
-    return base_path() . $path;
-  }
-  // Created files.
-  else {
-    switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
-      case FILE_DOWNLOADS_PUBLIC:
-        return $GLOBALS['base_url'] . '/' . $path;
-      case FILE_DOWNLOADS_PRIVATE:
-        // Strip file_directory_path from $path. Private downloads' URLs are
-        // rewritten to be served relatively to system/files (which is a menu
-        // callback that streams the file) instead of relatively to the file
-        // directory path.
-        if (strpos($path, file_directory_path() . '/') === 0) {
-          $path = trim(substr($path, strlen(file_directory_path())), '\\/');
-        }
-        return url('system/files/' . $path, array('absolute' => TRUE));
-    }
+  switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
+    case FILE_DOWNLOADS_PUBLIC:
+      return $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
+    case FILE_DOWNLOADS_PRIVATE:
+      return url('system/files/'. $path, array('absolute' => TRUE));
   }
 }
 
@@ -116,17 +82,28 @@ function file_create_path($dest = 0) {
 }
 
 /**
- * Check that the directory exists and is writable. Directories need to
- * have execute permissions to be considered a directory by FTP servers, etc.
+ * Checks whether a directory exists and is writable.
  *
- * @param $directory A string containing the name of a directory path.
- * @param $mode A Boolean value to indicate if the directory should be created
- *   if it does not exist or made writable if it is read-only.
- * @param $form_item An optional string containing the name of a form item that
- *   any errors will be attached to. This is useful for settings forms that
- *   require the user to specify a writable directory. If it can't be made to
- *   work, a form error will be set preventing them from saving the settings.
- * @return FALSE when directory not found, or TRUE when directory exists.
+ * Furthermore, the directory can optionally be created if it does not exist,
+ * and/or be set to writable if it is currently not. Directories need to have
+ * execute permission to be considered a directory by FTP servers.
+ *
+ * @param $directory
+ *   A string representing the directory path.
+ * @param $mode
+ *   An optional bitmask containing the actions, if any, to be carried out on
+ *   the directory. Any combination of the actions FILE_CREATE_DIRECTORY and
+ *   FILE_MODIFY_PERMISSIONS is allowed.
+ * @param $form_item
+ *   An optional string containing the name of a form item that any errors
+ *   will be attached to. Useful when the function validates a directory path
+ *   entered as a form value. An error will consequently prevent form submit
+ *   handlers from running, and instead display the form along with the
+ *   error messages.
+ *
+ * @return
+ *   FALSE if the directory does not exist or is not writable, even after
+ *   any optional actions have been carried out. Otherwise, TRUE is returned.
  */
 function file_check_directory(&$directory, $mode = 0, $form_item = NULL) {
   $directory = rtrim($directory, '/\\');
@@ -482,6 +459,7 @@ function file_create_filename($basename, $directory) {
     }
     else {
       $name = $basename;
+      $ext = '';
     }
 
     $counter = 0;
@@ -691,9 +669,12 @@ function file_validate_name_length($file) {
  * @param $file
  *   A Drupal file object.
  * @param $extensions
- *   A string with a space separated
+ *   A string with a space separated list of allowed file extensions, not
+ *   including the period. For example, 'bmp jpg gif png'.
+ *
  * @return
- *   An array. If the file extension is not allowed, it will contain an error message.
+ *   An array. If the file extension is not allowed, it will contain an error
+ *   message.
  */
 function file_validate_extensions($file, $extensions) {
   global $user;
@@ -702,7 +683,7 @@ function file_validate_extensions($file, $extensions) {
 
   // Bypass validation for uid  = 1.
   if ($user->uid != 1) {
-    $regex = '/\.('. ereg_replace(' +', '|', preg_quote($extensions)) .')$/i';
+    $regex = '/\.('. @ereg_replace(' +', '|', preg_quote($extensions)) .')$/i';
     if (!preg_match($regex, $file->filename)) {
       $errors[] = t('Only files with the following extensions are allowed: %files-allowed.', array('%files-allowed' => $extensions));
     }
@@ -850,8 +831,13 @@ function file_save_data($data, $dest, $replace = FILE_EXISTS_RENAME) {
 /**
  * Set the status of a file.
  *
- * @param file A Drupal file object
- * @param status A status value to set the file to.
+ * @param $file 
+ *   A Drupal file object.
+ * @param $status
+ *   A status value to set the file to. One of:
+ *   - FILE_STATUS_PERMANENT
+ *   - FILE_STATUS_TEMPORARY
+ *
  * @return FALSE on failure, TRUE on success and $file->status will contain the
  *     status.
  */
@@ -873,6 +859,14 @@ function file_set_status(&$file, $status) {
 function file_transfer($source, $headers) {
   if (ob_get_level()) {
     ob_end_clean();
+  }
+  
+  // IE cannot download private files because it cannot store files downloaded
+  // over https in the browser cache. The problem can be solved by sending
+  // custom headers to IE. See http://support.microsoft.com/kb/323308/en-us
+  if (isset($_SERVER['HTTPS']) && ($_SERVER['HTTPS'] == 'on')) {
+    drupal_set_header('Cache-Control: private');
+    drupal_set_header('Pragma: private');
   }
 
   foreach ($headers as $header) {
@@ -930,6 +924,7 @@ function file_download() {
 
 /**
  * Finds all files that match a given mask in a given directory.
+ *
  * Directories and files beginning with a period are excluded; this
  * prevents hidden files and directories (such as SVN working directories)
  * from being scanned.
@@ -946,18 +941,19 @@ function file_download() {
  *   When TRUE, the directory scan will recurse the entire tree
  *   starting at the provided directory.
  * @param $key
- *   The key to be used for the returned array of files. Possible
- *   values are "filename", for the path starting with $dir,
- *   "basename", for the basename of the file, and "name" for the name
- *   of the file without an extension.
+ *   The key to be used for the returned associative array of files. Possible
+ *   values are "filename", for the path starting with $dir; "basename", for
+ *   the basename of the file; and "name" for the name of the file without the
+ *   extension.
  * @param $min_depth
  *   Minimum depth of directories to return files from.
  * @param $depth
- *   Current depth of recursion. This parameter is only used internally and should not be passed.
+ *   Current depth of recursion. This parameter is only used internally and
+ *   should not be passed in.
  *
  * @return
  *   An associative array (keyed on the provided key) of objects with
- *   "path", "basename", and "name" members corresponding to the
+ *   "filename", "basename", and "name" members corresponding to the
  *   matching files.
  */
 function file_scan_directory($dir, $mask, $nomask = array('.', '..', 'CVS'), $callback = 0, $recurse = TRUE, $key = 'filename', $min_depth = 0, $depth = 0) {
@@ -971,7 +967,7 @@ function file_scan_directory($dir, $mask, $nomask = array('.', '..', 'CVS'), $ca
           // Give priority to files in this folder by merging them in after any subdirectory files.
           $files = array_merge(file_scan_directory("$dir/$file", $mask, $nomask, $callback, $recurse, $key, $min_depth, $depth + 1), $files);
         }
-        elseif ($depth >= $min_depth && ereg($mask, $file)) {
+        elseif ($depth >= $min_depth && @ereg($mask, $file)) {
           // Always use this match over anything already set in $files with the same $$key.
           $filename = "$dir/$file";
           $basename = basename($file);
