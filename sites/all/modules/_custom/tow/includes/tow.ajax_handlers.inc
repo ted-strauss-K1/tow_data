@@ -319,7 +319,7 @@ function tow_ajax_handlers_refresh_search_results($nid) {
     $_GET['q'] = str_replace('/refresh_ajax', '', $_GET['q']);
 
     // Define search data.
-    $search = tow_search_inner_within_dataset_callback($nid);
+    $search = tow_search_inner_within_dataset($nid);
 
     // Generate new widgets block output.
     $widgets = tow_search_inner_widgets_block();
