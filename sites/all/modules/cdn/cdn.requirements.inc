@@ -110,8 +110,12 @@ function _cdn_requirements_generate_patterns_for_patch($full_path) {
     $line = fgets($fp);
 
     // Check if the current line indicates the next file.
-    if (drupal_substr($line, 0, 7) == 'Index: ') {
-      $file_to_patch = drupal_substr($line, 7, drupal_strlen($line) - 7 - 1);
+    if (drupal_substr($line, 0, 10) == 'diff --git') {
+      $pattern = '/[ab]\/(\S+)/';
+      preg_match_all($pattern, $line, $matches);
+      $file_to_patch = $matches[1][0];
+      $patch_type = 'core';
+      $kind = $patch_type;
     }
 
     // Find out which kind of file this is: a core file, a module file or a
