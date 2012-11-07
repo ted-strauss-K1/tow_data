@@ -2,9 +2,9 @@ name = "AHAH helper demo"
 description = A demo form the AHAH helper module.
 core = 6.x
 
-; Information added by drupal.org packaging script on 2011-02-25
-version = "6.x-2.x-dev"
+; Information added by drupal.org packaging script on 2011-07-11
+version = "6.x-2.2"
 core = "6.x"
 project = "ahah_helper"
-datestamp = "1298618820"
+datestamp = "1310369523"
 
