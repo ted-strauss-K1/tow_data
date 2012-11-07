@@ -60,6 +60,21 @@
       if (settings.automodalReload) {
         settings.url += '&automodalReload=true';
       }
+      if (settings.automodalReload) {
+        settings.url += '&automodalReload=true';
+      }
+
+      /**
+       * Custom tweak to redirect modal frame reload to parent url.
+       */
+      if (settings.automodalRedirect == undefined) {
+        if (top.window.location.pathname != '/') {
+          settings.url += '&destination=' + top.window.location.pathname.substring(1) + top.window.location.hash;
+        }
+        else {
+          settings.url += '&destination=<front>';
+        }
+      }
 
       if (settings.automodalRedirect != undefined) {
         settings.url += '&automodalRedirect=' + encodeURIComponent(settings.automodalRedirect);
