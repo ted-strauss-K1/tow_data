@@ -40,6 +40,7 @@ class vud_node_handler_field_widget extends views_handler_field {
       if ($valid_type) {
         $tag = variable_get('vud_tag', 'vote');
         $widget_type = variable_get('vud_node_widget', 'plain');
+        drupal_alter('vud_node_widget', $widget, $nid);
         $widget_message_code = (!$can_edit) ? VUD_WIDGET_MESSAGE_DENIED : VUD_WIDGET_MESSAGE_ERROR;
 
         $widget = theme('vud_widget', $nid, 'node', $tag, $widget_type, !$can_edit, $widget_message_code);
