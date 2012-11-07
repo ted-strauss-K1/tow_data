@@ -82,7 +82,7 @@ function cdn_requirements($phase) {
         if ($mode == CDN_MODE_BASIC) {
           $requirements['cdn']['value'] .= ' – '. t('Origin Pull mode');
           $farfuture = variable_get(CDN_BASIC_FARFUTURE_VARIABLE, CDN_BASIC_FARFUTURE_DEFAULT);
-          $preprocess_css = variable_get('preprocess_css', FALSE);
+          $preprocess_css = variable_get('preprocess_css');
 
           if (!$preprocess_css) {
             $args = array(

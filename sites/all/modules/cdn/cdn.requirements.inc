@@ -72,10 +72,6 @@ function _cdn_requirements_check_patch_applied($patterns) {
           if (!$match) {
             $match = preg_match('|' . preg_quote($pattern) . '|m', str_replace("\n", "\r\n", file_get_contents($full_path)));
           }
-          if (!$match) {
-            $pattern = trim($pattern, "\n"); $pattern = trim($pattern, "\r"); $pattern = trim($pattern, "\r\n"); $pattern = trim($pattern);
-            $match = preg_match('|' . preg_quote($pattern) . '|m', file_get_contents($full_path));
-          }
           $patched = $patched && $match;
 
           // Remember unpatched files.
