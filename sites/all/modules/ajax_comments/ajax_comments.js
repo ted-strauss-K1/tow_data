@@ -140,7 +140,7 @@ Drupal.ajax_comments_init_form = function(context) {
 
     // Moving preview in a proper place.
     if (ajax_comments_is_reply_to_node(action)) {
-      $('#comments-' + nid + ' .ajax-comments-title-processed').before($('#comment-preview-' + form_num));
+      $('#node-' + nid).siblings('div#comments').find('.ajax-comments-title-processed').before($('#comment-preview-' + form_num));
     }
     else {
       $(content_sel).before($('#comment-preview-' + form_num));
