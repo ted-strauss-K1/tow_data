@@ -530,7 +530,7 @@ function heartbeat_comments_form_submit($form = array(), &$form_state = array())
 
     if (db_query("INSERT INTO {heartbeat_comments} (uid, uaid, message, time) VALUES (%d, %d, '%s', '%s')", $uid, $tuaid, $message, date('Y-m-d H:i:s'))) {
       $hcid = db_last_insert_id('heartbeat_comments', 'hcid');
-      $saved = db_fetch_object(db_query("SELECT s.hcid, s.uid, s.uaid, s.message AS 'comment', s.time,
+      $saved = db_fetch_object(db_query("SELECT s.hcid, s.uid, s.uaid, s.message AS comment, s.time,
         u.uid, u.name AS registered_name, u.name AS name, u.signature, u.signature_format, u.picture, u.data
         FROM {heartbeat_comments} s INNER JOIN {users} u ON s.uid = u.uid
         WHERE s.hcid = %d", $hcid));
@@ -754,7 +754,7 @@ function heartbeat_get_message_reactions($uaid, $all = FALSE) {
   // a translation that is not there, consequently.
   // That is hard coded taken care of while saving the comment.
   if ($locale) {
-    $query = "SELECT s.hcid, s.uid, s.message AS 'comment', s.cleared, s.time, u.uid,
+    $query = "SELECT s.hcid, s.uid, s.message AS comment, s.cleared, s.time, u.uid,
       u.name, u.signature, u.signature_format, u.picture, u.data, ht.tuaid
       FROM {heartbeat_comments} s INNER JOIN {users} u ON s.uid = u.uid
       INNER JOIN {heartbeat_activity} ha ON ha.uaid = s.uaid
@@ -762,7 +762,7 @@ function heartbeat_get_message_reactions($uaid, $all = FALSE) {
       WHERE ht.uaid = %d ORDER BY time DESC";
   }
   else {
-    $query = "SELECT s.hcid, s.uid, s.message AS 'comment', s.cleared, s.time,
+    $query = "SELECT s.hcid, s.uid, s.message AS comment, s.cleared, s.time,
       u.uid, u.name, u.signature, u.signature_format, u.picture, u.data
       FROM {heartbeat_comments} s INNER JOIN {users} u ON s.uid = u.uid
       WHERE uaid = %d ORDER BY time DESC";

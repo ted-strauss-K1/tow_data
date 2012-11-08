@@ -231,7 +231,7 @@ function heartbeat_get_tuaid($uaid) {
   // Messages that were created before locale was installed,
   // need a record in the translation table.
   else {
-    db_query("INSERT INTO {heartbeat_translations} SET uaid = %d, tuaid = %d", $uaid, $uaid);
+    db_query("INSERT INTO {heartbeat_translations} (uaid, tuaid) VALUES (%d, %d)", $uaid, $uaid);
     return $uaid;
   }
 }
