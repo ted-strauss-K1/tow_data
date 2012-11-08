@@ -1,5 +1,4 @@
 <?php
-// $Id: hds.module,v 1.1.2.16 2010/11/12 01:08:37 stalski Exp $
 // by Stalski (Jochen Stals) - Menhir - www.menhir.be
 
 /**
@@ -147,7 +146,7 @@ function hds_ds_fields($type_name, $build_mode, $extra) {
         'formatters' => array(
           'ds_eval_code' => t('Default'),
         ),
-        'code' => '<?php print l(theme("user_picture", $object->actor), "user/". $object->actor->uid, array("html" => TRUE)); ?>'
+        'code' => '<?php print theme("user_picture", $object->actor); ?>'
       ),
       'type' => DS_FIELD_TYPE_CODE,
       'status' => DS_FIELD_STATUS_STATIC,

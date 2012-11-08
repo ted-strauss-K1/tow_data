@@ -1,5 +1,4 @@
 <?php
-// $Id: heartbeat_views.views.inc,v 1.1.2.2.2.17 2010/10/16 09:16:36 stalski Exp $
 
 /**
  * @file
@@ -54,9 +53,35 @@ function heartbeat_views_data() {
         'group' => t('Heartbeat activity'),
 
         'base'  => array(
-          'field' => 'message_id',
+          'field' => 'uaid',
           'title' => t('Heartbeat activity messages'),
           'help'  => t("All activity logged by heartbeat"),
+        ),
+      ),
+
+      // uaid.
+      'uaid' => array(
+        'title' => t('Uaid'),
+        'help' => t('The unique ID of the activity message.'), // The help that appears on the UI,
+        'field' => array(
+          'handler' => 'views_handler_field_numeric',
+          'click sortable' => TRUE,
+        ),
+        'filter' => array(
+          'handler' => 'views_handler_filter_numeric',
+        ),
+        'sort' => array(
+          'handler' => 'views_handler_sort',
+        ),
+      ),
+
+      // Delete link for activity.
+      'delete_link' => array(
+        'real field' => 'uaid',
+        'field' => array(
+          'title' => t('Delete link'),
+          'help' => t('Provide a simple link to delete the activity message.'),
+          'handler' => 'views_handler_field_heartbeat_activity_link_delete',
         ),
       ),
 
@@ -111,7 +136,7 @@ function heartbeat_views_data() {
         'help' => t('Logged Message'),
         'field' => array(
           'handler' => 'views_handler_field_markup',
-          'format' => FILTER_FORMAT_DEFAULT,
+          'format' => FILTER_HTML_ESCAPE,
         ),
       ),
       // Language field
@@ -130,7 +155,11 @@ function heartbeat_views_data() {
           'click sortable' => TRUE,
         ),
         'sort' => array(
+          //'handler' => 'views_handler_sort',
           'handler' => 'views_handler_sort_date',
+        ),
+        'filter' => array(
+          'handler' => 'views_handler_filter_date',
         ),
       ),
       'access_type' => array(
@@ -181,6 +210,19 @@ function heartbeat_views_data() {
       'relationship' => array(
         'relationship table' => 'heartbeat_activity',
         'relationship field' => 'nid_target',
+        'handler' => 'views_handler_relationship',
+        'base' => 'og_ancestry',
+        'base field' => 'nid',
+        'label' => t('Group'),
+      ),
+    );
+    $data['heartbeat_activity']['og_relation'] = array(
+      'group' => t('Heartbeat'),
+      'title' => t('Organic group'),
+      'help' => t('Create a relationship to organic group nodes.'),
+      'relationship' => array(
+        'relationship table' => 'heartbeat_activity',
+        'relationship field' => 'nid',
         'handler' => 'views_handler_relationship',
         'base' => 'og_ancestry',
         'base field' => 'nid',
@@ -253,6 +295,12 @@ function heartbeat_views_handlers() {
       'views_handler_filter_heartbeat_user_requested' => array(
         'parent' => 'views_handler_filter_boolean_operator',
       ),
+
+      // Delete link for heartbeat activity.
+      'views_handler_field_heartbeat_activity_link_delete' => array(
+        'parent' => 'views_handler_field',
+      ),
+
     ),
   );
 }

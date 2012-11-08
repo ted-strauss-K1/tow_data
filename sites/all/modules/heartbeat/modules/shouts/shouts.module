@@ -1,5 +1,4 @@
 <?php
-// $Id: shouts.module,v 1.1.2.2.2.26 2010/11/12 10:47:07 stalski Exp $
 // by Zuuperman and Stalski - Menhir - www.menhir.be
 
 /**
@@ -108,7 +107,7 @@ function shouts_user($op, &$edit, &$account, $category = NULL) {
  */
 function shouts_heartbeat_message_info() {
   return array(
-    0 =>
+    'heartbeat_shout' =>
     array(
       'message_id' => 'heartbeat_shout',
       'message' => '!user !message',
@@ -250,6 +249,12 @@ function shouts_shout_form($form_state = array(), $show_latest_shout = TRUE) {
         'onclick' => 'javascript:Drupal.heartbeat.Shouts.shout(this, \'shout/post\'); return false;'
       ),
     );
+
+    $form['heartbeat_shout_token'] = array(
+      '#id' => 'heartbeat_shout_post_' . $GLOBALS['user']->uid,
+      '#default_value' => drupal_get_token('heartbeat_shout_post_' . $GLOBALS['user']->uid),
+      '#type' => 'hidden',
+    );
   }
 
   return $form;
@@ -265,6 +270,14 @@ function shouts_shout_form_submit($form = array(), &$form_state = array()) {
 
   global $user;
   $uid = $user->uid;
+
+  // Check the token.
+  $token = 'heartbeat_shout_post_'. $uid;
+  $token_value = ($ahah ? $_POST['heartbeat_shout_token'] : $form_state['values']['heartbeat_shout_token']);
+  if (!drupal_valid_token($token_value, $token)) {
+    drupal_json(array('status' => FALSE, 'data' => t('Access denied')));
+    exit;
+  }
 
   $message = ($ahah ? $_POST['shout'] : $form_state['values']['shout']);
 

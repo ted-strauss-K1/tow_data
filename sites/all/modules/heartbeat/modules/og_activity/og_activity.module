@@ -1,5 +1,4 @@
 <?php
-// $Id: og_activity.module,v 1.1.2.2.2.13 2010/09/26 21:03:17 stalski Exp $
 // by Jochen Stals - Menhir - www.menhir.be
 
 define('HEARTBEAT_OG_PUBLIC', 10);
@@ -102,10 +101,25 @@ function og_activity_token_values($type, $object = NULL, $options = array()) {
       if (!empty($object->og_groups) && is_array($object->og_groups)) {
         $gids = array_keys(array_filter($object->og_groups));
         $title = db_result(db_query("SELECT title FROM {node} WHERE nid = %d", $gids[0]));
-        $values['ogname-title-link'] = l(check_plain($title),'node/'. $gids[0]);
+        $values['ogname-title-link'] = l(check_plain($title),'node/'. $gids[0], array('html' => TRUE));
         return $values;
       }
       break;
+  }
+
+}
+
+/**
+ * Implementation of hook_heartbeat_activity_log().
+ */
+function og_activity_heartbeat_activity_log($heartbeatactivity, $args) {
+
+  // Most of the time nid is a group post and nid_target the group, sometimes nid_target left empty.
+  // In some cases the nid is the group id, leaving the nid_target empty.
+  $in_group = (int) db_result(db_query_range("SELECT 1 FROM {og_ancestry} WHERE (nid = %d OR group_nid = %d OR group_nid = %d)", $heartbeatactivity->nid, $heartbeatactivity->nid, $heartbeatactivity->nid_target, 0, 1));
+  if ($in_group) {
+    db_query("UPDATE {heartbeat_activity} SET in_group = 1 WHERE nid = %d AND nid_target = %d ", $heartbeatactivity->nid, $heartbeatactivity->nid_target);
+
   }
 
 }

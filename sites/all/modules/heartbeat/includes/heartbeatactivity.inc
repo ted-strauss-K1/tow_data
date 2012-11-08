@@ -1,5 +1,4 @@
 <?php
-// $Id: heartbeatactivity.inc,v 1.1.2.1.2.45 2011/01/21 00:53:09 stalski Exp $
 
 /**
  * @file
@@ -42,10 +41,9 @@ class HeartbeatActivity {
   public $template = '';
 
   // Global properties on message base.
-  public $show_time = 0;
+  public $display_time = TRUE;
   public $count = 0; // count for same instance
   public $target_count = 0; // count for same instance that is merged by target
-  public $display_time = TRUE;
   public $time_info_grouped = 0;
   public $delete_access = FALSE;
   public $actor_access = FALSE;
@@ -87,8 +85,14 @@ class HeartbeatActivity {
     }
     else {
       $account = new stdClass();
+      $message_actor_data = unserialize($data['data']);
+      unset($data['data']);
+      $account->data = $message_actor_data;
+      $account->heartbeat_activity_settings = isset($message_actor_data['heartbeat_activity_settings']) ? $message_actor_data['heartbeat_activity_settings'] : array();
       foreach (user_fields() as $field)  {
-        $account->$field = $data[$field];
+        if (isset($data[$field])) {
+          $account->$field = $data[$field];
+        }
       }
       $this->actor = $account;
     }
@@ -212,7 +216,7 @@ class HeartbeatActivity {
     if ($count > $max_items_to_group) {
       $count = $max_items_to_group;
       $unique = array_slice($unique, 0, $count);
-      $remains = array_slice($candidates['variables'], $count - 1);
+      $remains = array_slice($candidates['variables'], $count);
     }
 
     // Replacement of placeholder with group targets
@@ -220,12 +224,8 @@ class HeartbeatActivity {
     // Try to replace the variable with the group_target variables
     if (preg_match_all("|\%(.*)\%(.*)|U", $message_template, $matches)) {
 
-      if (count($remains) > 0) {
-        $hidden_remains = '<ul id="' . $beat . '-remaining" style="display: none;">';
-        foreach ($remains as $remain) {
-          $hidden_remains .= '<li>' . $remain["@". $target] . '</li>';
-        }
-        $hidden_remains .= '</ul>';
+      if ($this->template->concat_args['show_remaining_items']) {
+        $hidden_remains = theme('heartbeat_activity_remaining', $beat, $target, $remains);
       }
 
       // TODO Make a decision on how to handle the target on merged groups
@@ -244,7 +244,7 @@ class HeartbeatActivity {
               $merged_string .= ' ' . $stored_variables["@". $target];
             }
             elseif ($i < $count && $count > 2) {
-              if (strlen(strip_tags($this->template->concat_args['merge_separator_t'])) > 0) {
+              if (isset($this->template->concat_args['merge_separator_t']) && strlen(strip_tags($this->template->concat_args['merge_separator_t'])) > 0) {
                 $merged_string .= ' ' . t($this->template->concat_args['merge_separator']);
               }
               else {
@@ -253,20 +253,25 @@ class HeartbeatActivity {
               $merged_string .= ' ' . $stored_variables["@". $target];
             }
             elseif ($i == $count || $count == 2) {
-              if (strlen(strip_tags($this->template->concat_args['merge_end_separator_t'])) > 0) {
+              if (isset($this->template->concat_args['merge_end_separator_t']) && strlen(strip_tags($this->template->concat_args['merge_end_separator_t'])) > 0) {
                 $merged_string .= ' ' . t($this->template->concat_args['merge_end_separator']);
               }
               else {
                 $merged_string .= ' ' . $this->template->concat_args['merge_end_separator'];
               }
               if (count($remains) >= 1 && $hidden_remains != '') {
-                $attributes = array(
-                  'attributes' => array(
-                    'absolute' => TRUE,
-                    'onclick' => 'javascript:$(\'#' . $beat . '-remaining\').toggle(\'slow\'); return false;'),
-                    'fragment' => $beat);
-                $merged_string .= ' ' . l(t('@num more', array('@num' => count($remains))), $base_url . request_uri(), $attributes);
-                $message_extension .= $hidden_remains;
+
+                // Add the last item.
+                $merged_string .= ' ' . $stored_variables["@". $target];
+
+                if ($this->template->concat_args['show_remaining_items']) {
+                  // Add the remains.
+                  $message_extension .= $hidden_remains;
+
+                  // Add the link to the remaining items.
+                  $merged_string .= theme('hearbeat_activity_remain_link', $beat, count($remains));
+                }
+
               }
               else {
                 $merged_string .= ' ' . $stored_variables["@". $target];
@@ -305,7 +310,7 @@ class HeartbeatActivity {
       }
     }
     if (!empty($this->nid_target)) {
-      $node_target = node_load($this->nid);
+      $node_target = node_load($this->nid_target);
       // Add extra node access information for nid_target.
       $this->nid_target_info = array(
         'uid' => $node_target->uid,
@@ -382,7 +387,7 @@ class HeartbeatActivity {
       if ($uaid && !isset($tuaid)) {
         $tuaid = $uaid;
       }
-      db_query("INSERT INTO {heartbeat_translations} (tuaid, uaid) VALUES (%d, %d)", $tuaid, $uaid);
+      db_query("INSERT INTO {heartbeat_translations} SET tuaid=%d, uaid=%d", $tuaid, $uaid);
 
     }
 
@@ -414,7 +419,6 @@ class HeartbeatActivity {
       $lang = $language->language;
     }
 
-    // Mis-usage of the t-function, but how could i fix this?
     $message = t($this->message, $args, $lang);
     $message_concat = t($this->message_concat, $args, $lang);
 
@@ -426,8 +430,9 @@ class HeartbeatActivity {
 
     // Log relational message to user activity
     $logged = db_query("INSERT INTO {heartbeat_activity}
-      (uid, uid_target, nid, nid_target, message_id, language, access, message, message_concat, timestamp, nid_info, nid_target_info, uaid_comments, variables)
-      VALUES  (%d, %d, %d, %d, '%s', '%s', %d, '%s', '%s', %d, '%s', '%s', %d, '%s')",
+      SET uid=%d, uid_target=%d, nid=%d, nid_target=%d, message_id='%s', language='%s',
+      access = %d, message ='%s',message_concat ='%s', timestamp=%d
+      , nid_info='%s', nid_target_info='%s', uaid_comments=%d, variables='%s'",
       $this->uid,  $this->uid_target, $this->nid, $this->nid_target, $this->message_id, $lang,
       $this->access, $message, $message_concat, $this->timestamp,
       serialize($this->nid_info), serialize($this->nid_target_info), 0,

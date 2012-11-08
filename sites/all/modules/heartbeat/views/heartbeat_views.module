@@ -14,6 +14,57 @@ function heartbeat_views_views_api() {
 }
 
 /**
+ * Implementation of hook_views_bulk_operations_object_info()
+ *
+ * The array returned for each object type contains:
+ *  'type' => the object type name, should be the same as 'type' field in actions.
+ *  'base_table' => the Views 2 table name corresponding to that object type, should be the same as the $view->base_table attribute.
+ *  'load' => a function($id) that returns the corresponding object.
+ *  'title' => an attribute on the object that returns a human-friendly identifier of the object.
+ *  'access' (optional) => a function($op, $node, $account = NULL) that behaves like node_access().
+ *
+ */
+function heartbeat_views_views_bulk_operations_object_info() {
+  return array(
+    'heartbeat_activity' => array(
+      'type' => 'heartbeat_activity',
+      'base_table' => 'heartbeat_activity',
+      'load' => 'heartbeat_load_message_instance',
+      'title' => 'message',
+      'oid' => 'uaid',
+      'access' => '_heartbeat_message_has_access',
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_action_info().
+ */
+function heartbeat_views_action_info() {
+  return array(
+    'heartbeat_activity_delete_action' => array(
+      'description' => t('Delete activity'),
+      'type' => 'heartbeat_activity',
+      'configurable' => FALSE,
+      'hooks' => array(
+        'heartbeat_activity' => array('delete'),
+      ),
+    ),
+  );
+}
+
+/**
+ * Views bulk operations callback to delete multiple activity.
+ */
+function heartbeat_activity_delete_action($heartbeatactivity, $context = array()) {
+
+  if (_heartbeat_message_delete_access($heartbeatactivity->uaid)) {
+    _heartbeat_activity_delete($heartbeatactivity->uaid);
+  }
+
+}
+
+/**
  * Implementation of hook_views_pre_view().
  */
 function heartbeat_views_views_pre_view(&$view, &$display_id=0, &$args = NULL) {
@@ -114,6 +165,7 @@ function _heartbeat_render_view(&$view) {
   }
 
   $result = _heartbeat_group_views_messages($name, $results, $stream);
+
   $view->result = $result;
 
 }
@@ -126,8 +178,8 @@ function _heartbeat_group_views_messages($name, $messages, $stream) {
   heartbeat_include('HeartbeatParser');
   $heartbeat = HeartbeatParser::instantiate($name);
 
-  if (empty($stream->grouping_seconds)) {
-    $timespan->grouping_seconds;
+  if (!empty($stream->grouping_seconds)) {
+    $timespan = $stream->grouping_seconds;
   }
   else {
     $timespan = variable_get('heartbeat_activity_grouping_seconds', 7200);
@@ -154,6 +206,23 @@ function _heartbeat_group_views_messages($name, $messages, $stream) {
     heartbeat_include($stream->name, $stream->module);
     $heartbeatAccess = new $class($stream);
   }
+
+  // Let other module load additions.
+  $hook = 'heartbeat_load';
+  foreach (module_implements($hook) as $module) {
+    $function = $module .'_'. $hook;
+    // $messages should be implemented by reference!!!
+    $function($messages, $heartbeatAccess);
+  }
+
+  // Let other modules retheme or completely rebuild messages.
+  $hook = 'heartbeat_theme_alter';
+  foreach (module_implements($hook) as $module) {
+    $function = $module .'_'. $hook;
+    $result = $function($messages, $heartbeatAccess);
+  }
+
+  // let other modules hook into the theming of the components.
   $hook = 'heartbeat_view';
   foreach (module_implements($hook) as $module) {
     $function = $module .'_'. $hook;

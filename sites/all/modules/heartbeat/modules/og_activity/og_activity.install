@@ -1,5 +1,4 @@
 <?php
-// $Id: og_activity.install,v 1.1.2.2.2.4 2010/02/21 12:31:33 stalski Exp $
 
 /**
  * @file
@@ -7,11 +6,45 @@
  */
 
 /**
+ * Define a column definition for {heartbeat_activity}.in_group.
+ */
+function og_activity_in_group_column() {
+  return array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'size' => 'tiny',
+    'description' => t('Custom message type.'),
+    'default' => 0,
+  );
+}
+
+/**
  * Implementation of hook_install().
  */
 function og_activity_install() {
   // Module weights in core: put heartbeat after heartbeat in the chain.
   db_query("UPDATE {system} SET weight = 51 WHERE name = 'og_activity'");
+  $ret = array();
+  db_add_field($ret, 'heartbeat_activity', 'in_group', og_activity_in_group_column());
+  db_add_index($ret, 'heartbeat_activity', 'group_language_timestamp', array('in_group', 'language', 'timestamp'));
+
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function og_activity_unininstall() {
+  $ret = array();
+  db_drop_field($ret, 'heartbeat_activity', 'in_group');
+  db_drop_index($ret, 'heartbeat_activity', 'group_language_timestamp');
+}
+
+/**
+ * Implementation of hook_schema_alter().
+ */
+function og_activity_schema_alter(&$schema) {
+  $schema['heartbeat_activity']['in_group'] = og_activity_in_group_column();
+  $schema['heartbeat_activity']['indexes']['group_language_timestamp'] = array('in_group', 'language', 'timestamp');
 }
 
 /**
@@ -34,4 +67,27 @@ function og_activity_enable() {
 
   drupal_set_message(t('Please visit !messages_page to import default heartbeat messages from other modules.', array('!messages_page' => l(t('Heartbeat messages page'), 'admin/build/heartbeat'))));
 
+}
+
+/**
+ * Set 'in_group' for existing activity records.
+ */
+function og_activity_update_6400() {
+  $ret = array();
+  db_add_field($ret, 'heartbeat_activity', 'in_group', og_activity_in_group_column());
+
+  db_query("UPDATE {heartbeat_activity} SET in_group = 1 WHERE nid IN (SELECT DISTINCT nid FROM {og_ancestry})");
+  db_query("UPDATE {heartbeat_activity} SET in_group = 1 WHERE nid IN (SELECT DISTINCT nid FROM {og})");
+
+  return $ret;
+}
+
+/**
+ * Add in_group, language, timestamp index to {heartbeat_activity}.
+ */
+function og_activity_update_6401() {
+  $ret = array();
+  db_add_index($ret, 'heartbeat_activity', 'group_language_timestamp', array('in_group', 'language', 'timestamp'));
+
+  return $ret;
 }

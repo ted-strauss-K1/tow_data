@@ -1,5 +1,4 @@
 <?php
-// $Id: heartbeat.module,v 1.1.2.26.2.46.2.108 2011/01/21 00:53:09 stalski Exp $
 // by Stalski (Jochen Stals) - Menhir - www.menhir.be
 
 
@@ -110,6 +109,8 @@ function heartbeat_init() {
   global $user, $language;
   drupal_add_js(drupal_get_path('module', 'heartbeat') . '/heartbeat.js');
   drupal_add_js(array('heartbeat_language' => $language->language), "setting");
+  drupal_add_js(array('heartbeat_poll_url' => url('heartbeat/js/poll', array('absolute' => TRUE))), "setting");
+
 }
 
 /**
@@ -120,6 +121,7 @@ function heartbeat_perm() {
   return array(
     'configure heartbeat',
     'configure heartbeat messages',
+    'access user activity',
     'delete heartbeat activity logs',
     'delete own heartbeat activity logs',
     'view heartbeat messages',
@@ -141,9 +143,7 @@ function heartbeat_menu() {
   // Menu page callbacks for each heartbeat access type
   $access_types = variable_get('heartbeat_access_types', array());
   foreach ($access_types as $access_type => $type) {
-    if (isset($type['settings']['page_disabled']) && $type['settings']['page_disabled']) {
-      continue;
-    }
+    $menu_item_type = (isset($type['settings']['page_disabled']) && $type['settings']['page_disabled']) ? MENU_NORMAL_ITEM : MENU_CALLBACK;
     $items['heartbeat/'. $access_type] = array(
       'title callback' => 'heartbeat_messages_title',
       'title arguments' => array(1),
@@ -153,7 +153,7 @@ function heartbeat_menu() {
       'access callback' => '_heartbeat_access_type_has_access',
       'access arguments' => array(1),
       'file' => 'heartbeat.pages.inc',
-      'type' => $access_type == 'singleheartbeat' ? MENU_CALLBACK : MENU_NORMAL_ITEM,
+      'type' => $access_type == 'singleheartbeat' ? MENU_CALLBACK : $menu_item_type,
     );
   }
 
@@ -392,6 +392,12 @@ function heartbeat_theme() {
     'heartbeat_time_ago' => array(
       'arguments' => array('message' => NULL),
     ),
+    'heartbeat_activity_remaining' => array(
+      'arguments' => array('beat' => NULL, 'target' => NULL, 'remains' => array()),
+    ),
+    'hearbeat_activity_remain_link' => array(
+      'arguments' => array('beat' => NULL, 'count' => NULL),
+    ),
     'heartbeat_message_user_select_form' => array(
       'arguments' => array('form' => NULL),
     ),
@@ -431,8 +437,11 @@ function heartbeat_nodeapi(&$node, $op, $arg = 0) {
   // Visa versa could be done custom but at the
   // time of writing, i did not implement this.
   if ($op == 'delete') {
-    db_query("DELETE FROM {heartbeat_activity} WHERE nid = %d
+    $result = db_query("SELECT uaid FROM {heartbeat_activity} WHERE nid = %d
       OR nid_target = %d", $node->nid, $node->nid);
+    while ($row = db_fetch_object($result)) {
+      _heartbeat_activity_delete($row->uaid);
+    }
   }
 }
 
@@ -443,20 +452,60 @@ function heartbeat_nodeapi(&$node, $op, $arg = 0) {
  */
 function heartbeat_cron() {
 
-  if ($maximum_time = variable_get('heartbeat_activity_log_cron_delete', 2678400)) {
-    $delete_time = $_SERVER['REQUEST_TIME'] - $maximum_time;
-    $result = db_query("SELECT uaid FROM {heartbeat_activity} WHERE timestamp < %d", $delete_time);
+  $cron_delete_time = variable_get('heartbeat_activity_log_cron_delete', 2678400);
+  $keep_latest_number = variable_get('heartbeat_activity_records_per_user', 10);
+
+  // Delete activity older than the expiration date, while
+  // keeping the latest X for each user.
+  if ($cron_delete_time) {
+
+    $expire = $_SERVER['REQUEST_TIME'] - $cron_delete_time;
+
+    // Activity Ids that can not be removed (latest activity per user)
+    $keep_uaids = array(0 => 0);
+
+    $unlimited_templates = variable_get('heartbeat_activity_templates_unlimited', array());
+
+    // Calculate the latest activity for each user.
+    $arguments = array_merge($unlimited_templates, array($keep_latest_number));
+    $result = db_query("SELECT
+        t1.uid,
+        t1.uaid as 'uaid',
+        COUNT(*) as 'rows_per_user',
+        t1.timestamp as 'real_date',
+        MIN(t2.timestamp) as 'oldest_date',
+        count(t2.uid) AS 'count'
+      FROM {heartbeat_activity} AS t1
+      INNER JOIN {heartbeat_activity} AS t2 ON t1.uid = t2.uid AND t2.timestamp >= t1.timestamp
+      WHERE (t1.timestamp, t1.uaid) < (t2.timestamp, t2.uaid)
+      AND t1.message_id NOT IN (" . db_placeholders($unlimited_templates) . ")
+      GROUP BY t1.uid, t1.uaid HAVING COUNT(t2.uid) <= %d
+      ORDER BY t1.uid, t1.uaid, t1.timestamp DESC", $arguments);
     while ($row = db_fetch_object($result)) {
+      $keep_uaids[$row->uaid] = $row->uaid;
+    }
+
+    $arguments = array_merge(array($expire), $keep_uaids);
+    $delete_result = db_query("SELECT uaid
+      FROM {heartbeat_activity}
+      WHERE
+        timestamp < %d
+      AND
+        uaid NOT IN (" . db_placeholders($keep_uaids) . ") ", $arguments);
+    while ($row = db_fetch_object($delete_result)) {
       _heartbeat_activity_delete($row->uaid);
     }
+
   }
 
+  // Remove activity for nodes that are removed.
   $result = db_query("SELECT uaid, nid, nid_target FROM {heartbeat_activity} WHERE nid > 0");
   while ($row = db_fetch_object($result)) {
     if (!($exists = db_result(db_query("SELECT nid FROM {node} WHERE nid = %d ", $row->nid)))) {
       _heartbeat_activity_delete($row->uaid);
     }
   }
+
 }
 
 /**
@@ -464,7 +513,7 @@ function heartbeat_cron() {
  */
 function heartbeat_block($op = 'list', $delta = 0, $edit = array()) {
 
-  if (!user_access('view heartbeat messages') || !variable_get('heartbeat_enabled', 1)) {
+  if (!variable_get('heartbeat_enabled', 1)) {
     return FALSE;
   }
 
@@ -481,12 +530,25 @@ function heartbeat_block($op = 'list', $delta = 0, $edit = array()) {
   }
   elseif ($op == 'view') {
 
+    if (!user_access('view heartbeat messages')) {
+      return FALSE;
+    }
+
     // Message streams for each access type
-    if (variable_get('heartbeat_show_user_profile_messages_' . drupal_strtolower($delta), 0)
+    if (variable_get('heartbeat_show_user_profile_messages_' . drupal_strtolower($delta), 1)
       && arg(0) == 'user' && is_numeric(arg(1))) {
       $context = heartbeat_stream_view($delta, FALSE, 0, FALSE, heartbeat_user_load(arg(1)));
     }
     else {
+      // Check if the block is set for profile pages and if we are on a profile page.
+      if (variable_get('heartbeat_show_node_author_messages_' . drupal_strtolower($delta), 1)) {
+        if (arg(0) == 'node' && is_numeric(arg(1)) && function_exists('is_content_profile')) {
+          $node = node_load(arg(1));
+          if (is_content_profile($node->type)) {
+            $context = heartbeat_stream_view($delta, FALSE, 0, FALSE, heartbeat_user_load($node->uid));
+          }
+        }
+      }
       $context = heartbeat_stream_view($delta);
     }
 
@@ -512,13 +574,25 @@ function heartbeat_block($op = 'list', $delta = 0, $edit = array()) {
   elseif ($op == 'configure') {
 
     $realname = isset($access_types[$delta]['realname']) ? $access_types[$delta]['realname'] : $access_types[$delta]['class'];
+
     $form['items'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Automatically Determine Target User'),
+      '#description' => t('By default heartbeat will show activity in relation to the currently logged in user.  Use these options to use a user determined by the context of the content being viewed.'),
+    );
+
+    $form['items']['user_profile'] = array(
       '#type' => 'checkbox',
       '#title' => t('Show activity for the displayed user on the user profile page'),
-      '#description' => t('By default heartbeat will show activity in relation to the
-        currently logged in user.  With this setting enabled and only on the user profile page,
-        the messages will be shown in relation to the user profile.'),
-      '#default_value' => variable_get('heartbeat_show_user_profile_messages_' . drupal_strtolower($realname), 0),
+      '#description' => t('<strong>When viewing core user profile pages</strong>, the messages will be shown in relation to the user profile.'),
+      '#default_value' => variable_get('heartbeat_show_user_profile_messages_' . drupal_strtolower($realname), 1),
+    );
+
+    $form['items']['node_author'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show activity for author of the displayed profile node'),
+      '#description' => t('<strong>When viewing nodes</strong>, the messages will be shown in relation to the node author of the profile node page.'),
+      '#default_value' => variable_get('heartbeat_show_node_author_messages_' . drupal_strtolower($realname), 0),
     );
 
     return $form;
@@ -526,7 +600,9 @@ function heartbeat_block($op = 'list', $delta = 0, $edit = array()) {
   elseif ($op == 'save') {
 
     $realname = isset($access_types[$delta]['realname']) ? $access_types[$delta]['realname'] : $access_types[$delta]['class'];
-    variable_set('heartbeat_show_user_profile_messages_' . drupal_strtolower($realname), $edit['items']);
+    variable_set('heartbeat_show_user_profile_messages_' . drupal_strtolower($realname), $edit['user_profile']);
+    variable_set('heartbeat_show_node_author_messages_' . drupal_strtolower($realname), $edit['node_author']);
+
   }
 
 }
@@ -602,8 +678,6 @@ function heartbeat_heartbeat_message_info() {
       'group_target' => '',
       'merge_separator' => '',
       'merge_end_separator' => '',
-      'merge_separator_t' => '0',
-      'merge_end_separator_t' => '0',
     ),
     'description' => 'user replied on some content',
     'perms' => '1',
@@ -643,8 +717,6 @@ function heartbeat_heartbeat_message_info() {
       'merge_target' => '',
       'merge_separator' => '',
       'merge_end_separator' => '',
-      'merge_separator_t' => '0',
-      'merge_end_separator_t' => '0',
     ),
     'perms' => '1',
     'custom' => HEARTBEAT_MESSAGE_DEFAULT,
@@ -670,9 +742,9 @@ function heartbeat_heartbeat_message_info() {
       'perms' => '1',
       'custom' => HEARTBEAT_MESSAGE_DEFAULT,
       'variables' => array(
-        '@username' => '[node:user-name-url]',
+        '@username' => '[author:user-name-url]',
         '@title' => '[node:title-link]',
-        '@image' => '',
+        '@image' => '[node:node-image-thumbnail-link]',
       ),
     );
   }
@@ -877,8 +949,6 @@ function theme_heartbeat_buttons($message) {
  */
 function theme_heartbeat_messages($messages,  HeartbeatAccess $heartbeatAccess, $link = '') {
 
-  $display_time = variable_get('heartbeat_show_message_times', TRUE);
-
   $content = '';
 
   foreach ($messages as $key => $message) {
@@ -888,7 +958,7 @@ function theme_heartbeat_messages($messages,  HeartbeatAccess $heartbeatAccess, 
     //$message->content['widgets'] = theme('heartbeat_widgets', $message);
     $message->content['widgets'] = _theme_heartbeat_widgets($message);
 
-    if ($display_time && $message->display_time) {
+    if ($message->display_time) {
       $message->content['time_info'] = theme('heartbeat_time_ago', $message);
     }
 
@@ -968,6 +1038,8 @@ function _theme_user_message_select_form($title, $settings) {
     );
 
   }
+
+  ksort($form['heartbeat_activity_settings']);
 
   return $form;
 }
@@ -1205,11 +1277,32 @@ function _heartbeat_messages_rebuild($defaults, $stored) {
 
     // Find updated messages in code.
     else {
+
+      // Hacky code to avoid detecting revertable changes. The merge_separator_t was a dirty fix
+      // resulting in more hacky stuff.
+      // TODO Review the concept of translatable messages and their merging separators.
+      $stored_concat_args = heartbeat_decode_message_variables($stored_lookup[$default['message_id']]['concat_args']);
+      if (isset($stored_concat_args['merge_separator_t'])) {
+        unset($stored_concat_args['merge_separator_t']);
+      }
+      if (isset($stored_concat_args['merge_end_separator_t'])) {
+        unset($stored_concat_args['merge_end_separator_t']);
+      }
+      $stored_lookup[$default['message_id']]['concat_args'] = heartbeat_encode_message_variables($stored_concat_args);
+
       //$stored_lookup[$default['message_id']]['variables'] = heartbeat_decode_message_variables($stored_lookup[$default['message_id']]['variables']);
       //$stored_lookup[$default['message_id']]['concat_args'] = heartbeat_decode_message_variables($stored_lookup[$default['message_id']]['concat_args']);
       $default['variables'] = heartbeat_encode_message_variables($default['variables']);
       $default['concat_args'] = heartbeat_encode_message_variables($default['concat_args']);
+      if (isset($default['attachments'])) {
+        $default['attachments'] = serialize($default['attachments']);
+      }
       $diffs = array_diff_assoc($default, $stored_lookup[$default['message_id']]);
+
+      // TODO Check how to solve these diffs once and for all.
+      // dsm($default['variables']); and dsm($stored_lookup[$default['message_id']]['variables']);
+      // are never the same. Also lookat concat_args and custom.
+
       if (!empty($diffs)) {
         $operations['diffs'][$default['message_id']] = $diffs;
       }
@@ -1352,15 +1445,19 @@ function heartbeat_message_update($record) {
  */
 function _heartbeat_activity_delete($uaid) {
 
-  $activity = heartbeat_load_message_instance($uaid);
-  // perform the update action, then refresh node statistics
-  db_query("DELETE FROM {heartbeat_activity} WHERE uaid = %d", $uaid);
+  foreach (heartbeat_get_uaids($uaid) as $uaid) {
 
-  // Allow modules to respond to the updating of a heartbeat activity message.
-  module_invoke_all('heartbeat_activity_delete', $activity);
+    $activity = heartbeat_load_message_instance($uaid);
 
-  // Add an entry to the watchdog log.
-  watchdog('heartbeat', 'Heartbeat: deleted message %uaid.', array('%uaid' => $activity->uaid), WATCHDOG_NOTICE);
+    // perform the update action, then refresh node statistics
+    db_query("DELETE FROM {heartbeat_activity} WHERE uaid = %d", $uaid);
+
+    // Allow modules to respond to the updating of a heartbeat activity message.
+    module_invoke_all('heartbeat_activity_delete', $activity);
+
+    // Add an entry to the watchdog log.
+    watchdog('heartbeat', 'Heartbeat: deleted message %uaid.', array('%uaid' => $activity->uaid), WATCHDOG_NOTICE);
+  }
 
 }
 
@@ -1492,6 +1589,7 @@ function heartbeat_get_related_uids($uid) {
     // all the messages where the current uid is in the friendlist
     // if function exists use it
     $related_uids = module_invoke_all('heartbeat_related_uid_info', $uid);
+    $related_uids[$uid] = $uid;
     if (count($related_uids) > 0) {
       foreach ($related_uids as $rel_uid) {
         $uids[$uid][$rel_uid] = $rel_uid;
@@ -1554,6 +1652,21 @@ function heartbeat_load_message_instance($uaid) {
 }
 
 /**
+ * Promote a message to the list again.
+ *
+ * @param string $hid
+ */
+function heartbeat_promote_message_instance($uaid) {
+  $uaids = heartbeat_get_uaids($uaid);
+  foreach ($uaids as $row_uaid) {
+    if ($row = heartbeat_load_message_instance($row_uaid)) {
+      db_query("UPDATE {heartbeat_activity} set timestamp = %d WHERE uaid = %d ", time(), $row_uaid);
+    }
+  }
+  return FALSE;
+}
+
+/**
  * Helper function to check access on an Access type activity stream
  */
 function _heartbeat_message_has_access($uaid) {
@@ -1612,6 +1725,7 @@ function heartbeat_stream_view($access_type, $page = FALSE, $offset = 0, $ajax =
 
   // Message streams for each access type
   if ($type = _heartbeat_access_type_has_access($access_type)) {
+
     heartbeat_include('HeartbeatStream');
     heartbeat_include('HeartbeatMessageBuilder');
     heartbeat_include('HeartbeatParser');
@@ -1689,6 +1803,15 @@ function theme_heartbeat_stream_more_link($heartbeatAccess, $offset_time, $page 
   $ajax_pager = $page ? $heartbeatAccess->getStream()->page_pager_ajax : ($heartbeatAccess->getStream()->block_show_pager == 2 || $heartbeatAccess->getStream()->block_show_pager == 3);
   $attributes = array('html' => FALSE, 'attributes' => array('class' => 'heartbeat-older-messages'));
 
+  if ($_GET['group_nid']) {
+    $attributes['query'] .= 'group_nid='.$_GET['group_nid'];
+  }
+  elseif (module_exists('og')) {
+    if ($group = og_get_group_context()) {
+      $attributes['query'] .= 'group_nid='.$group->nid;
+    }
+  }
+
   if (isset($_GET['filters'])) {
     $attributes['query'] = 'filters=' . $_GET['filters'];
   }
@@ -1703,13 +1826,22 @@ function theme_heartbeat_stream_more_link($heartbeatAccess, $offset_time, $page 
     $path = 'heartbeat/' . $heartbeatAccess->getAccess();
     $path .= '/' . $offset_time;
 
-    // Add a fourth paramter to indicate that where on a profile page.
-    if (arg(0) == 'user' && is_numeric(arg(1)) && variable_get('heartbeat_show_user_profile_messages_' . $heartbeatAccess->getStream()->name, 0)) {
+    // Add a fourth parameter to indicate that where on a profile page.
+    $account = -1;
+    if (arg(0) == 'user' && is_numeric(arg(1)) && variable_get('heartbeat_show_user_profile_messages_' . $heartbeatAccess->getStream()->name, 1)) {
       $path .= '/' . arg(1);
+      $account = arg(1);
+    }
+    elseif (isset($_REQUEST['account'])) {
+      $path .= '/' . $_REQUEST['account'];
+      $account = $_REQUEST['account'];
     }
 
     if ($ajax_pager) {
-      $attributes['attributes']['onclick'] = 'javascript:Drupal.heartbeat.getOlderMessages(this, ' . (int)$page . '); return false;';
+      $attributes['attributes']['onclick'] = 'javascript:Drupal.heartbeat.getOlderMessages(this, ' . (int)$page . ', ' . $account . '); return false;';
+      if (method_exists($heartbeatAccess, 'getGroup')) {
+        $attributes['attributes']['class'] = 'heartbeat-group-' . $heartbeatAccess->getGroup()->nid;
+      }
     }
 
     $formattedlink = l(t('Older messages'), $path, $attributes) . '<span class="heartbeat-messages-throbber">&nbsp;</span>';
@@ -1730,6 +1862,40 @@ function theme_heartbeat_stream_more_link($heartbeatAccess, $offset_time, $page 
   $content .= '</div>';
 
   return $content;
+
+}
+
+/**
+ * Theme function for the heartbeat activity remaining items.
+ */
+function theme_heartbeat_activity_remaining($beat, $target, $remains = array()) {
+
+  $output = '';
+
+  if (count($remains) > 0) {
+    $output .= '<ul id="' . $beat . '-remaining" class="beat-remaining" style="display: none;">';
+    foreach ($remains as $remain) {
+      $output .= '<li>' . $remain["@". $target] . '</li>';
+    }
+    $output .= '</ul>';
+  }
+
+  return $output;
+
+}
+
+/**
+ * Theme function for the heartbeat activity remain link.
+ */
+function theme_hearbeat_activity_remain_link($beat, $count) {
+
+  $attributes = array(
+    'attributes' => array(
+      'absolute' => TRUE,
+      'onclick' => 'javascript:$(\'#' . $beat . '-remaining\').toggle(\'slow\'); return false;'),
+      'fragment' => $beat);
+
+  return ' ' . l(t('@num more', array('@num' => $count)), $GLOBALS['base_url'] . request_uri(), $attributes);
 
 }
 

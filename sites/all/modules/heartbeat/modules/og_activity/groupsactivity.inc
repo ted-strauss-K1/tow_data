@@ -1,5 +1,4 @@
 <?php
-// $Id: groupsactivity.inc,v 1.1.2.5 2010/12/13 21:51:36 stalski Exp $
 
 /**
  * @file
@@ -42,20 +41,20 @@ class GroupsActivity extends HeartbeatAccess {
 
     // Sql parts
     $this->stream->sql_start = "SELECT
-      hm.hid AS hid, hm.message AS message_orig,
-      hm.message_concat AS message_concat_orig,
-      hm.attachments AS attachments, hm.concat_args,
-      hm.custom AS custom, hm.description as description,
-      hm.perms, hm.variables AS variables_orig,
+      hm.hid AS 'hid', hm.message AS 'message_orig',
+      hm.message_concat AS 'message_concat_orig',
+      hm.attachments AS 'attachments', hm.concat_args,
+      hm.custom AS 'custom', hm.description as 'description',
+      hm.perms, hm.variables AS 'variables_orig',
       ua.*,
-      1 AS count
+      1 AS 'count'
     FROM {heartbeat_activity} ua
     LEFT JOIN {heartbeat_messages} hm ON ua.message_id = hm.message_id
-    INNER JOIN {og_ancestry} oa ON (oa.nid = ua.nid OR oa.group_nid = ua.nid)
     LEFT JOIN {users} ua_users ON ua.uid = ua_users.uid
     LEFT JOIN {users} ua_target_users ON ua.uid_target = ua_target_users.uid
     WHERE
-      ua.language = '%s'
+      ua.in_group = 1
+      AND ua.language = '%s'
       AND (ua_users.uid = 0 OR ua_users.status = 1)
       AND (ua_target_users.uid = 0 OR ua_target_users.status = 1)
     ";
@@ -97,9 +96,8 @@ class GroupsActivity extends HeartbeatAccess {
    */
   public function addViewQuery(&$view) {
 
-    /*$join = new views_join();
-    $join->construct('og_ancestry', $view->table_alias, 'nid', 'group_nid', array(), 'INNER');
-    $view->query->add_relationship('og_ancestry', $join, $view->table_alias);*/
+    $view->query->set_where_group('and', 'andgroup');
+    $view->query->add_where('andgroup', "$view->table_alias.in_group = %d ", 1);
 
   }
 

@@ -1,5 +1,4 @@
 <?php
-// $Id: heartbeataccess.inc,v 1.1.2.2.2.35 2010/12/13 21:51:36 stalski Exp $
 
 /**
  * @file
@@ -75,7 +74,8 @@ abstract class HeartbeatAccess {
    * your own activity.
    */
   public function skipActiveUser() {
-    return $this->_whoisuser_type == self::TYPE_USER_PROFILE ? FALSE : TRUE;
+    $skip = $this->_whoisuser_type == self::TYPE_USER_PROFILE ? FALSE : (empty($this->stream->skip_active_user) ? FALSE : $this->stream->skip_active_user);
+    return $skip;
   }
 
   /**
@@ -193,7 +193,7 @@ abstract class HeartbeatAccess {
       // Limit the query for messages newer than oldest_date,
       // add param delete too old messages if set
       if ($this->stream->oldest_date) {
-        $args[] = $_SERVER['REQUEST_TIME'] - $this->stream->oldest_date;
+        //$args[] = $_SERVER['REQUEST_TIME'] - $this->stream->oldest_date;
       }
     }
 
@@ -252,13 +252,14 @@ abstract class HeartbeatAccess {
     // If users are involved (uid or uid_target) in heartbeat_activity
     // check if they are not blocked (status = 1).
     $this->stream->sql_start = "SELECT
-      hm.hid AS hid, hm.message AS message_orig,
-      hm.message_concat AS message_concat_orig,
-      hm.attachments AS attachments, hm.concat_args,
-      hm.custom AS custom, hm.description as description,
-      hm.perms, hm.variables AS variables_orig,
+      hm.hid AS 'hid', hm.message AS 'message_orig',
+      hm.message_concat AS 'message_concat_orig',
+      hm.attachments AS 'attachments', hm.concat_args,
+      hm.custom AS 'custom', hm.description as 'description',
+      hm.perms, hm.variables AS 'variables_orig',
       ua.*, ua_users.*,
-      1 AS count
+      ua.access AS 'access',
+      1 AS 'count'
     FROM {heartbeat_activity} ua
     LEFT JOIN {heartbeat_messages} hm ON ua.message_id = hm.message_id
     LEFT JOIN {users} ua_users ON ua.uid = ua_users.uid
@@ -269,6 +270,11 @@ abstract class HeartbeatAccess {
       AND (ua_target_users.uid = 0 OR ua_target_users.status = 1)
     ";
 
+    // Skip the first user if configured that way.
+    if (variable_get('heartbeat_skip_admin', 0) == 1) {
+      $this->stream->sql_start .= "AND ua.uid != 1 ";
+    }
+
     // Calls with an offset uaid will fetch newer messages
     if ($this->stream->latest_uaid > 0) {
       $this->stream->sql_start .= "AND (ua.uaid > %d ) ";
@@ -278,7 +284,7 @@ abstract class HeartbeatAccess {
 
       // Add sql to delete too old messages if set
       if ($this->stream->oldest_date) {
-        $this->stream->sql_start .= "AND ua.timestamp > %d ";
+        //$this->stream->sql_start .= "AND ua.timestamp > %d ";
       }
       $this->stream->sql_start .= ")";
     }
@@ -297,7 +303,7 @@ abstract class HeartbeatAccess {
    *
    * @return HeartbeatParser object
    */
-  final protected function createHeartbeatParser() {
+  protected function createHeartbeatParser() {
     $heartbeat = HeartbeatParser::instantiate($this->getAccess());
     return $heartbeat;
   }
@@ -313,6 +319,13 @@ abstract class HeartbeatAccess {
       $offset = $_SERVER['REQUEST_TIME'];
     }
     $this->_offset_sql = $offset;
+  }
+
+  /**
+   * getOffsetSql
+   */
+  final public function getOffsetSql() {
+    return $this->_offset_sql;
   }
 
   /**
