@@ -80,6 +80,9 @@ function shouts_update_4() {
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {shouts} ADD uaid INT NOT NULL DEFAULT '0' AFTER uid");
       break;
+    case 'pgsql':
+      $ret[] = update_sql("ALTER TABLE {shouts} ADD COLUMN uaid INTEGER NOT NULL DEFAULT '0' AFTER uid");
+      break;
   }
   return $ret;
 }
@@ -95,6 +98,9 @@ function shouts_update_44() {
     case 'mysql':
     case 'mysqli':
       $ret[] = update_sql("ALTER TABLE {shouts} DROP uaid");
+      break;
+    case 'pgsql':
+      $ret[] = update_sql("ALTER TABLE {shouts} DROP COLUMN uaid RESTRICT");
       break;
   }
   return $ret;
