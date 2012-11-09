@@ -27,13 +27,17 @@ function rules_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
 function rules_user($op, &$edit, &$account, $category = NULL) {
   static $account_unchanged;
 
-  // We don't support updates for other categories than 'account'
-  if ($op == 'update' && $category == 'account') {
+  if ($op == 'update') {
     // Save the unchanged account for the use with op after_update.
     $account_unchanged = drupal_clone($account);
   }
-  else if ($op == 'after_update' && $category == 'account') {
-    rules_invoke_event('user_update', array('account' => &$account, 'account_unchanged' => $account_unchanged));
+  else if ($op == 'after_update') {
+    if ($category == 'account') {
+     rules_invoke_event('user_update', array('account' => &$account, 'account_unchanged' => $account_unchanged));
+    }
+    else {
+      rules_invoke_event('profile_update', array('account' => &$account, 'account_unchanged' => $account_unchanged));
+    }
   }
   else if (in_array($op, array('insert', 'login', 'logout', 'view', 'delete'))) {
     // At user creation add the assigned roles which are not available in
