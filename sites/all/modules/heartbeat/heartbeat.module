@@ -470,11 +470,11 @@ function heartbeat_cron() {
     $arguments = array_merge($unlimited_templates, array($keep_latest_number));
     $result = db_query("SELECT
         t1.uid,
-        t1.uaid as uaid,
-        COUNT(*) as rows_per_user,
-        t1.timestamp as real_date,
-        MIN(t2.timestamp) as oldest_date,
-        count(t2.uid) AS count
+        t1.uaid as 'uaid',
+        COUNT(*) as 'rows_per_user',
+        t1.timestamp as 'real_date',
+        MIN(t2.timestamp) as 'oldest_date',
+        count(t2.uid) AS 'count'
       FROM {heartbeat_activity} AS t1
       INNER JOIN {heartbeat_activity} AS t2 ON t1.uid = t2.uid AND t2.timestamp >= t1.timestamp
       WHERE (t1.timestamp, t1.uaid) < (t2.timestamp, t2.uaid)

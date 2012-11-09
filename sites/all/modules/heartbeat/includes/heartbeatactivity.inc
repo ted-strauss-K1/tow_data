@@ -387,7 +387,7 @@ class HeartbeatActivity {
       if ($uaid && !isset($tuaid)) {
         $tuaid = $uaid;
       }
-      db_query("INSERT INTO {heartbeat_translations} (tuaid, uaid) VALUES (%d, %d)", $tuaid, $uaid);
+      db_query("INSERT INTO {heartbeat_translations} SET tuaid=%d, uaid=%d", $tuaid, $uaid);
 
     }
 
@@ -430,8 +430,9 @@ class HeartbeatActivity {
 
     // Log relational message to user activity
     $logged = db_query("INSERT INTO {heartbeat_activity}
-      (uid, uid_target, nid, nid_target, message_id, language, access, message, message_concat, timestamp, nid_info, nid_target_info, uaid_comments, variables)
-      VALUES  (%d, %d, %d, %d, '%s', '%s', %d, '%s', '%s', %d, '%s', '%s', %d, '%s')",
+      SET uid=%d, uid_target=%d, nid=%d, nid_target=%d, message_id='%s', language='%s',
+      access = %d, message ='%s',message_concat ='%s', timestamp=%d
+      , nid_info='%s', nid_target_info='%s', uaid_comments=%d, variables='%s'",
       $this->uid,  $this->uid_target, $this->nid, $this->nid_target, $this->message_id, $lang,
       $this->access, $message, $message_concat, $this->timestamp,
       serialize($this->nid_info), serialize($this->nid_target_info), 0,
