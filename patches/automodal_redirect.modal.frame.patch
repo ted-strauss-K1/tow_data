@@ -1,0 +1,26 @@
+diff --git a/sites/all/modules/automodal/automodal.js b/sites/all/modules/automodal/automodal.js
+index 9e57656..53f5f8b 100644
+--- a/sites/all/modules/automodal/automodal.js
++++ b/sites/all/modules/automodal/automodal.js
+@@ -60,6 +60,21 @@
+       if (settings.automodalReload) {
+         settings.url += '&automodalReload=true';
+       }
++      if (settings.automodalReload) {
++        settings.url += '&automodalReload=true';
++      }
++
++      /**
++       * Custom tweak to redirect modal frame reload to parent url.
++       */
++      if (settings.automodalRedirect == undefined) {
++        if (top.window.location.pathname != '/') {
++          settings.url += '&destination=' + top.window.location.pathname.substring(1) + top.window.location.hash;
++        }
++        else {
++          settings.url += '&destination=<front>';
++        }
++      }
+ 
+       if (settings.automodalRedirect != undefined) {
+         settings.url += '&automodalRedirect=' + encodeURIComponent(settings.automodalRedirect);
