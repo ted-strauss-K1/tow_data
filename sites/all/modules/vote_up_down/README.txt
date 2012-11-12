@@ -197,3 +197,5 @@ Original Author - Fredrik Jonsson fredrik at combonet dot se
 Orginal 2.x version - Pratul Kalia (lut4rp)
 
 Current Maintainer: Marco Villegas (marvil07)
+
+// vim: set syntax=asciidoc:

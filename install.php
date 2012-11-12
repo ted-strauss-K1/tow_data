@@ -1,5 +1,4 @@
 <?php
-// $Id: install.php,v 1.113.2.13 2010/12/06 06:50:56 goba Exp $
 
 require_once './includes/install.inc';
 
@@ -19,14 +18,6 @@ define('MAINTENANCE_MODE', 'install');
 function install_main() {
   require_once './includes/bootstrap.inc';
   drupal_bootstrap(DRUPAL_BOOTSTRAP_CONFIGURATION);
-
-  // The user agent header is used to pass a database prefix in the request when
-  // running tests. However, for security reasons, it is imperative that no
-  // installation be permitted using such a prefix.
-  if (isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], "simpletest") !== FALSE) {
-    header($_SERVER['SERVER_PROTOCOL'] . ' 403 Forbidden');
-    exit;
-  }
 
   // This must go after drupal_bootstrap(), which unsets globals!
   global $profile, $install_locale, $conf;
@@ -139,6 +130,12 @@ function install_main() {
     if (!$verify) {
       install_change_settings($profile, $install_locale);
     }
+    // The default lock implementation uses a database table,
+    // so we cannot use it for install, but we still need
+    // the API functions available.
+    require_once './includes/lock-install.inc';
+    $conf['lock_inc'] = './includes/lock-install.inc';
+    lock_init();
 
     // Install system.module.
     drupal_install_system();

@@ -1,5 +1,4 @@
 <?php
-// $Id: heartbeatmessagetemplate.inc,v 1.1.2.6 2010/02/21 22:45:26 stalski Exp $
 
 /**
  * @file
@@ -44,6 +43,12 @@ class HeartbeatMessageTemplate {
     if (variable_get('heartbeat_activity_display_tags', 0) == 1) {
       $this->tags = heartbeat_get_available_tags($this->hid);
     }
+
+    // Set a default on the remaining items.
+    if (!isset($this->concat_args['show_remaining_items'])) {
+      $this->concat_args['show_remaining_items'] = 1;
+    }
+
   }
 
   /**

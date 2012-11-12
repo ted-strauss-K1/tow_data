@@ -1,5 +1,4 @@
 <?php
-// $Id: datatables-view.tpl.php,v 1.1 2009/12/16 00:59:58 duellj Exp $
 /**
  * @file
  * Template to display a datatable.

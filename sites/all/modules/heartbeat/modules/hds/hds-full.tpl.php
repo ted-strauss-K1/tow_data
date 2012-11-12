@@ -1,5 +1,4 @@
 <?php
-// $Id: hds-full.tpl.php,v 1.1.2.2 2010/02/21 12:31:33 stalski Exp $
 
 /**
  * @file
@@ -25,5 +24,17 @@
     <?php print $content; ?>
 
   </div>
+
+  <?php if (count($message->uaids) > 0) :?>
+  <div class="beat-item <?php print $message->classes ?> beat-item-ungrouped" id="beat-item-<?php print $message->uaid ?>-ungrouped" style="display: none;">
+  <?php foreach ($message->additions->source as $ungrouped_message) { ?>
+    <?php print $ungrouped_message; ?><br />
+  <?php } ?>
+    <div class="heartbeat-buttons">
+    <?php print l(t('Back'), drupal_get_destination(), array('attributes' => array('onclick' => 'javascript:Drupal.heartbeat.splitGroupedMessage(' . $message->uaid .', null); return false;')))?>
+    </div>
+    <br class="clearfix" />
+  </div>
+  <?php endif; ?>
 
 </div>

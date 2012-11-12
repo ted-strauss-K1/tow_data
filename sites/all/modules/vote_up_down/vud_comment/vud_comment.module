@@ -155,7 +155,11 @@ function vud_comment_preprocess_comment(&$variables) {
  * Function to return the node type of a particular node ID.
  */
 function _vud_comment_get_node_type($nid) {
-  return db_result(db_query("SELECT type from {node} where nid = %d", $nid));
+  static $node_types_by_nid = array();
+  if (!isset($node_types_by_nid[$nid])) {
+    $node_types_by_nid[$nid] = db_result(db_query("SELECT type from {node} WHERE nid = %d", $nid));
+  }
+  return $node_types_by_nid[$nid];
 }
 
 /**

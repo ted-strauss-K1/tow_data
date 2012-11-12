@@ -1,5 +1,4 @@
 <?php
-// $Id: heartbeat.admin.inc,v 1.1.2.15.2.20.2.69 2011/01/20 20:37:04 stalski Exp $
 
 /**
  * @file
@@ -204,6 +203,11 @@ function heartbeat_admin_settings() {
 
   $form = array();
 
+  $templates = array();
+  foreach(heartbeat_messages('all', TRUE, FALSE) as $template) {
+    $templates[$template['message_id']] = $template['message_id'];
+  }
+
   // log settings
   $form['hb_logging'] = array(
     '#type' => 'fieldset',
@@ -219,6 +223,13 @@ function heartbeat_admin_settings() {
     '#default_value' => variable_get('heartbeat_enabled', 1),
     '#weight' => -5,
   );
+  $form['hb_logging']['heartbeat_skip_admin'] = array(
+    '#title' => t('Skip the admin user'),
+    '#description' => t('Note that the admin user will be logged but retained from display in the query.'),
+    '#type' => 'checkbox',
+    '#default_value' => variable_get('heartbeat_skip_admin', 0),
+    '#weight' => -5,
+  );
   $form['hb_logging']['heartbeat_debug'] = array(
     '#title' => t('Run the heartbeat message builder in debug mode'),
     '#description' => t('This is not for production sites. It\'s a developer tool to see which messages are blocked for which reason. Note that this needs to show for all user roles!'),
@@ -228,6 +239,9 @@ function heartbeat_admin_settings() {
   );
   $cron_delete_options = array(
     0 => t('Never, my queries are limited manually'),
+    600 => t('Older than 10 minutes'),
+    3600 => t('Older than an hour'),
+    86400 => t('Older than a day'),
     604800 => t('Older than a week'),
     2678400 => t('Older than a month'),
     5270400 => t('Older than two months'),
@@ -238,6 +252,26 @@ function heartbeat_admin_settings() {
     '#type' => 'select',
     '#options' => $cron_delete_options,
     '#default_value' => variable_get('heartbeat_activity_log_cron_delete', 2678400),
+  );
+  $form['hb_logging']['heartbeat_activity_records_per_user'] = array(
+    '#title' => t('Keep activity for each user'),
+    '#description' => t('Keep activity for each user. While cron removes the activity older than T, we make sure that there is still some activity left per user so the personal heartbeat is not empty.'),
+    '#type' => 'select',
+    '#options' => array(
+      '10' => t('@recs records', array('@recs' => 10)),
+      '20' => t('@recs records', array('@recs' => 20)),
+      '30' => t('@recs records', array('@recs' => 30)),
+      '50' => t('@recs records', array('@recs' => 50)),
+      '100' => t('@recs records', array('@recs' => 100)),
+    ),
+    '#default_value' => variable_get('heartbeat_activity_records_per_user', 10),
+  );
+  $form['hb_logging'] ['heartbeat_activity_templates_unlimited'] = array(
+    '#title' => t('Select the templates where activity can never be deleted'),
+    '#type' => 'select',
+    '#multiple' => TRUE,
+    '#options' => $templates,
+    '#default_value' => variable_get('heartbeat_activity_templates_unlimited', array())
   );
 
   // display settings
@@ -323,10 +357,6 @@ function heartbeat_admin_settings() {
     '#collapsible' => TRUE,
     '#collapsed' => TRUE,
   );
-  $templates = array();
-  foreach(heartbeat_messages('all', TRUE, FALSE) as $template) {
-    $templates[$template['message_id']] = $template['message_id'];
-  }
   $form['hb_profile'] ['heartbeat_profile_message_templates'] = array(
     '#title' => t('Select the templates to show on the profile page'),
     '#description' => t('The enduser can have the possibility to set the restriction level of message types. Here the administrator can select and expose those message templates you want to display on the profile page.'),
@@ -443,9 +473,9 @@ function heartbeat_messages_access_types_submit(&$form, &$form_state = array()) 
   }
 
   variable_set('heartbeat_stream_data', $stream_data);
-
-  menu_cache_clear();
   variable_set('admin_menu_rebuild_links', TRUE);
+
+  menu_router_build();
 }
 
 /**
@@ -565,6 +595,12 @@ function heartbeat_activity_stream_configure(& $form_state, $access_type) {
     '#title' => t('Settings'),
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
+  );
+  $form['fs_settings']['skip_active_user'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Skip active user'),
+    '#default_value' => isset($edit['skip_active_user']) ? $edit['skip_active_user'] : 0,
+    '#description' => t('Enabling this will make sure the active or logged-in user will not see his own messages.'),
   );
   $form['fs_settings']['poll_messages'] = array(
     '#type' => 'select',
@@ -718,6 +754,7 @@ function heartbeat_activity_stream_configure_submit($form, $form_state) {
     'page_pager_ajax' => $form_state['values']['page_pager_ajax'],
     'num_load_max' => $form_state['values']['num_load_max'],
     'grouping_seconds' => $form_state['values']['grouping_seconds'],
+    'skip_active_user' => $form_state['values']['skip_active_user'],
   );
   // populate the settings with the form state
   if (isset($form_state['values']['settings'])) {
@@ -796,8 +833,13 @@ function heartbeat_messages_overview() {
       $links .= ' - ' . l(t('revert'), "admin/build/heartbeat/revert/". $message->hid, array('query' => 'destination=admin/build/heartbeat/list'));
     }
 
+
+    $perms = _heartbeat_perms_options();
+
     $row = array(
-      drupal_strlen($message->description) <= 0 ? str_replace('_', ' ', $message->message_id) : $message->description, $message->message_id,
+      drupal_strlen($message->description) <= 0 ? str_replace('_', ' ', $message->message_id) : $message->description,
+      $message->message_id,
+      $perms[$message->perms],
       $links
     );
 
@@ -809,7 +851,7 @@ function heartbeat_messages_overview() {
     }
 
   }
-  $headers = array(t('Description'), t('Message id (API usage)'), t('Operations'));
+  $headers = array(t('Description'), t('Message id (API usage)'), t('Access'), t('Operations'));
 
   // we check here if the reader needs to be informed about it.
   $intro .= t('<p>The messages are passed to the t-function when parsed to view.</p>');
@@ -857,6 +899,18 @@ function _heartbeat_messages_overview_language($languages, &$message) {
   // Add a report of todo translations to the list
   if ($report != array()) {
     $message->description .= '<div><small>'. implode(', ', $report) .'</small></div>';
+  }
+}
+
+/**
+ * Validate function to maintain and administer heartbeat messages.
+ */
+function heartbeat_messages_add_validate($form, &$form_state) {
+  $name = $form_state['values']['message_id'];
+
+  // View name must be alphanumeric or underscores, no other punctuation.
+  if (preg_match('/[^a-zA-Z0-9_]/', $name)) {
+    form_error($form['message_id'], t('Heartbeat template name must be alphanumeric or underscores only.'));
   }
 }
 
@@ -933,6 +987,19 @@ function heartbeat_messages_edit(&$form_state, $message) {
     '#default_value' => $edit ? $message->custom : HEARTBEAT_MESSAGE_CUSTOM,
   );
 
+  // Create data to add in custom settings.
+  $form['data'] = array(
+    '#tree' => TRUE,
+    '#weight' => 100,
+  );
+
+  $form['data']['heartbeat_show_message_times'] = array(
+    '#title' => t('Show the time of action in message displays'),
+    '#type' => 'checkbox',
+    '#default_value' => $edit && isset($message->variables['heartbeat_show_message_times']) ? $message->variables['heartbeat_show_message_times'] : 1,
+    '#description' => t('Disabling the display overrules all other settings.'),
+  );
+
   $tags = (string) (!empty($message->tags) ? implode(",", $message->tags) : '');
   // Autocomplete heartbeat tags
   $form['tags'] = array(
@@ -971,7 +1038,7 @@ function heartbeat_messages_edit(&$form_state, $message) {
     '#rows' => 1,
     '#required' => TRUE,
     '#default_value' => empty($message->message) ? '' : $message->message,
-    '#description' => t('"!" is available to interpret a words as variables.'),
+    '#description' => t('"!" is available to interpret a words as variables.<br />Note that the actor variable needs to be <strong>@username</strong> to be handled correct.'),
   );
 
   $desc = t("Type of message when it comes to grouping messages together.<br />
@@ -997,6 +1064,13 @@ function heartbeat_messages_edit(&$form_state, $message) {
     '#type' => 'markup',
     '#prefix' => '<div id="type-summary-wrapper">',
     '#suffix' => '</div>',
+  );
+
+  $form['type_summary']['show_remaining_items'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show display items'),
+    '#description' => t('This includes a link that will open up the remaining items sliding down the message body.'),
+    '#default_value' => !isset($message->concat_args['show_remaining_items']) ? 1 : $message->concat_args['show_remaining_items'],
   );
 
   $form['type_summary']['message_concat'] = array(
@@ -1076,13 +1150,10 @@ function heartbeat_messages_edit(&$form_state, $message) {
     '#default_value' => empty($message->hid) ? 0 : $message->hid,
   );
   // Buttons
-  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'), '#weight' => 50);
+  $form['submit'] = array('#type' => 'submit', '#value' => t('Save'), '#weight' => 101);
   if (isset($edit['hid'])) {
     $form['delete'] = array('#type' => 'submit', '#value' => t('Delete'));
   }
-  $form['data'] = array(
-    '#tree' => TRUE,
-  );
 
   // Set the attachments
   $attachments = module_invoke_all('heartbeat_attachments', $form_state['message']);
@@ -1125,6 +1196,7 @@ function heartbeat_messages_add_submit($form, &$form_state) {
       'group_num_max' => $form_state['values']['group_num_max'],
       'merge_separator' => $form_state['values']['merge_separator'],
       'merge_end_separator' => $form_state['values']['merge_end_separator'],
+      'show_remaining_items' => $form_state['values']['show_remaining_items'],
       'roles' => $form_state['values']['roles']
     );
     $message->concat_args = $concat_args;
@@ -1170,6 +1242,7 @@ function heartbeat_messages_edit_submit($form, &$form_state) {
       'group_num_max' => $form_state['values']['group_num_max'],
       'merge_separator' => $form_state['values']['merge_separator'],
       'merge_end_separator' => $form_state['values']['merge_end_separator'],
+      'show_remaining_items' => $form_state['values']['show_remaining_items'],
       'roles' => $form_state['values']['roles'],
     );
 

@@ -192,3 +192,5 @@ If you want to use a different templating system than PHPtemplate, you
 can! Set 'render function' to the name of a function that will be called
 in place of `drupal_render_template()` and set 'extension' to something
 other than '.tpl.php' if you so desire.
+
+// vim: set syntax=asciidoc:

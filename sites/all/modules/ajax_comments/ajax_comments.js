@@ -31,9 +31,11 @@ Drupal.behaviors.ajax_comments = function(context) {
     ctrl = false;
      // Add sending on Ctrl+Enter.
     if ((e.ctrlKey) && ((e.keyCode == 0xA) || (e.keyCode == 0xD)) && ((typeof submitted == "undefined") || !submitted)) {
-      submitted = true;
+      //submitted = true;
       var form_num = ajax_comments_get_form_num_from_element(e.target);
-      $('#ajax-comments-submit-' + form_num).click();
+      $('#comment-form-' + form_num + ' textarea:not(.is-processed)', context).addClass('is-processed').each(function () {
+        $('#ajax-comments-submit-' + form_num).click();
+      });
     }
  });
 
@@ -140,7 +142,7 @@ Drupal.ajax_comments_init_form = function(context) {
 
     // Moving preview in a proper place.
     if (ajax_comments_is_reply_to_node(action)) {
-      $('#comments-' + nid + ' .ajax-comments-title-processed').before($('#comment-preview-' + form_num));
+      $('#node-' + nid).siblings('div#comments').find('.ajax-comments-title-processed').before($('#comment-preview-' + form_num));
     }
     else {
       $(content_sel).before($('#comment-preview-' + form_num));
@@ -275,7 +277,7 @@ Drupal.ajax_comments_reply_click = function() {
         }
         $(this).parents('h2,h3,h4').after($(comment_content_sel));
         rows = Drupal.settings.ajax_comments_rows_default;
-        $('.ajax-comments-title-processed').before($('#comment-preview-' + form_num));
+        //$('.ajax-comments-title-processed').before($('#comment-preview-' + form_num));
       }
       else {
         $(comment_content_sel).addClass('indented');

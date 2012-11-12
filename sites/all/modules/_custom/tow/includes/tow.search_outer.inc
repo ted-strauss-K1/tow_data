@@ -229,7 +229,12 @@ function tow_search_outer_view($type = 'apachesolr_search') {
     } else {
         $results = theme('box', t('Your search yielded no results'), variable_get('apachesolr_search_noresults', apachesolr_search_noresults()));
     }
-
+    
+    //Set breadcrumbs
+    $bc = array();
+    $bc[] = l('Data','data');
+    drupal_set_breadcrumb($bc);
+    
     return $results;
 }
 

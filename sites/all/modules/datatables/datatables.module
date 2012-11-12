@@ -1,5 +1,4 @@
 <?php
-// $Id: datatables.module,v 1.3.2.1 2010/07/28 01:06:23 duellj Exp $
 
 /**
  * @file
@@ -178,6 +177,16 @@ function template_preprocess_datatables_view(&$vars) {
   $position = 0;
   foreach ($columns as $field => $column) {
     $column_options = NULL;
+    
+     switch ($options['hidden_columns'][$field]) {
+       case 'expandable':
+         $datatable_options['bExpandable'] = TRUE;
+         // ... and fall through, since expandable columns are also hidden
+       case 'hidden':
+         // Hidden or expandable columns get the bVisible init option set to false
+         $column_options['bVisible'] = FALSE;
+    }
+
     // render the header labels
     if ($field == $column && empty($fields[$field]->options['exclude'])) {
       $vars['header'][$field] = check_plain(!empty($fields[$field]) ? $fields[$field]->label() : '');
@@ -185,15 +194,23 @@ function template_preprocess_datatables_view(&$vars) {
         $column_options['bSortable'] = FALSE;
       }
       else {
-        // Check if rendered field has html
-        if (strlen($handler->rendered_fields[0][$field]) != strlen(strip_tags($handler->rendered_fields[0][$field]))) {
+        // Attempt to autodetect the type of field in order to handle sorting correctly.
+        if (strlen($fields[$field]->last_render) != strlen(strip_tags($fields[$field]->last_render))) {
           $column_options['sType'] = 'html';
+        }
+        elseif (is_numeric($fields[$field]->last_render)) {
+          $column_options['sType'] = 'numeric';
+        }
+        elseif ($fields[$field] instanceof views_handler_field_date) {
+          $column_options['sType'] = 'date';
         }
         $column_options['bSortable'] = TRUE;
       }
-    }
+      $datatable_options['aoColumns'][] = $column_options;
 
-    $datatable_options['aoColumns'][] = $column_options;
+      // Save header columns for use in expandable hidden rows.
+      $datatable_options['aoColumnHeaders'][] = $vars['header'][$field];
+    }
 
     // Set default sort order
     if ($options['default'] == $field) {
@@ -234,15 +251,44 @@ function template_preprocess_datatables_view(&$vars) {
   }
   
   // Enable table info display, if necessary.
-  $datatable_options['bInfo'] = $options['table_info'];
-
-  // Disable search filter box, if necessary.
-  $datatable_options['bFilter'] = $options['search_box'];
+  $datatable_options['bInfo'] = $options['elements']['table_info'];
+  $datatable_options['bFilter'] = $options['elements']['search_box'];
+  $datatable_options['bStateSave'] = $options['elements']['save_state'];
   
+  $datatable_options['bLengthChange'] = $options['pages']['length_change'];
+  $datatable_options['iDisplayLength'] = (int) $options['pages']['display_length'];
+  
+  // Enable ThemeRoller support, if necessary.
+  if($options['layout']['themeroller']) {
+    $datatable_options['bJQueryUI'] = TRUE;
+  }
+  
+  // Pass the sDOM parameter, if one is specified.
+  if ($options['layout']['sdom']) {
+    $datatable_options['sDom'] = $options['layout']['sdom'];  
+  }
+  
+    $datatable_options['bAutoWidth'] = $options['layout']['autowidth'];
+    
+  // Enable full_numbers pagination if selected
+  switch ($options['pages']['pagination_style']) {
+    case 'full_numbers':
+      $datatable_options['sPaginationType'] = 'full_numbers';
+      break;
+    
+    case 'no_pagination':
+      $datatable_options['bPaginate'] = FALSE;
+      break;
+    
+    default: 
+      // Do nothing. No parameters need to be sent for the default (two-button) style
+      break;
+  }
+
   foreach ($vars['rows'] as $num => $row) {
     $vars['row_classes'][$num][] = ($num % 2 == 0) ? 'odd' : 'even';
   }
-
+  
   $vars['class'] = 'views-table';
   $vars['id'] = _datatables_get_id();
 
