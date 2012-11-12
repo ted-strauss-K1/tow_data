@@ -1,5 +1,4 @@
 <?php
-// $Id: database.mysqli.inc,v 1.54.2.4 2010/12/15 20:41:10 goba Exp $
 
 /**
  * @file
@@ -74,7 +73,6 @@ function db_connect($url) {
 
   $connection = mysqli_init();
   @mysqli_real_connect($connection, $url['host'], $url['user'], $url['pass'], substr($url['path'], 1), $url['port'], NULL, MYSQLI_CLIENT_FOUND_ROWS);
-//drupal_set_message("<pre>" . print_r(get_defined_vars(), FALSE) . "</pre>");
 
   if (mysqli_connect_errno() > 0) {
     _db_error_page(mysqli_connect_error());
@@ -255,9 +253,9 @@ function db_query_range($query) {
 /**
  * Runs a SELECT query and stores its results in a temporary table.
  *
- * Use this as a substitute for db_query() when the results need to stored
- * in a temporary table. Temporary tables exist for the duration of the page
- * request.
+ * Use this as a substitute for db_query() when the results need to be stored
+ * in a temporary table.
+ * 
  * User-supplied arguments to the query should be passed in as separate parameters
  * so that they can be properly escaped to avoid SQL injection attacks.
  *
@@ -276,10 +274,10 @@ function db_query_range($query) {
  *
  *   NOTE: using this syntax will cast NULL and FALSE values to decimal 0,
  *   and TRUE values to decimal 1.
- *
  * @param $table
  *   The name of the temporary table to select into. This name will not be
  *   prefixed as there is no risk of collision.
+ *
  * @return
  *   A database query result resource, or FALSE if the query was not executed
  *   correctly.

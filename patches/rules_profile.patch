@@ -1,0 +1,133 @@
+diff --git a/sites/all/modules/rules/rules/modules/profile.rules.inc b/sites/all/modules/rules/rules/modules/profile.rules.inc
+new file mode 100644
+index 0000000..97e1ec4
+--- /dev/null
++++ b/sites/all/modules/rules/rules/modules/profile.rules.inc
+@@ -0,0 +1,60 @@
++<?php
++
++/**
++ * @file rules integration for the profile module
++ *
++ * @addtogroup rules
++ * @{
++ */
++
++/**
++ * Implementation of hook_rules_event_info().
++ */
++function profile_rules_event_info() {
++  return array(
++    'profile_update' => array(
++      'label' => t('User profile fields have been updated'),
++      'module' => 'Profile',
++      'arguments' => rules_events_hook_user_arguments(t('updated user')) + array(
++        'account_unchanged' => array('type' => 'user', 'label' => t('unchanged user')),
++      ),
++    ),
++  );
++}
++
++/**
++ * Implementation of hook_rules_condition_info().
++ */
++function profile_rules_condition_info() {
++  return array(
++    'rules_condition_profile_field_changed' => array(
++      'label' => t('Compare profile field against two users.'),
++      'arguments' => array(
++        'user1' => array('type' => 'user', 'label' => t('User account 1')),
++        'user2' => array('type' => 'user', 'label' => t('User account 2')),
++      ),
++      'help' => t('Evaluates to TRUE when profile field differ between given users.'),
++      'module' => 'Profile',
++    ),
++  );
++}
++
++/**
++ * Compares for changed profile field between two given users.
++ */
++function rules_condition_profile_field_changed($user1, $user2, $settings) {
++  $profile_field = $settings['profile_field'];
++  if (isset($user1->{$profile_field}) && isset($user2->{$profile_field})) {
++    $value1 = $user1->{$profile_field};
++    $value2 = $user2->{$profile_field};
++    return $value1 !== $value2;
++  }
++  else {
++    // Comparing non existing fields differ always
++    return TRUE;
++  }
++}
++
++/**
++ * @}
++ */
+diff --git a/sites/all/modules/rules/rules/modules/profile.rules_forms.inc b/sites/all/modules/rules/rules/modules/profile.rules_forms.inc
+new file mode 100644
+index 0000000..1a92932
+--- /dev/null
++++ b/sites/all/modules/rules/rules/modules/profile.rules_forms.inc
+@@ -0,0 +1,35 @@
++<?php
++
++
++/**
++ * @file Rules configuration forms for the profile module
++ *
++ * @addtogroup rules
++ * @{
++ */
++
++function rules_condition_profile_field_changed_form($settings, &$form) {
++  $form['settings'] += _rules_profile_fields_form($settings);
++}
++
++function _rules_profile_fields_form($settings) {
++  $fields = array();
++  $result = db_query('SELECT name, title FROM {profile_fields}');
++  while ($field = db_fetch_object($result)) {
++    $fields[$field->name] = t($field->title);
++  }
++
++  $form['profile_field'] = array(
++    '#type' => 'select',
++    '#title' => t('Profile Field'),
++    '#description' => t('Select the profile field to compare value to.'),
++    '#options' => $fields,
++    '#default_value' => isset($settings['profile_field']) ? $settings['profile_field'] : '',
++    '#required' => TRUE,
++  );
++  return $form;
++}
++
++/**
++ * @}
++ */
+diff --git a/sites/all/modules/rules/rules/modules/rules.events.inc b/sites/all/modules/rules/rules/modules/rules.events.inc
+index 8eceaa4..b7e0def 100644
+--- a/sites/all/modules/rules/rules/modules/rules.events.inc
++++ b/sites/all/modules/rules/rules/modules/rules.events.inc
+@@ -27,13 +27,17 @@ function rules_nodeapi(&$node, $op, $teaser = NULL, $page = NULL) {
+ function rules_user($op, &$edit, &$account, $category = NULL) {
+   static $account_unchanged;
+ 
+-  // We don't support updates for other categories than 'account'
+-  if ($op == 'update' && $category == 'account') {
++  if ($op == 'update') {
+     // Save the unchanged account for the use with op after_update.
+     $account_unchanged = drupal_clone($account);
+   }
+-  else if ($op == 'after_update' && $category == 'account') {
+-    rules_invoke_event('user_update', array('account' => &$account, 'account_unchanged' => $account_unchanged));
++  else if ($op == 'after_update') {
++    if ($category == 'account') {
++     rules_invoke_event('user_update', array('account' => &$account, 'account_unchanged' => $account_unchanged));
++    }
++    else {
++      rules_invoke_event('profile_update', array('account' => &$account, 'account_unchanged' => $account_unchanged));
++    }
+   }
+   else if (in_array($op, array('insert', 'login', 'logout', 'view', 'delete'))) {
+     // At user creation add the assigned roles which are not available in

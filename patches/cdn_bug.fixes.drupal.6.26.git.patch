@@ -1,0 +1,196 @@
+diff --git a/sites/all/modules/cdn/cdn.install b/sites/all/modules/cdn/cdn.install
+index 95708e5..c71a2f5 100644
+--- a/sites/all/modules/cdn/cdn.install
++++ b/sites/all/modules/cdn/cdn.install
+@@ -82,7 +82,7 @@ function cdn_requirements($phase) {
+         if ($mode == CDN_MODE_BASIC) {
+           $requirements['cdn']['value'] .= ' – '. t('Origin Pull mode');
+           $farfuture = variable_get(CDN_BASIC_FARFUTURE_VARIABLE, CDN_BASIC_FARFUTURE_DEFAULT);
+-          $preprocess_css = variable_get('preprocess_css');
++          $preprocess_css = variable_get('preprocess_css', FALSE);
+ 
+           if (!$preprocess_css) {
+             $args = array(
+diff --git a/sites/all/modules/cdn/cdn.requirements.inc b/sites/all/modules/cdn/cdn.requirements.inc
+index 768f9e2..76af9a1 100644
+--- a/sites/all/modules/cdn/cdn.requirements.inc
++++ b/sites/all/modules/cdn/cdn.requirements.inc
+@@ -110,8 +110,12 @@ function _cdn_requirements_generate_patterns_for_patch($full_path) {
+     $line = fgets($fp);
+ 
+     // Check if the current line indicates the next file.
+-    if (drupal_substr($line, 0, 7) == 'Index: ') {
+-      $file_to_patch = drupal_substr($line, 7, drupal_strlen($line) - 7 - 1);
++    if (drupal_substr($line, 0, 10) == 'diff --git') {
++      $pattern = '/[ab]\/(\S+)/';
++      preg_match_all($pattern, $line, $matches);
++      $file_to_patch = $matches[1][0];
++      $patch_type = 'core';
++      $kind = $patch_type;
+     }
+ 
+     // Find out which kind of file this is: a core file, a module file or a
+diff --git a/sites/all/modules/cdn/patches/drupal6.patch b/sites/all/modules/cdn/patches/drupal6.patch
+index 402495f..7208b1a 100644
+--- a/sites/all/modules/cdn/patches/drupal6.patch
++++ b/sites/all/modules/cdn/patches/drupal6.patch
+@@ -1,11 +1,8 @@
+-Index: includes/common.inc
+-===================================================================
+-RCS file: /cvs/drupal/drupal/includes/common.inc,v
+-retrieving revision 1.756.2.96
+-diff -u -F '^f' -r1.756.2.96 common.inc
+---- includes/common.inc	11 Aug 2010 20:35:47 -0000	1.756.2.96
+-+++ includes/common.inc	22 Aug 2010 17:03:31 -0000
+-@@ -1880,15 +1880,15 @@ function drupal_get_css($css = NULL) {
++diff --git a/includes/common.inc b/includes/common.inc
++index b86f2d2..af35c51 100644
++--- a/includes/common.inc
+++++ b/includes/common.inc
++@@ -1922,15 +1922,15 @@ function drupal_get_css($css = NULL) {
+              // If a CSS file is not to be preprocessed and it's a module CSS file, it needs to *always* appear at the *top*,
+              // regardless of whether preprocessing is on or off.
+              if (!$preprocess && $type == 'module') {
+@@ -24,7 +21,7 @@ diff -u -F '^f' -r1.756.2.96 common.inc
+              }
+            }
+          }
+-@@ -1900,7 +1900,7 @@ function drupal_get_css($css = NULL) {
++@@ -1942,7 +1942,7 @@ function drupal_get_css($css = NULL) {
+        // starting with "ad*".
+        $filename = 'css_'. md5(serialize($types) . $query_string) .'.css';
+        $preprocess_file = drupal_build_css_cache($types, $filename);
+@@ -33,7 +30,7 @@ diff -u -F '^f' -r1.756.2.96 common.inc
+      }
+    }
+  
+-@@ -2288,7 +2288,7 @@ function drupal_get_js($scope = 'header'
++@@ -2330,7 +2330,7 @@ function drupal_get_js($scope = 'header', $javascript = NULL) {
+          // Additionally, go through any remaining scripts if JS preprocessing is on and output the non-cached ones.
+          foreach ($data as $path => $info) {
+            if (!$info['preprocess'] || !$is_writable || !$preprocess_js) {
+@@ -42,7 +39,7 @@ diff -u -F '^f' -r1.756.2.96 common.inc
+            }
+            else {
+              $files[$path] = $info;
+-@@ -2303,7 +2303,7 @@ function drupal_get_js($scope = 'header'
++@@ -2345,7 +2345,7 @@ function drupal_get_js($scope = 'header', $javascript = NULL) {
+      // starting with "ad*".
+      $filename = 'js_'. md5(serialize($files) . $query_string) .'.js';
+      $preprocess_file = drupal_build_js_cache($files, $filename);
+@@ -51,14 +48,11 @@ diff -u -F '^f' -r1.756.2.96 common.inc
+    }
+  
+    // Keep the order of JS files consistent as some are preprocessed and others are not.
+-Index: includes/file.inc
+-===================================================================
+-RCS file: /cvs/drupal/drupal/includes/file.inc,v
+-retrieving revision 1.121.2.13
+-diff -u -F '^f' -r1.121.2.13 file.inc
+---- includes/file.inc	11 Aug 2010 17:40:55 -0000	1.121.2.13
+-+++ includes/file.inc	22 Aug 2010 17:03:35 -0000
+-@@ -35,19 +35,52 @@
++diff --git a/includes/file.inc b/includes/file.inc
++index bbcf9dc..89712a0 100644
++--- a/includes/file.inc
+++++ b/includes/file.inc
++@@ -34,19 +34,52 @@ define('FILE_STATUS_PERMANENT', 1);
+  /**
+   * Create the download path to a file.
+   *
+@@ -83,12 +77,6 @@ diff -u -F '^f' -r1.121.2.13 file.inc
+ -  // Strip file_directory_path from $path. We only include relative paths in urls.
+ -  if (strpos($path, file_directory_path() .'/') === 0) {
+ -    $path = trim(substr($path, strlen(file_directory_path())), '\\/');
+--  }
+--  switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
+--    case FILE_DOWNLOADS_PUBLIC:
+--      return $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
+--    case FILE_DOWNLOADS_PRIVATE:
+--      return url('system/files/'. $path, array('absolute' => TRUE));
+ +  // Clean up Windows paths.
+ +  $old_path = $path = str_replace('\\', '/', $path);
+ +
+@@ -98,7 +86,12 @@ diff -u -F '^f' -r1.121.2.13 file.inc
+ +  // root-relative or a protocol-relative URL.
+ +  if ($path != $old_path || drupal_substr($path, 0, 1) == '/' || drupal_substr($path, 0, 2) == '//') {
+ +    return $path;
+-+  }
++   }
++-  switch (variable_get('file_downloads', FILE_DOWNLOADS_PUBLIC)) {
++-    case FILE_DOWNLOADS_PUBLIC:
++-      return $GLOBALS['base_url'] .'/'. file_directory_path() .'/'. str_replace('\\', '/', $path);
++-    case FILE_DOWNLOADS_PRIVATE:
++-      return url('system/files/'. $path, array('absolute' => TRUE));
+ +
+ +  // Shipped files.
+ +  if (preg_match("#^(/?)(misc|modules|sites|themes)/#i", $path) && (strpos($path, file_directory_path() . '/') !== 0)) {
+@@ -122,14 +115,11 @@ diff -u -F '^f' -r1.121.2.13 file.inc
+    }
+  }
+  
+-Index: includes/form.inc
+-===================================================================
+-RCS file: /cvs/drupal/drupal/includes/form.inc,v
+-retrieving revision 1.265.2.34
+-diff -u -F '^f' -r1.265.2.34 form.inc
+---- includes/form.inc	6 Aug 2010 11:02:49 -0000	1.265.2.34
+-+++ includes/form.inc	22 Aug 2010 17:03:38 -0000
+-@@ -1991,7 +1991,7 @@ function theme_image_button($element) {
++diff --git a/includes/form.inc b/includes/form.inc
++index e6d2a6a..5a9940b 100644
++--- a/includes/form.inc
+++++ b/includes/form.inc
++@@ -1997,7 +1997,7 @@ function theme_image_button($element) {
+      (!empty($element['#value']) ? ('value="'. check_plain($element['#value']) .'" ') : '') .
+      'id="'. $element['#id'] .'" '.
+      drupal_attributes($element['#attributes']) .
+@@ -138,14 +128,11 @@ diff -u -F '^f' -r1.265.2.34 form.inc
+      (!empty($element['#title']) ? 'alt="'. check_plain($element['#title']) .'" title="'. check_plain($element['#title']) .'" ' : '' ) .
+      "/>\n";
+  }
+-Index: includes/theme.inc
+-===================================================================
+-RCS file: /cvs/drupal/drupal/includes/theme.inc,v
+-retrieving revision 1.415.2.27
+-diff -u -F '^f' -r1.415.2.27 theme.inc
+---- includes/theme.inc	1 Mar 2010 10:02:01 -0000	1.415.2.27
+-+++ includes/theme.inc	22 Aug 2010 17:03:39 -0000
+-@@ -1020,24 +1020,24 @@ function theme_get_setting($setting_name
++diff --git a/includes/theme.inc b/includes/theme.inc
++index e1e45e0..c311fc6 100644
++--- a/includes/theme.inc
+++++ b/includes/theme.inc
++@@ -1033,24 +1033,24 @@ function theme_get_setting($setting_name, $refresh = FALSE) {
+  
+      if ($settings['toggle_logo']) {
+        if ($settings['default_logo']) {
+@@ -175,7 +162,7 @@ diff -u -F '^f' -r1.415.2.27 theme.inc
+        }
+        else {
+          $settings['toggle_favicon'] = FALSE;
+-@@ -1258,7 +1258,7 @@ function theme_links($links, $attributes
++@@ -1286,7 +1286,7 @@ function theme_links($links, $attributes = array('class' => 'links')) {
+  function theme_image($path, $alt = '', $title = '', $attributes = NULL, $getsize = TRUE) {
+    if (!$getsize || (is_file($path) && (list($width, $height, $type, $image_attributes) = @getimagesize($path)))) {
+      $attributes = drupal_attributes($attributes);
+@@ -184,14 +171,11 @@ diff -u -F '^f' -r1.415.2.27 theme.inc
+      return '<img src="'. check_url($url) .'" alt="'. check_plain($alt) .'" title="'. check_plain($title) .'" '. (isset($image_attributes) ? $image_attributes : '') . $attributes .' />';
+    }
+  }
+-Index: themes/garland/template.php
+-===================================================================
+-RCS file: /cvs/drupal/drupal/themes/garland/template.php,v
+-retrieving revision 1.16.2.3
+-diff -u -F '^f' -r1.16.2.3 template.php
+---- themes/garland/template.php	11 May 2010 09:41:22 -0000	1.16.2.3
+-+++ themes/garland/template.php	22 Aug 2010 17:03:40 -0000
+-@@ -96,9 +96,9 @@ function phptemplate_node_submitted($nod
++diff --git a/themes/garland/template.php b/themes/garland/template.php
++index 5426620..f09f42d 100644
++--- a/themes/garland/template.php
+++++ b/themes/garland/template.php
++@@ -95,9 +95,9 @@ function phptemplate_node_submitted($node) {
+  function phptemplate_get_ie_styles() {
+    global $language;
+  

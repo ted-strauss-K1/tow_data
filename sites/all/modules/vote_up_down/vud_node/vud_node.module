@@ -147,6 +147,7 @@ function vud_node_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
         $node_type = in_array($node->type, variable_get('vud_node_types', array()), TRUE);
         $widget_showmode = variable_get('vud_node_widget_show', VUD_NODE_DISPLAY_BOTH);
         $widget = variable_get('vud_node_widget', 'plain');
+        drupal_alter('vud_node_widget', $widget, $node);
         $vote_on_teaser = (bool)variable_get('vud_node_widget_vote_on_teaser', TRUE);
         $teaser = $a3;
 
@@ -254,6 +255,7 @@ function vud_node_link($type, $object, $teaser = FALSE) {
       $votes_display_mode = variable_get('vud_node_votes', VUD_NODE_DISPLAY_BOTH);
       $node_type = in_array($node->type, variable_get('vud_node_types', array()), TRUE);
       $widget_theme = variable_get('vud_node_widget', 'plain');
+      drupal_alter('vud_node_widget', $widget_theme, $node);
       $tag = variable_get('vud_tag', 'vote');
       $view_vud_node_votes_count = user_access('view vote up/down count on nodes') || user_access('use vote up/down on nodes');
       switch ($votes_display_mode) {

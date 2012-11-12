@@ -1,0 +1,344 @@
+diff --git a/sites/all/modules/heartbeat/heartbeat.admin.inc b/sites/all/modules/heartbeat/heartbeat.admin.inc
+index fe19c67..a688530 100644
+--- a/sites/all/modules/heartbeat/heartbeat.admin.inc
++++ b/sites/all/modules/heartbeat/heartbeat.admin.inc
+@@ -50,7 +50,7 @@ function heartbeat_messages_admin_overview() {
+     array('data' => t('Time'), 'field' => 'timestamp', 'sort' => 'desc'),
+     array('data' => t('Operations'))
+   ));
+-  $result = pager_query('SELECT DISTINCT ha.message AS \'message\', ha.uaid, ha.timestamp, ha.language, u.name AS registered_name, u.uid FROM {heartbeat_activity} ha LEFT JOIN {users} u ON u.uid = ha.uid '. tablesort_sql($form['header']['#value']), 50, 0, NULL);
++  $result = pager_query('SELECT DISTINCT ha.message AS message, ha.uaid, ha.timestamp, ha.language, u.name AS registered_name, u.uid FROM {heartbeat_activity} ha LEFT JOIN {users} u ON u.uid = ha.uid '. tablesort_sql($form['header']['#value']), 50, 0, NULL);
+ 
+   // build a table listing the appropriate comments
+   $destination = drupal_get_destination();
+diff --git a/sites/all/modules/heartbeat/heartbeat.common.inc b/sites/all/modules/heartbeat/heartbeat.common.inc
+index afb6036..2d61ab1 100644
+--- a/sites/all/modules/heartbeat/heartbeat.common.inc
++++ b/sites/all/modules/heartbeat/heartbeat.common.inc
+@@ -231,7 +231,7 @@ function heartbeat_get_tuaid($uaid) {
+   // Messages that were created before locale was installed,
+   // need a record in the translation table.
+   else {
+-    db_query("INSERT INTO {heartbeat_translations} SET uaid = %d, tuaid = %d", $uaid, $uaid);
++    db_query("INSERT INTO {heartbeat_translations} (uaid, tuaid) VALUES (%d, %d)", $uaid, $uaid);
+     return $uaid;
+   }
+ }
+diff --git a/sites/all/modules/heartbeat/heartbeat.install b/sites/all/modules/heartbeat/heartbeat.install
+index 5621943..c32a393 100644
+--- a/sites/all/modules/heartbeat/heartbeat.install
++++ b/sites/all/modules/heartbeat/heartbeat.install
+@@ -339,11 +339,18 @@ function heartbeat_update_3() {
+     case 'mysqli':
+ 
+       $ret[] = update_sql("RENAME TABLE {user_activity} TO {hb_activity}");
+-      $ret[] = update_sql("DELETE FROM {system} WHERE name = 'user_activity'");
+-      $ret[] = update_sql("UPDATE {system} SET status = 1 WHERE name = 'hb_activity'");
++
++      break;
++
++    case 'pgsql':
++
++      $ret[] = update_sql("ALTER TABLE {user_activity} RENAME TO {hb_activity}");
+ 
+       break;
+   }
++  $ret[] = update_sql("DELETE FROM {system} WHERE name = 'user_activity'");
++  $ret[] = update_sql("UPDATE {system} SET status = 1 WHERE name = 'hb_activity'");
++
+   return $ret;
+ }
+ 
+@@ -367,6 +374,18 @@ function heartbeat_update_4() {
+       $ret[] = update_sql("ALTER TABLE {heartbeat_messages} ADD attachments BLOB NULL AFTER variables");
+ 
+       break;
++
++    case 'pgsql':
++
++      $ret[] = update_sql("ALTER TABLE {hb_activity} RENAME TO {heartbeat_activity}");
++
++      $ret[] = update_sql("ALTER TABLE {heartbeat_messages} ADD COLUMN custom SMALLINT NOT NULL DEFAULT '0' AFTER perms");
++      $ret[] = update_sql("ALTER TABLE {heartbeat_messages} DROP COLUMN module RESTRICT");
++      $ret[] = update_sql("ALTER TABLE {heartbeat_messages} DROP COLUMN message_type RESTRICT");
++
++      $ret[] = update_sql("ALTER TABLE {heartbeat_messages} ADD COLUMN attachments BYTEA NULL AFTER variables");
++
++      break;
+   }
+   return $ret;
+ }
+@@ -381,7 +400,10 @@ function heartbeat_update_401() {
+   switch ($GLOBALS['db_type']) {
+     case 'mysql':
+     case 'mysqli':
+-      $ret[] = update_sql("ALTER TABLE {heartbeat_activity} ADD nid INT NOT NULL DEFAULT '0' AFTER uid_target");
++      $ret[] = update_sql("ALTER TABLE {heartbeat_activity} ADD nid INTEGER NOT NULL DEFAULT '0' AFTER uid_target");
++      break;
++    case 'pgsql':
++      $ret[] = update_sql("ALTER TABLE {heartbeat_activity} ADD COLUMN nid INTEGER NOT NULL DEFAULT '0' AFTER uid_target");
+       break;
+   }
+   return $ret;
+@@ -401,23 +423,28 @@ function heartbeat_update_402() {
+     case 'mysqli':
+       $ret[] = update_sql("CREATE TABLE {heartbeat_translations} (uaid int(11), tuaid int(11))");
+ 
+-      $result = db_query("SELECT * FROM {heartbeat_messages}");
+-      while ($row = db_fetch_object($result)) {
+-        switch ($row->custom) {
+-          case 2:
+-            $custom = 4;
+-            break;
+-          case 1:
+-            $custom = 2;
+-            break;
+-          case 0:
+-          default:
+-            $custom = 1;
+-        }
+-        $ret[] = update_sql("UPDATE {heartbeat_messages} SET custom = $custom WHERE hid = ". $row->hid);
+-      }
++      break;
++    case 'pgsql':
++      $ret[] = update_sql("CREATE TABLE {heartbeat_translations} (uaid INTEGER, tuaid INTEGER)");
++
+       break;
+   }
++  $result = db_query("SELECT * FROM {heartbeat_messages}");
++  while ($row = db_fetch_object($result)) {
++    switch ($row->custom) {
++      case 2:
++        $custom = 4;
++        break;
++      case 1:
++        $custom = 2;
++        break;
++      case 0:
++      default:
++        $custom = 1;
++    }
++    $ret[] = update_sql("UPDATE {heartbeat_messages} SET custom = $custom WHERE hid = ". $row->hid);
++  }
++
+   return $ret;
+ }
+ 
+@@ -466,6 +493,11 @@ function heartbeat_update_410() {
+       $ret[] = update_sql("ALTER TABLE {heartbeat_activity} ADD nid_target_info VARCHAR(128) NULL DEFAULT '' AFTER nid_info");
+       $ret[] = update_sql("ALTER TABLE {heartbeat_activity} ADD uaid_comments INT NULL DEFAULT 0 AFTER nid_target_info");
+       break;
++    case 'pgsql':
++      $ret[] = update_sql("ALTER TABLE {heartbeat_activity} ADD COLUMN nid_info VARCHAR(128) NULL DEFAULT '' AFTER language");
++      $ret[] = update_sql("ALTER TABLE {heartbeat_activity} ADD COLUMN nid_target_info VARCHAR(128) NULL DEFAULT '' AFTER nid_info");
++      $ret[] = update_sql("ALTER TABLE {heartbeat_activity} ADD COLUMN uaid_comments INT NULL DEFAULT 0 AFTER nid_target_info");
++      break;
+   }
+ 
+   $result = db_query("SELECT uaid, nid, nid_target FROM {heartbeat_activity} WHERE nid > 0");
+diff --git a/sites/all/modules/heartbeat/heartbeat.module b/sites/all/modules/heartbeat/heartbeat.module
+index 09bc3e5..675faf3 100644
+--- a/sites/all/modules/heartbeat/heartbeat.module
++++ b/sites/all/modules/heartbeat/heartbeat.module
+@@ -470,15 +470,15 @@ function heartbeat_cron() {
+     $arguments = array_merge($unlimited_templates, array($keep_latest_number));
+     $result = db_query("SELECT
+         t1.uid,
+-        t1.uaid as 'uaid',
+-        COUNT(*) as 'rows_per_user',
+-        t1.timestamp as 'real_date',
+-        MIN(t2.timestamp) as 'oldest_date',
+-        count(t2.uid) AS 'count'
++        t1.uaid as uaid,
++        COUNT(*) as rows_per_user,
++        t1.timestamp as real_date,
++        MIN(t2.timestamp) as oldest_date,
++        count(t2.uid) AS count
+       FROM {heartbeat_activity} AS t1
+       INNER JOIN {heartbeat_activity} AS t2 ON t1.uid = t2.uid AND t2.timestamp >= t1.timestamp
+       WHERE (t1.timestamp, t1.uaid) < (t2.timestamp, t2.uaid)
+-      AND t1.message_id NOT IN (" . db_placeholders($unlimited_templates) . ")
++      AND t1.message_id NOT IN (" . db_placeholders($unlimited_templates, 'varchar') . ")
+       GROUP BY t1.uid, t1.uaid HAVING COUNT(t2.uid) <= %d
+       ORDER BY t1.uid, t1.uaid, t1.timestamp DESC", $arguments);
+     while ($row = db_fetch_object($result)) {
+diff --git a/sites/all/modules/heartbeat/includes/heartbeataccess.inc b/sites/all/modules/heartbeat/includes/heartbeataccess.inc
+index fcd4455..b0a7889 100644
+--- a/sites/all/modules/heartbeat/includes/heartbeataccess.inc
++++ b/sites/all/modules/heartbeat/includes/heartbeataccess.inc
+@@ -252,14 +252,14 @@ abstract class HeartbeatAccess {
+     // If users are involved (uid or uid_target) in heartbeat_activity
+     // check if they are not blocked (status = 1).
+     $this->stream->sql_start = "SELECT
+-      hm.hid AS 'hid', hm.message AS 'message_orig',
+-      hm.message_concat AS 'message_concat_orig',
+-      hm.attachments AS 'attachments', hm.concat_args,
+-      hm.custom AS 'custom', hm.description as 'description',
+-      hm.perms, hm.variables AS 'variables_orig',
++      hm.hid AS hid, hm.message AS message_orig,
++      hm.message_concat AS message_concat_orig,
++      hm.attachments AS attachments, hm.concat_args,
++      hm.custom AS custom, hm.description as description,
++      hm.perms, hm.variables AS variables_orig,
+       ua.*, ua_users.*,
+-      ua.access AS 'access',
+-      1 AS 'count'
++      ua.access AS access,
++      1 AS count
+     FROM {heartbeat_activity} ua
+     LEFT JOIN {heartbeat_messages} hm ON ua.message_id = hm.message_id
+     LEFT JOIN {users} ua_users ON ua.uid = ua_users.uid
+diff --git a/sites/all/modules/heartbeat/includes/heartbeatactivity.inc b/sites/all/modules/heartbeat/includes/heartbeatactivity.inc
+index 4e1c4fd..29fb02b 100644
+--- a/sites/all/modules/heartbeat/includes/heartbeatactivity.inc
++++ b/sites/all/modules/heartbeat/includes/heartbeatactivity.inc
+@@ -387,7 +387,7 @@ class HeartbeatActivity {
+       if ($uaid && !isset($tuaid)) {
+         $tuaid = $uaid;
+       }
+-      db_query("INSERT INTO {heartbeat_translations} SET tuaid=%d, uaid=%d", $tuaid, $uaid);
++      db_query("INSERT INTO {heartbeat_translations} (tuaid, uaid) VALUES (%d, %d)", $tuaid, $uaid);
+ 
+     }
+ 
+@@ -430,9 +430,8 @@ class HeartbeatActivity {
+ 
+     // Log relational message to user activity
+     $logged = db_query("INSERT INTO {heartbeat_activity}
+-      SET uid=%d, uid_target=%d, nid=%d, nid_target=%d, message_id='%s', language='%s',
+-      access = %d, message ='%s',message_concat ='%s', timestamp=%d
+-      , nid_info='%s', nid_target_info='%s', uaid_comments=%d, variables='%s'",
++      (uid, uid_target, nid, nid_target, message_id, language, access, message, message_concat, timestamp, nid_info, nid_target_info, uaid_comments, variables)
++      VALUES  (%d, %d, %d, %d, '%s', '%s', %d, '%s', '%s', %d, '%s', '%s', %d, '%s')",
+       $this->uid,  $this->uid_target, $this->nid, $this->nid_target, $this->message_id, $lang,
+       $this->access, $message, $message_concat, $this->timestamp,
+       serialize($this->nid_info), serialize($this->nid_target_info), 0,
+diff --git a/sites/all/modules/heartbeat/includes/singleheartbeat.inc b/sites/all/modules/heartbeat/includes/singleheartbeat.inc
+index a14802d..85a26b7 100644
+--- a/sites/all/modules/heartbeat/includes/singleheartbeat.inc
++++ b/sites/all/modules/heartbeat/includes/singleheartbeat.inc
+@@ -54,13 +54,13 @@ class SingleHeartbeat extends heartbeataccess {
+     // If users are involved (uid or uid_target) in heartbeat_activity
+     // check if they are not blocked (status = 1).
+     $this->stream->sql_start = "SELECT
+-      hm.hid AS 'hid', hm.message AS 'message_orig',
+-      hm.message_concat AS 'message_concat_orig',
+-      hm.attachments AS 'attachments', hm.concat_args,
+-      hm.custom AS 'custom', hm.description as 'description',
+-      hm.perms, hm.variables AS 'variables_orig',
++      hm.hid AS hid, hm.message AS message_orig,
++      hm.message_concat AS message_concat_orig,
++      hm.attachments AS attachments, hm.concat_args,
++      hm.custom AS custom, hm.description as description,
++      hm.perms, hm.variables AS variables_orig,
+       ua.*, ua_users.*,
+-      1 AS 'count'
++      1 AS count
+     FROM {heartbeat_activity} ua
+     LEFT JOIN {heartbeat_messages} hm ON ua.message_id = hm.message_id
+     LEFT JOIN {users} ua_users ON ua.uid = ua_users.uid
+diff --git a/sites/all/modules/heartbeat/modules/friendlist_activity/friendlist_activity.module b/sites/all/modules/heartbeat/modules/friendlist_activity/friendlist_activity.module
+index 1925371..dc11e3d 100644
+--- a/sites/all/modules/heartbeat/modules/friendlist_activity/friendlist_activity.module
++++ b/sites/all/modules/heartbeat/modules/friendlist_activity/friendlist_activity.module
+@@ -122,7 +122,7 @@ function friendlist_activity_get_friends($uid) {
+ 
+   if ($api == 'friendlist_api') {
+ 
+-    $sql = "SELECT fr.requestee_id as 'uid' FROM {friendlist_relations} as fr
++    $sql = "SELECT fr.requestee_id as uid FROM {friendlist_relations} as fr
+     INNER JOIN {friendlist_statuses} fs ON fs.rid = fr.rid
+     WHERE fr.requester_id = %d AND fs.status = '%s' ORDER BY fs.last_update_time DESC, fr.rid DESC";
+     $result = db_query($sql, $uid, 'TW_BOTH');
+diff --git a/sites/all/modules/heartbeat/modules/heartbeat_comments/heartbeat_comments.admin.inc b/sites/all/modules/heartbeat/modules/heartbeat_comments/heartbeat_comments.admin.inc
+index ce7413d..47b8667 100644
+--- a/sites/all/modules/heartbeat/modules/heartbeat_comments/heartbeat_comments.admin.inc
++++ b/sites/all/modules/heartbeat/modules/heartbeat_comments/heartbeat_comments.admin.inc
+@@ -45,7 +45,7 @@ function heartbeat_comments_admin_overview() {
+     array('data' => t('Reacted on'), 'field' => 'heartbeat_title'),
+     array('data' => t('Time'), 'field' => 'timestamp', 'sort' => 'desc')
+   ));
+-  $result = pager_query('SELECT c.hcid, c.uid, c.uaid, c.message AS \'subject\', c.cleared, c.time, ha.message AS \'heartbeat_title\', u.name AS registered_name, u.uid  FROM {heartbeat_comments} c LEFT JOIN {heartbeat_activity} ha ON ha.uaid = c.uaid LEFT JOIN {users} u ON u.uid = c.uid '. tablesort_sql($form['header']['#value']), 50, 0, NULL);
++  $result = pager_query('SELECT c.hcid, c.uid, c.uaid, c.message AS subject, c.cleared, c.time, ha.message AS heartbeat_title, u.name AS registered_name, u.uid  FROM {heartbeat_comments} c LEFT JOIN {heartbeat_activity} ha ON ha.uaid = c.uaid LEFT JOIN {users} u ON u.uid = c.uid '. tablesort_sql($form['header']['#value']), 50, 0, NULL);
+ 
+   // build a table listing the appropriate comments
+   $destination = drupal_get_destination();
+diff --git a/sites/all/modules/heartbeat/modules/heartbeat_comments/heartbeat_comments.module b/sites/all/modules/heartbeat/modules/heartbeat_comments/heartbeat_comments.module
+index 842f4aa..26d1f2b 100644
+--- a/sites/all/modules/heartbeat/modules/heartbeat_comments/heartbeat_comments.module
++++ b/sites/all/modules/heartbeat/modules/heartbeat_comments/heartbeat_comments.module
+@@ -530,7 +530,7 @@ function heartbeat_comments_form_submit($form = array(), &$form_state = array())
+ 
+     if (db_query("INSERT INTO {heartbeat_comments} (uid, uaid, message, time) VALUES (%d, %d, '%s', '%s')", $uid, $tuaid, $message, date('Y-m-d H:i:s'))) {
+       $hcid = db_last_insert_id('heartbeat_comments', 'hcid');
+-      $saved = db_fetch_object(db_query("SELECT s.hcid, s.uid, s.uaid, s.message AS 'comment', s.time,
++      $saved = db_fetch_object(db_query("SELECT s.hcid, s.uid, s.uaid, s.message AS comment, s.time,
+         u.uid, u.name AS registered_name, u.name AS name, u.signature, u.signature_format, u.picture, u.data
+         FROM {heartbeat_comments} s INNER JOIN {users} u ON s.uid = u.uid
+         WHERE s.hcid = %d", $hcid));
+@@ -754,7 +754,7 @@ function heartbeat_get_message_reactions($uaid, $all = FALSE) {
+   // a translation that is not there, consequently.
+   // That is hard coded taken care of while saving the comment.
+   if ($locale) {
+-    $query = "SELECT s.hcid, s.uid, s.message AS 'comment', s.cleared, s.time, u.uid,
++    $query = "SELECT s.hcid, s.uid, s.message AS comment, s.cleared, s.time, u.uid,
+       u.name, u.signature, u.signature_format, u.picture, u.data, ht.tuaid
+       FROM {heartbeat_comments} s INNER JOIN {users} u ON s.uid = u.uid
+       INNER JOIN {heartbeat_activity} ha ON ha.uaid = s.uaid
+@@ -762,7 +762,7 @@ function heartbeat_get_message_reactions($uaid, $all = FALSE) {
+       WHERE ht.uaid = %d ORDER BY time DESC";
+   }
+   else {
+-    $query = "SELECT s.hcid, s.uid, s.message AS 'comment', s.cleared, s.time,
++    $query = "SELECT s.hcid, s.uid, s.message AS comment, s.cleared, s.time,
+       u.uid, u.name, u.signature, u.signature_format, u.picture, u.data
+       FROM {heartbeat_comments} s INNER JOIN {users} u ON s.uid = u.uid
+       WHERE uaid = %d ORDER BY time DESC";
+diff --git a/sites/all/modules/heartbeat/modules/og_activity/groupsactivity.inc b/sites/all/modules/heartbeat/modules/og_activity/groupsactivity.inc
+index 894966f..7c9e73b 100644
+--- a/sites/all/modules/heartbeat/modules/og_activity/groupsactivity.inc
++++ b/sites/all/modules/heartbeat/modules/og_activity/groupsactivity.inc
+@@ -41,13 +41,13 @@ class GroupsActivity extends HeartbeatAccess {
+ 
+     // Sql parts
+     $this->stream->sql_start = "SELECT
+-      hm.hid AS 'hid', hm.message AS 'message_orig',
+-      hm.message_concat AS 'message_concat_orig',
+-      hm.attachments AS 'attachments', hm.concat_args,
+-      hm.custom AS 'custom', hm.description as 'description',
+-      hm.perms, hm.variables AS 'variables_orig',
++      hm.hid AS hid, hm.message AS message_orig,
++      hm.message_concat AS message_concat_orig,
++      hm.attachments AS attachments, hm.concat_args,
++      hm.custom AS custom, hm.description as description,
++      hm.perms, hm.variables AS variables_orig,
+       ua.*,
+-      1 AS 'count'
++      1 AS count
+     FROM {heartbeat_activity} ua
+     LEFT JOIN {heartbeat_messages} hm ON ua.message_id = hm.message_id
+     LEFT JOIN {users} ua_users ON ua.uid = ua_users.uid
+diff --git a/sites/all/modules/heartbeat/modules/shouts/shouts.install b/sites/all/modules/heartbeat/modules/shouts/shouts.install
+index 68e08ea..db74279 100644
+--- a/sites/all/modules/heartbeat/modules/shouts/shouts.install
++++ b/sites/all/modules/heartbeat/modules/shouts/shouts.install
+@@ -80,6 +80,9 @@ function shouts_update_4() {
+     case 'mysqli':
+       $ret[] = update_sql("ALTER TABLE {shouts} ADD uaid INT NOT NULL DEFAULT '0' AFTER uid");
+       break;
++    case 'pgsql':
++      $ret[] = update_sql("ALTER TABLE {shouts} ADD COLUMN uaid INTEGER NOT NULL DEFAULT '0' AFTER uid");
++      break;
+   }
+   return $ret;
+ }
+@@ -96,6 +99,9 @@ function shouts_update_44() {
+     case 'mysqli':
+       $ret[] = update_sql("ALTER TABLE {shouts} DROP uaid");
+       break;
++    case 'pgsql':
++      $ret[] = update_sql("ALTER TABLE {shouts} DROP COLUMN uaid RESTRICT");
++      break;
+   }
+   return $ret;
+ }

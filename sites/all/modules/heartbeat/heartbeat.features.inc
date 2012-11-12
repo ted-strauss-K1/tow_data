@@ -1,5 +1,4 @@
 <?php
-// $Id: heartbeat.features.inc,v 1.1.2.5 2011/01/15 20:49:55 stalski Exp $
 
 /**
  * @file
@@ -80,6 +79,7 @@ function heartbeat_features_export_render($module = 'foo', $data) {
     // Build message object
     $concat_args = heartbeat_decode_message_variables($message->concat_args);
     $variables = heartbeat_decode_message_variables($message->variables);
+    $attachments = unserialize($message->attachments);
     $message = array(
       'message' => $message->message,
       'message_concat' => $message->message_concat,
@@ -88,7 +88,8 @@ function heartbeat_features_export_render($module = 'foo', $data) {
       'description' => $message->description,
       'perms' => $message->perms,
       'custom' => HEARTBEAT_MESSAGE_DEFAULT,
-      'variables' => $variables
+      'variables' => $variables,
+      'attachments' => $attachments
     );
 
     // Add to code

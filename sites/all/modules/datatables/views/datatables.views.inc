@@ -1,5 +1,4 @@
 <?php
-// $Id: datatables.views.inc,v 1.1 2009/12/16 00:59:58 duellj Exp $
 
 /**
  * @file

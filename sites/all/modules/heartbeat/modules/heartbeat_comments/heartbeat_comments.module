@@ -1,5 +1,4 @@
 <?php
-// $Id: heartbeat_comments.module,v 1.1.2.45 2011/01/21 00:53:09 stalski Exp $
 
 /**
  * @file
@@ -159,7 +158,7 @@ function heartbeat_comments_form_alter(&$form, $form_state, $form_id) {
  */
 function heartbeat_comments_heartbeat_load(&$messages, HeartbeatAccess $stream) {
 
-  drupal_add_js(drupal_get_path('module', 'heartbeat_comments') . '/heartbeat_comments.js', 'module');
+  drupal_add_js(drupal_get_path('module', 'heartbeat_comments') . '/heartbeat_comments.js');
   $comments_order = variable_get('heartbeat_comments_order', 'recent_on_top');
   drupal_add_js(array('heartbeat_comments_order' => $comments_order), "setting");
   $comments_position = variable_get('heartbeat_comments_position', 'down');
@@ -197,6 +196,9 @@ function heartbeat_comments_heartbeat_load(&$messages, HeartbeatAccess $stream) 
       if ($message_nid_cache && $node_comment) {
         $show_form = user_access('post comments');
       }
+
+      $messages[$key]->additions->object_type = '';
+
       if (!$show_form && $GLOBALS['user']->uid == 0) {
         $output = '<div class="user-login-teaser">' . t('!login or !register to make a comment', array('!login' => l(t('Login'), 'user'), '!register' => l(t('register'), 'user/register'))) . '</div>';
       }
@@ -436,6 +438,12 @@ function heartbeat_comments_form($form_state = array(), $uaid = 0, $node_comment
       ),
     );
 
+    $form['heartbeat_comment_token'] = array(
+      '#id' => 'heartbeat_comment_'. $uaid,
+      '#default_value' => drupal_get_token('heartbeat_comment_'. $uaid),
+      '#type' => 'hidden',
+    );
+
     if ($nid && $node_comment) {
 
       $show_form = user_access('post comments');
@@ -476,6 +484,13 @@ function heartbeat_comments_form_submit($form = array(), &$form_state = array())
   $nid = ($ahah ? $_POST['nid'] : (isset($form_state['values']['nid']) ? $form_state['values']['nid']: 0));
   $node_comment = $nid > 0 && ($ahah ? $_POST['node_comment'] : $form_state['values']['node_comment']);
   $first_comment = ($ahah ? (isset($_POST['first_comment']) ? $_POST['first_comment'] : 0) : (isset($form_state['values']['first_comment']) ? $form_state['values']['first_comment'] : 0));
+
+  // Check the token.
+  $token = 'heartbeat_comment_'. $uaid;
+  if (!drupal_valid_token($_POST['heartbeat_comment_token'], $token)) {
+    drupal_json(array('status' => FALSE, 'data' => t('Access denied')));
+    exit;
+  }
 
   if (!user_access('add heartbeat comment') || empty($message)) {
     drupal_json(array('status' => FALSE, 'data' => t('No comments')));
@@ -537,8 +552,10 @@ function heartbeat_comments_form_submit($form = array(), &$form_state = array())
   $authorid = db_result(db_query("SELECT uid FROM {heartbeat_activity} WHERE uaid = %d", $uaid));
   $author = heartbeat_user_load($authorid);
 
-  // Let rules know there has been a shout event
-  if (module_exists('rules')) {
+  module_invoke_all('heartbeat_comment_post', $user, $saved, $author);
+
+  // Let rules know there is a comment event.
+  if (!$node_comment && module_exists('rules')) {
     rules_invoke_event('heartbeat_comment_post', $user, $saved, $author);
 
     // For actions on related users
@@ -834,8 +851,6 @@ function _heartbeat_comments_delete_access($hcid) {
   }
 
   // TODO: Allow message owner to delete comment as well
-
-  return FALSE;
 }
 
 /**
@@ -884,7 +899,7 @@ function _heartbeat_comments_delete($hcid) {
   db_query("DELETE FROM {heartbeat_comments} WHERE hcid = %d", $hcid);
   db_query("UPDATE {heartbeat_activity} SET uaid_comments = uaid_comments - 1 WHERE uaid IN ( %s ) ", implode(',', $uaids));
   if (variable_get('heartbeat_comments_cache', 1)) {
-    cache_clear_all('heartbeat:comments:'. $uaid. ':0', 'cache');
+    cache_clear_all('heartbeat:comments:'. $lang_uaid. ':0', 'cache');
   }
 }
 
@@ -902,8 +917,6 @@ function _heartbeat_comments_node_delete_access($cid) {
     $uid = db_result(db_query("SELECT uid FROM {comments} WHERE cid = %d ", $cid));
     return ($uid == $user->uid && user_access('delete own comments'));
   }
-
-  return FALSE;
 
 }
 
