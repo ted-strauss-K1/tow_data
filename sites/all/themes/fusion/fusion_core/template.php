@@ -27,6 +27,7 @@ function fusion_core_preprocess_maintenance_page(&$vars) {
  */
 function fusion_core_preprocess_page(&$vars) {
   global $language, $theme_key, $theme_info, $user;
+
   // Remove sidebars if disabled e.g., for Panels
   if (!$vars['show_blocks']) {
     $vars['sidebar_first'] = '';
@@ -76,7 +77,7 @@ function fusion_core_preprocess_page(&$vars) {
   $vars['body_classes'] = implode(' ', $body_classes);                                               // Create class list separated by spaces
   
   // Add a unique css id for the body tag by converting / or + or _ in the current page alias into a dash (-).
-  $vars['body_id'] = 'pid-' . strtolower(preg_replace('/[_+\/]/', '-', drupal_get_path_alias($_GET['q'])));
+  $vars['body_id'] = 'pid-' . strtolower(fusion_core_clean_css_identifier(drupal_get_path_alias($_GET['q'])));
 
   // Generate links tree & add Superfish class if dropdown enabled, else make standard primary links
   $vars['primary_links_tree'] = '';
@@ -247,6 +248,18 @@ function fusion_core_preprocess_comment_wrapper(&$vars) {
   $vars['comment_controls_state'] = COMMENT_CONTROLS_HIDDEN;
 }
 
+/**
+ * Returns a list of blocks.  
+ * Uses Drupal block interface and appends any blocks assigned by the Context module.
+ */
+function fusion_core_block_list($region) {
+  $drupal_list = block_list($region);
+  if (module_exists('context') && $context = context_get_plugin('reaction', 'block')) {
+    $context_list = $context->block_list($region);
+    $drupal_list = array_merge($context_list, $drupal_list);
+  }
+  return $drupal_list;
+}
 
 /**
  * Block preprocessing
@@ -268,8 +281,8 @@ function fusion_core_preprocess_block(&$vars) {
     $grid_name = substr(theme_get_setting('theme_grid'), 0, 7);
     $grid_width = (int)substr($grid_name, 4, 2);
     $grid_fixed = (substr(theme_get_setting('theme_grid'), 7) != 'fluid') ? 1 : 0;
-    $sidebar_first_width = (block_list('sidebar_first')) ? theme_get_setting('sidebar_first_width') : 0;
-    $sidebar_last_width = (block_list('sidebar_last')) ? theme_get_setting('sidebar_last_width') : 0;
+    $sidebar_first_width = (fusion_core_block_list('sidebar_first')) ? theme_get_setting('sidebar_first_width') : 0;
+    $sidebar_last_width = (fusion_core_block_list('sidebar_last')) ? theme_get_setting('sidebar_last_width') : 0;
     $regions = fusion_core_set_regions($grid_width, $sidebar_first_width, $sidebar_last_width);
   }
 
@@ -454,20 +467,20 @@ function fusion_core_grid_block($element, $name) {
 function fusion_core_set_regions($grid_width, $sidebar_first_width, $sidebar_last_width) {
   $sidebar_total = $sidebar_first_width + $sidebar_last_width;
   $regions = array(
-    'header_top' => array('width' => $grid_width, 'total' => count(block_list('header_top')), 'count' => 0),
-    'header' => array('width' => $grid_width, 'total' => count(block_list('header')), 'count' => 0),
-    'preface_top' => array('width' => $grid_width, 'total' => count(block_list('preface_top')), 'count' => 0),
-    'preface_bottom' => array('width' => $grid_width - $sidebar_first_width, 'total' => count(block_list('preface_bottom')), 'count' => 0),
-    'sidebar_first' => array('width' => $sidebar_first_width, 'total' => count(block_list('sidebar_first')), 'count' => 0),
-    'content_top' => array('width' => $grid_width - $sidebar_total, 'total' => count(block_list('content_top')), 'count' => 0),
-    'content' => array('width' => $grid_width - $sidebar_total, 'total' => count(block_list('content')), 'count' => 0),
-    'node_top' => array('width' => $grid_width - $sidebar_total, 'total' => count(block_list('node_top')), 'count' => 0),
-    'node_bottom' => array('width' => $grid_width - $sidebar_total, 'total' => count(block_list('node_bottom')), 'count' => 0),
-    'content_bottom' => array('width' => $grid_width - $sidebar_total, 'total' => count(block_list('content_bottom')), 'count' => 0),
-    'sidebar_last' => array('width' => $sidebar_last_width, 'total' => count(block_list('sidebar_last')), 'count' => 0),
-    'postscript_top' => array('width' => $grid_width - $sidebar_first_width, 'total' => count(block_list('postscript_top')), 'count' => 0),
-    'postscript_bottom' => array('width' => $grid_width, 'total' => count(block_list('postscript_bottom')), 'count' => 0),
-    'footer' => array('width' => $grid_width, 'total' => count(block_list('footer')), 'count' => 0)
+    'header_top' => array('width' => $grid_width, 'total' => count(fusion_core_block_list('header_top')), 'count' => 0),
+    'header' => array('width' => $grid_width, 'total' => count(fusion_core_block_list('header')), 'count' => 0),
+    'preface_top' => array('width' => $grid_width, 'total' => count(fusion_core_block_list('preface_top')), 'count' => 0),
+    'preface_bottom' => array('width' => $grid_width - $sidebar_first_width, 'total' => count(fusion_core_block_list('preface_bottom')), 'count' => 0),
+    'sidebar_first' => array('width' => $sidebar_first_width, 'total' => count(fusion_core_block_list('sidebar_first')), 'count' => 0),
+    'content_top' => array('width' => $grid_width - $sidebar_total, 'total' => count(fusion_core_block_list('content_top')), 'count' => 0),
+    'content' => array('width' => $grid_width - $sidebar_total, 'total' => count(fusion_core_block_list('content')), 'count' => 0),
+    'node_top' => array('width' => $grid_width - $sidebar_total, 'total' => count(fusion_core_block_list('node_top')), 'count' => 0),
+    'node_bottom' => array('width' => $grid_width - $sidebar_total, 'total' => count(fusion_core_block_list('node_bottom')), 'count' => 0),
+    'content_bottom' => array('width' => $grid_width - $sidebar_total, 'total' => count(fusion_core_block_list('content_bottom')), 'count' => 0),
+    'sidebar_last' => array('width' => $sidebar_last_width, 'total' => count(fusion_core_block_list('sidebar_last')), 'count' => 0),
+    'postscript_top' => array('width' => $grid_width - $sidebar_first_width, 'total' => count(fusion_core_block_list('postscript_top')), 'count' => 0),
+    'postscript_bottom' => array('width' => $grid_width, 'total' => count(fusion_core_block_list('postscript_bottom')), 'count' => 0),
+    'footer' => array('width' => $grid_width, 'total' => count(fusion_core_block_list('footer')), 'count' => 0)
   );
   return $regions;
 }
@@ -542,3 +555,35 @@ function fusion_core_theme_paths($theme) {
 function fusion_core_themesettings_link($prefix, $suffix, $text, $path, $options) {
   return $prefix . (($text) ? l($text, $path, $options) : '') . $suffix;
 }
+
+/**
+ * @function fusion_core_clean_css_identifier()
+ *   backport of drupal_clean_css_identifier() from Drupal 7.x
+ *
+ * @param $identifier
+ *   the identifier to clean
+ * @param $filter
+ *   an array of string replacements to use on the identifier 
+ *
+ * @return
+ *   A string safe for use as a CSS class or ID
+ **/
+ 
+ function fusion_core_clean_css_identifier($identifier, $filter = array(' ' => '-', '_' => '-', '/' => '-', '[' => '-', ']' => '')) {
+ 
+   // By default, we filter using Drupal's coding standards.
+   $identifier = strtr($identifier, $filter);
+ 
+   // Valid characters in a CSS identifier are:
+   // - the hyphen (U+002D)
+   // - a-z (U+0030 - U+0039)
+   // - A-Z (U+0041 - U+005A)
+   // - the underscore (U+005F)
+   // - 0-9 (U+0061 - U+007A)
+   // - ISO 10646 characters U+00A1 and higher
+   // We strip out any character not in the above list.
+   $identifier = preg_replace('/[^\x{002D}\x{0030}-\x{0039}\x{0041}-\x{005A}\x{005F}\x{0061}-\x{007A}\x{00A1}-\x{FFFF}]/u', '', $identifier);
+ 
+   return $identifier;
+ 
+ }

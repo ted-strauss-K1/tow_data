@@ -57,7 +57,7 @@
           <div id="main-inner" class="main-inner inner">
             <div id="content-region" class="content-region row nested">
               <div id="content-region-inner" class="content-region-inner inner">
-                <a name="main-content" id="main-content"></a>
+                <a id="main-content"></a>
                 <div id="content-inner" class="content-inner block">
                   <div id="content-inner-inner" class="content-inner-inner inner">
                     <?php if ($title): ?>

@@ -40,7 +40,6 @@
  * @see template_preprocess_search_theme_form()
  */
 ?>
-
 <div id="search" class="container-inline">
   <input class="search-input form-text" type="text" maxlength="128" name="search_theme_form" id="edit-search-theme-form-header"  size="15" value="" title="<?php print t('Enter search terms') ?>" />
   <input id="search_header" class="search_submit" type="submit" name="op" value="<?php print t('Search') ?>"  />

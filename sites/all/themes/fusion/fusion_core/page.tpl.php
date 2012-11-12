@@ -100,7 +100,7 @@
 
                         <div id="content-region" class="content-region row nested">
                           <div id="content-region-inner" class="content-region-inner inner">
-                            <a name="main-content-area" id="main-content-area"></a>
+                            <a id="main-content-area"></a>
                             <?php print theme('grid_block', $tabs, 'content-tabs'); ?>
                             <div id="content-inner" class="content-inner block">
                               <div id="content-inner-inner" class="content-inner-inner inner">
