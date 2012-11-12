@@ -652,7 +652,7 @@ div.tow-highcharts-handle {
 {
 	width: 408px;
 }
-#block-menu-menu-login-register-username
+#block-menu-menu-signing
 {
 	float:right;
 	width: 300px;
@@ -969,7 +969,7 @@ div.tow-highcharts-handle {
 
 .starflag .flag-bookmarks .flag-action
 {
-	background: url("/sites/all/themes/themes/fusion/fusion_theory/img/book_mark.png") no-repeat scroll 0 0 transparent;
+	background: url("../img/book_mark.png") no-repeat scroll 0 0 transparent;
     float: left;
     font-size: 0;
     height: 31px;
@@ -978,7 +978,7 @@ div.tow-highcharts-handle {
 }
 .starflag .flag-bookmarks .unflag-action
 {
-		background: url("/sites/all/themes/themes/fusion/fusion_theory/img/book_mark.png") no-repeat scroll 0 -40px transparent;
+		background: url("../img/book_mark.png") no-repeat scroll 0 -40px transparent;
     float: left;
     font-size: 0;
     height: 31px;
@@ -1125,7 +1125,7 @@ div.tow-highcharts-handle {
 }
 .edit-row
 {
-	 background: url("/sites/all/themes/themes/fusion/fusion_theory/img/edit_data.png") no-repeat scroll 0 0 transparent;
+	 background: url("../img/edit_data.png") no-repeat scroll 0 0 transparent;
     float: left;
     font-size: 0;
     height: 16px;
@@ -1135,11 +1135,11 @@ div.tow-highcharts-handle {
 }
 .edit-row:hover
 {
-	 background: url("/sites/all/themes/themes/fusion/fusion_theory/img/edit_data_hr.png") no-repeat scroll 0 0 transparent;
+	 background: url("../img/edit_data_hr.png") no-repeat scroll 0 0 transparent;
 }
 .delete-row
 {
-	 background: url("/sites/all/themes/themes/fusion/fusion_theory/img/del_data.png") no-repeat scroll 0 0 transparent;
+	 background: url("../img/del_data.png") no-repeat scroll 0 0 transparent;
     float: left;
     font-size: 0;
     height:17px;
@@ -1148,7 +1148,7 @@ div.tow-highcharts-handle {
 }
 .delete-row:hover
 {
-	background: url("/sites/all/themes/themes/fusion/fusion_theory/img/del_data_hr.png") no-repeat scroll 0 0 transparent;
+	background: url("../img/del_data_hr.png") no-repeat scroll 0 0 transparent;
 }
 
 .starflag .flag-bookmarks
@@ -1467,6 +1467,14 @@ div.tow-highcharts-handle {
 	padding-right: 10px;
 	text-decoration: none;
 	font-weight:normal;
+}
+#block-menu-menu-tags .title
+{
+	display:none;
+}
+#block-menu-menu-users .title
+{
+	display:none;
 }
 #block-menu-menu-tags li a.active
 {

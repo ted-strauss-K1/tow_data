@@ -8,7 +8,6 @@ engine = phptemplate
 stylesheets[all][] = css/fusion-theory.css
 stylesheets[all][] = css/other.css
 stylesheets[all][] = css/bootstrap.css
-stylesheets[all][] = css/DT_bootstrap.css
 stylesheets[all][] = css/bootstrap-responsive.css
 stylesheets[all][] = css/bootstrap.min.css
 
