@@ -657,25 +657,25 @@ div.tow-highcharts-handle {
 	float:right;
 	width: 300px;
 }
-#block-menu-menu-login-register-username .inner
+#block-menu-menu-signing .inner
 {
 	margin:0px;
 }
-#block-menu-menu-login-register-username .title
+#block-menu-menu-signing .title
 {
 	display:none;
 }
-#block-menu-menu-login-register-username ul
+#block-menu-menu-signing ul
 {
 	margin:0px;
 	padding:0px;
 	text-align: right;
 }
-#block-menu-menu-login-register-username ul li
+#block-menu-menu-signing ul li
 {
 	display: inline;
 }
-#block-menu-menu-login-register-username ul li a
+#block-menu-menu-signing ul li a
 {
 	 color: #676767;
     float: none;
@@ -685,7 +685,7 @@ div.tow-highcharts-handle {
     padding: 9px 10px 11px;
     text-decoration: none;
 }
-#block-menu-menu-login-register-username ul li a:hover
+#block-menu-menu-signing ul li a:hover
 {
 	color: #000000;
 	border-top: 3px solid;
