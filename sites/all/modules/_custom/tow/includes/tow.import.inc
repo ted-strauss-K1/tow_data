@@ -138,7 +138,7 @@ function tow_import_form($form_state, $nid) {
     );
     $rows[] = array(
         'class' => '7 hidden',
-        'data' => array(l('New import', 'import/' . $_tow_dataset->nid) . t(' or back to your ') . l('dataset', 'dataset/' . $_tow_dataset->nid)),
+        'data' => array(l('New import', 'import/' . $_tow_dataset->nid) . t(' or back to your ') . l('dataset', 'node/' . $_tow_dataset->nid)),
     );
 
     // Progress.
