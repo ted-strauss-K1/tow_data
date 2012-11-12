@@ -314,7 +314,11 @@ div.tow-highcharts-handle {
 }
 .dataTables_scrollBody 
 {
-	height:auto !important;
+	/*height:auto !important;*/
+}
+.page-table .dataTables_scrollBody 
+{
+	height:500px !important;
 }
 #block-menu-primary-links .inner
 {
@@ -648,7 +652,7 @@ div.tow-highcharts-handle {
 {
 	width: 408px;
 }
-#block-menu-menu-signing
+#block-menu-menu-login-register-username
 {
 	float:right;
 	width: 300px;
@@ -927,9 +931,25 @@ div.tow-highcharts-handle {
 }
 #block-tow-search_inner_field_list .collapsible legend
 {
-	padding: 1px;
+/*	padding: 1px;
     width: 100%;
-	 background:#666;
+	 background:#666;*/
+	   border: 1px solid #E5E5E5;
+    border-radius: 4px 4px 0 0;
+    font-size: 13px;
+    padding: 8px 10px;
+    width: 95%;
+}
+#block-tow-search_inner_field_list .collapsible .fieldset-wrapper
+{
+	padding: 8px 10px;
+	border: 1px solid #E5E5E5;
+	border-top:0px;
+	width: 95%;
+}
+#block-tow-search_inner_field_list .collapsible
+{
+	margin-bottom: 5px;
 }
 #block-tow-search_inner_field_list .collapsible legend a
 {
@@ -2085,7 +2105,7 @@ dt.profile-profile_bio
 }
 .tow-saved-search-block-item #comments textarea
 {
-	width:600px;
+	width:180px;
 }
 
 /*login pop up box*/
@@ -2172,7 +2192,7 @@ dt.profile-profile_bio
     width:100px;
     padding:2px;
     border: 0px solid red;
-	 overflow: hidden;
+	overflow: hidden;
 	text-overflow: ellipsis;
 	display:block;
 	white-space: nowrap;
@@ -2181,9 +2201,10 @@ dt.profile-profile_bio
 .dataTables_scroll table tbody tr td span
 {
     width:100px;
-    padding:2px;
+    padding: 0 1px;
+	line-height:21px;
     border: 0px solid red;
-	 overflow: hidden;
+	overflow: hidden;
 	text-overflow: ellipsis;
 	display:block;
 	white-space: nowrap;
@@ -2203,4 +2224,29 @@ dt.profile-profile_bio
     overflow: visible;
     white-space: normal;
 	cursor:pointer;
+}
+#block-tow-search_inner_facets
+{
+	width:700px !important;
+}
+#block-tow-saved_searches_description
+{
+	width:700px !important;
+}
+#block-tow-saved_searches_description h2
+{
+	text-align:left;
+}
+#block-tow-search_inner_facets div.tow-inner-search-widget
+{
+	float: left;
+    margin-right: 10px;
+    min-height: 350px;
+	width: 215px;
+}
+.fixed_head
+{
+	position:fixed;
+	top:0px;
+	background:#fff;
 }
