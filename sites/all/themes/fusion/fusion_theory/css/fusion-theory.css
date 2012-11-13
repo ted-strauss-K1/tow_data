@@ -1021,9 +1021,9 @@ div.tow-highcharts-handle {
 	 background: none repeat scroll 0 0 #CCCCCC;
     float: right;
     line-height: 15px;
-    margin-right: 50px;
+    /*margin-right: 50px;*/
     padding: 10px 12px;
-    width: 170px;
+    width: 160px;
 }
 .tow-saved-search-block-item .user-data .picture
 {
@@ -1613,7 +1613,7 @@ block-menu-menu-users .inner
 
 .tow-saved-search-block-item .comments .comment
 {
-	border-top: 1px solid #CCCCCC;
+	/*border-top: 1px solid #CCCCCC;*/
     margin: 0;
     padding: 0;
 }
@@ -1937,6 +1937,15 @@ button:active {
 
 #block-tow-saved_searches_list
 {
+	width:250px;
+}
+#block-tow-saved_searches_list .vud-widget-upanddown
+{
+	margin:0 10px 0 0;
+}
+#block-tow-saved_searches_list .comments-header
+{
+	display:none;
 }
 #block-tow-saved_searches_list .inner
 {
@@ -1945,17 +1954,41 @@ button:active {
 #block-tow-saved_searches_list .inner div.node
 {
 	margin-bottom:0px;
-	border-top: 1px solid #CCCCCC;
+	/*border-top: 1px solid #CCCCCC;*/
+}
+#block-tow-saved_searches_list .inner div.node h2
+{
+	  border-bottom: 1px solid #CCCCCC;
+    font-size: 13px !important;
+    font-weight: normal !important;
+    left: -5px;
+    line-height: 20px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+    position: relative;
+    text-align: left;
+    width: 240px;
+}
+#block-tow-saved_searches_list #comments .content p
+{
+	font-size:13px;
+	padding-right:5px;
 }
 #block-tow-saved_searches_list #comments
 {
-	margin-left: 50px;
-    width: 630px;
+	 margin-left: 23px;
+    width: 217px;
+	margin-bottom:10px;
+}
+#block-tow-saved_searches_list #comments form
+{
+	margin-bottom:0px;
 }
 #block-tow-saved_searches_list div.comment h3.title {
     font-size: 18px;
     font-weight: normal;
     margin: 0;
+	display:none;
 }
 
 
@@ -2124,7 +2157,13 @@ dt.profile-profile_bio
 }
 .tow-saved-search-block-item
 {
-	clear:both;
+	border: 1px solid #CCCCCC;
+    border-radius: 5px 5px 5px 5px;
+    clear: both;
+    margin-top: 10px;
+    overflow: hidden;
+    padding: 3px;
+    width: 232px;
 }
 .tow-saved-search-block-item #comments textarea
 {
@@ -2144,7 +2183,7 @@ dt.profile-profile_bio
 }
 .tow-saved-search-block-item #comments textarea
 {
-	width:180px;
+	width:195px;
 }
 
 /*login pop up box*/
