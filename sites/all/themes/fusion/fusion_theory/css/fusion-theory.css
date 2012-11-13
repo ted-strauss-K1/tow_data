@@ -532,8 +532,13 @@ div.tow-highcharts-handle {
 /*user login css*/
 
 .modalframe {
+	   background-clip: padding-box;
     background-color: #FFFFFF;
-    border: 2px solid #1B5084;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+    border-radius: 6px 6px 6px 6px;
+    box-shadow: 0 3px 7px rgba(0, 0, 0, 0.3);
+    background-color: #FFFFFF;
+    /*border: 2px solid #1B5084;*/
     color: #000000;
     height: 530px !important;
     top: 50px !important;
@@ -554,12 +559,38 @@ div.tow-highcharts-handle {
 {
     background-color: #fff;
     border: 0px solid #6694C6;
+	border-bottom: 1px solid #EEEEEE;
+    padding: 9px 15px;
+	  line-height: 30px;
+      margin: 0;
+}
+.modalframe .ui-dialog-titlebar-close
+{
+	   color: #000000;
+    float: right;
+    font-size: 20px;
+    font-weight: bold;
+    line-height: 20px;
+    opacity: 0.2;
+    text-shadow: 0 1px 0 #FFFFFF;
+	background:url("../img/close.png") no-repeat scroll 0 0 transparent;
+    border: 0 none;
+    cursor: pointer;
+    padding: 0;
+	 margin-top: 2px;
+	    right: 10px;
+		top: 10px;
+}
+.modalframe .ui-dialog-titlebar-close:hover
+{
+	background:url("../img/close_hr.png") no-repeat scroll 0 0 transparent !important;
 }
 .modalframe .ui-dialog-title
 {
 	color:#000 !important;
 	text-transform: capitalize;
-	font-size: 18px;
+	font-size: 24.5px;
+	font-weight:bold;
 }
 #user-login
 {
