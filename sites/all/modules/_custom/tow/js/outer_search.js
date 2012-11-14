@@ -132,7 +132,7 @@ Drupal.behaviors.outer_search = function(context) {
     }
 
     var setFavicon = function () {
-        var link = $('link[type=image/x-icon]').remove().attr("href");
+        var link = $('link[type="image/x-icon"]').remove().attr("href");
         $('<link href="'+ link +'" rel="shortcut icon" type="image/x-icon" />').appendTo('head');
     }
 
