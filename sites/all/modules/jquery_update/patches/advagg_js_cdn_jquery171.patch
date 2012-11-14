@@ -1,0 +1,13 @@
+diff --git a/advagg_js_cdn/advagg_js_cdn.module b/advagg_js_cdn/advagg_js_cdn.module
+index b54c917..c4a9634 100644
+--- a/advagg_js_cdn/advagg_js_cdn.module
++++ b/advagg_js_cdn/advagg_js_cdn.module
+@@ -44,7 +44,7 @@ function advagg_js_cdn_advagg_js_pre_alter(&$javascript, $preprocess_js, $public
+       // jquery.js
+       if (isset($jquery_filepath) && ($path == $jquery_filepath . '/replace/jquery.min.js' || $path == $jquery_filepath . '/replace/jquery.js')) {
+         $info['preprocess'] = FALSE;
+-        $javascript['external'][$schema . '://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js'] = $info;
++        $javascript['external'][$schema . '://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js'] = $info;
+         unset($javascript[$type][$path]);
+       }
+       elseif ($path == 'misc/jquery.js') {

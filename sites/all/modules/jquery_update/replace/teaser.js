@@ -1,5 +1,3 @@
-// $Id: teaser.js,v 1.1.2.1 2009/03/21 19:43:51 mfer Exp $
-
 /**
  * Auto-attach for teaser behavior.
  *

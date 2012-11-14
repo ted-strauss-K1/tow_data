@@ -1,4 +1,3 @@
-// $Id: README.txt,v 1.2.4.1 2009/03/21 19:43:51 mfer Exp $
 
 CONTENTS OF THIS FILE
 ---------------------
@@ -15,6 +14,7 @@ Authors:
 * Jeff Robbins (jjeff)
 * Angela Byron (webchick)
 * Addison Berry (add1sun)
+* (fatcrobat)
 
 jQuery Update module upgrades Drupal's stable version of jQuery in order to
 support the most current jQuery version available.
