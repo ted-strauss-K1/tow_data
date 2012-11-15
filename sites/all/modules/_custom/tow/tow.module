@@ -469,6 +469,7 @@ function tow_init() {
         $node = node_load(arg(1));
         if ($node->type == 'dataset') {
             drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
+            drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
         }
     }
 

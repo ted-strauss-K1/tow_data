@@ -66,12 +66,12 @@ if($('#datatable-1').size() != 0) {
         }
     } );
 
-
+}
     // The same prcodure as above at the top
     // for another table with another amount of columns (dataset page)
     // 'Detail'-info for rows in DataTable.
     // Insert a 'details' column to the table.
-    //if ($('#datatable-1 td img').size() == 0) { /*prevent multiple ajax request at once*/
+    if ($('#datatable-1 td img').size() == 0) { /*prevent multiple ajax request at once*/
         var nCloneTh = document.createElement( 'th' );
         var nCloneTd = document.createElement( 'td' );
         nCloneTd.innerHTML = '<img src="../../misc/menu-collapsed.png">';
@@ -133,11 +133,8 @@ if($('#datatable-1').size() != 0) {
             }
         } );
 
-    }
 
-
-
-        //AJAX 'refresh'
+//AJAX 'refresh'
         $('div.sample-tables span a').live('click', function(e) {
             e.preventDefault();
             refresh_samples_ajax();
@@ -219,30 +216,34 @@ if($('#datatable-1').size() != 0) {
 
         //AJAX bookmarks count
         $(document).bind('flagGlobalAfterLinkUpdate', function(event, data) {
-            refresh_bookmark_ajax();
+           if(event.handled !== true) {
+                refresh_bookmark_ajax();
+                event.handled = true;
+           }
+           return false; 
         });
-
-
+        
         var refresh_bookmark_ajax = function () {
             var url = 'http://' + window.location.hostname + window.location.pathname + '/ajax/bookmark';
-            url = url.replace('node', 'dataset');
+            var pathArray = window.location.pathname.split( '/' );
+            url = url.replace(pathArray[1], 'dataset');
 
             $.ajax({
                 url: url,
                 success: function(data) {
 
                     var bookmarkRefresh = data.bookmark_count;
-                    $('div.starflag p').text('Bookmarks: ' + bookmarkRefresh);
+                    $('div.starflag b').text(bookmarkRefresh);
                 },
                 dataType: 'json'
             });
 
         };
 
-    //}
-
+    }
 
 }
+
 
 
 
