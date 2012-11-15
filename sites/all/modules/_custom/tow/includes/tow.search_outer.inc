@@ -17,7 +17,7 @@ function tow_search_outer_sponsored_block() {
     // Construct block.
     $block = array();
     $block['title'] = 'Sponsored';
-    $block['content'] = '<img src="/sites/default/files/pictures/ebay.png" alt="">';
+    $block['content'] = '<img src="' .  '/' . drupal_get_path('module', 'tow') . '/images/sponsored.png' . '" alt="">';
 
     return $block;
 }
