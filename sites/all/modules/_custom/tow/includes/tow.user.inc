@@ -70,6 +70,28 @@ function tow_user_menu_alter(&$items) {
     unset($items['user/register']['file']);
 }
 
+/**
+ * Part of impelementation of hook_form_alter().
+ */
+function tow_user_profile_form_alter(&$form, $form_state) {
+    $form['#submit'][] = 'tow_user_profile_update_message';
+}
+
+function tow_user_profile_update_message(&$form, $form_state) {
+    $upd_fields = '';
+    foreach ($form['Personal information'] as $item) {
+          $is_profile = strpos($item['#name'], 'profile_');
+          if(($is_profile === 0) && ($item['#value'] != $item['#default_value'])) {
+            $upd_fields .= $item['#title'] . ', ';
+          }
+    }
+    if ($upd_fields != '') {
+       $message = substr($upd_fields, 0, -2);
+       drupal_set_message('You\'ve just updated ' . $message . ' in your user profile');
+    }
+}
+
+
 /* * **************************************************************************************************
  * Functions
  * ************************************************************************************************** */

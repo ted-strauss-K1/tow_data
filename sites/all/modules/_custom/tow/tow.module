@@ -396,6 +396,11 @@ You can upload pictures from your computer with the form below or use Image butt
             $form['comment_filter']['format'] = NULL;
             $form['comment_filter']['comment']['#resizable'] = FALSE;
             break;
+        
+        // User profile form.
+        case 'user_profile_form':
+            tow_user_profile_form_alter(&$form, $form_state);
+            break;
     }
 
     // Altering deletion and truncation forms.
