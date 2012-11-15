@@ -201,7 +201,7 @@ function tow_invite_insert($account) {
             t.uid = %d
 
     ", $nid, $account->uid));
-        if ($exists) {
+        if (!$exists) {
             db_query("
 
         INSERT
