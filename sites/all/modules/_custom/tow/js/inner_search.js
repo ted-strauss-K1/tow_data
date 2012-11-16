@@ -1438,6 +1438,12 @@ shadow: false,
                 }
                 else {
                     $('#block-tow-saved_searches_list').html(data.saved_searches);
+                    $.hrd.noty({
+                      'layout' : 'topRight',
+                      'type' : 'success',
+                      'closeWith': 'click',
+                      'text' : 'You posted a search'
+                    });
                 }
             },
             dataType: 'json'
