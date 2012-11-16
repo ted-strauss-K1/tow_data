@@ -66,7 +66,7 @@ if($('#datatable-1').size() != 0) {
         }
     } );
 
-}
+
     // The same prcodure as above at the top
     // for another table with another amount of columns (dataset page)
     // 'Detail'-info for rows in DataTable.
@@ -133,6 +133,8 @@ if($('#datatable-1').size() != 0) {
             }
         } );
 
+    }
+}
 
 //AJAX 'refresh'
         $('div.sample-tables span a').live('click', function(e) {
@@ -240,7 +242,7 @@ if($('#datatable-1').size() != 0) {
 
         };
 
-    }
+    
 
 }
 
