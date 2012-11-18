@@ -2328,3 +2328,18 @@ dt.profile-profile_bio
 	top:0px;
 	background:#fff;
 }
+
+.modalframe-page-content .password-parent {
+    float: left;
+    margin: 0 10px 0 0;
+    width: 192px;
+}
+.modalframe-page-content .confirm-parent {
+    float: left;
+    margin: 0;
+    width: 200px;
+}
+.modalframe-page-content .password-description
+{
+	clear:both;
+}
