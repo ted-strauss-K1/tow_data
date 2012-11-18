@@ -1,5 +1,7 @@
 Drupal.behaviors.dataset_browse = function(context) {
 
+//Implement datatables features only if table exists
+if($('#datatable-1').size() != 0) {
     // 'Detail'-info for rows in DataTable.
     // Insert a 'details' column to the table.
     $('.views-table tr:last').remove();
@@ -69,7 +71,7 @@ Drupal.behaviors.dataset_browse = function(context) {
     // for another table with another amount of columns (dataset page)
     // 'Detail'-info for rows in DataTable.
     // Insert a 'details' column to the table.
-    if ($('#datatable-1 td img').size() == 0) {
+    //if ($('#datatable-1 td img').size() == 0) { /*prevent multiple ajax request at once*/
         var nCloneTh = document.createElement( 'th' );
         var nCloneTd = document.createElement( 'td' );
         nCloneTd.innerHTML = '<img src="../../misc/menu-collapsed.png">';
@@ -131,8 +133,7 @@ Drupal.behaviors.dataset_browse = function(context) {
             }
         } );
 
-
-
+    }
 
 
 
@@ -238,7 +239,7 @@ Drupal.behaviors.dataset_browse = function(context) {
 
         };
 
-    }
+    //}
 
 
 }
