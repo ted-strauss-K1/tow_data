@@ -176,3 +176,47 @@ function tow_user_list_userpoints() {
     }
     return theme('tow_user_list_userpoints', $args, $header, $rows);
 }
+
+//Function to display +1/-1 point messages
+function tow_user_new_points() {
+    global $user;
+    $account = user_load($user->uid);
+
+    $result = db_query("
+
+    SELECT
+      p.points,
+      p.time_stamp,
+      p.description
+
+      FROM
+        {userpoints_txn} p
+
+      WHERE
+        p.uid = %d
+        
+      AND
+        p.time_stamp >= %d
+    ", $account->uid, $account->points_last_time);
+
+    $num_rows = 0;
+    $messages = array();
+    while ($row = db_fetch_object($result)) {
+        $num_rows++;
+         if ($row->description) {
+            $description = filter_xss($row->description);
+        } else {
+            $description = t('None');
+        }
+        $messages[] = ('You\'ve got ' . $row->points . ' point for ' . $description);
+    }
+    if ($num_rows == 0) {
+        return;
+    } else {
+        foreach($messages as $message) {
+                drupal_set_message($message);
+        }
+        $cur_time = time();
+        user_save($account, array('points_last_time' => $cur_time));
+    }
+};
