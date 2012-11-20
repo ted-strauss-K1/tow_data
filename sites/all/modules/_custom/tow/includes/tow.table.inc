@@ -435,7 +435,7 @@ function tow_table_page_callback($nid) {
 
     // Set global dataset and table variables.
     $_tow_dataset = node_load($node->field_dataset['0']['value']);
-    $_tow_dataset = (object) array('nid' => $_tow_dataset->nid, 'title' => $_tow_dataset->title, 'uid' => $_tow_dataset->uid);
+    $_tow_dataset = (object) array('nid' => $_tow_dataset->nid, 'title' => $_tow_dataset->title, 'uid' => $_tow_dataset->uid, 'taxonomy' => $_tow_dataset->taxonomy);
     $_tow_table = $node;
 
     // Generate an output of the table: title, teaser and admin tasks.
