@@ -142,11 +142,11 @@ function tow_invite_form_submit($form, &$form_state) {
         if (tow_invite_user($email, $link, $form_state['values']['message'], $person->name)) {
             drupal_set_message('Invite has been sent');
         } else {
-            drupal_set_message('Invite has not been sent');
+            drupal_set_message('Invite has not been sent', 'error');
         }
     } else {
         if (db_result(db_query_range("SELECT nid FROM {tow_invites} WHERE nid = %d AND email = '%s'", array($_tow_dataset->nid, $email), 0, 1))) {
-            drupal_set_message('Invite had already been sent');
+            drupal_set_message('Invite had already been sent', 'warning');
             return;
         }
         $token = user_password(32);
@@ -156,7 +156,7 @@ function tow_invite_form_submit($form, &$form_state) {
             db_query("INSERT INTO {tow_invites} VALUES ('%d', '%s', '%s')", $_tow_dataset->nid, $token, $email);
             drupal_set_message('Invite has been sent');
         } else {
-            drupal_set_message('Invite has not been sent');
+            drupal_set_message('Invite has not been sent', 'error');
         }
     }
 }
@@ -201,7 +201,7 @@ function tow_invite_insert($account) {
             t.uid = %d
 
     ", $nid, $account->uid));
-        if ($exists) {
+        if (!$exists) {
             db_query("
 
         INSERT
@@ -292,7 +292,7 @@ function tow_invite_user($email, $link, $user_message, $person, $tokenlink = FAL
         'subject' => 'Access to dataset on Theory on Wheels',
         'body' => $body,
         'headers' => $headers,
-        'from' => variable_get('smtp_from', 'notify@tow.com')
+        'from' => variable_get('site_mail', 'notify@theoryonwheels.com')
     );
 
     // Send mail.

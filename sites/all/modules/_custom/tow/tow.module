@@ -29,7 +29,6 @@ module_load_include('inc', 'tow', 'includes/tow.install');
 module_load_include('inc', 'tow', 'includes/tow.invite');
 module_load_include('inc', 'tow', 'includes/tow.pma_menu');
 module_load_include('inc', 'tow', 'includes/tow.record');
-module_load_include('inc', 'tow', 'includes/tow.register');
 module_load_include('inc', 'tow', 'includes/tow.saved_searches');
 module_load_include('inc', 'tow', 'includes/tow.search_inner');
 module_load_include('inc', 'tow', 'includes/tow.search_inner_linked');
@@ -379,11 +378,6 @@ You can upload pictures from your computer with the form below or use Image butt
         // Record node form.
         case 'record_node_form':
             tow_record_form_alter(&$form, $form_state);
-            break;
-
-        // User registration form.
-        case 'user_register':
-            # tow_register_form_alter($form, $form_state);
             break;
 
         // User login form
@@ -1341,7 +1335,6 @@ function tow_user($op, &$edit, &$account) {
     // Actions on creation of a user.
     if ($op == 'insert') {
         tow_invite_insert($account);
-        tow_register($edit, $account);
     }
 }
 
