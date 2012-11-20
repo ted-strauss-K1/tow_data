@@ -50,6 +50,12 @@ module_load_include('inc', 'tow', 'includes/tow.user');
  * Implementation of hook_access().
  */
 function tow_access($op, $node, $account) {
+    
+    if (is_string($node)) {
+        $type = $node;
+        $node = new stdClass;
+        $node->type = $type;
+    }
     switch ($op) {
 
         // Check if a user is allowed to create the node.
