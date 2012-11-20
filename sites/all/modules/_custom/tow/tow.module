@@ -514,6 +514,9 @@ function tow_init() {
     
     //Check user reputation new votes
     tow_user_new_points();
+    
+    //Check user datasets new requests
+    tow_user_new_requests();
 }
 
 function tow_link_alter(&$links, $node, $comment = NULL) {
@@ -808,6 +811,15 @@ function tow_menu() {
 
     // Add test menu items.
     $items = array_merge($items, tow_tests_menu());
+    
+    //User dataset access through noty messages
+    $items['notyaccess_ajax/%/%/%'] = array(
+    'page callback' => 'tow_ajax_handlers_noty_access', 
+    'page arguments' => array(1, 2, 3),
+    'access arguments' => array('access content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+    );
 
     return $items;
 }
