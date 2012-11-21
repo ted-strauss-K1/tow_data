@@ -225,7 +225,7 @@ function tow_search_outer_view($type = 'apachesolr_search') {
     $results = search_data($keys, 'tow');
 
     if ($results) {
-        $results = theme('box', t('Search results'), $results);
+        $results = theme('box', NULL/*t('Search results')*/, $results);
     } else {
         $results = theme('box', t('Your search yielded no results'), variable_get('apachesolr_search_noresults', apachesolr_search_noresults()));
     }
