@@ -197,6 +197,13 @@ function tow_dataset_form_alter(&$form, &$form_state) {
     $form['buttons']['submit']['#value'] = t('Save and import data');
     $form['#validate'][] = 'tow_dataset_dont_validate_cancel';
     $form['#submit'][] = 'tow_dataset_submit_redirect';
+    
+    //Set breadcrumbs
+    if (arg(1) == 'add'){
+        $bc[] = l('Data', '<front>');
+        $bc[] .= t('Create dataset');
+    }
+    drupal_set_breadcrumb($bc);
 }
 
 /* * **************************************************************************************************

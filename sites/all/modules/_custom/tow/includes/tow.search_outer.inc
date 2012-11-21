@@ -232,7 +232,7 @@ function tow_search_outer_view($type = 'apachesolr_search') {
     
     //Set breadcrumbs
     $bc = array();
-    $bc[] = l('Data','data');
+    $bc[] = t('Data');
     drupal_set_breadcrumb($bc);
     
     return $results;
