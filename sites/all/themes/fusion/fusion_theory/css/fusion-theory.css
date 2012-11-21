@@ -91,11 +91,14 @@ a:hover {
 	color: #fff;
 	text-decoration: none; }
 #block-tow-pma_menu ul li ul {
-	display: none; 
-	border: 1px solid #CCCCCC;
+	display:none; 
+	border:1px solid #CCCCCC;
 	margin-top: 24px !important;
-	 width: 200px;
-    z-index: 5;
+	width:200px;
+    z-index:5;
+	position:relative;
+    top:0px;
+	left:0px;
 	background:#999999;
 }
 #block-tow-pma_menu ul li ul li
@@ -103,10 +106,12 @@ a:hover {
 	 border-bottom: 1px solid #000000;
     float: left;
     overflow: hidden;
+	padding:0px;
 }
 #block-tow-pma_menu ul li ul li a
 {
 	 font-size: 15px !important;
+	 padding: 3px 10px !important;
     width: 180px;
 }
 #block-tow-pma_menu ul li:hover ul, #block-tow-pma_menu ul li.hover ul {
@@ -164,8 +169,8 @@ a:hover {
 	color: #000000;
 	float: left;
 	font-size: 17px;
-	padding-left: 5px;
-	padding-right: 5px;
+	padding-left: 10px;
+	padding-right: 10px;
 	text-decoration: none;
 	list-style:none;
 	font-weight:normal;
@@ -175,8 +180,8 @@ a:hover {
 	color: #000000;
 	float: left;
 	font-size: 17px;
-	padding-left: 10px;
-	padding-right: 10px;
+	/*padding-left: 10px;
+	padding-right: 10px;*/
 	text-decoration: none;
 	font-weight:normal;
 }
@@ -196,10 +201,15 @@ a:hover {
 	color: #000000;
 	float: left;
 	font-size: 17px;
-	padding-left: 10px;
-	padding-right: 10px;
+	/*padding-left: 10px;
+	padding-right: 10px;*/
+	padding: 0;
 	text-decoration: none;
 	font-weight:normal;
+}
+#block-tow-pma_menu li
+{
+	padding:3px 10px;
 }
 #block-tow-pma_menu li a:hover {
     color: #979797;
