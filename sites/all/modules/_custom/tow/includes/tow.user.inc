@@ -70,6 +70,28 @@ function tow_user_menu_alter(&$items) {
     unset($items['user/register']['file']);
 }
 
+/**
+ * Part of impelementation of hook_form_alter().
+ */
+function tow_user_profile_form_alter(&$form, $form_state) {
+    $form['#submit'][] = 'tow_user_profile_update_message';
+}
+
+function tow_user_profile_update_message(&$form, $form_state) {
+    $upd_fields = '';
+    foreach ($form['Personal information'] as $item) {
+          $is_profile = strpos($item['#name'], 'profile_');
+          if(($is_profile === 0) && ($item['#value'] != $item['#default_value'])) {
+            $upd_fields .= $item['#title'] . ', ';
+          }
+    }
+    if ($upd_fields != '') {
+       $message = substr($upd_fields, 0, -2);
+       drupal_set_message('You\'ve just updated ' . $message . ' in your user profile');
+    }
+}
+
+
 /* * **************************************************************************************************
  * Functions
  * ************************************************************************************************** */
@@ -154,3 +176,120 @@ function tow_user_list_userpoints() {
     }
     return theme('tow_user_list_userpoints', $args, $header, $rows);
 }
+
+//Function to display +1/-1 point messages
+function tow_user_new_points() {
+    global $user;
+    $account = user_load($user->uid);
+
+    $result = db_query("
+
+    SELECT
+      p.points,
+      p.time_stamp,
+      p.description
+
+      FROM
+        {userpoints_txn} p
+
+      WHERE
+        p.uid = %d
+        
+      AND
+        p.time_stamp >= %d
+    ", $account->uid, $account->points_last_time);
+
+    $num_rows = 0;
+    $messages = array();
+    while ($row = db_fetch_object($result)) {
+        $num_rows++;
+         if ($row->description) {
+            $description = filter_xss($row->description);
+        } else {
+            $description = t('None');
+        }
+        $messages[] = ('You\'ve got ' . $row->points . ' point for ' . $description);
+    }
+    if ($num_rows == 0) {
+        return;
+    } else {
+        foreach($messages as $message) {
+                drupal_set_message($message);
+        }
+        $cur_time = time();
+        user_save($account, array('points_last_time' => $cur_time));
+    }
+};
+
+//Function to display dataset access requests messages
+function tow_user_new_requests() {
+    global $user;
+    $account = user_load($user->uid);
+
+    $result = db_query("
+
+    SELECT
+      tar.nid,
+      tar.uid,
+      tar.request_timestamp
+
+      FROM
+        {tow_access_requests} tar
+      
+      JOIN
+        {node} n
+        
+      ON
+        tar.nid = n.nid
+
+      WHERE
+        n.uid = %d
+        
+      AND
+        tar.request_timestamp >= %d
+    ", $account->uid, $account->requests_last_time);
+
+    $num_rows = 0;
+    $messages = array();
+    while ($row = db_fetch_object($result)) {
+        $num_rows++;
+        $requester = user_load($row->uid);
+        $a_dataset = node_load($row->nid);
+        $messages[] = array('message' => ($requester->realname . ' has requested access to your dataset ' . $a_dataset->title . ', should we grant access?'),
+                            'requester' => $requester->uid,
+                            'dataset' => $a_dataset->nid);
+    }
+    if ($num_rows == 0) {
+        return;
+    } else {
+        foreach($messages as $message) {
+                 drupal_add_js('$(document).ready(function(){$.hrd.noty({
+  text : "' . $message['message'] .'", 
+  buttons: [
+    {addClass: "btn btn-primary", text: "Grant", onClick: function($noty) {
+        $.get( 
+        // Callback URL.
+        "' . base_path() .'notyaccess_ajax/1/" + ' . $message['dataset'] . ' + "/" + ' . $message['requester'] . '
+        ).success(function() { $noty.close(); }).error(function() { alert("error"); });
+      }
+    },
+    {addClass: "btn btn-danger", text: "Deny", onClick: function($noty) {
+        $.get( 
+        // Callback URL.
+        "' . base_path() .'notyaccess_ajax/-1/" + ' . $message['dataset'] . ' + "/" + ' . $message['requester'] . '
+        ).success(function() { $noty.close(); }).error(function() { alert("error"); });
+      }
+    },
+    {addClass: "btn", text: "Later", onClick: function($noty) {
+        $noty.close();
+      }
+    }
+  ]
+});
+});
+', 'inline');
+        }
+        $cur_time = time();
+        user_save($account, array('requests_last_time' => $cur_time));
+    }
+};

@@ -1,5 +1,3 @@
-// $Id: tabledrag.js,v 1.1.2.1.2.2 2009/03/21 20:06:59 mfer Exp $
-
 /**
  * Drag and drop table rows with field manipulation.
  *
@@ -76,13 +74,15 @@ Drupal.tableDrag = function(table, tableSettings) {
     // manually append 2 indentations in the first draggable row, measure
     // the offset, then remove.
     var indent = Drupal.theme('tableDragIndentation');
-    var testCell = $('tr.draggable:first td:first', table).prepend(indent).prepend(indent);
+    // Match immediate children of the parent element to allow nesting.
+    var testCell = $('> tbody > tr.draggable:first td:first, > tr.draggable:first td:first', table).prepend(indent).prepend(indent);
     this.indentAmount = $('.indentation', testCell).get(1).offsetLeft - $('.indentation', testCell).get(0).offsetLeft;
     $('.indentation', testCell).slice(0, 2).remove();
   }
 
   // Make each applicable row draggable.
-  $('tr.draggable', table).each(function() { self.makeDraggable(this); });
+  // Match immediate children of the parent element to allow nesting.
+  $('> tr.draggable, > tbody > tr.draggable', table).each(function() { self.makeDraggable(this); });
 
   // Hide columns containing affected form elements.
   this.hideColumns();
@@ -112,9 +112,10 @@ Drupal.tableDrag.prototype.hideColumns = function(){
     // Hide the column containing this field.
     if (hidden && cell[0] && cell.css('display') != 'none') {
       // Add 1 to our indexes. The nth-child selector is 1 based, not 0 based.
-      var columnIndex = $('td', cell.parent()).index(cell.get(0)) + 1;
-      var headerIndex = $('td:not(:hidden)', cell.parent()).index(cell.get(0)) + 1;
-      $('tr', this.table).each(function(){
+      // Match immediate children of the parent element to allow nesting.
+      var columnIndex = $('> td', cell.parent()).index(cell.get(0)) + 1;
+      var headerIndex = $('> td:not(:hidden)', cell.parent()).index(cell.get(0)) + 1;
+      $('> thead > tr, > tbody > tr, > tr', this.table).each(function(){
         var row = $(this);
         var parentTag = row.parent().get(0).tagName.toLowerCase();
         var index = (parentTag == 'thead') ? headerIndex : columnIndex;
@@ -169,12 +170,13 @@ Drupal.tableDrag.prototype.makeDraggable = function(item) {
   // Create the handle.
   var handle = $('<a href="#" class="tabledrag-handle"><div class="handle">&nbsp;</div></a>').attr('title', Drupal.t('Drag to re-order'));
   // Insert the handle after indentations (if any).
-  if ($('td:first .indentation:last', item).after(handle).size()) {
-    // Update the total width of indentation in this entire table.
-    self.indentCount = Math.max($('.indentation', item).size(), self.indentCount);
+
+  if($('td:first .indentation:last', item).length && $('td:first .indentation:last', item).after(handle).size()){
+  // Update the total width of indentation in this entire table.
+  self.indentCount = Math.max($('.indentation', item).size(), self.indentCount);
   }
   else {
-    $('td:first', item).prepend(handle);
+  $('td:first', item).prepend(handle);
   }
 
   // Add hover action for the handle.
@@ -684,7 +686,7 @@ Drupal.tableDrag.prototype.updateField = function(changedRow, group) {
           var maxVal = values[values.length - 1];
           // Populate the values in the siblings.
           $(targetClass, siblings).each(function() {
-            // If there are more items than possible values, assign the maximum value to the row. 
+            // If there are more items than possible values, assign the maximum value to the row.
             if (values.length > 0) {
               this.value = values.shift();
             }
@@ -758,7 +760,8 @@ Drupal.tableDrag.prototype.setScroll = function(scrollAmount) {
 Drupal.tableDrag.prototype.restripeTable = function() {
   // :even and :odd are reversed because jquery counts from 0 and
   // we count from 1, so we're out of sync.
-  $('tr.draggable', this.table)
+  // Match immediate children of the parent element to allow nesting.
+  $('> tbody > tr.draggable, > tr.draggable', this.table)
     .filter(':odd').filter('.odd')
       .removeClass('odd').addClass('even')
     .end().end()
@@ -961,7 +964,6 @@ Drupal.tableDrag.prototype.row.prototype.indent = function(indentDiff) {
   indent = Math.max(indent, this.interval.min);
   indent = Math.min(indent, this.interval.max);
   indentDiff = indent - this.indents;
-
   for (var n = 1; n <= Math.abs(indentDiff); n++) {
     // Add or remove indentations.
     if (indentDiff < 0) {

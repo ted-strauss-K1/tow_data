@@ -1,5 +1,3 @@
-// $Id: ahah.js,v 1.1.2.1 2009/03/21 19:43:51 mfer Exp $
-
 /**
  * Provides AJAX-like page updating via AHAH (Asynchronous HTML and HTTP).
  *
@@ -136,7 +134,7 @@ Drupal.ahah.prototype.beforeSubmit = function (form_values, element, options) {
   else if (this.progress.type == 'throbber') {
     this.progress.element = $('<div class="ahah-progress ahah-progress-throbber"><div class="throbber">&nbsp;</div></div>');
     if (this.progress.message) {
-      $('.throbber', this.progress.element).after('<div class="message">' + this.progress.message + '</div>')
+      $('.throbber', this.progress.element).after('<div class="message">' + this.progress.message + '</div>');
     }
     $(this.element).after(this.progress.element);
   }

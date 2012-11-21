@@ -12,6 +12,12 @@ stylesheets[all][] = css/DT_bootstrap.css
 stylesheets[all][] = css/bootstrap-responsive.css
 stylesheets[all][] = css/bootstrap.min.css
 
+scripts[] = js/noty/promise.js
+scripts[] = js/noty/jquery.noty.js
+scripts[] = js/noty/noty.js
+scripts[] = js/noty/default.js
+scripts[] = js/noty/topRight.js
+scripts[] = js/noty/center.js
 
 /*regions[sidebar_first = sidebar first */
 regions[sidebar_last] = sidebar last

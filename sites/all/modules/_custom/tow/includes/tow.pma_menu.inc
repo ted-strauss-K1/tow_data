@@ -95,6 +95,7 @@ function tow_pma_menu_breadcrumbs() {
     }
 
     $bc = array();
+    $bc[] = l('Data', '<front>');
 
     // Select taxonomy term corresponding to dataset category.
     if ($_tow_dataset->taxonomy) {

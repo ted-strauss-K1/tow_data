@@ -363,3 +363,21 @@ function tow_ajax_handlers_search_outer() {
     return drupal_json($json);
 }
 
+//Database change user dataset access through noty messages
+function tow_ajax_handlers_noty_access($status, $nid, $uid) {
+    db_query("
+
+          UPDATE
+            {tow_access_requests}
+
+            SET
+              status = %d
+
+            WHERE
+                nid = %d
+              AND
+                uid = %d
+
+     ", $status, $nid, $uid);
+}
+

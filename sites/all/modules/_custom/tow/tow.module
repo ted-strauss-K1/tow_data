@@ -49,6 +49,12 @@ module_load_include('inc', 'tow', 'includes/tow.user');
  * Implementation of hook_access().
  */
 function tow_access($op, $node, $account) {
+    
+    if (is_string($node)) {
+        $type = $node;
+        $node = new stdClass;
+        $node->type = $type;
+    }
     switch ($op) {
 
         // Check if a user is allowed to create the node.
@@ -390,6 +396,11 @@ You can upload pictures from your computer with the form below or use Image butt
             $form['comment_filter']['format'] = NULL;
             $form['comment_filter']['comment']['#resizable'] = FALSE;
             break;
+        
+        // User profile form.
+        case 'user_profile_form':
+            tow_user_profile_form_alter(&$form, $form_state);
+            break;
     }
 
     // Altering deletion and truncation forms.
@@ -458,6 +469,7 @@ function tow_init() {
         $node = node_load(arg(1));
         if ($node->type == 'dataset') {
             drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
+            drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
         }
     }
 
@@ -499,6 +511,12 @@ function tow_init() {
             tow_statistics_node_views_update($node);
         }
     }
+    
+    //Check user reputation new votes
+    tow_user_new_points();
+    
+    //Check user datasets new requests
+    tow_user_new_requests();
 }
 
 function tow_link_alter(&$links, $node, $comment = NULL) {
@@ -793,6 +811,15 @@ function tow_menu() {
 
     // Add test menu items.
     $items = array_merge($items, tow_tests_menu());
+    
+    //User dataset access through noty messages
+    $items['notyaccess_ajax/%/%/%'] = array(
+    'page callback' => 'tow_ajax_handlers_noty_access', 
+    'page arguments' => array(1, 2, 3),
+    'access arguments' => array('access content'),
+    'file' => 'includes/tow.ajax_handlers.inc',
+    'type' => MENU_CALLBACK,
+    );
 
     return $items;
 }
