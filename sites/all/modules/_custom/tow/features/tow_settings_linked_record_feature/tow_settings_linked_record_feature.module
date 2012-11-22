@@ -1,0 +1,3 @@
+<?php
+
+include_once('tow_settings_linked_record_feature.features.inc');

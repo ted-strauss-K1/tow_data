@@ -205,7 +205,7 @@ Drupal.ajax_comments_init_links = function(context) {
  * TODO: check div selector
  */
 Drupal.ajax_comments_fold = function(context) {
-  $('div[id^=comments-] > .indented:not(.ajax-comments-processed)', context).addClass('folded').addClass('ajax-comments-processed').each(function (){
+  $('div[id^="comments-"] > .indented:not(.ajax-comments-processed)', context).addClass('folded').addClass('ajax-comments-processed').each(function (){
     $thread = $(this);
     // Hide threads.
     $thread.css('display', 'none');
@@ -443,7 +443,7 @@ Drupal.ajax_comments_delete_click = function() {
  * Attaches the ahah behavior to each ahah form element.
  */
 Drupal.behaviors.ajax_comments_pager = function(context) {
-  $('div[id^=comments-] .pager:not(.pager-processed)', context).addClass('pager-processed').each(function() {
+  $('div[id^="comments-"] .pager:not(.pager-processed)', context).addClass('pager-processed').each(function() {
     $target = $(this);
     $target
       .find('li > a')
@@ -543,7 +543,7 @@ function ajax_comments_rewind(form_num, pid, rows){
   $('#comment-form .error').removeClass('error');
 
   // Set proper PID.
-  $('#comment-form-' + form_num + ' input[name=pid]').val(pid)
+  $('#comment-form-' + form_num + ' input[name="pid"]').val(pid)
 
   // Now we can attach previously removed editors.
   ajax_comments_attach_editors();
@@ -683,7 +683,7 @@ jQuery.fn.ajaxCommentsPreviewToggle = function() {
   var obj = $(this[0]);
 
   //var form_num = ajax_comments_get_form_num_from_element(this[0]);
-  var comments_form = obj.parents('div[id^=comments-]');
+  var comments_form = obj.parents('div[id^="comments-"]');
   alert(obj.parent().html());
   
   // Hide previous preview.
@@ -707,7 +707,7 @@ jQuery.fn.ajaxCommentsPreviewToggle = function() {
 jQuery.fn.ajaxCommentsSubmitToggle = function() {	
   var obj = $(this[0]);      
   var html = obj.html();
-  var link = obj.find('a[href*=/comment/reply]');
+  var link = obj.find('a[href*="/comment/reply"]');
   var form_num = ajax_comments_get_form_num_from_href(link.attr('href'));
   var nid = ajax_comments_get_nid_from_href(link.attr('href'));
   

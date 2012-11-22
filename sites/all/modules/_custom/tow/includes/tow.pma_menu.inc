@@ -94,6 +94,16 @@ function tow_pma_menu_breadcrumbs() {
         $_tow_dataset = node_load($destination);
     }
 
+    //Set import data page breadcrumbs
+    if (arg(0) == 'import') {
+        $bc[] = l('Data', '<front>');
+        $bc[] .= l($_tow_dataset->title, 'node/' . $_tow_dataset->nid);
+        $bc[] .= t('Import data');
+        drupal_set_breadcrumb($bc);
+        return;
+    }
+    
+    //Set other breadcrumbs
     $bc = array();
     $bc[] = l('Data', '<front>');
 
@@ -118,13 +128,12 @@ function tow_pma_menu_breadcrumbs() {
     } else {
         $bc[] = $_tow_dataset->title;
     }
-
+    
     // Extend breadcrumbs.
     global $_tow_bc_attachment;
     if ($_tow_bc_attachment) {
         $bc[count($bc) - 1] .= $_tow_bc_attachment;
     }
-
 
     drupal_set_breadcrumb($bc);
 }

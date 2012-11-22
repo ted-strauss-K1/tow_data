@@ -1374,7 +1374,8 @@ function tow_submit_maintanance_mode($form, &$form_state) {
  * Returns a link for creation a dataset.
  */
 function tow_data() {
-    return l('Create a new dataset', 'node/add/dataset', array('attributes' => array('class' => 'create-dataset-link')));
+    drupal_goto('<front>');
+    //return l('Create a new dataset', 'node/add/dataset', array('attributes' => array('class' => 'create-dataset-link')));
 }
 
 /**

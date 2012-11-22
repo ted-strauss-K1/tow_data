@@ -164,8 +164,8 @@ Drupal.behaviors.inner_search = function(context) {
     var title_sort1 = function() {
         title_sort = 'asc';
         type_sort = '';
-        $('.tow-inner-search-widget-sort a[href*=type]').text('type');
-        $('.tow-inner-search-widget-sort a[href*=title]').text('title (asc)');
+        $('.tow-inner-search-widget-sort a[href*="type"]').text('type');
+        $('.tow-inner-search-widget-sort a[href*="title"]').text('title (asc)');
         var sortArray = $('.tow-inner-search-widget').get();
         sortArray.sort(function(a, b) {
             var keyA = $(a).text().toLowerCase();
@@ -187,8 +187,8 @@ Drupal.behaviors.inner_search = function(context) {
     var title_sort2 = function() {
         title_sort = 'desc';
         type_sort = '';
-        $('.tow-inner-search-widget-sort a[href*=type]').text('type');
-        $('.tow-inner-search-widget-sort a[href*=title]').text('title (desc)');
+        $('.tow-inner-search-widget-sort a[href*="type"]').text('type');
+        $('.tow-inner-search-widget-sort a[href*="title"]').text('title (desc)');
         var sortArray = $('.tow-inner-search-widget').get();
         sortArray.sort(function(a, b) {
             var keyA = $(a).text().toLowerCase();
@@ -207,7 +207,7 @@ Drupal.behaviors.inner_search = function(context) {
         });
     };
 
-    $('.tow-inner-search-widget-sort a[href*=title]').live('click', function(e) {
+    $('.tow-inner-search-widget-sort a[href*="title"]').live('click', function(e) {
         e.preventDefault();
         if (title_sort == 'asc') {
             title_sort2();
@@ -222,13 +222,13 @@ Drupal.behaviors.inner_search = function(context) {
         title_sort = '';
         type_sort = 'asc';
 
-        $('.tow-inner-search-widget-sort a[href*=title]').text('title');
-        $('.tow-inner-search-widget-sort a[href*=type]').text('type (asc)');
+        $('.tow-inner-search-widget-sort a[href*="title"]').text('title');
+        $('.tow-inner-search-widget-sort a[href*="type"]').text('type (asc)');
 
         var sortArray = $('.tow-inner-search-widget').get();
         sortArray.sort(function(a,b) {
-            var keyA = $(a).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
-            var keyB = $(b).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
+            var keyA = $(a).find('input[value="text"], input[value="char"], input[value="bool"], input[value="code"], input[value="enum"], input[value="date"], input[value="datetime"], input[value="float"], input[value="int"], input[value="table"], input[value="time"], input[value="timestamp"]').attr('value');
+            var keyB = $(b).find('input[value="text"], input[value="char"], input[value="bool"], input[value="code"], input[value="enum"], input[value="date"], input[value="datetime"], input[value="float"], input[value="int"], input[value="table"], input[value="time"], input[value="timestamp"]').attr('value');
 
             if (keyA > keyB) {
                 return -1;
@@ -246,13 +246,13 @@ Drupal.behaviors.inner_search = function(context) {
     var type_sort2 = function() {
         title_sort = '';
         type_sort = 'desc';
-        $('.tow-inner-search-widget-sort a[href*=title]').text('title');
+        $('.tow-inner-search-widget-sort a[href*="title"]').text('title');
 
-        $('.tow-inner-search-widget-sort a[href*=type]').text('type (desc)');
+        $('.tow-inner-search-widget-sort a[href*="type"]').text('type (desc)');
         var sortArray = $('.tow-inner-search-widget').get();
         sortArray.sort(function(a,b) {
-            var keyA = $(a).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
-            var keyB = $(b).find('input[value=text], input[value=char], input[value=bool], input[value=code], input[value=enum], input[value=date], input[value=datetime], input[value=float], input[value=int], input[value=table], input[value=time], input[value=timestamp]').attr('value');
+            var keyA = $(a).find('input[value="text"], input[value="char"], input[value="bool"], input[value="code"], input[value="enum"], input[value="date"], input[value="datetime"], input[value="float"], input[value="int"], input[value="table"], input[value="time"], input[value="timestamp"]').attr('value');
+            var keyB = $(b).find('input[value="text"], input[value="char"], input[value="bool"], input[value="code"], input[value="enum"], input[value="date"], input[value="datetime"], input[value="float"], input[value="int"], input[value="table"], input[value="time"], input[value="timestamp"]').attr('value');
 
             if (keyA < keyB) {
                 return -1;
@@ -267,7 +267,7 @@ Drupal.behaviors.inner_search = function(context) {
         });
     };
 
-    $('.tow-inner-search-widget-sort a[href*=type]').live('click',function(e) {
+    $('.tow-inner-search-widget-sort a[href*="type"]').live('click',function(e) {
         e.preventDefault();
         if (type_sort == 'asc') {
             type_sort2();
@@ -282,8 +282,8 @@ Drupal.behaviors.inner_search = function(context) {
         title_sort = '';
         type_sort = '';
         e.preventDefault();
-        $('.tow-inner-search-widget-sort a[href*=title]').text('title');
-        $('.tow-inner-search-widget-sort a[href*=type]').text('type');
+        $('.tow-inner-search-widget-sort a[href*="title"]').text('title');
+        $('.tow-inner-search-widget-sort a[href*="type"]').text('type');
 
         $('#tow-search-inner-hash-form').after(initialArray);
     });

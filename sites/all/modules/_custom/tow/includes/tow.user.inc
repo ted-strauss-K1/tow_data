@@ -18,7 +18,15 @@ function tow_user_view_block() {
     $account = user_load(arg(1));
     user_build_content($account);
     $block['content'] = theme('user_profile', $account);
-
+    
+    //Set breadcrumbs
+    $breadcrumb[] = l('User', 'users');
+    $breadcrumb[] .= $account->realname;
+    if(arg(2) == 'edit') {
+       $breadcrumb[] .= t('edit');
+    }
+    drupal_set_breadcrumb($breadcrumb);
+ 
     return $block;
 }
 
