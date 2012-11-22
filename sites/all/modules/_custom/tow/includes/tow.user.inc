@@ -301,3 +301,56 @@ function tow_user_new_requests() {
         user_save($account, array('requests_last_time' => $cur_time));
     }
 };
+
+//Function to display 'comment on saved search' messages
+function tow_user_new_ss_comments() {
+    global $user;
+    $account = user_load($user->uid);
+
+    $result = db_query("
+
+    SELECT
+      c.nid,
+      c.uid,
+      c.comment,
+      c.timestamp
+
+      FROM
+        {comments} c
+      
+      JOIN
+        {node} n
+        
+      ON
+        c.nid = n.nid
+
+      WHERE
+        n.uid = %d
+        
+      AND
+        c.timestamp >= %d
+    ", $account->uid, $account->ss_comments_last_time);
+
+    $num_rows = 0;
+    $messages = array();
+    while ($row = db_fetch_object($result)) {
+        $num_rows++;
+         /*if ($row->description) {
+            $description = filter_xss($row->description);
+        } else {
+            $description = t('None');
+        }*/
+        $commented_ss = node_load($row->nid);
+        $comment = (strlen($row->comment) > 50) ? substr($row->comment,0,47) . '...' : $row->comment;
+        $messages[] = ('Comment on ' . $commented_ss->title . ': ' . $comment);
+    }
+    if ($num_rows == 0) {
+        return;
+    } else {
+        foreach($messages as $message) {
+                drupal_set_message($message);
+        }
+        $cur_time = time();
+        user_save($account, array('ss_comments_last_time' => $cur_time));
+    }
+};
