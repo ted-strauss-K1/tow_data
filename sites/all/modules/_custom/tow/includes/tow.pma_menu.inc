@@ -52,7 +52,10 @@ function tow_pma_menu_block() {
     $items = array();
     //$items['summary'] = l('Overview', 'node/' . $_tow_dataset->nid);
     $items['browse'] = ($_tow_grey_pma_menu) ? t('Browse') : /* (($_tow_table) ? l('Browse', 'table/' . $_tow_table->nid) : */l('Browse', 'node/' . $_tow_dataset->nid)/* ) */;
-    $items['browse'] .= '<ul class="browse-submenu">' . $subitems . '</ul>';
+    global $user;
+    if ($user->uid) {
+        $items['browse'] .= '<ul class="browse-submenu">' . $subitems . '</ul>';
+    }
     $items['search'] = ($_tow_grey_pma_menu) ? t('Search') : l('Search', 'search_dataset/' . $_tow_dataset->nid);
     $res_doc = db_query("SELECT t.nid FROM {content_type_document} t WHERE t.field_doc_dataset_nid_value = %d", $_tow_dataset->nid);
     $dataset_doc = db_fetch_array($res_doc);
