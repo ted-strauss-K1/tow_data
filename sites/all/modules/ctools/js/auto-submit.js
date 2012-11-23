@@ -37,7 +37,7 @@ Drupal.behaviors.CToolsAutoSubmit = function() {
     });
 
   // Bind to any textfield widgets that will be auto submitted.
-  $('input[type=text].ctools-auto-submit:not(.ctools-auto-submit-processed),.ctools-auto-submit-full-form input[type=text]:not(.ctools-auto-submit-processed)')
+  $('input[type="text"].ctools-auto-submit:not(.ctools-auto-submit-processed),.ctools-auto-submit-full-form input[type="text"]:not(.ctools-auto-submit-processed)')
     .addClass('.ctools-auto-submit-processed')
     .keyup(function(e) {
       var form = this.form;
