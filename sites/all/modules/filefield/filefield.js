@@ -3,7 +3,7 @@
  * Auto-attach standard client side file input validation.
  */
 Drupal.behaviors.filefieldValidateAutoAttach = function(context) {
-  $("input[type=file]", context).bind('change', Drupal.filefield.validateExtensions);
+  $("input[type='file']", context).bind('change', Drupal.filefield.validateExtensions);
 };
 
 
