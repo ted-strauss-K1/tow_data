@@ -732,7 +732,7 @@ Drupal.behaviors.inner_search = function(context) {
                                 'max' : max
                             };
                             $(window).css('cursor', 'wait');
-                            var url = 'http://' + location.host + '/search_inner_zoom_ajax?XDEBUG_SESSION_START=ajax';
+                            var url = 'http://' + location.host + '/search_inner_zoom_ajax';
                             var searchRid = $('#tow-search-inner-hash-form #edit-rid').val();
                             var searchHash = $('#tow-search-inner-hash-form #edit-hash').val();
 

@@ -223,7 +223,7 @@ Drupal.behaviors.Import = function(context) {
     function fileUpload(hash, file) {
 
         var fileName = file.name;
-        var uri = 'upload_selected/' + hash + '/' + dataset + '/' + getChosenTable() + '?XDEBUG_SESSION_START=import';
+        var uri = 'upload_selected/' + hash + '/' + dataset + '/' + getChosenTable() + '';
         var xhr = new XMLHttpRequest();
 
         xhr.open("POST", uri, true);
