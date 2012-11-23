@@ -122,8 +122,11 @@ function tow_search_inner_widgets_block() {
 
     // Save query and stats to db.
     $serialized_query = serialize($query);
+    $serialized_query = str_replace("\0", "~~NULL_BYTE~~", $serialized_query); 
     $serialized_stats = serialize($stats_response->stats->stats_fields);
+    $serialized_stats = str_replace("\0", "~~NULL_BYTE~~", $serialized_stats); 
     $hash = mt_rand(1000, 9999);
+
     db_query("
 
     INSERT

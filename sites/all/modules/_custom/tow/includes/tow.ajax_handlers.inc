@@ -185,7 +185,7 @@ function tow_ajax_handlers_field_zooming() {
         WHERE
             t.rid = %d
           AND
-            hash = %d
+            t.hash = %d
 
     ", $rid, $hash));
 
@@ -195,8 +195,10 @@ function tow_ajax_handlers_field_zooming() {
         $_GET['q'] = 'search_dataset/' . $table_nid;
 
         $query = apachesolr_drupal_query(NULL, NULL, NULL, NULL);
+        $serialized_query = str_replace("~~NULL_BYTE~~", "\0", $serialized_query);
         $query = unserialize($serialized_query);
 
+        $serialized_stats = str_replace("~~NULL_BYTE~~", "\0", $serialized_stats);
         $stats = unserialize($serialized_stats);
         $params = array();
 
