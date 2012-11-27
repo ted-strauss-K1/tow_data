@@ -463,7 +463,19 @@ You can upload pictures from your computer with the form below or use Image butt
 function tow_init() {
     global $user, $_tow_user;
     $_tow_user = $user;
-
+    
+    //Set breadcrumbs on 'users' pages
+    if(arg(0) == 'users') {
+        $bc[] = t('Users');
+        drupal_set_breadcrumb($bc);
+    }
+    
+    //Set breadcrumbs on 'tags' pages
+    if(arg(0) == 'tags') {
+        $bc[] = t('Tags');
+        drupal_set_breadcrumb($bc);
+    }
+    
     // Add dataTables representation to the dataset search page.
     if (arg(0) == 'search_dataset' && arg(1)) {
         $node = node_load(arg(1));
