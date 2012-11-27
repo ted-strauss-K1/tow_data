@@ -60,13 +60,13 @@ function tow_access_dataset($node) {
                 if (tow_access_bypass_solr()) {
                     return;
                 }
-                if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
+                /*if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
                     global $_tow_grey_pma_menu;
                     $_tow_grey_pma_menu = TRUE;
                 } else {
                     drupal_access_denied();
                     die();
-                }
+                }*/
             }
             return;
         }

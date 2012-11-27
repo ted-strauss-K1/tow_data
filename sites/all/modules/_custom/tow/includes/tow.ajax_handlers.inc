@@ -332,13 +332,14 @@ function tow_ajax_handlers_refresh_search_results($nid) {
     // Generate new Search description block output.
     $save_search = tow_saved_searches_description_block();
 
+    global $user;
     // JSON.
     $json = array(
         'search' => $search,
         'widgets' => $widgets['content'],
         'fields' => $fields['content'],
         'save_search' => $save_search['content'],
-        'save_this_search' => $save_this_search['content'],
+        'save_this_search' => /*($user->uid) ? */$save_this_search['content']/* : NULL*/,
     );
 
     return drupal_json($json);
