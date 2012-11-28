@@ -154,6 +154,40 @@ function tow_apachesolr_update_index(&$document, $node) {
         );
         $document->ss_teaser = views_trim_text($alter, $node->body);
     
+    //Build request to show private datasets with granted access
+    if ($node->field_access_type[0]['value'] == 2) {    
+    $result = db_query("
+
+      SELECT
+        tar.uid,
+        tar.nid,
+        tar.status
+
+        FROM
+          {tow_access_requests} tar
+          
+        JOIN
+          {node} n
+          
+        ON
+          tar.nid = n.nid
+
+        WHERE
+          tar.nid = %d
+        
+        AND
+          tar.status = 1
+
+    ", $node->nid);
+        
+        $users = array();
+        while ($row = db_fetch_object($result)) {
+            $users[] = $row->uid;
+        }
+        $document->im_tow_user_access_private = $users;
+    }
+        
+    
     }
 
     // Record processing.
@@ -305,51 +339,19 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
     $params['fl'] .= ',im_vid_' . $categories_vid;
     $params['fl'] .= ',im_vid_' . $tags_vid;
     $params['fl'] .= ',ss_teaser';
+    $params['fl'] .= ',im_tow_user_access_private';
 
     // Add filters.
     $query->add_filter('type', 'dataset');
     
     global $_tow_user;
-    
-    //Build request to show private datasets with granted access
-    $result = db_query("
-
-      SELECT
-        tar.uid,
-        tar.nid,
-        tar.status
-
-        FROM
-          {tow_access_requests} tar
-          
-        JOIN
-          {node} n
-          
-        ON
-          tar.nid = n.nid
-
-        WHERE
-          tar.uid = %d
-        
-        AND
-          tar.status = 1
-
-    ", $_tow_user->uid);
-        
-        $user_access_private = array();
-        while ($row = db_fetch_object($result)) {
-            $user_access_private[] = $row->nid;
-        }
-    
     $is_admin = (in_array('administrator', $_tow_user->roles) || ($_tow_user->uid == 1));
     if (!$is_admin) {
       $subquery = apachesolr_drupal_query();
       $subquery->add_filter('uid', $_tow_user->uid);
       $subquery->add_filter('sis_cck_field_access_type', 0);
       $subquery->add_filter('sis_cck_field_access_type', 1);
-      foreach($user_access_private as $nid) {
-             $subquery->add_filter('nid', $nid);
-      }
+      $subquery->add_filter('im_tow_user_access_private', $_tow_user->uid);
       $query->add_subquery($subquery, 'OR');
     }
     
