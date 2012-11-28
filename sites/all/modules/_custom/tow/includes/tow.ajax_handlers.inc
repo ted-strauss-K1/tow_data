@@ -53,6 +53,10 @@ function tow_ajax_handlers_create_saved_search($nid) {
                 'saved' => TRUE,
                 'saved_searches' => $block['content'],
             );
+            
+            //Update {apachesolr_search_node} table for indexing updates in saved_searches
+            db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $nid);
+        
         } catch (Exception $e) {
             watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
             $json = array(
