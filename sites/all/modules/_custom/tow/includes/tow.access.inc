@@ -412,6 +412,9 @@ function tow_access_confirm_submit($form, &$form_state) {
           tar.nid = %d
 
     ", $form_state['values']['nid']);
+    
+    //Update {apachesolr_search_node} table for indexing updates in access
+    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $form_state['values']['nid']);
     }
 
     // Case 'Grant' or 'Deny' actions.
@@ -439,6 +442,9 @@ function tow_access_confirm_submit($form, &$form_state) {
             uid = %d
 
     ", $status, $form_state['values']['nid'], $form_state['values']['uid']);
+        
+    //Update {apachesolr_search_node} table for indexing updates in access
+    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $form_state['values']['nid']);
     }
 
     // Redirect.
@@ -465,6 +471,9 @@ function tow_access_request_form_submit($form, &$form_state) {
             (%d, %d, 0, %d)
 
     ", $_tow_dataset->nid, $user->uid, time());
+    
+    //Update {apachesolr_search_node} table for indexing updates in access
+    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
     }
 
     // Show error 403 otherwise.

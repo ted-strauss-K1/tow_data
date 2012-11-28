@@ -120,6 +120,10 @@ function tow_invite_form_submit($form, &$form_state) {
             (%d, %d, 1, %d)
 
       ", $_tow_dataset->nid, $person->uid, time());
+            
+      //Update {apachesolr_search_node} table for indexing updates in access
+      db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
+            
         } else {
             db_query("
 
@@ -136,6 +140,9 @@ function tow_invite_form_submit($form, &$form_state) {
             uid = %d
 
       ", 1, time(), $_tow_dataset->nid, $person->uid);
+            
+        //Update {apachesolr_search_node} table for indexing updates in access
+        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
         }
 
         $link = l($_tow_dataset->title, 'node/' . $_tow_dataset->nid, array('absolute' => TRUE));
@@ -213,6 +220,10 @@ function tow_invite_insert($account) {
             (%d, %d, 1, %d)
 
       ", $nid, $account->uid, time());
+            
+        //Update {apachesolr_search_node} table for indexing updates in access
+        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $nid);
+            
         } else {
             db_query("
 
@@ -229,6 +240,10 @@ function tow_invite_insert($account) {
             uid = %d
 
       ", 1, time(), $nid, $account->uid);
+            
+        //Update {apachesolr_search_node} table for indexing updates in access
+        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $nid);
+            
         }
         db_query("
 

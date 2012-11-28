@@ -382,5 +382,8 @@ function tow_ajax_handlers_noty_access($status, $nid, $uid) {
                 uid = %d
 
      ", $status, $nid, $uid);
+    
+    //Update {apachesolr_search_node} table for indexing updates in access
+    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $nid);
 }
 
