@@ -1097,6 +1097,20 @@ function tow_nodeapi(&$node, $op) {
       $new_document->field_doc_dataset_nid[0]['value'] = $node->nid;
       node_save($new_document);
     }
+    
+    //Update {apachesolr_search_node} table after adding/deleting table or record
+    if (($node->type == 'table' || $node->type == 'record') && ($op == 'insert' || $op == 'update')) {
+        if ($node->type == 'table') {
+            $dnid = db_result(db_query("SELECT field_dataset_value FROM {content_type_table} WHERE nid = %d", $node->nid));
+        }
+        if ($node->type == 'record') {
+            $dnid = db_result(db_query("SELECT ctt.field_dataset_value FROM {content_type_table} ctt JOIN {content_type_record} ctr ON ctr.field_table_value = ctt.nid WHERE ctr.nid = %d", $node->nid));
+        }
+        
+        //Update {apachesolr_search_node} table for indexing updates in table/row amount
+        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $dnid);           
+    }
+    
 
 }
 
