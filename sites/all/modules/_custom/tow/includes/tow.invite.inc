@@ -148,6 +148,7 @@ function tow_invite_form_submit($form, &$form_state) {
         $link = l($_tow_dataset->title, 'node/' . $_tow_dataset->nid, array('absolute' => TRUE));
         if (tow_invite_user($email, $link, $form_state['values']['message'], $person->name)) {
             drupal_set_message('Invite has been sent');
+            $_SESSION['invite'] = TRUE;
         } else {
             drupal_set_message('Invite has not been sent', 'error');
         }
@@ -162,6 +163,7 @@ function tow_invite_form_submit($form, &$form_state) {
         if (tow_invite_user($email, $link, $form_state['values']['message'], $person, $tokenlink)) {
             db_query("INSERT INTO {tow_invites} VALUES ('%d', '%s', '%s')", $_tow_dataset->nid, $token, $email);
             drupal_set_message('Invite has been sent');
+            $_SESSION['invite'] = TRUE;
         } else {
             drupal_set_message('Invite has not been sent', 'error');
         }
