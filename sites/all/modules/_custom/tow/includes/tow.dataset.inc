@@ -1017,3 +1017,23 @@ function _tow_dataset_count_all($uid) {
 
     return $count;
 }
+
+/**
+ * Returns a doc page output.
+ */
+function tow_dataset_doc_output($dnid) {
+    global $_tow_dataset;
+    $_tow_dataset = node_load($dnid);
+    
+    $res_doc = db_query("SELECT t.nid FROM {content_type_document} t WHERE t.field_doc_dataset_nid_value = %d", $dnid);
+    $dataset_doc = db_fetch_array($res_doc);
+    $doc = node_load($dataset_doc['nid']);
+    
+    global $_tow_dataset_doc;
+    $_tow_dataset_doc = TRUE;
+
+    $output = $doc->body;
+    
+    return $output;
+    
+}

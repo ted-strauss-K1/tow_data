@@ -78,7 +78,7 @@ function tow_pma_menu_block() {
     $items['search'] = /*($_tow_grey_pma_menu) ? t('Search') : */l('Search', 'search_dataset/' . $_tow_dataset->nid);
     $res_doc = db_query("SELECT t.nid FROM {content_type_document} t WHERE t.field_doc_dataset_nid_value = %d", $_tow_dataset->nid);
     $dataset_doc = db_fetch_array($res_doc);
-    $items['docs'] = (!$dataset_doc) ? l('Docs', 'node/add/document', array('query' => 'dataset=' . $_tow_dataset->nid)) : l('Docs', 'node/' . $dataset_doc['nid']);
+    $items['docs'] = (!$dataset_doc) ? l('Docs', 'node/add/document', array('query' => 'dataset=' . $_tow_dataset->nid)) : l('Docs', 'doc/' . $_tow_dataset->nid);
     $items['new_dataset'] = ($user->uid) ? l('Create new dataset', 'node/add/dataset') : l('Create new dataset', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal')));
 
     //Set menu items according to user roles
@@ -151,12 +151,16 @@ function tow_pma_menu_breadcrumbs() {
     }
 
     global $_tow_dataset_search;
+    global $_tow_dataset_doc;
     if ($_tow_dataset_search === TRUE) {
         $bc[] = l($_tow_dataset->title, 'node/' . $_tow_dataset->nid);
         $bc[] = 'search';
     } else if ($_tow_table) {
         $bc[] = l($_tow_dataset->title, 'node/' . $_tow_dataset->nid);
         $bc[] = $_tow_table->title;
+    } else if ($_tow_dataset_doc === TRUE) {
+        $bc[] = l($_tow_dataset->title, 'node/' . $_tow_dataset->nid);
+        $bc[] = 'Docs';
     } else {
         $bc[] = $_tow_dataset->title;
     }
