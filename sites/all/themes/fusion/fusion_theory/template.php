@@ -28,4 +28,16 @@ function fusion_theory_status_messages($display = NULL) {
   return false;
 }
 
+function fusion_theory_preprocess_page(&$vars) { 
+  // Add per content type pages
+  if (isset($vars['node'])) {
+    // Add template naming suggestion. It should alway use hyphens.
+    // If node type is "custom_news", it will pickup "page-custom-news.tpl.php".
+    // Use page-contenttype.tpl.php for edit form.
+    // Use page-node-add-contenttype.tpl.php for add-a-new-node form.
+    $vars['template_files'][] = 'page-'. str_replace('_', '-', $vars['node']->type);
+  }
+}
+
+
 ?>
