@@ -5,6 +5,11 @@
  *
  * Custom code for Theory on Wheels.
  */
+/* * **************************************************************************************************
+ * CSS & JS
+ * ************************************************************************************************** */
+
+drupal_add_css(drupal_get_path('module', 'tow') . '/css/tow.css');
 
 
 
@@ -338,9 +343,9 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
     if ($form_id == 'document_node_form') {
         
         drupal_add_css(drupal_get_path('module', 'tow') . '/js/wmd/wmd.css');
-        drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');        
+        drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');
         drupal_add_js(drupal_get_path('module', 'tow') . '/js/document_preview.js');
-        $form['body_field']['body']['#resizable'] = FALSE;        
+        $form['body_field']['body']['#resizable'] = FALSE;
         $form['body_field']['#suffix'] = '<script type="text/javascript" src="/' . drupal_get_path('module', 'tow') . '/js/wmd/wmd.js"></script></div>';
         $form['field_doc_dataset_nid']['#access'] = FALSE;
         $form['title']['#access'] = FALSE;
@@ -351,8 +356,9 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
         $form['buttons']['cancel'] = array(
         '#type' => 'markup',
         '#value' => l(t('Cancel'), referer_uri()),
-        '#weight' => 20,
+        '#weight' => 4,
         );
+
         $form['#redirect'] = 'doc/' . $form['field_doc_dataset_nid'][0]['#default_value']['value'];
         
         global $_tow_dataset;
