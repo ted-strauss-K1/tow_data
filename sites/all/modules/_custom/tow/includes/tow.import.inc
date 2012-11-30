@@ -149,7 +149,7 @@ function tow_import_form($form_state, $nid) {
     );
 
     // Submission.
-    $form['submit'] = array('#type' => 'submit', '#value' => 'Submit');
+    $form['submit'] = array('#type' => 'submit', '#value' => 'Submit', '#attributes' => array('class' => 'hidden'));
 
     return $form;
 }
