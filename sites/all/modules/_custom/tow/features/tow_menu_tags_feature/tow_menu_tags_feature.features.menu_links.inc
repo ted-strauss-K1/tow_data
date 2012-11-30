@@ -22,7 +22,7 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '2',
+    'weight' => '-49',
   );
   // Exported menu link: menu-tags:tags/new
   $menu_links['menu-tags:tags/new'] = array(
@@ -40,7 +40,7 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '3',
+    'weight' => '-48',
   );
   // Exported menu link: menu-tags:tags/popular
   $menu_links['menu-tags:tags/popular'] = array(
@@ -58,7 +58,7 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '1',
+    'weight' => '-50',
   );
   // Translatables
   // Included for use with string extractors like potx.

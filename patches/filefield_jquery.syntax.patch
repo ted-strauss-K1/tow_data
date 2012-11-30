@@ -1,0 +1,13 @@
+diff --git a/sites/all/modules/filefield/filefield.js b/sites/all/modules/filefield/filefield.js
+index 0c2e802..48b579a 100644
+--- a/sites/all/modules/filefield/filefield.js
++++ b/sites/all/modules/filefield/filefield.js
+@@ -3,7 +3,7 @@
+  * Auto-attach standard client side file input validation.
+  */
+ Drupal.behaviors.filefieldValidateAutoAttach = function(context) {
+-  $("input[type=file]", context).bind('change', Drupal.filefield.validateExtensions);
++  $("input[type='file']", context).bind('change', Drupal.filefield.validateExtensions);
+ };
+ 
+ 

@@ -22,7 +22,7 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '5',
+    'weight' => '-46',
   );
   // Exported menu link: menu-users:users/new_users
   $menu_links['menu-users:users/new_users'] = array(
@@ -40,7 +40,7 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '2',
+    'weight' => '-49',
   );
   // Exported menu link: menu-users:users/reputation
   $menu_links['menu-users:users/reputation'] = array(
@@ -58,7 +58,7 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '1',
+    'weight' => '-50',
   );
   // Exported menu link: menu-users:users/searchers
   $menu_links['menu-users:users/searchers'] = array(
@@ -76,7 +76,7 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '3',
+    'weight' => '-48',
   );
   // Exported menu link: menu-users:users/voters
   $menu_links['menu-users:users/voters'] = array(
@@ -94,7 +94,7 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '4',
+    'weight' => '-47',
   );
   // Translatables
   // Included for use with string extractors like potx.

@@ -1,0 +1,13 @@
+diff --git a/modules/user/user.js b/modules/user/user.js
+index 46bfad0..4cd7925 100644
+--- a/modules/user/user.js
++++ b/modules/user/user.js
+@@ -180,7 +180,7 @@ Drupal.setDefaultTimezone = function() {
+  * "Picture support" radio buttons.
+  */
+ Drupal.behaviors.userSettings = function (context) {
+-  $('div.user-admin-picture-radios input[type=radio]:not(.userSettings-processed)', context).addClass('userSettings-processed').click(function () {
++  $('div.user-admin-picture-radios input[type="radio"]:not(.userSettings-processed)', context).addClass('userSettings-processed').click(function () {
+     $('div.user-admin-picture-settings', context)[['hide', 'show'][this.value]]();
+   });
+ };

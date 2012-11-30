@@ -49,7 +49,7 @@ Drupal.behaviors.flagLinkOptions = function(context) {
     // where LINKTYPE is the value of the selected radio button.
     var radioButton = this;
     var $relevant   = $('fieldset#link-options-' + radioButton.value);
-    var $irrelevant = $('fieldset[id^=link-options-]').not($relevant);
+    var $irrelevant = $('fieldset[id^="link-options-"]').not($relevant);
 
     $relevant.show();
     $irrelevant.hide();

@@ -66,7 +66,7 @@ Attacklab.wmdBase = function(){
 	wmd.PanelCollection = function(){
 		this.buttonBar = doc.getElementById("wmd-button-bar");
 		this.preview = doc.getElementById("wmd-preview");
-		this.output = doc.getElementById("wmd-output");
+		//this.output = doc.getElementById("wmd-output");
 		this.input = doc.getElementById("edit-body");
 	};
 	
@@ -946,7 +946,7 @@ Attacklab.wmdBase = function(){
 			spacer1.id = "wmd-spacer1";
 			buttonRow.appendChild(spacer1);
 
-			var imageButton = document.createElement("li");
+                        var imageButton = document.createElement("li");
 			imageButton.className = "wmd-button";
 			imageButton.id = "wmd-image-button";
 			imageButton.title = "Image <img> Ctrl+G";
@@ -976,8 +976,8 @@ Attacklab.wmdBase = function(){
 			};
 			setupButton(linkButton, true);
 			buttonRow.appendChild(linkButton);
-			
-			var codeButton = document.createElement("li");
+
+                        var codeButton = document.createElement("li");
 			codeButton.className = "wmd-button";
 			codeButton.id = "wmd-code-button";
 			codeButton.title = "Code Sample <pre><code> Ctrl+K";

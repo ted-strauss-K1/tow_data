@@ -11,7 +11,7 @@ Drupal.behaviors.PageManagerList = function() {
     .change(function() {
       $('#edit-pages-apply').click();
     });
-  $('form#page-manager-list-pages-form input[type=text]:not(.pm-processed)')
+  $('form#page-manager-list-pages-form input[type="text"]:not(.pm-processed)')
     .addClass('pm-processed')
     .keyup(function(e) {
       switch (e.keyCode) {

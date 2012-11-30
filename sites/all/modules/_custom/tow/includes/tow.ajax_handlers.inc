@@ -53,6 +53,10 @@ function tow_ajax_handlers_create_saved_search($nid) {
                 'saved' => TRUE,
                 'saved_searches' => $block['content'],
             );
+            
+            //Update {apachesolr_search_node} table for indexing updates in saved_searches
+            db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $nid);
+        
         } catch (Exception $e) {
             watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
             $json = array(
@@ -332,13 +336,14 @@ function tow_ajax_handlers_refresh_search_results($nid) {
     // Generate new Search description block output.
     $save_search = tow_saved_searches_description_block();
 
+    global $user;
     // JSON.
     $json = array(
         'search' => $search,
         'widgets' => $widgets['content'],
         'fields' => $fields['content'],
         'save_search' => $save_search['content'],
-        'save_this_search' => $save_this_search['content'],
+        'save_this_search' => /*($user->uid) ? */$save_this_search['content']/* : NULL*/,
     );
 
     return drupal_json($json);
@@ -381,5 +386,8 @@ function tow_ajax_handlers_noty_access($status, $nid, $uid) {
                 uid = %d
 
      ", $status, $nid, $uid);
+    
+    //Update {apachesolr_search_node} table for indexing updates in access
+    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $nid);
 }
 

@@ -1,0 +1,13 @@
+diff --git a/sites/all/modules/flag/theme/flag-admin.js b/sites/all/modules/flag/theme/flag-admin.js
+index c4ccf47..8adf4f9 100644
+--- a/sites/all/modules/flag/theme/flag-admin.js
++++ b/sites/all/modules/flag/theme/flag-admin.js
+@@ -49,7 +49,7 @@ Drupal.behaviors.flagLinkOptions = function(context) {
+     // where LINKTYPE is the value of the selected radio button.
+     var radioButton = this;
+     var $relevant   = $('fieldset#link-options-' + radioButton.value);
+-    var $irrelevant = $('fieldset[id^=link-options-]').not($relevant);
++    var $irrelevant = $('fieldset[id^="link-options-"]').not($relevant);
+ 
+     $relevant.show();
+     $irrelevant.hide();

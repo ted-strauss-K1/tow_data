@@ -269,8 +269,13 @@ function tow_user_new_requests() {
     }
     if ($num_rows == 0) {
         return;
-    } else {
+    }
+    else {
         foreach($messages as $message) {
+            if (isset($_SESSION['invite'])) {
+                unset($_SESSION['invite']);
+            }
+            else {
                  drupal_add_js('$(document).ready(function(){$.hrd.noty({
   text : "' . $message['message'] .'", 
   buttons: [
@@ -296,6 +301,7 @@ function tow_user_new_requests() {
 });
 });
 ', 'inline');
+            }
         }
         $cur_time = time();
         user_save($account, array('requests_last_time' => $cur_time));

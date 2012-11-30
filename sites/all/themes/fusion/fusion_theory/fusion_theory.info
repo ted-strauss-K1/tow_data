@@ -13,7 +13,7 @@ stylesheets[all][] = css/bootstrap-responsive.css
 stylesheets[all][] = css/bootstrap.min.css
 stylesheets[all][] = css/tow.css
 
-scripts[] = js/noty/promise.js
+/*scripts[] = js/noty/promise.js*/
 scripts[] = js/noty/jquery.noty.js
 scripts[] = js/noty/noty.js
 scripts[] = js/noty/default.js
