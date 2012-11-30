@@ -5,11 +5,6 @@
  *
  * Custom code for Theory on Wheels.
  */
-/* * **************************************************************************************************
- * CSS & JS
- * ************************************************************************************************** */
-
-drupal_add_css(drupal_get_path('module', 'tow') . '/css/tow.css');
 
 
 
@@ -342,9 +337,9 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
     // Add scripts for document node form 'stackoverflow style live preview'.
     if ($form_id == 'document_node_form') {
         drupal_add_css(drupal_get_path('module', 'tow') . '/js/wmd/wmd.css');
-        drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');
+        drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');        
         drupal_add_js(drupal_get_path('module', 'tow') . '/js/document_preview.js');
-        $form['body_field']['body']['#resizable'] = FALSE;
+        $form['body_field']['body']['#resizable'] = FALSE;        
         $form['body_field']['#suffix'] = '<script type="text/javascript" src="/' . drupal_get_path('module', 'tow') . '/js/wmd/wmd.js"></script></div>';
         if (is_null($form['body_field']['body']['#default_value'])) {
             $form['body_field']['body']['#default_value'] = '## Introduction ##
