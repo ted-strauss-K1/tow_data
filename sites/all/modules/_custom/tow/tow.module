@@ -341,25 +341,30 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
 
     // Add scripts for document node form 'stackoverflow style live preview'.
     if ($form_id == 'document_node_form') {
+        
         drupal_add_css(drupal_get_path('module', 'tow') . '/js/wmd/wmd.css');
         drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');
         drupal_add_js(drupal_get_path('module', 'tow') . '/js/document_preview.js');
         $form['body_field']['body']['#resizable'] = FALSE;
         $form['body_field']['#suffix'] = '<script type="text/javascript" src="/' . drupal_get_path('module', 'tow') . '/js/wmd/wmd.js"></script></div>';
-        if (is_null($form['body_field']['body']['#default_value'])) {
-            $form['body_field']['body']['#default_value'] = '## Introduction ##
-Your introduction.
-## Data collection methods ##
-Describe your data collection methods.
-## Analysis methods ##
-Describe your analysis methods.
-
-You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.';
-        }
-        if (is_numeric($_GET['dataset'])) {
-          $form['field_doc_dataset_nid'][0]['#default_value']['value'] = $_GET['dataset'];
-          $form['field_doc_dataset_nid']['#access'] = false;
-        }
+        $form['field_doc_dataset_nid']['#access'] = FALSE;
+        $form['title']['#access'] = FALSE;
+        $form['body_field']['teaser_include']['#access'] = FALSE;
+        $form['field_doc_image']['#access'] = FALSE;
+        unset($form['buttons']['preview']);
+        unset($form['buttons']['delete']);
+        $form['buttons']['cancel'] = array(
+        '#type' => 'markup',
+        '#value' => l(t('Cancel'), referer_uri()),
+        '#weight' => 20,
+        );
+        $form['#redirect'] = 'doc/' . $form['field_doc_dataset_nid'][0]['#default_value']['value'];
+        
+        global $_tow_dataset;
+        $_tow_dataset = node_load($form['field_doc_dataset_nid'][0]['#default_value']['value']);
+        global $_tow_dataset_doc;
+        $_tow_dataset_doc = TRUE;
+        
     }
 
     // Call special callbacks for some kinds of forms.

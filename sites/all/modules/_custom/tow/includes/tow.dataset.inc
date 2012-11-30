@@ -1033,6 +1033,9 @@ function tow_dataset_doc_output($dnid) {
     $_tow_dataset_doc = TRUE;
 
     $output = $doc->body;
+    global $user;
+    $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $doc->uid));
+    $output .= ($is_admin) ? l('Edit doc', 'node/' . $dataset_doc['nid'] . '/edit') : '';
     
     return $output;
     
