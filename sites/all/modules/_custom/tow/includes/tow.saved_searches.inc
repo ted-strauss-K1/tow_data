@@ -64,6 +64,9 @@ function tow_saved_searches_list_block($nid = NULL) {
         if (function_exists('comment_render') && $node->comment) {
             $output .= comment_render($node, NULL);
         }
+        global $user;
+        $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $node->uid));
+        $output .= ($is_admin) ? l('Delete this search', 'node/' . $node->nid . '/delete') : '';
         $output .= '</div>';
 
         $block['content'] .= $output;
