@@ -13,11 +13,9 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'router_path' => 'tags/name',
     'link_title' => 'Name',
     'options' => array(
-      'attributes' => array(
-        'title' => 'All tags sorted in an alphabetical order.',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
@@ -31,11 +29,9 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'router_path' => 'tags/new',
     'link_title' => 'New',
     'options' => array(
-      'attributes' => array(
-        'title' => 'All tags sorted by date that tag was first added to a dataset.',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
@@ -49,11 +45,9 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'router_path' => 'tags/popular',
     'link_title' => 'Popular',
     'options' => array(
-      'attributes' => array(
-        'title' => 'All tags sorted by usage frequency descending.',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',

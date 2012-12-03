@@ -13,16 +13,14 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'router_path' => 'users/moderators',
     'link_title' => 'Moderators',
     'options' => array(
-      'attributes' => array(
-        'title' => 'Moderators',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '-46',
+    'weight' => '-47',
   );
   // Exported menu link: menu-users:users/new_users
   $menu_links['menu-users:users/new_users'] = array(
@@ -31,16 +29,14 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'router_path' => 'users/new_users',
     'link_title' => 'New Users',
     'options' => array(
-      'attributes' => array(
-        'title' => 'Users sorted by creation date descending',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '-49',
+    'weight' => '-50',
   );
   // Exported menu link: menu-users:users/reputation
   $menu_links['menu-users:users/reputation'] = array(
@@ -49,16 +45,14 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'router_path' => 'users/reputation',
     'link_title' => 'Reputation',
     'options' => array(
-      'attributes' => array(
-        'title' => ' User sorting by their reputation',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '-50',
+    'weight' => '-46',
   );
   // Exported menu link: menu-users:users/searchers
   $menu_links['menu-users:users/searchers'] = array(
@@ -67,16 +61,14 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'router_path' => 'users/searchers',
     'link_title' => 'Searchers',
     'options' => array(
-      'attributes' => array(
-        'title' => 'Descending sorting by saved searches the user have posted',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '-48',
+    'weight' => '-49',
   );
   // Exported menu link: menu-users:users/voters
   $menu_links['menu-users:users/voters'] = array(
@@ -85,16 +77,14 @@ function tow_menu_users_feature_menu_default_menu_links() {
     'router_path' => 'users/voters',
     'link_title' => 'Voters',
     'options' => array(
-      'attributes' => array(
-        'title' => 'Descending sorting by votes the user have made',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '-47',
+    'weight' => '-48',
   );
   // Translatables
   // Included for use with string extractors like potx.
