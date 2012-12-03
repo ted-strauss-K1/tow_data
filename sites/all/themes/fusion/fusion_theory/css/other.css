@@ -6,62 +6,32 @@
 
 /* Modifying the textarea to fit the Edit-buttons width on edit-node pages */
 #edit-body {
-    padding-right: 6px;
+    max-width: 95%;
+    min-width: 95%;
 }
 
-.node-form textarea {
-    width: 95%;    
+.node-form textarea {    
+    padding: 6px;    
 }
 
 /* Removing the border radius from the edit-body */
-/* Removing the top border from edit-body, because of the WMDp */
 
-textarea#edit-body {
-    border-top: none;
+textarea#edit-body {    
     border-radius: 0;    
 }
 
 /* Theming the preview */
 
-#wmd-preview {
-    width: 95%;
-    padding: 5px 3px 5px 5px;
+#wmd-preview {    
+    padding: 6px;
     border: #CCCCCC 1px solid;
     background-color: white;
+    min-width: 95%;
 }
 
-/* Todo: delete this field from JS */
-#wmd-output {
-    display: none;
-}
 
-/* Excluding from display Image and Dataset ID fields */
-.node-type-document #field-doc-image-items, /* Image from edit and view */
-#pid-node-add-document #field-doc-image-items, /* Image from create new */
-.node-type-document #edit-field-doc-dataset-nid-0-value-wrapper, /* DID from edit and view */
-#pid-node-add-document #edit-field-doc-dataset-nid-0-value-wrapper /* DID from create new */
-{
-    display: none;
-}
-
-/* Excluding from display "Split summary at cursor" button */
-.node-type-document .teaser-checkbox,
-#pid-node-add-document .teaser-checkbox {
-    display: none;
-}
-
-/* Excluding from display "Input format" collapse */
-.node-type-document .collapsible,
-#pid-node-add-document .collapsible {
-    display: none;
-}
 
 /*--------------- Submit Buttons styling ---------------*/
-/* Excluding from display "Preview" button */
-.node-type-document #edit-preview {
-    display: none;
-}
-
 .node-form #edit-submit {
     margin-right: 4%;
 }

@@ -20,10 +20,11 @@ body
 {
 	width: 95%;
         margin-right: 0;
-        background: url('images/background.png') repeat-x;
+        /* background: url('images/background.png') repeat-x; */
         height: 32px;
-	background-color: Silver;
-        border: #CCCCCC 1px solid;
+	background-color: white;
+        border: none;
+        /* border: #CCCCCC 1px solid; */
         padding-left: 3px;
         padding-right: 5px;
 }
@@ -77,7 +78,7 @@ body
 	margin-right: 5px;
 	
 	position: absolute;
-	background-image: url(images/wmd-buttons2.png);
+	background-image: url(images/wmd-buttons.png);
 	background-repeat: no-repeat;
 	background-position: 0px 0px;
 	display: inline-block; 
@@ -97,44 +98,23 @@ body
 
 
 /* sprite button slicing style information */
-#wmd-button-bar #wmd-bold-button    {left: 0px;   background-position: -5px -4px;}
-#wmd-button-bar #wmd-italic-button  {left: 25px;  background-position: -20px 0;}
-#wmd-button-bar #wmd-spacer1        {left: 50px;}
-#wmd-button-bar #wmd-image-button    {left: 75px;  background-position: -40px 0;}
-#wmd-button-bar #wmd-quote-button   {left: 100px;  background-position: -60px 0;}
-#wmd-button-bar #wmd-link-button    {left: 125px;  background-position: -80px 0;}
-#wmd-button-bar #wmd-code-button   {left: 150px;  background-position: -100px 0;}
-#wmd-button-bar #wmd-spacer2        {left: 175px;}
-#wmd-button-bar #wmd-olist-button   {left: 200px;  background-position: -120px 0;}
-#wmd-button-bar #wmd-ulist-button   {left: 225px; background-position: -140px 0;}
-#wmd-button-bar #wmd-heading-button {left: 250px; background-position: -160px 0;}
-#wmd-button-bar #wmd-hr-button      {left: 275px; background-position: -180px 0;}
-#wmd-button-bar #wmd-spacer3        {left: 300px;}
-#wmd-button-bar #wmd-undo-button    {left: 325px; background-position: -200px 0;}
-#wmd-button-bar #wmd-redo-button    {left: 350px; background-position: -220px 0;}
-#wmd-button-bar #wmd-help-button    {right: 0px; background-position: -240px 0;}
-
-
-/* Default values, w/h = 20px;
 #wmd-button-bar #wmd-bold-button    {left: 0px;   background-position: 0px 0;}
 #wmd-button-bar #wmd-italic-button  {left: 25px;  background-position: -20px 0;}
 #wmd-button-bar #wmd-spacer1        {left: 50px;}
 #wmd-button-bar #wmd-link-button    {left: 75px;  background-position: -40px 0;}
-#wmd-button-bar #wmd-quote-button   {left: 100px;  background-position: -60px 0;}
-#wmd-button-bar #wmd-code-button    {left: 125px;  background-position: -80px 0;}
-#wmd-button-bar #wmd-image-button   {left: 150px;  background-position: -100px 0;}
+#wmd-button-bar #wmd-quote-button   {left: 100px; background-position: -60px 0;}
+#wmd-button-bar #wmd-code-button    {left: 125px; background-position: -80px 0;}
+#wmd-button-bar #wmd-image-button   {left: 150px; background-position: -100px 0;}
 #wmd-button-bar #wmd-spacer2        {left: 175px;}
-#wmd-button-bar #wmd-olist-button   {left: 200px;  background-position: -120px 0;}
+#wmd-button-bar #wmd-olist-button   {left: 200px; background-position: -120px 0;}
 #wmd-button-bar #wmd-ulist-button   {left: 225px; background-position: -140px 0;}
 #wmd-button-bar #wmd-heading-button {left: 250px; background-position: -160px 0;}
 #wmd-button-bar #wmd-hr-button      {left: 275px; background-position: -180px 0;}
 #wmd-button-bar #wmd-spacer3        {left: 300px;}
 #wmd-button-bar #wmd-undo-button    {left: 325px; background-position: -200px 0;}
 #wmd-button-bar #wmd-redo-button    {left: 350px; background-position: -220px 0;}
+
 #wmd-button-bar #wmd-help-button    {right: 0px; background-position: -240px 0;}
-*/
-
-
 
 
 .wmd-prompt-background
