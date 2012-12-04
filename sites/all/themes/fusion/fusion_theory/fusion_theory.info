@@ -13,12 +13,12 @@ stylesheets[all][] = css/bootstrap-responsive.css
 stylesheets[all][] = css/bootstrap.min.css
 stylesheets[all][] = css/tow.css
 
-/*scripts[] = js/noty/promise.js*/
+scripts[] = js/noty/promise.js
 scripts[] = js/noty/jquery.noty.js
 scripts[] = js/noty/noty.js
 scripts[] = js/noty/default.js
 scripts[] = js/noty/topRight.js
-scripts[] = js/noty/center.js
+scripts[] = js/noty/top.js
 
 /*regions[sidebar_first = sidebar first */
 regions[sidebar_last] = sidebar last
