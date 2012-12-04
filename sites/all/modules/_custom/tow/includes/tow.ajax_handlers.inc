@@ -326,11 +326,12 @@ function tow_ajax_handlers_refresh_search_results($nid) {
     // Generate new widgets block output.
     $widgets = tow_search_inner_widgets_block();
 
-    // Generate new Save this search block output.
-    $save_this_search = tow_saved_searches_save_search_block();
-
     // Generate new Search description block output.
     $save_search = tow_saved_searches_description_block();
+
+    // Generate new Save this search block output.
+    $save_this_search = tow_saved_searches_save_search_block();
+    $save_this_search['content'] = str_replace($save_search['content'], '', $save_this_search['content']);
 
     // JSON.
     $json = array(
