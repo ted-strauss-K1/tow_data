@@ -1,0 +1,68 @@
+/* --------- Making the edit/add-document css --------- */
+
+.wmd-panel {
+    margin-left: 0;
+}
+
+/* Modifying the textarea to fit the Edit-buttons width on edit-node pages */
+#edit-body {
+    max-width: 95%;
+    min-width: 95%;
+}
+
+.node-form textarea {    
+    padding: 6px;    
+}
+
+/* Removing the border radius from the edit-body */
+
+textarea#edit-body {    
+    border-radius: 0;    
+}
+
+/* Theming the preview */
+
+#wmd-preview {    
+    padding: 6px;
+    border: #CCCCCC 1px solid;
+    background-color: white;
+    min-width: 95%;
+}
+
+
+
+/*--------------- Submit Buttons styling ---------------*/
+.node-form #edit-submit {
+    margin-right: 4%;
+}
+
+.node-form .form-submit {
+    min-width: 72px;
+    min-height: 36px;   
+    font-size: 14px;
+    text-align: center;
+    float: right;
+}
+/*--------------- End of Submit buttons styling ---------------*/
+
+/* Change the Preview label styling */
+.preview-doc-label {
+    font-size: 18px;
+    color: #666666;
+    margin-left: 6px;
+}
+
+/* Decorating the text at the "Preview" form */
+#wmd-preview {
+    color: #333333;
+}
+
+#wmd-preview p{
+    font-size: 14px;
+}
+
+#wmd-preview h2{
+    font-size: 18px;
+    text-decoration:underline;
+    line-height: 22px;
+}

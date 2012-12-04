@@ -1,0 +1,39 @@
+diff --git a/sites/all/modules/ctools/js/auto-submit.js b/sites/all/modules/ctools/js/auto-submit.js
+index 4065339..7435f51 100644
+--- a/sites/all/modules/ctools/js/auto-submit.js
++++ b/sites/all/modules/ctools/js/auto-submit.js
+@@ -37,7 +37,7 @@ Drupal.behaviors.CToolsAutoSubmit = function() {
+     });
+ 
+   // Bind to any textfield widgets that will be auto submitted.
+-  $('input[type=text].ctools-auto-submit:not(.ctools-auto-submit-processed),.ctools-auto-submit-full-form input[type=text]:not(.ctools-auto-submit-processed)')
++  $('input[type="text"].ctools-auto-submit:not(.ctools-auto-submit-processed),.ctools-auto-submit-full-form input[type="text"]:not(.ctools-auto-submit-processed)')
+     .addClass('.ctools-auto-submit-processed')
+     .keyup(function(e) {
+       var form = this.form;
+diff --git a/sites/all/modules/ctools/js/stylizer.js b/sites/all/modules/ctools/js/stylizer.js
+index 19c0112..a84b3fa 100644
+--- a/sites/all/modules/ctools/js/stylizer.js
++++ b/sites/all/modules/ctools/js/stylizer.js
+@@ -211,7 +211,7 @@
+       .click(function() {
+         $widget = $('input', $(this).parent());
+         // Toggle if a checkbox, turn on if a radio.
+-        $widget.attr('checked', !$widget.attr('checked') || $widget.is('input[type=radio]'));
++        $widget.attr('checked', !$widget.attr('checked') || $widget.is('input[type="radio"]'));
+       });
+   }
+ })(jQuery);
+diff --git a/sites/all/modules/ctools/page_manager/js/page-list.js b/sites/all/modules/ctools/page_manager/js/page-list.js
+index 16b5291..ff3d10d 100644
+--- a/sites/all/modules/ctools/page_manager/js/page-list.js
++++ b/sites/all/modules/ctools/page_manager/js/page-list.js
+@@ -11,7 +11,7 @@ Drupal.behaviors.PageManagerList = function() {
+     .change(function() {
+       $('#edit-pages-apply').click();
+     });
+-  $('form#page-manager-list-pages-form input[type=text]:not(.pm-processed)')
++  $('form#page-manager-list-pages-form input[type="text"]:not(.pm-processed)')
+     .addClass('pm-processed')
+     .keyup(function(e) {
+       switch (e.keyCode) {

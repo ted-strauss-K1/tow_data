@@ -13,16 +13,14 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'router_path' => 'tags/name',
     'link_title' => 'Name',
     'options' => array(
-      'attributes' => array(
-        'title' => 'All tags sorted in an alphabetical order.',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '2',
+    'weight' => '-49',
   );
   // Exported menu link: menu-tags:tags/new
   $menu_links['menu-tags:tags/new'] = array(
@@ -31,16 +29,14 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'router_path' => 'tags/new',
     'link_title' => 'New',
     'options' => array(
-      'attributes' => array(
-        'title' => 'All tags sorted by date that tag was first added to a dataset.',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '3',
+    'weight' => '-48',
   );
   // Exported menu link: menu-tags:tags/popular
   $menu_links['menu-tags:tags/popular'] = array(
@@ -49,16 +45,14 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'router_path' => 'tags/popular',
     'link_title' => 'Popular',
     'options' => array(
-      'attributes' => array(
-        'title' => 'All tags sorted by usage frequency descending.',
-      ),
+      'attributes' => array(),
     ),
-    'module' => 'system',
+    'module' => 'menu',
     'hidden' => '0',
     'external' => '0',
     'has_children' => '0',
     'expanded' => '0',
-    'weight' => '1',
+    'weight' => '-50',
   );
   // Translatables
   // Included for use with string extractors like potx.

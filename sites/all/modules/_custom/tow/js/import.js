@@ -17,8 +17,7 @@ Drupal.behaviors.Import = function(context) {
 
     // Hide progress bar.
     $('.progress-bar').addClass('hidden');
-
-    // Hide submit button.
+    
     var hash;
     var dataset = location.pathname.replace(/\import/g, "").replace(/\//g, "");
     var lock = false;
@@ -261,6 +260,9 @@ Drupal.behaviors.Import = function(context) {
                     false
                     );
                 fReader.readAsBinaryString(file);
+            }
+            else {
+                $('input#edit-submit').removeClass('hidden');
             }
         }
 

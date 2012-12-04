@@ -988,7 +988,7 @@ function tow_views_users_feature_views_default_views() {
   $handler->override_option('title', 'New Users');
   $handler->override_option('path', 'users/new_users');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'none',
     'title' => 'New Users',
     'description' => 'Users sorted by creation date descending',
     'weight' => '2',
@@ -1502,7 +1502,7 @@ function tow_views_users_feature_views_default_views() {
   $handler->override_option('title', 'Searchers');
   $handler->override_option('path', 'users/searchers');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'none',
     'title' => 'Searchers',
     'description' => 'Descending sorting by saved searches the user have posted',
     'weight' => '3',
@@ -2007,7 +2007,7 @@ function tow_views_users_feature_views_default_views() {
   $handler->override_option('title', 'Voters');
   $handler->override_option('path', 'users/voters');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'none',
     'title' => 'Voters',
     'description' => 'Descending sorting by votes the user have made',
     'weight' => '4',
@@ -2516,7 +2516,7 @@ function tow_views_users_feature_views_default_views() {
   $handler->override_option('title', 'Moderators');
   $handler->override_option('path', 'users/moderators');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'none',
     'title' => 'Moderators',
     'description' => 'Moderators',
     'weight' => '5',
@@ -3021,7 +3021,7 @@ function tow_views_users_feature_views_default_views() {
   $handler->override_option('title', 'Reputation');
   $handler->override_option('path', 'users/reputation');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'none',
     'title' => 'Reputation',
     'description' => ' User sorting by their reputation',
     'weight' => '1',

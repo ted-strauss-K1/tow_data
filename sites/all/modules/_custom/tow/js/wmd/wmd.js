@@ -66,7 +66,7 @@ Attacklab.wmdBase = function(){
 	wmd.PanelCollection = function(){
 		this.buttonBar = doc.getElementById("wmd-button-bar");
 		this.preview = doc.getElementById("wmd-preview");
-		this.output = doc.getElementById("wmd-output");
+		//this.output = doc.getElementById("wmd-output");
 		this.input = doc.getElementById("edit-body");
 	};
 	
@@ -944,9 +944,9 @@ Attacklab.wmdBase = function(){
 			var spacer1 = document.createElement("li");
 			spacer1.className = "wmd-spacer";
 			spacer1.id = "wmd-spacer1";
-			buttonRow.appendChild(spacer1); 
-
-			var linkButton = document.createElement("li");
+			buttonRow.appendChild(spacer1);
+                        
+                        var linkButton = document.createElement("li");
 			linkButton.className = "wmd-button";
 			linkButton.id = "wmd-link-button";
 			linkButton.title = "Hyperlink <a> Ctrl+L";
@@ -964,9 +964,9 @@ Attacklab.wmdBase = function(){
 			quoteButton.XShift = "-60px";
 			quoteButton.textOp = command.doBlockquote;
 			setupButton(quoteButton, true);
-			buttonRow.appendChild(quoteButton);
-			
-			var codeButton = document.createElement("li");
+			buttonRow.appendChild(quoteButton);			
+
+                        var codeButton = document.createElement("li");
 			codeButton.className = "wmd-button";
 			codeButton.id = "wmd-code-button";
 			codeButton.title = "Code Sample <pre><code> Ctrl+K";
@@ -974,8 +974,8 @@ Attacklab.wmdBase = function(){
 			codeButton.textOp = command.doCode;
 			setupButton(codeButton, true);
 			buttonRow.appendChild(codeButton);
-
-			var imageButton = document.createElement("li");
+                        
+                        var imageButton = document.createElement("li");
 			imageButton.className = "wmd-button";
 			imageButton.id = "wmd-image-button";
 			imageButton.title = "Image <img> Ctrl+G";
@@ -1063,8 +1063,8 @@ Attacklab.wmdBase = function(){
 				manager.redo();
 			};
 			setupButton(redoButton, true);
-			buttonRow.appendChild(redoButton); 
-			
+			buttonRow.appendChild(redoButton);                        
+                        
 			var helpButton = document.createElement("li");
 			helpButton.className = "wmd-button";
 			helpButton.id = "wmd-help-button";

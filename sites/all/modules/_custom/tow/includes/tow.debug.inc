@@ -18,7 +18,11 @@ function tow_debug_backtrace_dpm() {
     $debug = debug_backtrace();
 
     // Message.
+    global $user;
+    $user_cur = $user;
+    $user = user_load(1);
     dpm($debug);
+    $user = $user_cur;
 }
 
 /**

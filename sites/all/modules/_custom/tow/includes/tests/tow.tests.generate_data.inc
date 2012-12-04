@@ -272,6 +272,8 @@ function tow_tests_generate_data_form_submit($form, &$form_state) {
           $status = mt_rand(0, 2) - 1;
           db_query("INSERT INTO {tow_access_requests} (nid, uid, status, request_timestamp) VALUES ('%d', '%d', '%d', '%d')", 
             $dataset_nid, $users[$ru_index]['uid'], $status, time() - mt_rand(1, 2 * pow(10, 6)));
+          //Update {apachesolr_search_node} table for indexing updates in access
+          db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $dataset_nid);
         }
       }
       

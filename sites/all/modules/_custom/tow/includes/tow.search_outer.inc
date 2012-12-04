@@ -184,7 +184,8 @@ function tow_search_outer_tabs_block() {
     $items['newest'] = tow_search_outer_tab_link($tab, 'Newest', 'newest');
     $items['popular'] = tow_search_outer_tab_link($tab, 'Popular', 'popular');
     $items['debated'] = tow_search_outer_tab_link($tab, 'Debated', 'debated', TRUE);
-    $items['newdataset'] = l('Create new dataset', 'node/add/dataset');
+    global $user;
+    $items['newdataset'] = ($user->uid) ? l('Create new dataset', 'node/add/dataset') : l('Create new dataset', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal')));
 
     // Theme the block.
     $block['content'] = theme_item_list($items, NULL, 'ul');

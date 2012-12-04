@@ -64,6 +64,9 @@ function tow_saved_searches_list_block($nid = NULL) {
         if (function_exists('comment_render') && $node->comment) {
             $output .= comment_render($node, NULL);
         }
+        global $user;
+        $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $node->uid));
+        $output .= ($is_admin) ? l('Delete this search', 'node/' . $node->nid . '/delete') : '';
         $output .= '</div>';
 
         $block['content'] .= $output;
@@ -83,8 +86,10 @@ function tow_saved_searches_save_search_block() {
 
     $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
     $rows_amount = $saved_response->response->numFound;
-
-    $block['content'] = drupal_get_form('tow_saved_searches_save_search_form', $rows_amount);
+    
+    global $user;
+    
+    $block['content'] = ($user->uid) ? drupal_get_form('tow_saved_searches_save_search_form', $rows_amount) : (l('Login', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal'))) . ' to share your analysis');
 
     return $block;
 }

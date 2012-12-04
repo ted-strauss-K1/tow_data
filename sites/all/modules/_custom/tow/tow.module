@@ -341,25 +341,26 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
 
     // Add scripts for document node form 'stackoverflow style live preview'.
     if ($form_id == 'document_node_form') {
+        
         drupal_add_css(drupal_get_path('module', 'tow') . '/js/wmd/wmd.css');
         drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');
         drupal_add_js(drupal_get_path('module', 'tow') . '/js/document_preview.js');
         $form['body_field']['body']['#resizable'] = FALSE;
         $form['body_field']['#suffix'] = '<script type="text/javascript" src="/' . drupal_get_path('module', 'tow') . '/js/wmd/wmd.js"></script></div>';
-        if (is_null($form['body_field']['body']['#default_value'])) {
-            $form['body_field']['body']['#default_value'] = '## Introduction ##
-Your introduction.
-## Data collection methods ##
-Describe your data collection methods.
-## Analysis methods ##
-Describe your analysis methods.
-
-You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.';
-        }
-        if (is_numeric($_GET['dataset'])) {
-          $form['field_doc_dataset_nid'][0]['#default_value']['value'] = $_GET['dataset'];
-          $form['field_doc_dataset_nid']['#access'] = false;
-        }
+        $form['field_doc_dataset_nid']['#access'] = FALSE;
+        $form['title']['#access'] = FALSE;
+        $form['body_field']['teaser_include']['#access'] = FALSE;
+        $form['field_doc_image']['#access'] = FALSE;
+        unset($form['buttons']['preview']);
+        unset($form['buttons']['delete']);
+        
+        $form['#redirect'] = 'doc/' . $form['field_doc_dataset_nid'][0]['#default_value']['value'];
+        
+        global $_tow_dataset;
+        $_tow_dataset = node_load($form['field_doc_dataset_nid'][0]['#default_value']['value']);
+        global $_tow_dataset_doc;
+        $_tow_dataset_doc = TRUE;
+        
     }
 
     // Call special callbacks for some kinds of forms.
@@ -448,7 +449,7 @@ You can upload pictures from your computer with the form below or use Image butt
     }
 
     // Add cancel button to record, table and dataset node editing and user register forms.
-    if ($form_id == 'record_node_form' || $form_id == 'table_node_form' || $form_id == 'dataset_node_form' || $form_id == 'user_register') {
+    if ($form_id == 'record_node_form' || $form_id == 'table_node_form' || $form_id == 'dataset_node_form' || $form_id == 'user_register' || $form_id == 'document_node_form') {
         $form['buttons']['cancel'] = array(
             '#type' => 'submit',
             '#value' => t('Cancel'),
@@ -463,7 +464,19 @@ You can upload pictures from your computer with the form below or use Image butt
 function tow_init() {
     global $user, $_tow_user;
     $_tow_user = $user;
-
+    
+    //Set breadcrumbs on 'users' pages
+    if(arg(0) == 'users') {
+        $bc[] = t('Users');
+        drupal_set_breadcrumb($bc);
+    }
+    
+    //Set breadcrumbs on 'tags' pages
+    if(arg(0) == 'tags') {
+        $bc[] = t('Tags');
+        drupal_set_breadcrumb($bc);
+    }
+    
     // Add dataTables representation to the dataset search page.
     if (arg(0) == 'search_dataset' && arg(1)) {
         $node = node_load(arg(1));
@@ -823,6 +836,14 @@ function tow_menu() {
     'file' => 'includes/tow.ajax_handlers.inc',
     'type' => MENU_CALLBACK,
     );
+    
+    //Dataset doc
+    $items['doc'] = array(
+    'access arguments' => array('access content'),
+    'page arguments' => array(1),
+    'page callback' => 'tow_dataset_doc_output',
+    'file' => 'includes/tow.dataset.inc',
+    );
 
     return $items;
 }
@@ -1054,6 +1075,44 @@ function tow_nodeapi(&$node, $op) {
         $available_positions[] = $node->field_position[0]['value'];
         db_query("UPDATE {content_type_table} SET field_available_positions_value = '%s' WHERE nid = %d", serialize($available_positions), $node->field_table[0]['value']);
     }
+    
+    //Create document to dataset
+    if ($node->type == 'dataset' && $op == 'insert') {
+      $new_document = new stdClass();
+      $new_document->type = 'document';
+      $new_document->title = 'Doc for ' . $node->title . ' dataset';  
+      $new_document->uid = $node->uid;
+      $new_document->body = '<h2>Introduction</h2>
+
+<p>Your introduction.</p>
+
+<h2>Data collection methods</h2>
+
+<p>Describe your data collection methods.</p>
+
+<h2>Analysis methods</h2>
+
+<p>Describe your analysis methods.</p>
+
+<p>You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.</p>';
+      $new_document->field_doc_dataset_nid[0]['value'] = $node->nid;
+      node_save($new_document);
+    }
+    
+    //Update {apachesolr_search_node} table after adding/deleting table or record
+    if (($node->type == 'table' || $node->type == 'record') && ($op == 'insert' || $op == 'update')) {
+        if ($node->type == 'table') {
+            $dnid = db_result(db_query("SELECT field_dataset_value FROM {content_type_table} WHERE nid = %d", $node->nid));
+        }
+        if ($node->type == 'record') {
+            $dnid = db_result(db_query("SELECT ctt.field_dataset_value FROM {content_type_table} ctt JOIN {content_type_record} ctr ON ctr.field_table_value = ctt.nid WHERE ctr.nid = %d", $node->nid));
+        }
+        
+        //Update {apachesolr_search_node} table for indexing updates in table/row amount
+        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $dnid);           
+    }
+    
+
 }
 
 /**

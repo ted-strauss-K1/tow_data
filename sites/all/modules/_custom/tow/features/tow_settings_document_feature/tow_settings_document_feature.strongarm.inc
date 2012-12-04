@@ -88,7 +88,7 @@ function tow_settings_document_feature_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'form_build_id_document';
-  $strongarm->value = 'form-ada3937d4a7952fb450636fc8ee2fd8d';
+  $strongarm->value = 'form-f1351aae05e3381b4aa9590620ff599b';
   $export['form_build_id_document'] = $strongarm;
 
   $strongarm = new stdClass;

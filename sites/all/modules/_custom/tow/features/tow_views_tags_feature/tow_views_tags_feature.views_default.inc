@@ -214,7 +214,7 @@ function tow_views_tags_feature_views_default_views() {
   ));
   $handler->override_option('path', 'tags/popular');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'none',
     'title' => 'Popular',
     'description' => 'All tags sorted by usage frequency descending.',
     'weight' => '1',
@@ -392,7 +392,7 @@ function tow_views_tags_feature_views_default_views() {
   ));
   $handler->override_option('path', 'tags/name');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'none',
     'title' => 'Name',
     'description' => 'All tags sorted in an alphabetical order.',
     'weight' => '2',
@@ -417,7 +417,7 @@ function tow_views_tags_feature_views_default_views() {
   ));
   $handler->override_option('path', 'tags/new');
   $handler->override_option('menu', array(
-    'type' => 'normal',
+    'type' => 'none',
     'title' => 'New',
     'description' => 'All tags sorted by date that tag was first added to a dataset.',
     'weight' => '3',

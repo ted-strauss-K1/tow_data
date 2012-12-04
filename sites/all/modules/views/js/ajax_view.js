@@ -64,7 +64,7 @@ Drupal.behaviors.ViewsAjaxView = function() {
         // remove 'q' from the form; it's there for clean URLs
         // so that it submits to the right place with regular submit
         // but this method is submitting elsewhere.
-        $('input[name=q]', this).remove();
+        $('input[name="q"]', this).remove();
         var form = this;
         // ajaxSubmit doesn't accept a data argument, so we have to
         // pass additional fields this way.
@@ -74,7 +74,7 @@ Drupal.behaviors.ViewsAjaxView = function() {
       })
       .addClass('views-processed')
       .submit(function () {
-        $('input[type=submit], button', this).after('<span class="views-throbbing">&nbsp</span>');
+        $('input[type="submit"], button', this).after('<span class="views-throbbing">&nbsp</span>');
         var object = this;
         $(this).ajaxSubmit({
           url: ajax_path,
