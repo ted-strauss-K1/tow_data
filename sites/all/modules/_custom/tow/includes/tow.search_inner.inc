@@ -208,7 +208,6 @@ function tow_search_inner_widgets_block() {
             $block['content'] .= drupal_get_form('tow_search_inner_widget_form', $field['title'], $widget, $reset);
         }
     }
-    //$block['content'] .= drupal_get_form('tow_saved_searches_save_search_form', $rows_amount);
 
     return $block;
 }
@@ -288,7 +287,7 @@ function tow_search_inner_within_dataset_callback($nid) {
     global $_tow_dataset;
     $_tow_dataset = node_load($nid);
     
-    //Don't allow page loading 'search_dataset/nid' if node type isn't dataset
+    // Don't allow page loading 'search_dataset/nid' if node type isn't dataset
     if ($_tow_dataset->type != 'dataset') {
       drupal_not_found();
       die();
@@ -404,6 +403,9 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
             sort($nid_aux);
             $nid_aux = implode('+', $nid_aux);
 
+            // Future filters query param.
+            $qf = isset($_GET['filters']) ? $_GET['filters'] : '';
+            
             // Attributes.
             $options = array(
                 'attributes' => array(
@@ -411,13 +413,27 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
                     'f_type' => $field['type'],
                 ),
             );
+            
+            $sf_aux = $selected_fields;
+            unset($sf_aux[0]);
             if (in_array($field['title'] . '_' . $field['type'], $selected_fields)) {
+                unset($sf_aux[$field['title'] . '_' . $field['type']]);
+                $qsf = json_encode((object)$sf_aux);
                 $options['attributes']['class'] .= ' selected';
             }
+            else {
+                $sf_aux[$field['title'] . '_' . $field['type']] = $field['title'] . '_' . $field['type'];
+                $qsf = json_encode($sf_aux);
+            }
+            $qsf = ($qsf == '{}') ? '' : $qsf;
 
             // Fields as links or plain text according to selectedness and availability.
             if (empty($selected_tableset) || in_array($table_nid, $selected_tableset)) {
-                $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="/search_dataset/' . $nid_aux . '/refresh_ajax" f_type="' . $options['attributes']['f_type'] . '">' . $field['title'] . '</button>'; //l($field['title'], "search_dataset/$nid_aux/refresh_ajax", $options);
+                $href = '/search_dataset/' . $nid_aux . '/refresh_ajax';
+                $href .= (empty($qsf) && empty($qf)) ? '' : '?';
+                $href .= (empty($qf)) ? '' : 'filters=' . $qf;
+                $href .= (empty($qsf)) ? '' : ((empty($qf)) ? '' : '&') . 'selected_fields=' . check_plain($qsf);
+                $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="' . $href . '" f_type="' . $options['attributes']['f_type'] . '">' . $field['title'] . '</button>';
             } else {
                 $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini disabled">' . $field['title'] . '</button>';
             }
@@ -433,11 +449,6 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
             '#collapsible' => TRUE,
             '#collapsed' => (!(empty($selected_tableset) || in_array($table_nid, $selected_tableset))) ? TRUE : FALSE,
         );
-        /* $fields_list = '<ul>';
-          foreach ($table_fields as $f) {
-          $fields_list .= '<li>' . $f . '</li>';
-          }
-          $fields_list .= '</ul>'; */
         $fields_list = '<div class="btn-group" data-toggle="buttons-checkbox">';
         foreach ($table_fields as $f) {
             $fields_list .= $f;
