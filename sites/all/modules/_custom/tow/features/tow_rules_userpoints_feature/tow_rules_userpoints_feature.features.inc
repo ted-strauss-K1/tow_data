@@ -2415,30 +2415,6 @@ else {
           '0' => array(
             '#type' => 'condition',
             '#settings' => array(
-              'code' => '$views = db_result(db_query("SELECT t.count AS count FROM {tow_node_views_counter} t WHERE t.nid = %d LIMIT 1", $node->nid));
-if (!$views) {
-  return FALSE;
-}
-$views %= 10;
-
-return ($views === 0) ? TRUE : FALSE;',
-              'vars' => array(
-                '0' => 'node',
-              ),
-            ),
-            '#name' => 'rules_condition_custom_php',
-            '#info' => array(
-              'label' => 'Execute custom PHP code',
-              'module' => 'PHP',
-              'eval input' => array(
-                '0' => 'code',
-              ),
-            ),
-            '#weight' => 0,
-          ),
-          '1' => array(
-            '#type' => 'condition',
-            '#settings' => array(
               'type' => array(
                 'saved_search' => 'saved_search',
               ),
@@ -2458,6 +2434,37 @@ return ($views === 0) ? TRUE : FALSE;',
               'module' => 'Node',
             ),
             '#weight' => 0,
+          ),
+          '1' => array(
+            '#weight' => 0,
+            '#type' => 'condition',
+            '#settings' => array(
+              'code' => '$views = db_result(db_query("SELECT t.count AS count FROM {tow_node_views_counter} t WHERE t.nid = %d LIMIT 1", $node->nid));
+if (!$views) {
+  return FALSE;
+}
+$views %= 10;
+dpm($node);
+return ($views === 0) ? TRUE : FALSE;',
+              'vars' => array(
+                '0' => 'node',
+              ),
+              '#eval input' => array(
+                'token_rules_input_evaluator' => array(
+                  'code' => array(
+                    '0' => ':global',
+                  ),
+                ),
+              ),
+            ),
+            '#name' => 'rules_condition_custom_php',
+            '#info' => array(
+              'label' => 'Execute custom PHP code',
+              'module' => 'PHP',
+              'eval input' => array(
+                '0' => 'code',
+              ),
+            ),
           ),
         ),
         '#actions' => array(
