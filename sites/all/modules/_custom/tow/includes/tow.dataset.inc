@@ -219,6 +219,7 @@ function tow_dataset_doc_form_alter(&$form, &$form_state) {
         $form['field_doc_dataset_nid']['#access'] = FALSE;
         $form['title']['#access'] = FALSE;
         $form['body_field']['teaser_include']['#access'] = FALSE;
+        $form['body_field']['format']['#access'] = FALSE;
         $form['field_doc_image']['#access'] = FALSE;
         unset($form['buttons']['preview']);
         unset($form['buttons']['delete']);
