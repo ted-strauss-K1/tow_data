@@ -45,7 +45,7 @@ function tow_dataset_badge_block() {
     if ($user->uid == $_tow_dataset->uid) {
         $extrainfo = t('You are an administrator of this dataset');
     } elseif ($_tow_dataset->field_access_type[0]['value'] == 1) {
-        $extrainfo = t('Request access to this dataset');
+        $extrainfo = tow_access_request_widget($_tow_dataset->nid, $user->uid);
     }
 
     // Save the content of the block.
@@ -647,9 +647,9 @@ function tow_dataset_summary(&$node) {
     }
 
     // For user view if access is by request.
-    elseif ($node->field_access_type[0]['value'] == 1) {
+    /*elseif ($node->field_access_type[0]['value'] == 1) {
         $node->summary['access_widget'] = tow_access_request_widget($node->nid, $user->uid);
-    }
+    }*/
 
     // Extract and show names of tables from the dataset.
     $table_titles_res = db_query("
