@@ -83,7 +83,8 @@ function tow_pma_menu_block() {
 
     //Set menu items according to user roles
     //Dataset access type: By request
-    if ($access_type == 1 && $dataset_request['status'] != 1 && ($_tow_dataset->uid != $user->uid)) {
+    $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $_tow_dataset->uid));
+    if ($access_type == 1 && $dataset_request['status'] != 1 && (!$is_admin)) {
         $items['browse'] = l('Browse', 'node/' . $_tow_dataset->nid);
         unset($items['search']);
         //Anonymous
