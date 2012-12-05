@@ -945,17 +945,17 @@ Attacklab.wmdBase = function(){
 			spacer1.className = "wmd-spacer";
 			spacer1.id = "wmd-spacer1";
 			buttonRow.appendChild(spacer1);
-
-                        var imageButton = document.createElement("li");
-			imageButton.className = "wmd-button";
-			imageButton.id = "wmd-image-button";
-			imageButton.title = "Image <img> Ctrl+G";
-			imageButton.XShift = "-40px";
-			imageButton.textOp = function(chunk, postProcessing, useDefaultText){
-				return command.doLinkOrImage(chunk, postProcessing, true);
+                        
+                        var linkButton = document.createElement("li");
+			linkButton.className = "wmd-button";
+			linkButton.id = "wmd-link-button";
+			linkButton.title = "Hyperlink <a> Ctrl+L";
+			linkButton.XShift = "-40px";
+			linkButton.textOp = function(chunk, postProcessing, useDefaultText){
+				return command.doLinkOrImage(chunk, postProcessing, false);
 			};
-			setupButton(imageButton, true);
-			buttonRow.appendChild(imageButton);
+			setupButton(linkButton, true);
+			buttonRow.appendChild(linkButton);
 
 			var quoteButton = document.createElement("li");
 			quoteButton.className = "wmd-button";
@@ -964,27 +964,27 @@ Attacklab.wmdBase = function(){
 			quoteButton.XShift = "-60px";
 			quoteButton.textOp = command.doBlockquote;
 			setupButton(quoteButton, true);
-			buttonRow.appendChild(quoteButton);
-
-			var linkButton = document.createElement("li");
-			linkButton.className = "wmd-button";
-			linkButton.id = "wmd-link-button";
-			linkButton.title = "Hyperlink <a> Ctrl+L";
-			linkButton.XShift = "-80px";
-			linkButton.textOp = function(chunk, postProcessing, useDefaultText){
-				return command.doLinkOrImage(chunk, postProcessing, false);
-			};
-			setupButton(linkButton, true);
-			buttonRow.appendChild(linkButton);
+			buttonRow.appendChild(quoteButton);			
 
                         var codeButton = document.createElement("li");
 			codeButton.className = "wmd-button";
 			codeButton.id = "wmd-code-button";
 			codeButton.title = "Code Sample <pre><code> Ctrl+K";
-			codeButton.XShift = "-100px";
+			codeButton.XShift = "-80px";
 			codeButton.textOp = command.doCode;
 			setupButton(codeButton, true);
 			buttonRow.appendChild(codeButton);
+                        
+                        var imageButton = document.createElement("li");
+			imageButton.className = "wmd-button";
+			imageButton.id = "wmd-image-button";
+			imageButton.title = "Image <img> Ctrl+G";
+			imageButton.XShift = "-100px";
+			imageButton.textOp = function(chunk, postProcessing, useDefaultText){
+				return command.doLinkOrImage(chunk, postProcessing, true);
+			};
+			setupButton(imageButton, true);
+			buttonRow.appendChild(imageButton);
 
 			var spacer2 = document.createElement("li");
 			spacer2.className = "wmd-spacer";
@@ -1063,8 +1063,8 @@ Attacklab.wmdBase = function(){
 				manager.redo();
 			};
 			setupButton(redoButton, true);
-			buttonRow.appendChild(redoButton); 
-			
+			buttonRow.appendChild(redoButton);                        
+                        
 			var helpButton = document.createElement("li");
 			helpButton.className = "wmd-button";
 			helpButton.id = "wmd-help-button";
