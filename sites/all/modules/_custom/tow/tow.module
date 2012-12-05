@@ -1063,19 +1063,14 @@ function tow_nodeapi(&$node, $op) {
       $new_document->type = 'document';
       $new_document->title = 'Doc for ' . $node->title . ' dataset';  
       $new_document->uid = $node->uid;
-      $new_document->body = '<h2>Introduction</h2>
+      $new_document->body = '## Introduction ##
+Your introduction.
+## Data collection methods ##
+Describe your data collection methods.
+## Analysis methods ##
+Describe your analysis methods.
 
-<p>Your introduction.</p>
-
-<h2>Data collection methods</h2>
-
-<p>Describe your data collection methods.</p>
-
-<h2>Analysis methods</h2>
-
-<p>Describe your analysis methods.</p>
-
-<p>You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.</p>';
+You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.';
       $new_document->field_doc_dataset_nid[0]['value'] = $node->nid;
       node_save($new_document);
     }

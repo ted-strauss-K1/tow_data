@@ -214,7 +214,8 @@ function tow_dataset_doc_form_alter(&$form, &$form_state) {
         drupal_add_js(drupal_get_path('module', 'tow') . '/js/document_preview.js');
 
         $form['body_field']['body']['#resizable'] = FALSE;
-        $form['body_field']['#suffix'] = '<script type="text/javascript" src="/' . drupal_get_path('module', 'tow') . '/js/wmd/wmd.js"></script></div>';
+        $form['body_field']['#suffix'] = '<script type="text/javascript">wmd_options = {"output": "Markdown"};</script>
+            <script type="text/javascript" src="/' . drupal_get_path('module', 'tow') . '/js/wmd/wmd.js"></script></div>';
         $form['field_doc_dataset_nid']['#access'] = FALSE;
         $form['title']['#access'] = FALSE;
         $form['body_field']['teaser_include']['#access'] = FALSE;
@@ -235,20 +236,16 @@ function tow_dataset_doc_form_alter(&$form, &$form_state) {
 
 //Document form validation function
 function tow_dataset_doc_form_validate (&$form, &$form_state) {
+
     if ($form_state['values']['body'] == '') {
-        $form_state['values']['body'] = '<h2>Introduction</h2>
+        $form_state['values']['body'] = '## Introduction ##
+Your introduction.
+## Data collection methods ##
+Describe your data collection methods.
+## Analysis methods ##
+Describe your analysis methods.
 
-<p>Your introduction.</p>
-
-<h2>Data collection methods</h2>
-
-<p>Describe your data collection methods.</p>
-
-<h2>Analysis methods</h2>
-
-<p>Describe your analysis methods.</p>
-
-<p>You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.</p>';
+You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.';
     }
 }
 
@@ -1078,6 +1075,9 @@ function tow_dataset_doc_output($dnid) {
     global $_tow_dataset_doc;
     $_tow_dataset_doc = TRUE;
 
+    // Run all enabled filters for format_id '4' on the body field.
+    $doc->body = check_markup($doc->body, 4);
+    
     $output = $doc->body;
     global $user;
     $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $doc->uid));
