@@ -362,6 +362,7 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $categories_vid . '}' . 'im_vid_' . $categories_vid;
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $tags_vid . '}' . 'im_vid_' . $tags_vid;
 
+    $current_tab = tow_search_outer_get_homepage_tab();
     switch ($current_tab) {
 
         // Sort by time created descending for the newest datasets.
