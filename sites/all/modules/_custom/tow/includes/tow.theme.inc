@@ -219,6 +219,9 @@ function _tow_theme_search_inner_l($text, $path, $options = array()) {
     $get = array_diff_key($_GET, array('q' => 1, 'page' => 1), $options['query'], $query->get_url_queryvalues());
     $options['query'] += $get;
     unset($options['query']['zoom']);
+    $querystring = ltrim(url('', array('query' => $options['query'])), '/');
+    $options['fragment'] = $querystring;
+    unset($options['query']);
 
     return '<a href="' . check_url(url($path, $options)) . '"' . drupal_attributes($options['attributes']) . '>' . ($options['html'] ? $text : check_plain(html_entity_decode($text))) . '</a>';
 }

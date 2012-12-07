@@ -27,9 +27,6 @@ Drupal.behaviors.inner_search = function(context) {
     var minCur; // Current active chart minimum.
     var maxCur; // Current active chart maximum.
 
-    // URLs.
-    var urlISA = 'http://' + window.location.hostname + window.location.pathname + '/refresh_ajax'; // URL for inner search ajax call.
-
 
 
     /* ****************************************************************************************************
@@ -95,8 +92,8 @@ Drupal.behaviors.inner_search = function(context) {
     // Add 'Show more/fewer' link.
     $('<a href="#" class="apachesolr-showhide"></a>')
     .text(Drupal.t('Show more'))
-    .click(function() {
-        searchFacetsMoreFewer($(this));
+    .click(function(e) {
+        searchFacetsMoreFewer(e, $(this));
     })
     .appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
 
@@ -136,6 +133,11 @@ Drupal.behaviors.inner_search = function(context) {
     // Save search button click.
     $('#edit-save-search').live('click', function(e) {
         saveSearch(e);
+    });
+
+    // Delete saved search link click.
+    $('.saved-search-delete').live('click', function(e) {
+        deleteSavedSearch(e, $(this));
     });
 
 
@@ -328,9 +330,13 @@ Drupal.behaviors.inner_search = function(context) {
         }
 
         // Initialize necessary variables.
-        urlISA = 'http://' + window.location.hostname + selector.attr("href");
-        var filtersToSend = getUrlQueryParam(urlISA, 'filters');
-        var selectedFields = {};
+        var url = selector.attr("href");
+        var filtersToSend = getUrlQueryParam(url, 'filters');
+        var aux = getUrlQueryParam(url, 'selected_fields');
+        if (aux == '') {
+            aux = '{}';
+        }
+        var selectedFields = JSON.parse(aux);
 
         // Deselect selected field.
         if (selector.hasClass('selected')) {
@@ -339,9 +345,12 @@ Drupal.behaviors.inner_search = function(context) {
             var type = selector.attr('f_type');
             delete selectedFields[text + '_' + type];
             $('.tow-dataset-field-link').each(function() {
-                if ((selector.text() == text) && (selector.attr('f_type') == type)) {
-                    $selector.removeClass('selected');
-                    $('.' + text + ' .active').click();
+                if (($(this).text() == text) && ($(this).attr('f_type') == type)) {
+                    var resetClass = text + '-' + type;
+                    resetClass = resetClass.replace(' ', '-').toLowerCase();
+                    $(this).removeClass('selected');
+                    console.log('.' + resetClass +' .reset');
+                    $('.' + resetClass +'.reset').click();
                 }
             });
         }
@@ -352,20 +361,20 @@ Drupal.behaviors.inner_search = function(context) {
             var text = selector.text();
             var type = selector.attr('f_type');
             $('.tow-dataset-field-link').each(function() {
-                if (selector.text() == text && (selector.attr('f_type') == type)) {
-                    selector.addClass('selected');
+                if ($(this).text() == text && ($(this).attr('f_type') == type)) {
+                    $(this).addClass('selected');
                 }
             });
         }
 
         // Construct selected fields param.
         $('.tow-dataset-field-link.selected').each(function() {
-            selectedFields[selector.text() + '_' + selector.attr('f_type')] = selector.text() + '_' + selector.attr('f_type');
+            selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
         });
         selectedFieldsToSend = JSON.stringify(selectedFields);
 
         // Set hash.
-        setHash(urlISA);
+        setHash(url);
 
         // Stop page processing.
         event.preventDefault();
@@ -377,17 +386,20 @@ Drupal.behaviors.inner_search = function(context) {
      */
     function searchFacetClickUpdate(event, selector) {
         event.preventDefault();
-        var filtersToSend = getUrlQueryParam(selector.attr('href'), 'filters');
-        var selectedFieldsToSend = getUrlQueryParam(selector.attr('href'), 'selected_fields');
+        
+        var url = selector.attr('href');
+        var filtersToSend = getUrlQueryParam(url, 'filters');
+        var selectedFieldsToSend = getUrlQueryParam(url, 'selected_fields');
         $('#edit-filters').value = filtersToSend;
         $('#edit-selected-fields').value = selectedFieldsToSend;
-        setHash(selector.attr('href'));
+
+        setHash(url);
     }
 
     /**
      * Show More/Fewer facets.
      */
-    function searchFacetsMoreFewer(selector) {
+    function searchFacetsMoreFewer(event, selector) {
         if (selector.parent().find('.apachesolr-hidden-facet:visible').length == 0) {
             selector.parent().find('.apachesolr-hidden-facet').removeClass('hidden');
             selector.text(Drupal.t('Show fewer'));
@@ -396,6 +408,8 @@ Drupal.behaviors.inner_search = function(context) {
             selector.parent().find('.apachesolr-hidden-facet').addClass('hidden');
             selector.text(Drupal.t('Show more'));
         }
+        
+        event.preventDefault();
         return false;
     }
 
@@ -412,7 +426,7 @@ Drupal.behaviors.inner_search = function(context) {
 
             if (type == 'length') {
                 var option = selector.parent().parent().children('.form-item').children('[name="option"]').val();
-                var value = parseInt($(this).parent().parent().children('.form-item').children('[name="value"]').val());
+                var value = parseInt(selector.parent().parent().children('.form-item').children('[name="value"]').val());
 
                 if (option.indexOf('[* TO #]') > -1) {
                     value -= 1;
@@ -665,6 +679,7 @@ Drupal.behaviors.inner_search = function(context) {
 
                 newVisibleBox(min, max, false);
 
+                event.preventDefault();
                 return false;
             }
 
@@ -1433,6 +1448,8 @@ Drupal.behaviors.inner_search = function(context) {
      */
     function innerSearchProcessing(filtersToSend, selectedFieldsToSend) {
 
+        var urlISA = 'http://' + window.location.hostname + window.location.pathname + '/refresh_ajax' + window.location.hash;
+
         // Disabling other widget choice while AJAX proceed.
         $('#tow-search-inner-hash-form').after('<div id="modalDiv" style="position:absolute;top:0px;left:0px;display:none;cursor:progress;z-index:100;"></div>');
 
@@ -1487,8 +1504,8 @@ Drupal.behaviors.inner_search = function(context) {
 
             $('<a href="#" class="apachesolr-showhide"></a>')
             .text(Drupal.t('Show more'))
-            .click(function() {
-                searchFacetsMoreFewer($(this));
+            .click(function(e) {
+                searchFacetsMoreFewer(e, $(this));
             })
             .appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
 
@@ -1591,9 +1608,48 @@ Drupal.behaviors.inner_search = function(context) {
             dataType: 'json'
         });
 
+        event.preventDefault();
         return false;
     }
 
+    /**
+     * Deleting a saved search.
+     */
+    function deleteSavedSearch(event, selector) {
+        var urlSSD = 'http://' + window.location.hostname + window.location.pathname + '/ajax/delete_search';
+        var confirmToSend = window.confirm('Are you sure you want to delete ' + selector.parent().children().find('.title').children().attr('title') + '? This action cannot be undone.');
+        var ssNidToSend = selector.attr('href').split('/')[2];
+        
+        /**
+         * Saved search creation.
+         */
+        function deleteSearchAjaxSuccess(data) {
+            $('#block-tow-saved_searches_list').html(data.saved_searches);
+            $.hrd.noty({
+                'layout' : 'topRight',
+                'type' : 'success',
+                'closeWith': 'click',
+                'text' : 'You have deleted a saved search'
+            });
+        }
+
+        // AJAX.
+        $.ajax({
+            url: urlSSD,
+            data: {
+                'confirm' : confirmToSend,
+                'ss_nid' : ssNidToSend
+            },
+            success: function(data) {
+                deleteSearchAjaxSuccess(data);
+            },
+            dataType: 'json'
+        });
+
+        event.preventDefault();
+        return false;
+    }
+    
     /**
      * Widgets sort according to sort type and sort direction.
      */

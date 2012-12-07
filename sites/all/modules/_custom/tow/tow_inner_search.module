@@ -30,7 +30,8 @@ function tow_inner_search_search($op = 'search', $keys = NULL) {
             $solrsort = isset($_GET['solrsort']) ? $_GET['solrsort'] : '';
             $page = isset($_GET['page']) ? $_GET['page'] : 0;
             try {
-                $results = apachesolr_search_execute($keys, $filters, $solrsort, 'search_dataset/' . tow_search_inner_get_nid(), $page, 'tow_inner_search');
+                $path = 'search_dataset/' . tow_search_inner_get_nid();
+                $results = apachesolr_search_execute($keys, $filters, $solrsort, $path, $page, 'tow_inner_search');
                 return $results;
             } catch (Exception $e) {
                 watchdog('ToW', 'Apache Solr: ' . nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);

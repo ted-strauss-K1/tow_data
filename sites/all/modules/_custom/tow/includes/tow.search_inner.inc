@@ -30,26 +30,13 @@ function tow_search_inner_cron() {
 /**
  * 'Inner search: field list' block.
  */
-function tow_search_inner_field_list_block() {
-
-    $selected = (isset($_GET['selected_fields'])) ? json_decode($_GET['selected_fields'], TRUE) : array();
-    $selected = (is_array($selected)) ? $selected : array($selected);
-    $nid = tow_search_inner_get_nid();
-
-    if (arg(2) == 'refresh_ajax') {
-        $show = TRUE;
-        $nid_aux = explode('+', $nid);
-        $node = node_load($nid_aux[0]);
-        $dataset = ($node->type == 'dataset') ? $node : node_load($node->field_dataset[0]['value']);
-    } elseif (is_numeric($nid)) {
-        $dataset = node_load($nid);
-        $show = ($dataset->type == 'dataset') ? TRUE : FALSE;
-    } else {
-        $show = FALSE;
-    }
-
+function tow_search_inner_field_list_block($selected_fields = array()) {
+    
+    $dataset = node_load(arg(1));
+    $show = ($dataset->type == 'dataset') ? TRUE : FALSE;
+    
     $block['title'] = ($show) ? 'Fields' : '';
-    $block['content'] = ($show) ? drupal_get_form('tow_search_inner_field_list_block_form', $dataset, $selected) : '';
+    $block['content'] = ($show) ? drupal_get_form('tow_search_inner_field_list_block_form', $dataset, $selected_fields) : '';
 
     return $block;
 }
@@ -70,10 +57,10 @@ function tow_search_inner_simple_search_block() {
 /**
  * 'Inner search: facets block' block.
  */
-function tow_search_inner_widgets_block() {
+function tow_search_inner_widgets_block($path = NULL) {
 
-    // Get the current location (unset '/sort_ajax' as its the pointer to a specific ajax-call for the page).
-    $path = $_GET['q'];
+    // Get the current location.
+    $path = isset($path) ? $path : $_GET['q'];
 
     // Define parametres of the sorting.
     $widgets_sort = isset($_GET['widgets_sort']) ? $_GET['widgets_sort'] : 'title';
@@ -109,6 +96,8 @@ function tow_search_inner_widgets_block() {
         $table_nid = tow_search_inner_get_nid();
     }
 
+    $dataset_path = 'search_dataset/' . tow_search_inner_get_dataset_nid($table_nid);
+
     // Get stats for full range.
     foreach (tow_apachesolr_table_fields($table_nid, TRUE) as $index => $field) {
         $query->remove_filter($field['name']);
@@ -141,7 +130,7 @@ function tow_search_inner_widgets_block() {
     $rid = db_last_insert_id('tow_apachesolr_requests', 'rid');
 
     // Set the block's content.
-    $block['content'] = drupal_get_form('tow_search_inner_hash_form', $rid, $hash, $sort_params);
+    $block['content'] = drupal_get_form('tow_search_inner_hash_form', $dataset_path, $rid, $hash, $sort_params);
 
     // Building solr query for facets for each field.
     $table_fields = tow_apachesolr_table_fields($table_nid);
@@ -196,16 +185,20 @@ function tow_search_inner_widgets_block() {
 
         $querystring = tow_search_inner_compose_query($queryvalues['filters'], FALSE);
         unset($querystring['zoom']);
-        $reset = l(t('Reset'), $path, array('query' => $querystring));
+        if (isset($_GET['selected_fields']) && $_GET['selected_fields'] != '') {
+            $querystring['selected_fields'] = $_GET['selected_fields'];
+        }
+        $querystring = ltrim(url('', array('query' => $querystring)), '/');
+        $reset = l(t('Reset'), $dataset_path, array('fragment' => $querystring, 'attributes' => array('class' => strtolower(str_replace(' ', '-', $field['title'])) . '-' . strtolower(str_replace(' ', '-', $field['type'])) . ' reset')));
         $whole_counts = count((array) $stats_response->facet_counts->facet_fields->$field['name']) - 1; // exclude _empty_ field
-        $widget = tow_search_inner_widget($field['name'], $field['type'], $response, $query, $stats_response->stats->stats_fields->$field['name'], $whole_counts, 'sis_tow_field_' . $field['type'] . '_' . $field['delta']);
+        $widget = tow_search_inner_widget($field, $dataset_path, $response, $query, $stats_response->stats->stats_fields->$field['name'], $whole_counts, 'sis_tow_field_' . $field['type'] . '_' . $field['delta']);
 
         if (!empty($selected_fields)) {
             if (in_array($field['title'] . '_' . $field['type'], $selected_fields)) {
-                $block['content'] .= drupal_get_form('tow_search_inner_widget_form', $field['title'], $widget, $reset);
+                $block['content'] .= drupal_get_form('tow_search_inner_widget_form', $field['title'], $dataset_path, $widget, $reset);
             }
         } else {
-            $block['content'] .= drupal_get_form('tow_search_inner_widget_form', $field['title'], $widget, $reset);
+            $block['content'] .= drupal_get_form('tow_search_inner_widget_form', $field['title'], $dataset_path, $widget, $reset);
         }
     }
 
@@ -213,41 +206,21 @@ function tow_search_inner_widgets_block() {
 }
 
 /**
- * Page for inner search within dataset menu callback.
+ * Search dataset callback.
  */
-function tow_search_inner_within_dataset($nid) {
+function tow_search_inner_within_dataset($nid, $ajax = FALSE) {
 
     global $_tow_dataset;
     $_tow_dataset = node_load($nid);
 
+    // Don't allow page loading 'search_dataset/nid' if node type isn't dataset
+    if (($_tow_dataset->type != 'dataset') && !$ajax) {
+      drupal_not_found();
+      die();
+    }
+
     global $_tow_dataset_search;
     $_tow_dataset_search = TRUE;
-
-    // Check for redirect.
-    if (!is_numeric($nid)) {
-
-        // Get current NIDs order and a sorted one.
-        $nid_array = explode(' ', $nid);
-        $sort_nid = explode(' ', $nid);
-        sort($sort_nid);
-
-        // Check sorted.
-        $sorted = TRUE;
-        foreach ($nid_array as $k => $v) {
-            if ($nid_array[$k] != $sort_nid[$k]) {
-                $sorted = FALSE;
-                break;
-            }
-        }
-
-        if (!$sorted) {
-
-            // Build new NID.
-            $sort_nid = implode('+', $sort_nid);
-            $path = str_replace($nid, $sort_nid, $_GET['q']);
-            drupal_goto($path);
-        }
-    }
 
     $type = 'apachesolr_search';
     $keys = trim(_tow_search_inner_get_keys());
@@ -281,53 +254,6 @@ function tow_search_inner_within_dataset($nid) {
     }
 }
 
-//Additional callback function to check if nid->type is dataset (almost totally copied previous function)
-function tow_search_inner_within_dataset_callback($nid) {
-
-    global $_tow_dataset;
-    $_tow_dataset = node_load($nid);
-    
-    // Don't allow page loading 'search_dataset/nid' if node type isn't dataset
-    if ($_tow_dataset->type != 'dataset') {
-      drupal_not_found();
-      die();
-    }
-    
-    global $_tow_dataset_search;
-    $_tow_dataset_search = TRUE;
-
-    $type = 'apachesolr_search';
-    $keys = trim(_tow_search_inner_get_keys());
-
-    // We did not redirect, so run the search if needed.
-/*    $results = '';
-
-    $filters = trim($_GET['filters']);
-
-    // Log the search keys:
-    $log = $keys;
-    if ($filters) {
-        $log .= 'filters=' . $filters;
-    }
-*/
-    // Collect the search results:
-    $results = search_data($keys, 'tow_inner_search');
-
-    // Add javascript.
-    drupal_add_js(drupal_get_path('module', 'tow') . '/js/jquery.ba-hashchange.min.js');
-    drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
-    drupal_add_js(drupal_get_path('module', 'tow') . '/js/highcharts.js');
-    drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/Scroller/media/js/dataTables.scroller.js');
-    drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/ColVis/media/js/ColVis.js');
-
-    // Return results.
-    if ($results) {
-        return $results;
-    } else {
-        return theme('box', t('Your search yielded no results'), variable_get('apachesolr_search_noresults', apachesolr_search_noresults()));
-    }
-}
-
 /* * **************************************************************************************************
  * Forms
  * ************************************************************************************************** */
@@ -337,43 +263,15 @@ function tow_search_inner_within_dataset_callback($nid) {
  */
 function tow_search_inner_field_list_block_form($form_state, $dataset, $selected_fields = array()) {
     $form = array();
-    $nid = array();
-    $selected_tableset = array();
-
-    // Define selected tableset and nid of the selected table.
-    $fields = array();
-    list($tables, $tablesets) = tow_search_inner_linked_build_tablesets($dataset->nid);
-    $linking_fields = array();
-    foreach ($tablesets as $tableset) {
-        $tableset_nids = array_keys($tableset);
-        sort($tableset_nids);
-        $key = implode('+', $tableset_nids);
-        $linking_fields[$key] = _tow_search_inner_linking_fields($tableset_nids);
+    
+    list($nid, $selected_tableset, $tables) = tow_search_inner_get_selected_tables($dataset, $selected_fields);
+    $nid = explode('+', $nid);
+    if (count($nid) == 1 && !$nid[0]) {
+        $nid = array();
     }
-    foreach ($tables as $table_nid) {
-        $table_fields = tow_apachesolr_table_fields($table_nid);
-        foreach ($table_fields as $field) {
-            if (in_array($field['title'] . '_' . $field['type'], $selected_fields)) {
-                if (empty($selected_tableset)) {
-                    foreach ($tablesets as $tableset) {
-                        foreach ($tableset as $key => $value) {
-                            if ($key == $table_nid) {
-                                $selected_tableset = array_keys($tableset);
-                                break 2;
-                            }
-                        }
-                    }
-                    if (empty($selected_tableset)) {
-                        $selected_tableset = array($table_nid);
-                    }
-                }
-                $nid[] = $table_nid;
-                break;
-            }
-        }
-    }
-
+    
     // Links.
+    $fields = array();
     foreach ($tables as $table_nid) {
         $table_fields = tow_apachesolr_table_fields($table_nid);
 
@@ -385,23 +283,6 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
         }
 
         foreach ($table_fields as $field) {
-
-            $is_linking_field = FALSE;
-            if (isset($key)) {
-                foreach ($linking_fields[$key] as $l_field) {
-                    if (($l_field['title'] == $field['title']) && ($l_field['type'] == $field['type'])) {
-                        $is_linking_field = TRUE;
-                        break;
-                    }
-                }
-            }
-
-            // Future NID.
-            $nid_aux = ($is_linking_field) ? explode('+', $key) : $nid;
-            $nid_aux[] = $table_nid;
-            $nid_aux = array_unique($nid_aux);
-            sort($nid_aux);
-            $nid_aux = implode('+', $nid_aux);
 
             // Future filters query param.
             $qf = isset($_GET['filters']) ? $_GET['filters'] : '';
@@ -429,8 +310,8 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
 
             // Fields as links or plain text according to selectedness and availability.
             if (empty($selected_tableset) || in_array($table_nid, $selected_tableset)) {
-                $href = '/search_dataset/' . $nid_aux . '/refresh_ajax';
-                $href .= (empty($qsf) && empty($qf)) ? '' : '?';
+                $href = '/search_dataset/' . tow_search_inner_get_dataset_nid($table_nid);
+                $href .= (empty($qsf) && empty($qf)) ? '' : '#?';
                 $href .= (empty($qf)) ? '' : 'filters=' . $qf;
                 $href .= (empty($qsf)) ? '' : ((empty($qf)) ? '' : '&') . 'selected_fields=' . check_plain($qsf);
                 $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="' . $href . '" f_type="' . $options['attributes']['f_type'] . '">' . $field['title'] . '</button>';
@@ -441,22 +322,15 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
     }
 
     // Form elements.
+    $form['fields_list']['#value'] = '';
     foreach ($fields as $table_nid => $table_fields) {
         $table = node_load($table_nid);
-        $form["tow_table_fields_$table_nid"] = array(
-            '#type' => 'fieldset',
-            '#title' => filter_xss($table->title),
-            '#collapsible' => TRUE,
-            '#collapsed' => (!(empty($selected_tableset) || in_array($table_nid, $selected_tableset))) ? TRUE : FALSE,
-        );
-        $fields_list = '<div class="btn-group" data-toggle="buttons-checkbox">';
+        $fields_list = '<h5>' . filter_xss($table->title) . '</h5><div class="btn-group" data-toggle="buttons-checkbox">';
         foreach ($table_fields as $f) {
             $fields_list .= $f;
         }
-        $fields_list .= '</div>';
-        $form["tow_table_fields_$table_nid"]['fields_list'] = array(
-            '#value' => $fields_list,
-        );
+        $fields_list .= '</div></p>';
+        $form['fields_list']['#value'] .= $fields_list;
     }
 
     return $form;
@@ -467,11 +341,10 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
  * for chart updating while zooming.
  * Sort links are also included here.
  */
-function tow_search_inner_hash_form($form_state, $rid, $hash, $sort_params) {
+function tow_search_inner_hash_form($form_state, $path, $rid, $hash, $sort_params) {
     $form = array();
 
-    // Get path.
-    $path = $_GET['q'];
+    // Action.
     $form['#action'] = $path;
 
     // Get sort parameters.
@@ -523,7 +396,7 @@ function tow_search_inner_hash_form($form_state, $rid, $hash, $sort_params) {
 /**
  * Returns form for numeric facets.
  */
-function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $empty, $selection_min, $selection_max, $data = NULL, $tooltips = NULL, $fieldtype = 'int', $max_count = 0) {
+function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $empty, $selection_min, $selection_max, $path, $data = NULL, $tooltips = NULL, $fieldtype = 'int', $max_count = 0) {
     $form = array();
 
     $saved_query = apachesolr_current_query(NULL, 'tow_inner_search');
@@ -588,11 +461,21 @@ function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $e
 
     $filters = $query->get_url_queryvalues();
     $querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
-    $url = url($_GET['q'], array('query' => $querystring));
+    unset($querystring['zoom']);
+    if (isset($_GET['selected_fields']) && $_GET['selected_fields'] != '') {
+        $querystring['selected_fields'] = $_GET['selected_fields'];
+    }
+    $querystring = ltrim(url('', array('query' => $querystring)), '/');
+    $url = url($path, array('fragment' => $querystring));
 
     $filters = $empty_query->get_url_queryvalues();
     $querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
-    $include_empty_url = url($_GET['q'], array('query' => $querystring));
+    unset($querystring['zoom']);
+    if (isset($_GET['selected_fields']) && $_GET['selected_fields'] != '') {
+        $querystring['selected_fields'] = $_GET['selected_fields'];
+    }
+    $querystring = ltrim(url('', array('query' => $querystring)), '/');
+    $include_empty_url = url($path, array('fragment' => $querystring));
 
     // Form.
     $form['data'] = array(
@@ -705,7 +588,7 @@ function tow_search_inner_simple_search_form() {
 /**
  * Form for text length.
  */
-function tow_search_inner_text_length_widget_form($form_state, $length_field) {
+function tow_search_inner_text_length_widget_form($form_state, $length_field, $path) {
     $form = array();
 
     // Field info.
@@ -755,7 +638,12 @@ function tow_search_inner_text_length_widget_form($form_state, $length_field) {
     $query->add_filter($length_field, $placeholder);
     $filters = $query->get_url_queryvalues();
     $querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
-    $url = url($_GET['q'], array('query' => $querystring));
+    unset($querystring['zoom']);
+    if (isset($_GET['selected_fields']) && $_GET['selected_fields'] != '') {
+        $querystring['selected_fields'] = $_GET['selected_fields'];
+    }
+    $querystring = ltrim(url('', array('query' => $querystring)), '/');
+    $url = url($path, array('fragment' => $querystring));
 
     $form['url'] = array(
         '#type' => 'hidden',
@@ -803,12 +691,8 @@ function tow_search_inner_text_length_widget_form($form_state, $length_field) {
 /**
  * Widget form description.
  */
-function tow_search_inner_widget_form(&$form_state, $field_title, $widget, $reset) {
+function tow_search_inner_widget_form(&$form_state, $field_title, $path, $widget, $reset) {
     $form = array();
-
-    // Get current location.
-    $path = $_GET['q'];
-    $path = str_replace('/refresh_ajax', '', $path);
 
     // Wrap the form with div-wrapper.
     $form['#prefix'] = '<div class="tow-inner-search-widget">';
@@ -846,7 +730,7 @@ function tow_search_inner_widget_form(&$form_state, $field_title, $widget, $rese
 /**
  * Returns bar chart widget.
  */
-function tow_search_inner_bar_widget($field, $field_type, $facet_counts, $empty, $stats) {
+function tow_search_inner_bar_widget($field, $field_type, $path, $facet_counts, $empty, $stats) {
     $data = array();
     $function = '_tow_solr_to_' . $field_type;
     $function_exists = function_exists($function);
@@ -876,7 +760,7 @@ function tow_search_inner_bar_widget($field, $field_type, $facet_counts, $empty,
     $data = drupal_to_js($data);
     $facets_list = drupal_to_js($facets_list);
 
-    $form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $stats->min, $stats->max, $empty, $selection_limits['min'], $selection_limits['max'], $data, $facets_list, $field_type);
+    $form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $stats->min, $stats->max, $empty, $selection_limits['min'], $selection_limits['max'], $path, $data, $facets_list, $field_type);
     $container = '<div class="tow-inner-search-highcharts-bar-container" id="' . $field . '_highchart"></div>';
     return $container . $form;
 }
@@ -993,7 +877,7 @@ function tow_search_inner_chart_data($field, $field_type, $facet_counts) {
 /**
  * Returns line chart widget.
  */
-function tow_search_inner_chart_widget($field, $field_type, $facet_counts, $empty) {
+function tow_search_inner_chart_widget($field, $field_type, $path, $facet_counts, $empty) {
 
     // Prepare data.
     list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $facet_counts);
@@ -1010,7 +894,7 @@ function tow_search_inner_chart_widget($field, $field_type, $facet_counts, $empt
     }
 
     // Generate output.
-    $form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start, $end, $empty, $selection_limits['min'], $selection_limits['max'], $data, $facets_list, $field_type, $max_count);
+    $form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $start, $end, $empty, $selection_limits['min'], $selection_limits['max'], $path, $data, $facets_list, $field_type, $max_count);
     $container = '<div class="tow-inner-search-highcharts-container" id="' . $field . '_highchart"></div>';
     return $container . $form;
 }
@@ -1138,7 +1022,7 @@ function tow_search_inner_facet_query(&$params, $field, $type, $stats, $barchart
 /**
  * Function for displaying a facet block.
  */
-function tow_search_inner_facet_widget($response, $query, $module, $delta, $facet_field, $filter_by, $facet_callback = FALSE) {
+function tow_search_inner_facet_widget($path, $response, $query, $module, $delta, $facet_field, $filter_by, $facet_callback = FALSE, $enum_options = FALSE) {
     if (!empty($response->facet_counts->facet_fields->$facet_field)) {
         $contains_active = FALSE;
         $items = array();
@@ -1154,6 +1038,9 @@ function tow_search_inner_facet_widget($response, $query, $module, $delta, $face
                 $options['html'] = TRUE;
             }
             $options['html'] = TRUE;
+            if ($enum_options) {
+                $options['enum_options'] = $enum_options;
+            }
 
             if ($facet_callback && function_exists($facet_callback)) {
                 $facet_text = $facet_callback($facet, $options);
@@ -1182,11 +1069,11 @@ function tow_search_inner_facet_widget($response, $query, $module, $delta, $face
                 $contains_active = TRUE;
                 $new_query->remove_filter($facet_field, $facet);
                 $options['query'] = $new_query->get_url_queryvalues();
-                $link = theme('tow_search_inner_unclick_link', $facet_text, $new_query->get_path(), $options, $count, FALSE, $response->response->numFound);
+                $link = theme('tow_search_inner_unclick_link', $facet_text, $path, $options, $count, FALSE, $response->response->numFound);
             } else {
                 $new_query->add_filter($facet_field, $facet, $exclude);
                 $options['query'] = $new_query->get_url_queryvalues();
-                $link = theme('tow_search_inner_facet_link', $facet_text, $new_query->get_path(), $options, $count, FALSE, $response->response->numFound);
+                $link = theme('tow_search_inner_facet_link', $facet_text, $path, $options, $count, FALSE, $response->response->numFound);
             }
 
             if ($count || $active) {
@@ -1211,17 +1098,96 @@ function tow_search_inner_facet_widget($response, $query, $module, $delta, $face
 /**
  * Returns graphical widget.
  */
-function tow_search_inner_graph_widget($field, $type, $facet_counts, $empty, $stats) {
-    return tow_search_inner_chart_widget($field, $type, $facet_counts->facet_ranges->$field, $empty);
+function tow_search_inner_graph_widget($field, $type, $path, $facet_counts, $empty, $stats) {
+    return tow_search_inner_chart_widget($field, $type, $path, $facet_counts->facet_ranges->$field, $empty);
+}
+
+/**
+ * Gets NID of parent dataset by a set of child tables.
+ */
+function tow_search_inner_get_dataset_nid($table_nid) {
+    $table_nids = is_numeric($table_nid) ? array(0 => $table_nid) : explode('+', $table_nid);
+    $table = node_load($table_nids[0]);
+    
+    if ($table->type == 'table') {
+        $dataset_nid = $table->field_dataset[0]['value'];
+    }
+    else {
+        $dataset_nid = $table_nid;
+    }
+
+    return $dataset_nid;
 }
 
 /**
  * Retrieves table nid from GET[q] search_dataset/nid -> nid
  */
 function tow_search_inner_get_nid() {
+
     $path = explode('/', $_GET['q']);
-    $return = count($path) >= 2 ? $path[1] : FALSE;
-    $return = str_replace(' ', '+', $return);
+    $dataset = node_load($path[1]);
+    $selected_fields = (isset($_GET['selected_fields'])) ? json_decode($_GET['selected_fields'], TRUE) : array();
+
+    if (!empty($selected_fields)) {
+        $return = tow_search_inner_get_selected_tables($dataset, $selected_fields, 'nid');
+    }
+    else {
+        $return = count($path) >= 2 ? $path[1] : FALSE;
+        $return = str_replace(' ', '+', $return);
+    }
+    
+    return $return;
+}
+
+/**
+ * Defines a set of tables which the selected fields are relevant to.
+ */
+function tow_search_inner_get_selected_tables($dataset, $selected_fields = array(), $return = 'all') {
+    $nid = array();
+    $selected_tableset = array();
+
+    // Define selected tableset and nid of the selected table.
+    $fields = array();
+    list($tables, $tablesets) = tow_search_inner_linked_build_tablesets($dataset->nid);
+    
+    $linking_fields = array();
+    foreach ($tablesets as $tableset) {
+        $tableset_nids = array_keys($tableset);
+        sort($tableset_nids);
+        $key = implode('+', $tableset_nids);
+        $linking_fields[$key] = _tow_search_inner_linking_fields($tableset_nids);
+    }
+    foreach ($tables as $table_nid) {
+        $table_fields = tow_apachesolr_table_fields($table_nid);
+        foreach ($table_fields as $field) {
+            if (in_array($field['title'] . '_' . $field['type'], $selected_fields)) {
+                if (empty($selected_tableset)) {
+                    foreach ($tablesets as $tableset) {
+                        foreach ($tableset as $key => $value) {
+                            if ($key == $table_nid) {
+                                $selected_tableset = array_keys($tableset);
+                                break 2;
+                            }
+                        }
+                    }
+                    if (empty($selected_tableset)) {
+                        $selected_tableset = array($table_nid);
+                    }
+                }
+                $nid[] = $table_nid;
+                break;
+            }
+        }
+    }
+    $nid = implode('+', $nid);
+    
+    if ($return == 'all') {
+        $return = array($nid, $selected_tableset, $tables);
+    }
+    else {
+        $return = ${$return};
+    }
+    
     return $return;
 }
 
@@ -1309,7 +1275,7 @@ function tow_search_inner_sort_fields($fields, $sort_params) {
 /**
  * Returns form for textual widgets.
  */
-function tow_search_inner_text_widget_form($form_state, $field, $fieldtype) {
+function tow_search_inner_text_widget_form($form_state, $field, $fieldtype, $path) {
 
     $form = array();
 
@@ -1348,7 +1314,12 @@ function tow_search_inner_text_widget_form($form_state, $field, $fieldtype) {
     $query->add_filter($field, $field . '_placeholder');
     $filters = $query->get_url_queryvalues();
     $querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
-    $url = url($_GET['q'], array('query' => $querystring));
+    unset($querystring['zoom']);
+    if (isset($_GET['selected_fields']) && $_GET['selected_fields'] != '') {
+        $querystring['selected_fields'] = $_GET['selected_fields'];
+    }
+    $querystring = ltrim(url('', array('query' => $querystring)), '/');
+    $url = url($path, array('fragment' => $querystring));
 
     $form['url'] = array(
         '#type' => 'hidden',
@@ -1360,7 +1331,12 @@ function tow_search_inner_text_widget_form($form_state, $field, $fieldtype) {
     $query->add_filter($field, $field . '_placeholder', TRUE);
     $filters = $query->get_url_queryvalues();
     $querystring = tow_search_inner_compose_query($filters['filters'], FALSE);
-    $negative_url = url($_GET['q'], array('query' => $querystring));
+    unset($querystring['zoom']);
+    if (isset($_GET['selected_fields']) && $_GET['selected_fields'] != '') {
+        $querystring['selected_fields'] = $_GET['selected_fields'];
+    }
+    $querystring = ltrim(url('', array('query' => $querystring)), '/');
+    $negative_url = url($path, array('fragment' => $querystring));
 
     $form['negative_url'] = array(
         '#type' => 'hidden',
@@ -1427,7 +1403,10 @@ function tow_search_inner_timezoom($current_field) {
 /**
  * Builds part of inner search facets block for specific field.
  */
-function tow_search_inner_widget($field, $type, $response, $query, $stats, $whole_counts, $length_field = NULL) {
+function tow_search_inner_widget($field_info, $path, $response, $query, $stats, $whole_counts, $length_field = NULL) {
+    $field = $field_info['name'];
+    $type = $field_info['type'];
+    
     $empty = $response->facet_counts->facet_fields->$field->_empty_;
 
     switch ($type) {
@@ -1440,23 +1419,24 @@ function tow_search_inner_widget($field, $type, $response, $query, $stats, $whol
         case 'time':
         case 'timestamp':
             if (isset($response->facet_counts->facet_ranges->$field)) {
-                return tow_search_inner_graph_widget($field, $type, $response->facet_counts, $empty, $stats);
+                return tow_search_inner_graph_widget($field, $type, $path, $response->facet_counts, $empty, $stats);
             } else {
-                $facets_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $field, $field, '');
+                $facets_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $field, $field, '');
                 return $facets_list['content'];
             }
 
         // Bool and code facets.
         case 'bool':
         case 'code':
-            $facets_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $field, $field, '');
+            $facets_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $field, $field, '');
             $facets_list['content'] .= '<input name="field" id="edit-field" value="' . $field . '" type="hidden">';
             $facets_list['content'] .= '<input name="fieldtype" id="edit-fieldtype" value="' . $type . '" type="hidden">';
             return $facets_list['content'];
 
         // Enum facets.
         case 'enum':
-            $facets_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $field, $field, '', '_tow_search_inner_facet_enum_option');
+            $enum_options = $field_info['enum_options'];
+            $facets_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $field, $field, '', '_tow_search_inner_facet_enum_option', $enum_options);
             $facets_list['content'] .= '<input name="field" id="edit-field" value="' . $field . '" type="hidden">';
             $facets_list['content'] .= '<input name="fieldtype" id="edit-fieldtype" value="' . $type . '" type="hidden">';
             return $facets_list['content'];
@@ -1464,15 +1444,15 @@ function tow_search_inner_widget($field, $type, $response, $query, $stats, $whol
         // Text facets.
         case 'text':
             $facet_field = 'f_' . $field;
-            $facet_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $facet_field, $facet_field, '', '_tow_search_inner_facet_trim_text');
-            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field) . drupal_get_form('tow_search_inner_text_widget_form', $field, $type);
+            $facet_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $facet_field, $facet_field, '', '_tow_search_inner_facet_trim_text');
+            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path) . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
             return $facet_list['content'] . $form;
 
         // Char facets.
         case 'char':
             $facet_field = 'f_' . $field;
-            $facet_list = tow_search_inner_facet_widget($response, $query, 'tow_inner_search', $facet_field, $facet_field, '');
-            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field) . drupal_get_form('tow_search_inner_text_widget_form', $field, $type);
+            $facet_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $facet_field, $facet_field, '');
+            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path) . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
             return ($whole_counts > 50) ? $facet_list['content'] . $form : $facet_list['content'];
 
         default:
@@ -1537,14 +1517,7 @@ function _tow_search_inner_add_queryvalue(&$query, $param, $value) {
 function _tow_search_inner_facet_enum_option($facet, &$options) {
     global $_tow_search_inner_field_delta;
 
-    $response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
-
-    if (isset($response->response->docs[0])) {
-        $table_nid = $response->response->docs[0]->ss_tow_field_table;
-    }
-
-    $table_node = node_load($table_nid);
-    $enum_options = unserialize($table_node->field_enum_options[$_tow_search_inner_field_delta]['value']);
+    $enum_options = $options['enum_options'];
 
     if ($enum_options[$facet]) {
         return $enum_options[$facet];
