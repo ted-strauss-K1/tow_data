@@ -65,6 +65,11 @@ textarea#edit-body {
     line-height: 22px;
 }
 
+/* Moving the "Create new Dataset" link to the right */
+.logged-in #block-tow-pma_menu li:last-child {
+    float: right;
+}
+
 /* -------------------------- Noty theming ---------------------------- */
 
 #noty_top_layout_container {   
@@ -101,3 +106,15 @@ textarea#edit-body {
 }
 
 /* ---------------------- The End of Noty theming ---------------------- */
+
+/* Bookmark flags theming */
+
+.flag-message {
+    display: table;
+    left: 35px;
+    top: 0;
+    width: 100px;
+    background-color: #C5C5C5;
+    border: 1px #222222 solid;
+    padding: 2px;
+}
