@@ -361,6 +361,7 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
     $params['facet.missing'] = 'true';
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $categories_vid . '}' . 'im_vid_' . $categories_vid;
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $tags_vid . '}' . 'im_vid_' . $tags_vid;
+    $params['facet.field'][] = '{!ex=' . 'sis_cck_field_access_type' .'}' . 'sis_cck_field_access_type';
 
     $current_tab = tow_search_outer_get_homepage_tab();
     switch ($current_tab) {
