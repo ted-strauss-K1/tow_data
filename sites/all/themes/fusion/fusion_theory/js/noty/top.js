@@ -28,7 +28,7 @@
 		css: {
 			display: 'none'
 		},
-		addClass: ''
+		addClass: 'noty_container_class'
 	};
 
 })(jQuery);

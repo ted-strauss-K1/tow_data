@@ -361,7 +361,9 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
     $params['facet.missing'] = 'true';
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $categories_vid . '}' . 'im_vid_' . $categories_vid;
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $tags_vid . '}' . 'im_vid_' . $tags_vid;
+    $params['facet.field'][] = '{!ex=' . 'sis_cck_field_access_type' .'}' . 'sis_cck_field_access_type';
 
+    $current_tab = tow_search_outer_get_homepage_tab();
     switch ($current_tab) {
 
         // Sort by time created descending for the newest datasets.
@@ -399,6 +401,7 @@ function tow_apachesolr_dataset_user_modify_query(&$query, &$params) {
     $params['fl'] .= ',im_vid_' . $categories_vid;
     $params['fl'] .= ',im_vid_' . $tags_vid;
     $params['fl'] .= ',ss_teaser';
+    $params['fl'] .= ',im_tow_user_access_private';
 
     // Add filters.
     $query->add_filter('type', 'dataset');
@@ -407,7 +410,11 @@ function tow_apachesolr_dataset_user_modify_query(&$query, &$params) {
     global $user;
     $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1));
     if (($user->uid != $viewed_user->uid) && !$is_admin) {
-      $query->add_filter('sis_cck_field_access_type', 2, TRUE);
+        $subquery = apachesolr_drupal_query();
+        $subquery->add_filter('sis_cck_field_access_type', 0);
+        $subquery->add_filter('sis_cck_field_access_type', 1);
+        $subquery->add_filter('im_tow_user_access_private', $user->uid);
+        $query->add_subquery($subquery, 'OR');
     }
  
     $query->set_solrsort('created', 'desc');

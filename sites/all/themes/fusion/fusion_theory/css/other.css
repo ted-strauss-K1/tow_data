@@ -29,8 +29,6 @@ textarea#edit-body {
     min-width: 95%;
 }
 
-
-
 /*--------------- Submit Buttons styling ---------------*/
 .node-form #edit-submit {
     margin-right: 4%;
@@ -65,4 +63,58 @@ textarea#edit-body {
     font-size: 18px;
     text-decoration:underline;
     line-height: 22px;
+}
+
+/* Moving the "Create new Dataset" link to the right */
+.logged-in #block-tow-pma_menu li:last-child {
+    float: right;
+}
+
+/* -------------------------- Noty theming ---------------------------- */
+
+#noty_top_layout_container {   
+   height: 30px !important;
+}
+
+.noty_container_class{
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;   
+    background-color: #666666 !important;
+}
+
+.noty_bar .noty_text {
+    color: white;
+    font-weight: bold;
+}
+
+.noty_bar .noty_text a {
+    text-decoration: underline;
+    color: #C5C5C5;
+}
+
+.noty_bar .noty_text a:hover {    
+    color: #222222;
+}
+
+.noty_close {
+    width: 15px !important;
+    height: 16px !important;
+    background-repeat: no-repeat !important;
+    margin-top: 4px;    
+    background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAQCAYAAADJViUEAAAACXBIWXMAAAsTAAALEwEAmpwYAAABNmlDQ1BQaG90b3Nob3AgSUNDIHByb2ZpbGUAAHjarY6xSsNQFEDPi6LiUCsEcXB4kygotupgxqQtRRCs1SHJ1qShSmkSXl7VfoSjWwcXd7/AyVFwUPwC/0Bx6uAQIYODCJ7p3MPlcsGo2HWnYZRhEGvVbjrS9Xw5+8QMUwDQCbPUbrUOAOIkjvjB5ysC4HnTrjsN/sZ8mCoNTIDtbpSFICpA/0KnGsQYMIN+qkHcAaY6addAPAClXu4vQCnI/Q0oKdfzQXwAZs/1fDDmADPIfQUwdXSpAWpJOlJnvVMtq5ZlSbubBJE8HmU6GmRyPw4TlSaqo6MukP8HwGK+2G46cq1qWXvr/DOu58vc3o8QgFh6LFpBOFTn3yqMnd/n4sZ4GQ5vYXpStN0ruNmAheuirVahvAX34y/Axk/96FpPYgAAACBjSFJNAAB6JQAAgIMAAPn/AACA6AAAUggAARVYAAA6lwAAF2/XWh+QAAAA60lEQVR42pzSvytFYRzH8de5nSST0i2DySiTzYRFNv8EA7vJYFB3MSilbGaDMrKYTJyiLEbJGchg8LPkWL7qpod7jk899Tzfvu8+3x9PVhRFiTd8aKZ2jhdMo2wIX7Xi0q+5slYiOIoOxrpis1j+mZiCn6ONHQxgEJup3DwB34XLEZYwgjNs14HhAivYwjWmUNUp+1sneEcWq1QX7sMGzjGEtVTSb2UvRKkzGMcuDnDay3kypruOS+zF8PZjjX86l5jHcbw/sYgJPPaCb+J06x6HqYFVeP3H96xytDGH24bwcI4HrEZvTfT0NQCv2jACOfHc9AAAAABJRU5ErkJggg==") !important;
+}
+
+/* ---------------------- The End of Noty theming ---------------------- */
+
+/* Bookmark flags theming */
+
+.flag-message {
+    display: table;
+    left: 35px;
+    top: 0;
+    width: 100px;
+    background-color: #C5C5C5;
+    border: 1px #222222 solid;
+    padding: 2px;
 }

@@ -45,7 +45,7 @@ function tow_dataset_badge_block() {
     if ($user->uid == $_tow_dataset->uid) {
         $extrainfo = t('You are an administrator of this dataset');
     } elseif ($_tow_dataset->field_access_type[0]['value'] == 1) {
-        $extrainfo = t('Request access to this dataset');
+        $extrainfo = tow_access_request_widget($_tow_dataset->nid, $user->uid);
     }
 
     // Save the content of the block.
@@ -204,6 +204,50 @@ function tow_dataset_form_alter(&$form, &$form_state) {
         $bc[] .= t('Create dataset');
     }
     drupal_set_breadcrumb($bc);
+}
+
+//Document
+function tow_dataset_doc_form_alter(&$form, &$form_state) {
+        // Add scripts for document node form 'stackoverflow style live preview'.
+        drupal_add_css(drupal_get_path('module', 'tow') . '/js/wmd/wmd.css');
+        drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');
+        drupal_add_js(drupal_get_path('module', 'tow') . '/js/document_preview.js');
+
+        $form['body_field']['body']['#resizable'] = FALSE;
+        $form['body_field']['#suffix'] = '<script type="text/javascript">wmd_options = {"output": "Markdown"};</script>
+            <script type="text/javascript" src="/' . drupal_get_path('module', 'tow') . '/js/wmd/wmd.js"></script></div>';
+        $form['field_doc_dataset_nid']['#access'] = FALSE;
+        $form['title']['#access'] = FALSE;
+        $form['body_field']['teaser_include']['#access'] = FALSE;
+        $form['body_field']['format']['#access'] = FALSE;
+        $form['field_doc_image']['#access'] = FALSE;
+        unset($form['buttons']['preview']);
+        unset($form['buttons']['delete']);
+        
+        $form['#redirect'] = 'doc/' . $form['field_doc_dataset_nid'][0]['#default_value']['value'];
+        
+        global $_tow_dataset;
+        $_tow_dataset = node_load($form['field_doc_dataset_nid'][0]['#default_value']['value']);
+        global $_tow_dataset_doc;
+        $_tow_dataset_doc = TRUE;
+        
+        $form['#validate'][] = 'tow_dataset_doc_form_validate';
+        
+}
+
+//Document form validation function
+function tow_dataset_doc_form_validate (&$form, &$form_state) {
+
+    if ($form_state['values']['body'] == '') {
+        $form_state['values']['body'] = '## Introduction ##
+Your introduction.
+## Data collection methods ##
+Describe your data collection methods.
+## Analysis methods ##
+Describe your analysis methods.
+
+You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.';
+    }
 }
 
 /* * **************************************************************************************************
@@ -603,9 +647,9 @@ function tow_dataset_summary(&$node) {
     }
 
     // For user view if access is by request.
-    elseif ($node->field_access_type[0]['value'] == 1) {
+    /*elseif ($node->field_access_type[0]['value'] == 1) {
         $node->summary['access_widget'] = tow_access_request_widget($node->nid, $user->uid);
-    }
+    }*/
 
     // Extract and show names of tables from the dataset.
     $table_titles_res = db_query("
@@ -1032,6 +1076,9 @@ function tow_dataset_doc_output($dnid) {
     global $_tow_dataset_doc;
     $_tow_dataset_doc = TRUE;
 
+    // Run all enabled filters for format_id '4' on the body field.
+    $doc->body = check_markup($doc->body, 4);
+    
     $output = $doc->body;
     global $user;
     $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $doc->uid));
