@@ -346,16 +346,7 @@ function tow_rules_heartbeat_feature_rules_defaults() {
         '#status' => 'default',
         '#conditions' => array(
           '0' => array(
-            '#type' => 'condition',
-            '#settings' => array(
-              'type' => array(
-                'dataset' => 'dataset',
-              ),
-              '#argument map' => array(
-                'node' => 'node',
-              ),
-            ),
-            '#name' => 'rules_condition_content_is_type',
+            '#weight' => 0,
             '#info' => array(
               'label' => 'Updated content is Dataset',
               'arguments' => array(
@@ -366,148 +357,112 @@ function tow_rules_heartbeat_feature_rules_defaults() {
               ),
               'module' => 'Node',
             ),
-            '#weight' => 0,
+            '#name' => 'rules_condition_content_is_type',
+            '#settings' => array(
+              'type' => array(
+                'dataset' => 'dataset',
+              ),
+              '#argument map' => array(
+                'node' => 'node',
+              ),
+            ),
+            '#type' => 'condition',
           ),
           '1' => array(
-            '#weight' => 0,
-            '#type' => 'condition',
+            '#info' => array(
+              'label' => 'Execute custom PHP code',
+              'module' => 'PHP',
+              'eval input' => array(
+                '0' => 'code',
+              ),
+            ),
+            '#name' => 'rules_condition_custom_php',
             '#settings' => array(
-              'code' => '$old = $node_unchanged->taxonomy;
-
-$typed_terms = array();
-
+              'code' => '$old_terms = $node_unchanged->taxonomy;
 $terms = $node->taxonomy;
-foreach ($terms[\'tags\'] as $vid => $vid_value) {
-  $typed_terms += drupal_explode_tags($vid_value);
+$old_typed_terms = array();
+$typed_terms = array();
+foreach ($old_terms as $key) {
+  $old_typed_terms[] = $key->name;
 }
-unset($terms[\'tags\']);
-
-if (is_array($terms)) {
-  foreach ($terms as $term) {
-    if (is_array($term)) {
-      foreach ($term as $tid) {
-        if ($tid) {
-          $typed_terms[] = taxonomy_get_term($tid)->name;
-        }
-      }
-    }
-    else if (is_object($term)) {
-      $typed_terms[] = taxonomy_get_term($term->tid)->name;
-    }
-    else if ($term) {
-      $typed_terms[] = taxonomy_get_term($term)->name;
-    }
-  }
+foreach ($terms as $key) {
+  $typed_terms[] = $key->name;
 }
 
-foreach ($old as $term) {
-  foreach ($typed_terms as $k => $t) {
-    if ($t == $term->name) {
-      unset($typed_terms[$k]);
-    }
-  }
+if (array_diff($old_typed_terms, $typed_terms) === array_diff($typed_terms, $old_typed_terms)) {
+  return FALSE;
 }
 
-$tags = \'\';
-foreach ($typed_terms as $tt) {
-  $tags .= \'"\' . $tt . \'"\' . \', \';
-}
-$tags = trim($tags, \', \');
-
-return ($tags == \'\') ? FALSE : TRUE;',
+$added_terms = array_diff($typed_terms, $old_typed_terms);
+return (empty($added_terms)) ? FALSE : TRUE;',
               'vars' => array(
                 '0' => 'node',
                 '1' => 'node_unchanged',
               ),
-            ),
-            '#name' => 'rules_condition_custom_php',
-            '#info' => array(
-              'label' => 'Execute custom PHP code',
-              'module' => 'PHP',
-              'eval input' => array(
-                '0' => 'code',
+              '#eval input' => array(
+                'token_rules_input_evaluator' => array(
+                  'code' => array(
+                    '0' => ':global',
+                  ),
+                ),
               ),
             ),
+            '#type' => 'condition',
+            '#weight' => 0,
           ),
         ),
         '#actions' => array(
           '0' => array(
-            '#info' => array(
-              'label' => 'Execute custom PHP code',
-              'module' => 'PHP',
-              'eval input' => array(
-                '0' => 'code',
-              ),
-            ),
-            '#name' => 'rules_action_custom_php',
+            '#weight' => 0,
+            '#type' => 'action',
             '#settings' => array(
-              'code' => '$old = $node_unchanged->taxonomy;
-
-$typed_terms = array();
-
+              'code' => '$old_terms = $node_unchanged->taxonomy;
 $terms = $node->taxonomy;
-foreach ($terms[\'tags\'] as $vid => $vid_value) {
-  $typed_terms += drupal_explode_tags($vid_value);
+$old_typed_terms = array();
+$typed_terms = array();
+foreach ($old_terms as $key) {
+  $old_typed_terms[] = $key->name;
 }
-unset($terms[\'tags\']);
-
-if (is_array($terms)) {
-  foreach ($terms as $term) {
-    if (is_array($term)) {
-      foreach ($term as $tid) {
-        if ($tid) {
-          $typed_terms[] = taxonomy_get_term($tid)->name;
-        }
-      }
-    }
-    else if (is_object($term)) {
-      $typed_terms[] = taxonomy_get_term($term->tid)->name;
-    }
-    else if ($term) {
-      $typed_terms[] = taxonomy_get_term($term)->name;
-    }
-  }
+foreach ($terms as $key) {
+  $typed_terms[] = $key->name;
 }
 
-foreach ($old as $term) {
-  foreach ($typed_terms as $k => $t) {
-    if ($t == $term->name) {
-      unset($typed_terms[$k]);
-    }
-  }
+if (array_diff($old_typed_terms, $typed_terms) === array_diff($typed_terms, $old_typed_terms)) {
+  return FALSE;
 }
 
-$tags = \'\';
-foreach ($typed_terms as $tt) {
-  $tags .= \'"\' . $tt . \'"\' . \', \';
+$added_terms = array_diff($typed_terms, $old_typed_terms);
+$new_tags = \'\';
+foreach ($added_terms as $tag) {
+  $term_array = taxonomy_get_term_by_name($tag);
+  $tid = $term_array[0]->tid;
+  $new_tags .= l($tag, \'taxonomy/term/\' . $tid) . \' \';
 }
-$tags = trim($tags, \', \');
-$node->new_tags = $tags;
-
+$node->new_tags = $new_tags;
 return array(\'node\' => $node);',
               'vars' => array(
                 '0' => 'node',
                 '1' => 'node_unchanged',
               ),
+              '#eval input' => array(
+                'token_rules_input_evaluator' => array(
+                  'code' => array(
+                    '0' => ':global',
+                  ),
+                ),
+              ),
             ),
-            '#type' => 'action',
-            '#weight' => 0,
+            '#name' => 'rules_action_custom_php',
+            '#info' => array(
+              'label' => 'Execute custom PHP code',
+              'module' => 'PHP',
+              'eval input' => array(
+                '0' => 'code',
+              ),
+            ),
           ),
           '1' => array(
-            '#weight' => 0,
-            '#info' => array(
-              'label' => 'Logs default activity',
-              'eval input' => array(
-                '0' => 'uid_param',
-                '1' => 'uid_target_param',
-                '2' => 'nid_param',
-                '3' => 'nid_target_param',
-                '4' => 'message_id_param',
-                '5' => 'variables_param',
-              ),
-              'module' => 'heartbeat',
-            ),
-            '#name' => 'heartbeat_rules_default_action',
+            '#type' => 'action',
             '#settings' => array(
               'uid_param' => '[user:uid]',
               'uid_target_param' => '[author:uid]',
@@ -535,7 +490,20 @@ return array(\'node\' => $node);',
                 ),
               ),
             ),
-            '#type' => 'action',
+            '#name' => 'heartbeat_rules_default_action',
+            '#info' => array(
+              'label' => 'Logs default activity',
+              'eval input' => array(
+                '0' => 'uid_param',
+                '1' => 'uid_target_param',
+                '2' => 'nid_param',
+                '3' => 'nid_target_param',
+                '4' => 'message_id_param',
+                '5' => 'variables_param',
+              ),
+              'module' => 'heartbeat',
+            ),
+            '#weight' => 0,
           ),
         ),
         '#version' => 6003,

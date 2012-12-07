@@ -206,6 +206,50 @@ function tow_dataset_form_alter(&$form, &$form_state) {
     drupal_set_breadcrumb($bc);
 }
 
+//Document
+function tow_dataset_doc_form_alter(&$form, &$form_state) {
+        // Add scripts for document node form 'stackoverflow style live preview'.
+        drupal_add_css(drupal_get_path('module', 'tow') . '/js/wmd/wmd.css');
+        drupal_add_js(drupal_get_path('module', 'tow') . '/js/wmd/showdown.js');
+        drupal_add_js(drupal_get_path('module', 'tow') . '/js/document_preview.js');
+
+        $form['body_field']['body']['#resizable'] = FALSE;
+        $form['body_field']['#suffix'] = '<script type="text/javascript">wmd_options = {"output": "Markdown"};</script>
+            <script type="text/javascript" src="/' . drupal_get_path('module', 'tow') . '/js/wmd/wmd.js"></script></div>';
+        $form['field_doc_dataset_nid']['#access'] = FALSE;
+        $form['title']['#access'] = FALSE;
+        $form['body_field']['teaser_include']['#access'] = FALSE;
+        $form['body_field']['format']['#access'] = FALSE;
+        $form['field_doc_image']['#access'] = FALSE;
+        unset($form['buttons']['preview']);
+        unset($form['buttons']['delete']);
+        
+        $form['#redirect'] = 'doc/' . $form['field_doc_dataset_nid'][0]['#default_value']['value'];
+        
+        global $_tow_dataset;
+        $_tow_dataset = node_load($form['field_doc_dataset_nid'][0]['#default_value']['value']);
+        global $_tow_dataset_doc;
+        $_tow_dataset_doc = TRUE;
+        
+        $form['#validate'][] = 'tow_dataset_doc_form_validate';
+        
+}
+
+//Document form validation function
+function tow_dataset_doc_form_validate (&$form, &$form_state) {
+
+    if ($form_state['values']['body'] == '') {
+        $form_state['values']['body'] = '## Introduction ##
+Your introduction.
+## Data collection methods ##
+Describe your data collection methods.
+## Analysis methods ##
+Describe your analysis methods.
+
+You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.';
+    }
+}
+
 /* * **************************************************************************************************
  * Forms
  * ************************************************************************************************** */
@@ -1032,6 +1076,9 @@ function tow_dataset_doc_output($dnid) {
     global $_tow_dataset_doc;
     $_tow_dataset_doc = TRUE;
 
+    // Run all enabled filters for format_id '4' on the body field.
+    $doc->body = check_markup($doc->body, 4);
+    
     $output = $doc->body;
     global $user;
     $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $doc->uid));
