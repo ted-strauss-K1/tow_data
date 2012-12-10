@@ -28,7 +28,8 @@ function tow_ajax_handlers_create_saved_search($nid) {
     $filters = $_GET['filters'];
 
     // Selected fields.
-    $selected_fields = (isset($_GET['selected_fields'])) ? $_GET['selected_fields'] : json_encode(new stdClass());
+    $selected_fields = (isset($_GET['selected_fields'])) ? $_GET['selected_fields'] : '';
+    $selected_fields = ($selected_fields == json_encode(new stdClass())) ? '' : $selected_fields;
 
     //Saved search comment (title)
     $ss_comment = $_GET['ss_comment'];
@@ -54,7 +55,7 @@ function tow_ajax_handlers_create_saved_search($nid) {
                 'saved_searches' => $block['content'],
             );
             
-            //Update {apachesolr_search_node} table for indexing updates in saved_searches
+            // Update {apachesolr_search_node} table for indexing updates in saved_searches
             db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $nid);
         
         } catch (Exception $e) {
@@ -65,6 +66,26 @@ function tow_ajax_handlers_create_saved_search($nid) {
             );
         }
     }
+
+    return drupal_json($json);
+}
+
+
+/**
+ * Handles the creation of a saved search with Ajax.
+ */
+function tow_ajax_handlers_delete_saved_search($dataset_nid) {
+
+    if ($_GET['confirm'] == 'true') {
+        node_delete($_GET['ss_nid']);
+    }
+    $block = tow_saved_searches_list_block($dataset_nid);
+    $json = array(
+        'saved_searches' => $block['content'],
+    );
+
+    // Update {apachesolr_search_node} table for indexing updates in saved_searches
+    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $dataset_nid);
 
     return drupal_json($json);
 }
@@ -317,25 +338,29 @@ function tow_ajax_handlers_register_add_more() {
  * Refresh search results according to filters set with Ajax.
  */
 function tow_ajax_handlers_refresh_search_results($nid) {
-
+    
+    $selected_fields = isset($_GET['selected_fields']) ? json_decode($_GET['selected_fields']) : array();
+    $selected_fields = is_null($selected_fields) ? array() : $selected_fields;
+    $selected_fields = is_object($selected_fields) ? (array)$selected_fields : $selected_fields;
+    $path = 'search_dataset/' . tow_search_inner_get_nid();
+    
     // Fields list block content.
-    $fields = tow_search_inner_field_list_block();
+    $fields = tow_search_inner_field_list_block($selected_fields);
 
     // Emulate we are on the search page.
     $_GET['q'] = str_replace('/refresh_ajax', '', $_GET['q']);
 
     // Define search data.
-    $search = tow_search_inner_within_dataset($nid);
+    $search = tow_search_inner_within_dataset($nid, TRUE);
 
     // Generate new widgets block output.
-    $widgets = tow_search_inner_widgets_block();
+    $widgets = tow_search_inner_widgets_block($path);
 
     // Generate new Search description block output.
     $save_search = tow_saved_searches_description_block();
 
     // Generate new Save this search block output.
     $save_this_search = tow_saved_searches_save_search_block();
-    $save_this_search['content'] = str_replace($save_search['content'], '', $save_this_search['content']);
 
     global $user;
 

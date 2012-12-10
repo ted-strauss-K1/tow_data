@@ -5,11 +5,6 @@
  *
  * Custom code for Theory on Wheels.
  */
-/* * **************************************************************************************************
- * CSS & JS
- * ************************************************************************************************** */
-
-drupal_add_css(drupal_get_path('module', 'tow') . '/css/tow.css');
 
 
 
@@ -626,6 +621,16 @@ function tow_menu() {
         'type' => MENU_CALLBACK,
     );
 
+    // Page for creating a saved search with Ajax.
+    $items['search_dataset/%/ajax/delete_search'] = array(
+        'title' => 'Delete a saved search',
+        'page callback' => 'tow_ajax_handlers_delete_saved_search',
+        'page arguments' => array(1),
+        'access arguments' => array('access content'),
+        'file' => 'includes/tow.ajax_handlers.inc',
+        'type' => MENU_CALLBACK,
+    );
+
     // Access actions.
     $items['access'] = array(
         'title' => NULL,
@@ -720,7 +725,7 @@ function tow_menu() {
 
     // Page for inner search within dataset.
     $items['search_dataset'] = array(
-        'page callback' => 'tow_search_inner_within_dataset_callback',
+        'page callback' => 'tow_search_inner_within_dataset',
         'page arguments' => array(1),
         'access arguments' => array('access content'),
         'file' => 'includes/tow.search_inner.inc',
@@ -886,6 +891,7 @@ function tow_nodeapi(&$node, $op) {
         if ($node->type == 'dataset') {
             global $_tow_dataset;
             $_tow_dataset = $node;
+            //db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
         }
     }
 
@@ -1313,12 +1319,25 @@ function tow_theme() {
 function tow_preprocess_node(&$variables) {
     if ($variables['type'] == 'saved_search') {
         $node = $variables['node'];
+        
+        $isset_filters = (isset($node->field_search_constraints[0]['safe']) && $node->field_search_constraints[0]['safe'] != '');
+        $isset_selected_fields = (isset($node->field_selected_fields[0]['safe']) && $node->field_selected_fields[0]['safe'] != '');
+        
         $variables['node_url'] = '/search_dataset/';
         $variables['node_url'] .= ($node->field_table_nid[0]['value'] == 0) ? $node->field_dataset_nid[0]['value'] : $node->field_table_nid[0]['value'];
-        $variables['node_url'] .= '#?';
-        $variables['node_url'] .= 'filters=' . $node->field_search_constraints[0]['safe'];
-        $variables['node_url'] .= '&';
-        $variables['node_url'] .= 'selected_fields=' . $node->field_selected_fields[0]['safe'];
+        
+        if ($isset_filters || $isset_selected_fields) {
+            $variables['node_url'] .= '#?';
+            if ($isset_filters) {
+                $variables['node_url'] .= 'filters=' . $node->field_search_constraints[0]['safe'];
+            }
+            if ($isset_selected_fields) {
+                if ($isset_filters) {
+                    $variables['node_url'] .= '&';
+                }
+                $variables['node_url'] .= 'selected_fields=' . $node->field_selected_fields[0]['safe'];
+            }
+        }
     }
 }
 
