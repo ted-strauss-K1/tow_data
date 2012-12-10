@@ -1082,7 +1082,8 @@ function tow_dataset_doc_output($dnid) {
     $output = $doc->body;
     global $user;
     $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $doc->uid));
-    $output .= ($is_admin) ? l('Edit doc', 'node/' . $dataset_doc['nid'] . '/edit') : '';
+    // Added a class to the Edic Doc link (Peter V.)
+    $output .= ($is_admin) ? l('Edit doc', 'node/' . $dataset_doc['nid'] . '/edit', array('attributes'=>array('class'=>'btn edit-doc-button'))) : '';
     
     return $output;
     
