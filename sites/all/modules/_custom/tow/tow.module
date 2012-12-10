@@ -886,6 +886,7 @@ function tow_nodeapi(&$node, $op) {
         if ($node->type == 'dataset') {
             global $_tow_dataset;
             $_tow_dataset = $node;
+            //db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
         }
     }
 

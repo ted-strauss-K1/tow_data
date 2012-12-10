@@ -143,6 +143,12 @@ function tow_apachesolr_update_index(&$document, $node) {
 
     ", $node->nid));
         $document->sis_tow_amount_saved_searches = (isset($document->sis_tow_amount_saved_searches) && $document->sis_tow_amount_saved_searches) ? $document->sis_tow_amount_saved_searches : 0;
+        
+        // Get amount of views.
+        tow_statistics_dataset_extract($node->nid);
+        global $_tow_dataset_statistics;
+        $document->sis_tow_count_views = $_tow_dataset_statistics['count'];
+        $document->sis_tow_count_views = (isset($document->sis_tow_count_views) && $document->sis_tow_count_views) ? $document->sis_tow_count_views : 0;
 
         // Get teaser.
         $document->ss_picture = $node->picture;
@@ -373,7 +379,8 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
 
         // Sort by time created ascending for the most popular datasets.
         case 'popular':
-            $query->set_solrsort('sort_title', 'asc');
+            $query->set_available_sort('sis_tow_count_views', array('title' => t('Most viewed'), 'default' => 'asc'));
+            $query->set_solrsort('sis_tow_count_views', 'desc');
             break;
 
         // Do nothing by default.
