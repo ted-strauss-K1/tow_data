@@ -19,6 +19,7 @@ scripts[] = js/noty/noty.js
 scripts[] = js/noty/default.js
 scripts[] = js/noty/topRight.js
 scripts[] = js/noty/top.js
+scripts[] = js/bootstrap/bootstrap.min.js
 
 /*regions[sidebar_first = sidebar first */
 regions[sidebar_last] = sidebar last
