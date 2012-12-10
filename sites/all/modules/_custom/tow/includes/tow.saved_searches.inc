@@ -55,7 +55,7 @@ function tow_saved_searches_list_block($nid = NULL) {
     }
 
     $block['title'] = t('User analysis');
-    $block['content'] = '';
+    $block['content'] = '<span class="saved_search-preamble" style="display:none;"><strong>Search history</strong></span>';
 
     foreach ($saved_searches as $node) {
 
@@ -66,7 +66,12 @@ function tow_saved_searches_list_block($nid = NULL) {
         }
         global $user;
         $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $node->uid));
-        $output .= ($is_admin) ? l('Delete this search', 'node/' . $node->nid . '/delete') : '';
+        $options = array(
+            'attributes' => array(
+                'class' => 'saved-search-delete',
+            ),
+        );
+        $output .= ($is_admin) ? l('Delete this search', 'node/' . $node->nid . '/delete', $options) : '';
         $output .= '</div>';
 
         $block['content'] .= $output;
@@ -85,11 +90,15 @@ function tow_saved_searches_save_search_block() {
     $block['title'] = NULL;
 
     $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+    
+    $nid = tow_search_inner_get_nid();
+    $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
+    $selected_fields = isset($_GET['selected_fields']) ? $_GET['selected_fields'] : '';
     $rows_amount = $saved_response->response->numFound;
     
     global $user;
     
-    $block['content'] = ($user->uid) ? drupal_get_form('tow_saved_searches_save_search_form', $rows_amount) : (l('Login', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal'))) . ' to share your analysis');
+    $block['content'] = ($user->uid) ? drupal_get_form('tow_saved_searches_save_search_form', $nid, $filters, $selected_fields, $rows_amount) : (l('Login', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal'))) . ' to share your analysis');
 
     return $block;
 }
@@ -106,12 +115,19 @@ function tow_saved_searches_description_block() {
     if (arg(0) != 'search_dataset') {
         $block['content'] = '';
     } else {
+        $nid = tow_search_inner_get_nid();
+        
+        $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
+        $selected_fields = isset($_GET['selected_fields']) ? $_GET['selected_fields'] : '';
+        
         $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
         $rows_amount = $saved_response->response->numFound;
-        $ssd_form = tow_saved_searches_save_search_form(&$form_state, $rows_amount);
+        
+        $summary = tow_saved_searches_summary($nid, $filters, $selected_fields, $rows_amount);
+        
         $block['content'] = 'Choose your search parameters';
-        if ($ssd_form['summary']['#value']) {
-            $block['content'] = $ssd_form['summary']['#value'];
+        if ($summary) {
+            $block['content'] = $summary;
         }
     }
 
@@ -125,12 +141,8 @@ function tow_saved_searches_description_block() {
 /**
  * Defines a form with button for saving search.
  */
-function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
+function tow_saved_searches_save_search_form(&$form_state, $nid, $filters, $selected_fields, $rows_amount) {
     $form = array();
-
-    $nid = arg(1);
-    $filters = $_GET['filters'];
-    $selected_fields = (isset($_GET['selected_fields'])) ? $_GET['selected_fields'] : json_encode(new stdClass(), TRUE);
 
     // Saved search comment(title).
     $form['comment'] = array(
@@ -141,6 +153,12 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
         '#attributes' => array(
             'placeholder' => t('Explain your findings...'),
         ),
+    );
+
+    // NID.
+    $form['nid'] = array(
+        '#type' => 'hidden',
+        '#value' => $nid,
     );
 
     // Filters.
@@ -159,11 +177,6 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
     $form['rows_amount'] = array(
         '#type' => 'hidden',
         '#value' => $rows_amount,
-    );
-
-    // Summary.
-    $form['summary'] = array(
-        '#value' => tow_saved_searches_summary($nid, $filters, $selected_fields, $rows_amount),
     );
 
     // Button.
@@ -192,7 +205,7 @@ function tow_saved_searches_save_search_form(&$form_state, $rows_amount) {
 function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
 
     // Get current node.
-    $nid = arg(1);
+    $nid = $form['nid'];
     if (!is_numeric($nid)) {
         $nid = str_replace(' ', '+', $nid);
         $nid_array = explode('+', $nid);
@@ -324,14 +337,14 @@ function tow_saved_searches_get_constraints($filters) {
 function tow_saved_searches_get_selected_fields($selected_fields) {
 
     // Return empty string if there are no filters.
-    if (!isset($selected_fields) || $selected_fields == json_encode(new stdClass())) {
-        return new stdClass();
+    if (!isset($selected_fields) || $selected_fields == '') {
+        return array();
     }
-
+    
     // Get an array of constraints.
-    $selected_fields = json_decode($selected_fields, TRUE);
-
-    return $selected_fields;
+    else {
+        return json_decode($selected_fields, TRUE);
+    }
 }
 
 /**
@@ -356,11 +369,13 @@ function tow_saved_searches_saved_search_create($node, $ss_comment, $filters, $s
     if ($node->type == 'table') {
         $saved_search->field_table_nid[0]['value'] = $node->nid;
         $saved_search->field_dataset_nid[0]['value'] = $node->field_dataset[0]['value'];
-        $saved_search->body = tow_saved_searches_summary($node->nid, $filters, $selected_fields, $rows_amount);
-        $saved_search->teaser = node_teaser($saved_search->body);
     }
+    
+    // Body, teaser.
+    $saved_search->body = tow_saved_searches_summary(tow_search_inner_get_nid(), $filters, $selected_fields, $rows_amount);
+    $saved_search->teaser = node_teaser($saved_search->body);
 
-    // Save search constraints.
+    // Save search constraints and selected fields.
     $filters = tow_saved_searches_sort_constraints($filters);
     $selected_fields = tow_saved_searches_sort_selected_fields($selected_fields);
     $saved_search->field_search_constraints[0]['value'] = $filters;
@@ -417,12 +432,10 @@ function tow_saved_searches_sort_selected_fields($selected_fields) {
     $sort_array = tow_saved_searches_get_selected_fields($selected_fields);
 
     // Sorting.
-    if (!is_object($sort_array)) {
-        asort($sort_array);
-    }
+    asort($sort_array);
 
     // Construct a new selected fields string.
-    $selected_fields = json_encode($sort_array);
+    $selected_fields = (empty($selected_fields)) ? '' : json_encode($sort_array);
 
     return $selected_fields;
 }
@@ -451,11 +464,12 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
         // Detect whether the constraint is included or excluded.
         $aux = explode(':', $constraint, 2);
         if (substr($aux[0], 0, 1) == '-') {
-            $clude = 'excluding';
+            $empty_values = TRUE;
             $aux[0] = substr($aux[0], 1);
         } else {
-            $clude = 'including';
+            $empty_values = FALSE;
         }
+        $clude = 'including';
 
         // Generate an output of the ranged values.
         if (preg_match('@[\[\{](\S+) TO (\S+)[\]\}]@', $aux[1])) {
@@ -506,7 +520,7 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
 
             // Define sentences according to limit presence.
             if ($start == '*' && $end == '*') {
-                $info[$aux[0]]['search'][$clude][] = "empty values";
+                $info[$aux[0]]['search'][$clude][] = ($empty_values) ? "empty" : "all" . " values";
             } elseif ($start == '*') {
                 $info[$aux[0]]['search'][$clude][] = "values$prefix less than $end$suffix";
             } elseif ($end == '*') {
