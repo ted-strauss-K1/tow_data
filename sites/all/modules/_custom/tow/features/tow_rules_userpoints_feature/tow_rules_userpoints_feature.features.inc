@@ -6,6 +6,117 @@
 function tow_rules_userpoints_feature_rules_defaults() {
   return array(
     'rules' => array(
+      'rules_tow_userpoints_view_content' => array(
+        '#type' => 'rule',
+        '#set' => 'event_node_view',
+        '#label' => 'ToW Userpoints: View Content',
+        '#active' => 1,
+        '#weight' => '0',
+        '#categories' => array(
+          '0' => 'Theory on Wheels',
+          '1' => 'Userpoints',
+          'tow_rules_userpoints_feature' => 'tow_rules_userpoints_feature',
+        ),
+        '#status' => 'default',
+        '#conditions' => array(
+          '0' => array(
+            '#weight' => 0,
+            '#info' => array(
+              'label' => 'Viewed content is Saved Search',
+              'arguments' => array(
+                'node' => array(
+                  'type' => 'node',
+                  'label' => 'Content',
+                ),
+              ),
+              'module' => 'Node',
+            ),
+            '#name' => 'rules_condition_content_is_type',
+            '#settings' => array(
+              'type' => array(
+                'saved_search' => 'saved_search',
+              ),
+              '#argument map' => array(
+                'node' => 'node',
+              ),
+            ),
+            '#type' => 'condition',
+          ),
+          '1' => array(
+            '#weight' => 0,
+            '#info' => array(
+              'label' => 'Execute custom PHP code',
+              'module' => 'PHP',
+              'eval input' => array(
+                '0' => 'code',
+              ),
+            ),
+            '#name' => 'rules_condition_custom_php',
+            '#settings' => array(
+              'code' => '$views = db_result(db_query("SELECT t.count AS count FROM {tow_node_views_counter} t WHERE t.nid = %d LIMIT 1", $node->nid));
+if (!$views) {
+  return FALSE;
+}
+$views %= 10;
+
+return ($views === 0) ? TRUE : FALSE;',
+              'vars' => array(
+                '0' => 'node',
+              ),
+              '#eval input' => array(
+                'token_rules_input_evaluator' => array(
+                  'code' => array(
+                    '0' => ':global',
+                  ),
+                ),
+              ),
+            ),
+            '#type' => 'condition',
+          ),
+        ),
+        '#actions' => array(
+          '0' => array(
+            '#type' => 'action',
+            '#settings' => array(
+              'points' => '1',
+              'description' => 'Being viewed with [node:type-name] [node:title-link].',
+              'operation' => '',
+              'entity_type' => '',
+              'entity_id' => '',
+              'tid' => '',
+              '#argument map' => array(
+                'user' => 'author',
+              ),
+              '#eval input' => array(
+                'token_rules_input_evaluator' => array(
+                  'description' => array(
+                    '0' => 'node',
+                  ),
+                ),
+              ),
+            ),
+            '#name' => 'userpoints_action_grant_points',
+            '#info' => array(
+              'label' => 'Grant points to a user',
+              'arguments' => array(
+                'user' => array(
+                  'type' => 'user',
+                  'label' => 'User',
+                ),
+              ),
+              'module' => 'Userpoints',
+              'eval input' => array(
+                '0' => 'points',
+                '1' => 'entity_id',
+                '2' => 'description',
+                '3' => 'operation',
+              ),
+            ),
+            '#weight' => 0,
+          ),
+        ),
+        '#version' => 6003,
+      ),
       'rules_tow_userpoints_create_document_250_words' => array(
         '#type' => 'rule',
         '#set' => 'event_node_insert',
@@ -2395,117 +2506,6 @@ else {
               ),
             ),
             '#weight' => 0,
-          ),
-        ),
-        '#version' => 6003,
-      ),
-      'rules_tow_userpoints_view_content' => array(
-        '#type' => 'rule',
-        '#set' => 'event_node_view',
-        '#label' => 'ToW Userpoints: View Content',
-        '#active' => 1,
-        '#weight' => '0',
-        '#categories' => array(
-          '0' => 'Theory on Wheels',
-          '1' => 'Userpoints',
-          'tow_rules_userpoints_feature' => 'tow_rules_userpoints_feature',
-        ),
-        '#status' => 'default',
-        '#conditions' => array(
-          '0' => array(
-            '#type' => 'condition',
-            '#settings' => array(
-              'type' => array(
-                'saved_search' => 'saved_search',
-              ),
-              '#argument map' => array(
-                'node' => 'node',
-              ),
-            ),
-            '#name' => 'rules_condition_content_is_type',
-            '#info' => array(
-              'label' => 'Viewed content is Saved Search',
-              'arguments' => array(
-                'node' => array(
-                  'type' => 'node',
-                  'label' => 'Content',
-                ),
-              ),
-              'module' => 'Node',
-            ),
-            '#weight' => 0,
-          ),
-          '1' => array(
-            '#weight' => 0,
-            '#type' => 'condition',
-            '#settings' => array(
-              'code' => '$views = db_result(db_query("SELECT t.count AS count FROM {tow_node_views_counter} t WHERE t.nid = %d LIMIT 1", $node->nid));
-if (!$views) {
-  return FALSE;
-}
-$views %= 10;
-dpm($node);
-return ($views === 0) ? TRUE : FALSE;',
-              'vars' => array(
-                '0' => 'node',
-              ),
-              '#eval input' => array(
-                'token_rules_input_evaluator' => array(
-                  'code' => array(
-                    '0' => ':global',
-                  ),
-                ),
-              ),
-            ),
-            '#name' => 'rules_condition_custom_php',
-            '#info' => array(
-              'label' => 'Execute custom PHP code',
-              'module' => 'PHP',
-              'eval input' => array(
-                '0' => 'code',
-              ),
-            ),
-          ),
-        ),
-        '#actions' => array(
-          '0' => array(
-            '#weight' => 0,
-            '#info' => array(
-              'label' => 'Grant points to a user',
-              'arguments' => array(
-                'user' => array(
-                  'type' => 'user',
-                  'label' => 'User',
-                ),
-              ),
-              'module' => 'Userpoints',
-              'eval input' => array(
-                '0' => 'points',
-                '1' => 'entity_id',
-                '2' => 'description',
-                '3' => 'operation',
-              ),
-            ),
-            '#name' => 'userpoints_action_grant_points',
-            '#settings' => array(
-              'points' => '1',
-              'description' => 'Being viewed with [node:type-name] [node:title-link].',
-              'operation' => '',
-              'entity_type' => '',
-              'entity_id' => '',
-              'tid' => '',
-              '#argument map' => array(
-                'user' => 'author',
-              ),
-              '#eval input' => array(
-                'token_rules_input_evaluator' => array(
-                  'description' => array(
-                    '0' => 'node',
-                  ),
-                ),
-              ),
-            ),
-            '#type' => 'action',
           ),
         ),
         '#version' => 6003,
