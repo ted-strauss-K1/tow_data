@@ -190,7 +190,7 @@ a:hover {
 #block-tow-search_outer_tabs li a:hover {
     color: #979797;
 }
-.logged-in #block-tow-search_outer_tabs li:last-child
+#block-tow-search_outer_tabs li:last-child
 {
 	float:right;	
 }
