@@ -241,6 +241,7 @@ function tow_search_inner_within_dataset($nid, $ajax = FALSE) {
 
     // Add javascript.
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/jquery.ba-hashchange.min.js');
+    drupal_add_js('misc/collapse.js');
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/highcharts.js');
     drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/Scroller/media/js/dataTables.scroller.js');

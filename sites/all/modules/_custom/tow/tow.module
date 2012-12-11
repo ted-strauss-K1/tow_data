@@ -219,6 +219,7 @@ function tow_block($op = 'list', $delta = 0) {
 
             // 'Inner search: facets block' block.
             if ($delta == 'search_inner_facets') {
+                drupal_add_js('misc/collapse.js');
                 drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
                 return tow_search_inner_widgets_block();
             }
