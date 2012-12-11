@@ -26,7 +26,29 @@ textarea#edit-body {
     padding: 6px;
     border: #CCCCCC 1px solid;
     background-color: white;
-    min-width: 95%;
+    min-width: 95%;    
+}
+
+.node-type-document .content-inner h1,
+.node-type-document .content-inner h2,
+.node-type-document .content-inner h3,
+.node-type-document .content-inner h4,
+.node-type-document .content-inner h5,
+.node-type-document .content-inner h6 {
+    text-align: left;
+}
+
+.page-doc .content-inner h1,
+.page-doc .content-inner h2,
+.page-doc .content-inner h3,
+.page-doc .content-inner h4,
+.page-doc .content-inner h5,
+.page-doc .content-inner h6 {
+    text-align: left;
+}
+
+.btn.edit-doc-button{
+    float: right;
 }
 
 /*--------------- Submit Buttons styling ---------------*/
@@ -35,8 +57,8 @@ textarea#edit-body {
 }
 
 .node-form .form-submit {
-    min-width: 72px;
-    min-height: 36px;   
+    width: 72px;
+    height: 36px;   
     font-size: 14px;
     text-align: center;
     float: right;
@@ -62,11 +84,11 @@ textarea#edit-body {
 #wmd-preview h2{
     font-size: 18px;
     text-decoration:underline;
-    line-height: 22px;
+    line-height: 22px;    
 }
 
 /* Moving the "Create new Dataset" link to the right */
-.logged-in #block-tow-pma_menu li:last-child {
+#block-tow-pma_menu li:last-child {
     float: right;
 }
 
