@@ -6,6 +6,41 @@
 function tow_menu_users_feature_menu_default_menu_links() {
   $menu_links = array();
 
+  // Exported menu link: menu-users:node/add/dataset
+  $menu_links['menu-users:node/add/dataset'] = array(
+    'menu_name' => 'menu-users',
+    'link_path' => 'node/add/dataset',
+    'router_path' => 'node/add/dataset',
+    'link_title' => 'Create new dataset',
+    'options' => array(
+      'attributes' => array(),
+    ),
+    'module' => 'menu',
+    'hidden' => '0',
+    'external' => '0',
+    'has_children' => '0',
+    'expanded' => '0',
+    'weight' => '-45',
+  );
+  // Exported menu link: menu-users:user/login
+  $menu_links['menu-users:user/login'] = array(
+    'menu_name' => 'menu-users',
+    'link_path' => 'user/login',
+    'router_path' => 'user/login',
+    'link_title' => 'Create new dataset',
+    'options' => array(
+      'attributes' => array(
+        'class' => 'automodal',
+      ),
+      'query' => 'automodalReload=true',
+    ),
+    'module' => 'menu',
+    'hidden' => '0',
+    'external' => '0',
+    'has_children' => '0',
+    'expanded' => '0',
+    'weight' => '-44',
+  );
   // Exported menu link: menu-users:users/moderators
   $menu_links['menu-users:users/moderators'] = array(
     'menu_name' => 'menu-users',
@@ -88,6 +123,7 @@ function tow_menu_users_feature_menu_default_menu_links() {
   );
   // Translatables
   // Included for use with string extractors like potx.
+  t('Create new dataset');
   t('Moderators');
   t('New Users');
   t('Reputation');
