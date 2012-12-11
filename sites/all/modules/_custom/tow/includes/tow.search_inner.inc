@@ -760,6 +760,7 @@ function tow_search_inner_bar_widget($field, $field_type, $path, $facet_counts, 
 
     $data = drupal_to_js($data);
     $facets_list = drupal_to_js($facets_list);
+    $facets_list = str_replace('\u005Cn', '\n', $facets_list);
 
     $form = drupal_get_form('tow_search_inner_numeric_facet_form', $field, $stats->min, $stats->max, $empty, $selection_limits['min'], $selection_limits['max'], $path, $data, $facets_list, $field_type);
     $container = '<div class="tow-inner-search-highcharts-bar-container" id="' . $field . '_highchart"></div>';
@@ -882,8 +883,10 @@ function tow_search_inner_chart_widget($field, $field_type, $path, $facet_counts
 
     // Prepare data.
     list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $facet_counts);
+    
     $data = drupal_to_js($data);
     $facets_list = drupal_to_js($facets_list);
+    $facets_list = str_replace('\u005Cn', '\n', $facets_list);
 
     // Limits of selection range.
     $selection_limits = tow_search_inner_range_limits($field);
