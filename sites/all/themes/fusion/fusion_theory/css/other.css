@@ -97,18 +97,11 @@ textarea#edit-body {
 #noty_top_layout_container {   
    height: 30px !important;
 }
-
-.noty_container_class{
-    background: none !important;
-    border: none !important;
-    border-radius: 0 !important;   
-    background-color: #666666 !important;
-}
-
+/*
 .noty_bar .noty_text {
     color: white;
     font-weight: bold;
-}
+} 
 
 .noty_bar .noty_text a {
     text-decoration: underline;
@@ -117,7 +110,16 @@ textarea#edit-body {
 
 .noty_bar .noty_text a:hover {    
     color: #222222;
+} */
+
+.noty_bar .noty_text a {
+    text-decoration: underline;
 }
+
+.noty_bar .noty_text {
+    font-weight: bold;
+    color: #747872;
+} 
 
 .noty_close {
     width: 15px !important;
@@ -140,3 +142,127 @@ textarea#edit-body {
     border: 1px #222222 solid;
     padding: 2px;
 }
+
+/* ---------------------- Noty types theming ---------------------- */
+
+.alert-note-noty-class {  
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;   
+    background-color: #666666 !important;
+}
+.alert-note-noty-class .noty_bar .noty_text{
+    color: white;    
+}
+
+.alert-note-noty-class .noty_bar .noty_text a {
+    color: #C5C5C5;
+}
+.alert-note-noty-class .noty_bar .noty_text a:hover{
+    color: #222222;    
+}
+
+
+.warning-noty-class {    
+    background: none !important;
+    /*border: none !important;*/
+    border-radius: 0 !important;   
+    background-color: #D8D8D8 !important;
+}
+
+.warning-noty-class .noty_bar .noty_text {
+    color: #717171;    
+}
+
+.warning-noty-class .noty_bar .noty_text a {
+    color: #909090;
+}
+
+.warning-noty-class .noty_bar .noty_text a:hover {    
+    color: #222222;
+}
+
+
+
+
+.error-noty-class {   
+    background: none !important;
+    /*border: none !important;*/
+    border-radius: 0 !important;   
+    background-color: #222224 !important;
+    border: 1px solid #000000;
+}
+
+.error-noty-class .noty_bar .noty_text {
+    color: #D3DDD3;
+    /*font-size: medium;*/
+}
+
+.error-noty-class .noty_bar .noty_text a {
+    color: #C5C5C5;
+}
+
+.error-noty-class .noty_bar .noty_text a:hover {    
+    color: #222222;
+}
+
+
+.information-noty-class {
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;   
+    background-color: #666666 !important;
+}
+
+.information-noty-class .noty_bar .noty_text {
+    color: white;    
+}
+
+.information-noty-class .noty_bar .noty_text a {
+    color: #C5C5C5;
+}
+
+.information-noty-class .noty_bar .noty_text a:hover {    
+    color: #222222;
+}
+
+
+.success-noty-class{  
+    background: none !important;
+    /*border: none !important;*/
+    border-radius: 0 !important;   
+    background-color: #F8F8F8 !important;
+    border: 1px solid #DADEE3;
+} 
+
+.success-noty-clas .noty_bar .noty_text {
+    color: #B1B1B5;    
+}
+
+.success-noty-clas .noty_bar .noty_text a {
+    color: #C5C5C5;
+}
+
+.success-noty-clas .noty_bar .noty_text a:hover {    
+    color: #222222;
+}
+
+.default-noty-class {
+  background: none !important;
+  border: none !important;
+  border-radius: 0 !important;   
+  background-color: #666666 !important;
+}
+
+.default-noty-class .noty_bar .noty_text {
+    color: white;    
+}
+
+.default-noty-class .noty_bar .noty_text a {
+    color: #C5C5C5;
+}
+
+.default-noty-class .noty_bar .noty_text a:hover {    
+    color: #222222;
+}
+

@@ -72,9 +72,10 @@ function tow_pma_menu_block() {
     $dataset_request = db_fetch_array($result);
 
     // Define menu items.
+    $browse_has_submenu = ($subitems) ? 'browse-has-submenu':NULL;
     $items = array();
-    $items['browse'] = /*($_tow_grey_pma_menu) ? t('Browse') :  (($_tow_table) ? l('Browse', 'table/' . $_tow_table->nid) : */l('Browse', 'node/' . $_tow_dataset->nid)/* ) */;
-    $items['browse'] .= '<ul class="browse-submenu">' . $subitems . '</ul>';
+    $items['browse'] = /*($_tow_grey_pma_menu) ? t('Browse') :  (($_tow_table) ? l('Browse', 'table/' . $_tow_table->nid) : */l('Browse', 'node/' . $_tow_dataset->nid, $options = array('attributes'=>array('class'=>$browse_has_submenu)))/* ) */;
+    $items['browse'] .= ($subitems) ? ('<ul class="browse-submenu">' . $subitems . '</ul>'):NULL;
     $items['search'] = /*($_tow_grey_pma_menu) ? t('Search') : */l('Search', 'search_dataset/' . $_tow_dataset->nid);
     $res_doc = db_query("SELECT t.nid FROM {content_type_document} t WHERE t.field_doc_dataset_nid_value = %d", $_tow_dataset->nid);
     $dataset_doc = db_fetch_array($res_doc);
@@ -83,8 +84,7 @@ function tow_pma_menu_block() {
 
     //Set menu items according to user roles
     //Dataset access type: By request
-    $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $_tow_dataset->uid));
-    if ($access_type == 1 && $dataset_request['status'] != 1 && (!$is_admin)) {
+    if ($access_type == 1 && $dataset_request['status'] != 1 && ($_tow_dataset->uid != $user->uid)) {
         $items['browse'] = l('Browse', 'node/' . $_tow_dataset->nid);
         unset($items['search']);
         //Anonymous

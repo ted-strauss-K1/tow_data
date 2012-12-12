@@ -6,6 +6,7 @@ $.hrd.noty = function(options) {
 		type: options['type'],
 		dismissQueue: true,
 		timeout: 5000,
+		force: true,
 		layout: 'top'
 	};
         }
