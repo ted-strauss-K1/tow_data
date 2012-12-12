@@ -93,13 +93,13 @@ a:hover {
 	color: #fff;
 	text-decoration: none; }
 #block-tow-pma_menu ul li ul {
-	display:none; 
+	display:none;
+        position: absolute;
 	border:1px solid #CCCCCC;
-	margin-top: 24px !important;
+	margin-top: 0px !important;
 	width:200px;
-    z-index:5;
-	position:relative;
-    top:8px;
+    z-index:5;	
+    top:31px;
 	left:0px;
 	background:#999999;
 }
@@ -116,10 +116,11 @@ a:hover {
 	 padding: 0px 10px !important;
     width: 180px;
 }
+
 #block-tow-pma_menu ul li:hover ul, #block-tow-pma_menu ul li.hover ul {
 	display: block;
 	position: absolute;
-	margin: 0;
+	margin: 0;        
 	padding: 0; }
 #block-tow-pma_menu ul li:hover li, #block-tow-pma_menu ul li.hover li {
 	float: none; }
