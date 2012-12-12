@@ -360,11 +360,12 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
 
         // User login form
         case 'user_login':
+            module_load_include('inc', 'user', 'user.pages');
             drupal_add_js(drupal_get_path('module', 'tow') . '/js/log_sign_tabs.js');
-            $form['#prefix'] = '<div class="login-signup-tab"><div class="log-tab">Log in</div><div class="sign-tab">Sign up</div></div>';
-            $form['pass']['#prefix'] = l('Forget password?', 'user/password', array('attributes' => array('class' => 'modalframe-exclude')));
+            $form['#prefix'] = '<div class="login-signup-tab"><div class="log-tab">Log in</div><div class="sign-tab">Sign up</div><div class="forget-tab">Forget password?</div></div>';
+            $form['pass']['#prefix'] = l('Forget password?', 'user/password', array('query' => 'automodal=true&automodalClose=true&automodalReload=true','attributes' => array('class' => 'modalframe-exclude')));
             if (empty($form_state['storage'])) {
-                $form['#suffix'] = drupal_get_form('user_register');
+                $form['#suffix'] = drupal_get_form('user_register') . drupal_get_form('user_pass');
             }
             break;
 
