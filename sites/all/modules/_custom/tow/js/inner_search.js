@@ -18,6 +18,8 @@ Drupal.behaviors.inner_search = function(context) {
     var arrayOfCharts = {}; // An array of Master Charts.
     var arrayOfZooms = {}; // An array of Detail Charts.
     var arrayOfCollapse = {}; // Widgets collapsibility information.
+    var firstPageLoad = true;
+    var firstPageLoadFieldsCount = 10;
 
     // Saving/memorizing.
     var currentHash = location.hash; // Current location hash.
@@ -37,7 +39,35 @@ Drupal.behaviors.inner_search = function(context) {
 
     // Hashchange.
     $(window).hashchange(function() {
-        hashChange();
+        if (firstPageLoad) {
+            if (window.location.hash == '') {
+                var counter = 0;
+                var selectedFields = {};
+                $('.btn-group.table-field-buttons-1').children().each(function(index) {
+                    if (counter < firstPageLoadFieldsCount) {
+                        $(this).addClass('selected');
+                        var text = $(this).text();
+                        var type = $(this).attr('f_type');
+                        $('.tow-dataset-field-link').each(function() {
+                            if ($(this).text() == text && ($(this).attr('f_type') == type)) {
+                                $(this).addClass('selected');
+                            }
+                        });
+                        selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
+                        counter++;
+                    }
+                });
+                var selectedFieldsToSend = JSON.stringify(selectedFields);
+                var url = 'http://' + window.location.hostname + window.location.pathname + '#?' + 'selected_fields=' + selectedFieldsToSend;
+                setHash(url);
+            }
+            else {
+                hashChange();
+            }
+        }
+        else {
+            hashChange();
+        }
     });
     $(window).hashchange();
 
@@ -349,7 +379,6 @@ Drupal.behaviors.inner_search = function(context) {
                     var resetClass = text + '-' + type;
                     resetClass = resetClass.replace(' ', '-').toLowerCase();
                     $(this).removeClass('selected');
-                    console.log('.' + resetClass +' .reset');
                     $('.' + resetClass +'.reset').click();
                 }
             });
@@ -1757,7 +1786,7 @@ Drupal.behaviors.inner_search = function(context) {
      */
     function setHash(url) {
         filtersToSend = getUrlQueryParam(url, 'filters');
-        selectedFieldsTosend = getUrlQueryParam(url, 'selected_fields');
+        selectedFieldsToSend = getUrlQueryParam(url, 'selected_fields');
         if ((filtersToSend.length == 0) && (selectedFieldsToSend.length == 0)) {
             hash = '';
         }
