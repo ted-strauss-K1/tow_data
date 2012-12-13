@@ -323,14 +323,16 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
 
     // Form elements.
     $form['fields_list']['#value'] = '';
+    $index = 1;
     foreach ($fields as $table_nid => $table_fields) {
         $table = node_load($table_nid);
-        $fields_list = '<h5>' . filter_xss($table->title) . '</h5><div class="btn-group" data-toggle="buttons-checkbox">';
+        $fields_list = '<h5>' . filter_xss($table->title) . '</h5><div class="btn-group table-field-buttons-' . $index . '" data-toggle="buttons-checkbox">';
         foreach ($table_fields as $f) {
             $fields_list .= $f;
         }
         $fields_list .= '</div></p>';
         $form['fields_list']['#value'] .= $fields_list;
+        $index++;
     }
 
     return $form;
