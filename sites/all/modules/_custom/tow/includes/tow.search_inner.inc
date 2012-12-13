@@ -42,19 +42,6 @@ function tow_search_inner_field_list_block($selected_fields = array()) {
 }
 
 /**
- * 'Inner search: simple search block' block.
- */
-function tow_search_inner_simple_search_block() {
-
-    $block = array();
-
-    $block['title'] = 'Simple search';
-    $block['content'] = drupal_get_form('tow_search_inner_simple_search_form');
-
-    return $block;
-}
-
-/**
  * 'Inner search: facets block' block.
  */
 function tow_search_inner_widgets_block($path = NULL) {
@@ -552,37 +539,6 @@ function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $e
         '#value' => $max,
     );
 
-    $form['search'] = array(
-        '#type' => 'button',
-        '#title' => t('Search'),
-        '#value' => t('Search'),
-        '#attributes' => array(
-            'class' => 'search-button',
-            'onclick' => 'return false;',
-        ),
-    );
-
-    return $form;
-}
-
-/**
- * 'Inner search: simple search block' form.
- */
-function tow_search_inner_simple_search_form() {
-    $form = array();
-
-    // NID.
-    $form['nid'] = array(
-        '#type' => 'hidden',
-        '#value' => tow_search_inner_get_nid(),
-    );
-
-    // Keywords.
-    $form['keywords'] = array(
-        '#type' => 'textfield',
-        '#value' => _tow_search_inner_get_keys(),
-    );
-
     return $form;
 }
 
@@ -675,17 +631,6 @@ function tow_search_inner_text_length_widget_form($form_state, $length_field, $p
         $form['value']['#value'] = $value;
     }
 
-    // Search button.
-    $form['search'] = array(
-        '#type' => 'button',
-        '#title' => t('Search'),
-        '#value' => t('Search'),
-        '#attributes' => array(
-            'class' => 'search-button',
-            'onclick' => 'return false;'
-        ),
-    );
-
     return $form;
 }
 
@@ -704,7 +649,7 @@ function tow_search_inner_widget_form(&$form_state, $field_title, $path, $widget
     $form['tow_inner_search_widget'] = array(
         '#type' => 'fieldset',
         '#title' => check_plain($field_title),
-        '#collapsible' => TRUE,
+        '#collapsible' => FALSE, #TRUE,
         '#collapsed' => _tow_search_inner_widget_fieldset_collapsed(),
         '#attributes' => array(
             'class' => $field_title,
@@ -1371,17 +1316,6 @@ function tow_search_inner_text_widget_form($form_state, $field, $fieldtype, $pat
     if (isset($value)) {
         $form['value']['#value'] = $value;
     }
-
-    // Search button.
-    $form['search'] = array(
-        '#type' => 'button',
-        '#title' => t('Search'),
-        '#value' => t('Search'),
-        '#attributes' => array(
-            'class' => 'search-button',
-            'onclick' => 'return false;'
-        ),
-    );
 
     return $form;
 }
