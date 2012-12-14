@@ -42,19 +42,6 @@ function tow_search_inner_field_list_block($selected_fields = array()) {
 }
 
 /**
- * 'Inner search: simple search block' block.
- */
-function tow_search_inner_simple_search_block() {
-
-    $block = array();
-
-    $block['title'] = 'Simple search';
-    $block['content'] = drupal_get_form('tow_search_inner_simple_search_form');
-
-    return $block;
-}
-
-/**
  * 'Inner search: facets block' block.
  */
 function tow_search_inner_widgets_block($path = NULL) {
@@ -282,6 +269,10 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
             sort($key);
             $key = implode('+', $key);
         }
+        else {
+            $key = $table_nid;
+        }
+        $tableset = $key;
 
         foreach ($table_fields as $field) {
 
@@ -293,6 +284,7 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
                 'attributes' => array(
                     'class' => 'tow-dataset-field-link',
                     'f_type' => $field['type'],
+                    'tableset' => $tableset,
                 ),
             );
             
@@ -315,23 +307,25 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
                 $href .= (empty($qsf) && empty($qf)) ? '' : '#?';
                 $href .= (empty($qf)) ? '' : 'filters=' . $qf;
                 $href .= (empty($qsf)) ? '' : ((empty($qf)) ? '' : '&') . 'selected_fields=' . check_plain($qsf);
-                $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="' . $href . '" f_type="' . $options['attributes']['f_type'] . '">' . $field['title'] . '</button>';
+                $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="' . $href . '" f_type="' . $options['attributes']['f_type'] . '" tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
             } else {
-                $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini disabled">' . $field['title'] . '</button>';
+                $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini unavailable"' . ' tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
             }
         }
     }
 
     // Form elements.
     $form['fields_list']['#value'] = '';
+    $index = 1;
     foreach ($fields as $table_nid => $table_fields) {
         $table = node_load($table_nid);
-        $fields_list = '<h5>' . filter_xss($table->title) . '</h5><div class="btn-group" data-toggle="buttons-checkbox">';
+        $fields_list = '<h5>' . filter_xss($table->title) . '</h5><div class="btn-group table-field-buttons-' . $index . '" data-toggle="buttons-checkbox">';
         foreach ($table_fields as $f) {
             $fields_list .= $f;
         }
         $fields_list .= '</div></p>';
         $form['fields_list']['#value'] .= $fields_list;
+        $index++;
     }
 
     return $form;
@@ -552,37 +546,6 @@ function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $e
         '#value' => $max,
     );
 
-    $form['search'] = array(
-        '#type' => 'button',
-        '#title' => t('Search'),
-        '#value' => t('Search'),
-        '#attributes' => array(
-            'class' => 'search-button',
-            'onclick' => 'return false;',
-        ),
-    );
-
-    return $form;
-}
-
-/**
- * 'Inner search: simple search block' form.
- */
-function tow_search_inner_simple_search_form() {
-    $form = array();
-
-    // NID.
-    $form['nid'] = array(
-        '#type' => 'hidden',
-        '#value' => tow_search_inner_get_nid(),
-    );
-
-    // Keywords.
-    $form['keywords'] = array(
-        '#type' => 'textfield',
-        '#value' => _tow_search_inner_get_keys(),
-    );
-
     return $form;
 }
 
@@ -675,17 +638,6 @@ function tow_search_inner_text_length_widget_form($form_state, $length_field, $p
         $form['value']['#value'] = $value;
     }
 
-    // Search button.
-    $form['search'] = array(
-        '#type' => 'button',
-        '#title' => t('Search'),
-        '#value' => t('Search'),
-        '#attributes' => array(
-            'class' => 'search-button',
-            'onclick' => 'return false;'
-        ),
-    );
-
     return $form;
 }
 
@@ -704,7 +656,7 @@ function tow_search_inner_widget_form(&$form_state, $field_title, $path, $widget
     $form['tow_inner_search_widget'] = array(
         '#type' => 'fieldset',
         '#title' => check_plain($field_title),
-        '#collapsible' => TRUE,
+        '#collapsible' => FALSE, #TRUE,
         '#collapsed' => _tow_search_inner_widget_fieldset_collapsed(),
         '#attributes' => array(
             'class' => $field_title,
@@ -883,7 +835,6 @@ function tow_search_inner_chart_widget($field, $field_type, $path, $facet_counts
 
     // Prepare data.
     list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $facet_counts);
-    
     $data = drupal_to_js($data);
     $facets_list = drupal_to_js($facets_list);
     $facets_list = str_replace('\u005Cn', '\n', $facets_list);
@@ -1371,17 +1322,6 @@ function tow_search_inner_text_widget_form($form_state, $field, $fieldtype, $pat
     if (isset($value)) {
         $form['value']['#value'] = $value;
     }
-
-    // Search button.
-    $form['search'] = array(
-        '#type' => 'button',
-        '#title' => t('Search'),
-        '#value' => t('Search'),
-        '#attributes' => array(
-            'class' => 'search-button',
-            'onclick' => 'return false;'
-        ),
-    );
 
     return $form;
 }

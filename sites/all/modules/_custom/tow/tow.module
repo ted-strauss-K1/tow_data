@@ -91,7 +91,6 @@ function tow_block($op = 'list', $delta = 0) {
         $blocks['search_outer_number_of_results']['info'] = t('Outer search: Number of results');
         $blocks['search_outer_tabs']['info'] = t('Outer search: Tabs for outer search');
         $blocks['search_inner_facets']['info'] = t('Inner search: facets block');
-        $blocks['search_inner_simple_search']['info'] = t('Inner search: simple search block');
         $blocks['search_inner_list_of_tables']['info'] = t('Inner search: list of separate and linked tables of a dataset');
         $blocks['search_inner_field_list']['info'] = t('Inner search: field list');
         $blocks['saved_searches_list']['info'] = t('Saved Searches');
@@ -222,11 +221,6 @@ function tow_block($op = 'list', $delta = 0) {
                 drupal_add_js('misc/collapse.js');
                 drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
                 return tow_search_inner_widgets_block();
-            }
-
-            // 'Inner search: simple search block' block.
-            if ($delta == 'search_inner_simple_search') {
-                return tow_search_inner_simple_search_block();
             }
 
             // 'Inner search: list of separate and linked tables of a dataset' block.
@@ -360,11 +354,12 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
 
         // User login form
         case 'user_login':
+            module_load_include('inc', 'user', 'user.pages');
             drupal_add_js(drupal_get_path('module', 'tow') . '/js/log_sign_tabs.js');
-            $form['#prefix'] = '<div class="login-signup-tab"><div class="log-tab">Log in</div><div class="sign-tab">Sign up</div></div>';
-            $form['pass']['#prefix'] = l('Forget password?', 'user/password', array('attributes' => array('class' => 'modalframe-exclude')));
+            $form['#prefix'] = '<div class="login-signup-tab"><div class="log-tab">Log in</div><div class="sign-tab">Sign up</div><div class="forget-tab">Forget password?</div></div>';
+            $form['pass']['#prefix'] = l('Forget password?', 'user/password', array('query' => 'automodal=true&automodalClose=true&automodalReload=true','attributes' => array('class' => 'modalframe-exclude')));
             if (empty($form_state['storage'])) {
-                $form['#suffix'] = drupal_get_form('user_register');
+                $form['#suffix'] = drupal_get_form('user_register') . drupal_get_form('user_pass');
             }
             break;
 

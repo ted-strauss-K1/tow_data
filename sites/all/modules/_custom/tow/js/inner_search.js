@@ -18,6 +18,8 @@ Drupal.behaviors.inner_search = function(context) {
     var arrayOfCharts = {}; // An array of Master Charts.
     var arrayOfZooms = {}; // An array of Detail Charts.
     var arrayOfCollapse = {}; // Widgets collapsibility information.
+    var firstPageLoad = true;
+    var firstPageLoadFieldsCount = 10;
 
     // Saving/memorizing.
     var currentHash = location.hash; // Current location hash.
@@ -37,7 +39,35 @@ Drupal.behaviors.inner_search = function(context) {
 
     // Hashchange.
     $(window).hashchange(function() {
-        hashChange();
+        if (firstPageLoad) {
+            if (window.location.hash == '') {
+                var counter = 0;
+                var selectedFields = {};
+                $('.btn-group.table-field-buttons-1').children().each(function(index) {
+                    if (counter < firstPageLoadFieldsCount) {
+                        $(this).addClass('selected');
+                        var text = $(this).text();
+                        var type = $(this).attr('f_type');
+                        $('.tow-dataset-field-link').each(function() {
+                            if ($(this).text() == text && ($(this).attr('f_type') == type)) {
+                                $(this).addClass('selected');
+                            }
+                        });
+                        selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
+                        counter++;
+                    }
+                });
+                var selectedFieldsToSend = JSON.stringify(selectedFields);
+                var url = 'http://' + window.location.hostname + window.location.pathname + '#?' + 'selected_fields=' + selectedFieldsToSend;
+                setHash(url);
+            }
+            else {
+                hashChange();
+            }
+        }
+        else {
+            hashChange();
+        }
     });
     $(window).hashchange();
 
@@ -80,6 +110,9 @@ Drupal.behaviors.inner_search = function(context) {
     $('.tow-dataset-field-link').live('click', function(e) {
         searchSelectField(e, $(this));
     });
+
+    // Dataset field hover.
+    $('.tow-dataset-field-link').live({ mouseenter: function() { searchFieldHoverIn($(this)); }, mouseleave: function() { searchFieldHoverOut($(this)); } });
 
     // Facet click.
     $('a.apachesolr-facet, a.apachesolr-hidden-facet, .tow-inner-search-selected').live('click', function(e) {
@@ -163,6 +196,7 @@ Drupal.behaviors.inner_search = function(context) {
                 innerSearchProcessing(filtersToSend, selectedFieldsTosend);
             });
         }
+        currentHash = hash;
     }
 
 
@@ -324,7 +358,7 @@ Drupal.behaviors.inner_search = function(context) {
         }
 
         // Ignore disabled fields.
-        if (selector.hasClass('disabled')) {
+        if (selector.hasClass('disabled') || selector.hasClass('unavailable')) {
             event.preventDefault();
             return false;
         }
@@ -349,7 +383,6 @@ Drupal.behaviors.inner_search = function(context) {
                     var resetClass = text + '-' + type;
                     resetClass = resetClass.replace(' ', '-').toLowerCase();
                     $(this).removeClass('selected');
-                    console.log('.' + resetClass +' .reset');
                     $('.' + resetClass +'.reset').click();
                 }
             });
@@ -381,6 +414,54 @@ Drupal.behaviors.inner_search = function(context) {
         return false;
     }
 
+    /**
+     * Dataset field hover mouse in.
+     */
+    function searchFieldHoverIn(selector) {
+        var selected = selector.hasClass('selected');
+        var disabled = selector.hasClass('unavailable');
+        var tableset = selector.attr('tableset');
+        
+        if (!disabled) {
+            selector.addClass('available-selected');
+            if (selected) {
+                var lastSelected = 0;
+                $('.tow-dataset-field-link.selected').each(function() {
+                    lastSelected++;
+                });
+                if (lastSelected < 2) {
+                    $('.tow-dataset-field-link').each(function() {
+                        $(this).addClass('available');
+                    });
+                }
+                else {
+                    $('.tow-dataset-field-link').each(function() {
+                        if ($(this).attr('tableset') == tableset) {
+                            $(this).addClass('available');
+                        }
+                    });
+                }
+            }
+            else {
+                $('.tow-dataset-field-link').each(function() {
+                    if ($(this).attr('tableset') == tableset) {
+                        $(this).addClass('available');
+                    }
+                });
+            }
+        }
+    }
+    
+    /**
+     * Dataset field hover mouse out.
+     */
+    function searchFieldHoverOut(selector) {
+        selector.removeClass('available-selected');
+        $('.tow-dataset-field-link').each(function() {
+            $(this).removeClass('available');
+        });
+    }
+    
     /**
      * Facet click.
      */
@@ -1757,7 +1838,7 @@ Drupal.behaviors.inner_search = function(context) {
      */
     function setHash(url) {
         filtersToSend = getUrlQueryParam(url, 'filters');
-        selectedFieldsTosend = getUrlQueryParam(url, 'selected_fields');
+        selectedFieldsToSend = getUrlQueryParam(url, 'selected_fields');
         if ((filtersToSend.length == 0) && (selectedFieldsToSend.length == 0)) {
             hash = '';
         }

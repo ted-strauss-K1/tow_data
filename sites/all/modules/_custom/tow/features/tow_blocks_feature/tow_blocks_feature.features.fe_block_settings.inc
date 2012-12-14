@@ -217,21 +217,6 @@ function tow_blocks_feature_default_fe_block_settings() {
     'cache' => '1',
   );
 
-  $theme['tow-search_inner_simple_search'] = array(
-    'module' => 'tow',
-    'delta' => 'search_inner_simple_search',
-    'theme' => 'fusion_theory',
-    'status' => '1',
-    'weight' => '-24',
-    'region' => 'content_top',
-    'custom' => '0',
-    'throttle' => '0',
-    'visibility' => '1',
-    'pages' => 'search_dataset/*',
-    'title' => '',
-    'cache' => '1',
-  );
-
   $theme['tow-search_outer_filter'] = array(
     'module' => 'tow',
     'delta' => 'search_outer_filter',
