@@ -1,16 +1,3 @@
-.tow-dataset-field-link {
-    background: white;
-}
-
-.tow-dataset-field-link.selected {
-    background: black;
-    color: white;
-}
-
-.tow-dataset-field-link.unavailable {
-    color: lightgrey;
-}
-
 .comment .vud-widget-upanddown .down-score {
     display: none;
 }
@@ -111,4 +98,30 @@
     height: auto !important;
     background-color: transparent !important;
     border: none !important;
+}
+
+/* Dataset fields styling */
+.tow-dataset-field-link {
+    background: white;
+    color: black;
+}
+.tow-dataset-field-link.unavailable {
+    background: white;
+    color: grey;
+}
+.tow-dataset-field-link.available {
+    background: grey;
+    color: white;
+}
+.tow-dataset-field-link.available-selected {
+    background: black;
+    color: white;
+}
+.tow-dataset-field-link.selected {
+    background: black;
+    color: white;
+}
+.tow-dataset-field-link.selected.available-selected {
+    background: grey;
+    color: white;
 }
