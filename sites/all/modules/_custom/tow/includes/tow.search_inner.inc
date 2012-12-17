@@ -269,6 +269,10 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
             sort($key);
             $key = implode('+', $key);
         }
+        else {
+            $key = $table_nid;
+        }
+        $tableset = $key;
 
         foreach ($table_fields as $field) {
 
@@ -280,6 +284,7 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
                 'attributes' => array(
                     'class' => 'tow-dataset-field-link',
                     'f_type' => $field['type'],
+                    'tableset' => $tableset,
                 ),
             );
             
@@ -302,9 +307,9 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
                 $href .= (empty($qsf) && empty($qf)) ? '' : '#?';
                 $href .= (empty($qf)) ? '' : 'filters=' . $qf;
                 $href .= (empty($qsf)) ? '' : ((empty($qf)) ? '' : '&') . 'selected_fields=' . check_plain($qsf);
-                $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="' . $href . '" f_type="' . $options['attributes']['f_type'] . '">' . $field['title'] . '</button>';
+                $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="' . $href . '" f_type="' . $options['attributes']['f_type'] . '" tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
             } else {
-                $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini disabled">' . $field['title'] . '</button>';
+                $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini unavailable"' . ' tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
             }
         }
     }
@@ -831,7 +836,6 @@ function tow_search_inner_chart_widget($field, $field_type, $path, $facet_counts
 
     // Prepare data.
     list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $facet_counts);
-    
     $data = drupal_to_js($data);
     $facets_list = drupal_to_js($facets_list);
     $facets_list = str_replace('\u005Cn', '\n', $facets_list);

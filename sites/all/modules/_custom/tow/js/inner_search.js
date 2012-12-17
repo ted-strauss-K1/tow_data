@@ -111,6 +111,9 @@ Drupal.behaviors.inner_search = function(context) {
         searchSelectField(e, $(this));
     });
 
+    // Dataset field hover.
+    $('.tow-dataset-field-link').live({ mouseenter: function() { searchFieldHoverIn($(this)); }, mouseleave: function() { searchFieldHoverOut($(this)); } });
+
     // Facet click.
     $('a.apachesolr-facet, a.apachesolr-hidden-facet, .tow-inner-search-selected').live('click', function(e) {
         searchFacetClickUpdate(e, $(this));
@@ -193,6 +196,7 @@ Drupal.behaviors.inner_search = function(context) {
                 innerSearchProcessing(filtersToSend, selectedFieldsTosend);
             });
         }
+        currentHash = hash;
     }
 
 
@@ -354,7 +358,7 @@ Drupal.behaviors.inner_search = function(context) {
         }
 
         // Ignore disabled fields.
-        if (selector.hasClass('disabled')) {
+        if (selector.hasClass('disabled') || selector.hasClass('unavailable')) {
             event.preventDefault();
             return false;
         }
@@ -410,6 +414,54 @@ Drupal.behaviors.inner_search = function(context) {
         return false;
     }
 
+    /**
+     * Dataset field hover mouse in.
+     */
+    function searchFieldHoverIn(selector) {
+        var selected = selector.hasClass('selected');
+        var disabled = selector.hasClass('unavailable');
+        var tableset = selector.attr('tableset');
+        
+        if (!disabled) {
+            selector.addClass('available-selected');
+            if (selected) {
+                var lastSelected = 0;
+                $('.tow-dataset-field-link.selected').each(function() {
+                    lastSelected++;
+                });
+                if (lastSelected < 2) {
+                    $('.tow-dataset-field-link').each(function() {
+                        $(this).addClass('available');
+                    });
+                }
+                else {
+                    $('.tow-dataset-field-link').each(function() {
+                        if ($(this).attr('tableset') == tableset) {
+                            $(this).addClass('available');
+                        }
+                    });
+                }
+            }
+            else {
+                $('.tow-dataset-field-link').each(function() {
+                    if ($(this).attr('tableset') == tableset) {
+                        $(this).addClass('available');
+                    }
+                });
+            }
+        }
+    }
+    
+    /**
+     * Dataset field hover mouse out.
+     */
+    function searchFieldHoverOut(selector) {
+        selector.removeClass('available-selected');
+        $('.tow-dataset-field-link').each(function() {
+            $(this).removeClass('available');
+        });
+    }
+    
     /**
      * Facet click.
      */

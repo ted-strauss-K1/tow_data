@@ -1,0 +1,33 @@
+<?php
+
+/**
+* Implements hook_menu ()
+*/
+
+function messages_test_menu()  {
+	$items = array();
+        
+		$items['admin/no'] = array(
+		'title' => 'Messages test',
+		'access callback' => TRUE,
+                'type' => MENU_NORMAL_ITEM,
+                'page callback' => 'test_mess',
+                /*'page arguments' => array('messages_test_form')*/
+                
+	);
+return $items;                
+}
+
+
+function test_mess () {
+    drupal_set_message('Warning test', 'warning');
+    drupal_set_message('Error test', 'error');            
+    drupal_set_message('Status-success test', 'status');
+    return 'test';
+}
+
+
+  
+	
+
+
