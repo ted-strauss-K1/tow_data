@@ -834,11 +834,11 @@ Drupal.behaviors.inner_search = function(context) {
                     },
                     plotOptions: {
                         series: {
-                            color: '#4169E1',
+                            color: '#474747',
                             fillColor: {
                                 linearGradient: [0, 0, 0, 70],
                                 stops: [
-                                [0, '#4572A7'],
+                                [0, '#525252'],
                                 [1, 'rgba(0,0,0,0)']
                                 ]
                             },
@@ -970,6 +970,8 @@ Drupal.behaviors.inner_search = function(context) {
                         },
                         min: 0,
                         max: yMax,
+                        gridLineWidth: 0,
+                        minorGridLineWidth: 0,
                         labels: {
                             x: -1,
                             y: 4
@@ -995,7 +997,7 @@ Drupal.behaviors.inner_search = function(context) {
                     },
                     plotOptions: {
                         series: {
-                            color: '#4169E1',
+                            color: '#474747',
                             marker: {
                                 enabled: false,
                                 states: {

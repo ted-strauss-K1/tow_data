@@ -509,10 +509,11 @@ function tow_search_inner_numeric_facet_form($form_state, $field, $min, $max, $e
     );
 
     $filters = $_GET['filters'] ? 'filters=' . $_GET['filters'] : '';
-
+    
+    $activeclass = ($empty_included == 1) ? 'active' : NULL;
     $form['include_empty'] = array(
         '#type' => 'checkbox',
-        '#title' => t('Empty') . ' (' . $empty . ')',
+        '#title' => '<button type="button" class="btn btn-mini ' . $activeclass . '" data-toggle="button">' . t('Empty') . ' (' . $empty . ')' . '</button>',#t('Empty') . ' (' . $empty . ')',
         '#value' => $empty_included,
     );
 
@@ -666,11 +667,11 @@ function tow_search_inner_widget_form(&$form_state, $field_title, $path, $widget
             '#type' => 'markup',
             '#value' => $widget,
         ),
-        // Rest link.
-        'reset' => array(
-            '#type' => 'markup',
-            '#value' => $reset,
-        ),
+        #// Reset link.
+        #'reset' => array(
+        #    '#type' => 'markup',
+        #    '#value' => $reset,
+        #),
     );
 
     return $form;
