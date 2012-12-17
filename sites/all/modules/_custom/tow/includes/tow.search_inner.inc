@@ -375,7 +375,13 @@ function tow_search_inner_hash_form($form_state, $path, $rid, $hash, $sort_param
         );
         ${$link_name} = l(t($link_name), $path, $params);
     }
-    $reset_all = l(t('Reset all'), $path, array('attributes' => array('class' => 'sort-link-reset')));
+    
+    $querystring = array();
+    if (isset($_GET['selected_fields']) && $_GET['selected_fields'] != '') {
+        $querystring['selected_fields'] = $_GET['selected_fields'];
+    }
+    $querystring = ltrim(url('', array('query' => $querystring)), '/');
+    $reset_all = l(t('Reset all'), $path, array('fragment' => $querystring, 'attributes' => array('class' => 'search-link-reset-all')));
 
     // Sort block.
     $form['sort'] = array(
