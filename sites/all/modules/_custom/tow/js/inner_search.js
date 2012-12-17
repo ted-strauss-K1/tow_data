@@ -82,9 +82,9 @@ Drupal.behaviors.inner_search = function(context) {
         sortWidgetsLinkClick(e, 'type', sortCurrentTypeDirection);
     });
 
-    // Sort: reset all.
-    $('.sort-link-reset').live('click', function(e) {
-        sortResetAll(e);
+    // Sort: reset all. ***Changed to reset all filters***
+    $('.search-link-reset-all').live('click', function(e) {
+        searchResetAll(e, $(this));
     });
 
 
@@ -217,9 +217,10 @@ Drupal.behaviors.inner_search = function(context) {
     }
 
     /**
-     * Widgets sorting reset.
+     * Widgets sorting reset. ***Reset all filters***
      */
-    function sortResetAll(event) {
+    function searchResetAll(event, selector) {
+        /*
         event.preventDefault();
 
         sortCurrentTitleDirection = '';
@@ -228,6 +229,12 @@ Drupal.behaviors.inner_search = function(context) {
         $('.tow-inner-search-widget-sort a[href*="title"]').text('title');
         $('.tow-inner-search-widget-sort a[href*="type"]').text('type');
         $('#tow-search-inner-hash-form').after(initialArrayOfWidgets);
+        */
+       
+        var url = selector.attr('href');
+        setHash(url);
+        
+        event.preventDefault();
     }
 
 
