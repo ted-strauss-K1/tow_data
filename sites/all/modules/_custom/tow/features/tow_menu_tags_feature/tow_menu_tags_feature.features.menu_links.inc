@@ -11,7 +11,7 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'menu_name' => 'menu-tags',
     'link_path' => 'node/add/dataset',
     'router_path' => 'node/add/dataset',
-    'link_title' => 'Create new dataset',
+    'link_title' => 'New dataset',
     'options' => array(
       'attributes' => array(),
     ),
@@ -75,7 +75,7 @@ function tow_menu_tags_feature_menu_default_menu_links() {
     'menu_name' => 'menu-tags',
     'link_path' => 'user/login',
     'router_path' => 'user/login',
-    'link_title' => 'Create new dataset',
+    'link_title' => 'New dataset',
     'options' => array(
       'attributes' => array(
         'class' => 'automodal',
@@ -91,9 +91,9 @@ function tow_menu_tags_feature_menu_default_menu_links() {
   );
   // Translatables
   // Included for use with string extractors like potx.
-  t('Create new dataset');
   t('Name');
   t('New');
+  t('New dataset');
   t('Popular');
 
 

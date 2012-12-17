@@ -172,28 +172,16 @@ function tow_search_outer_tabs_block() {
     );
 
     // A set of links.
-    /* $content .= '<div class="item-list"><ul><li>' . tow_search_outer_tab_link($tab, 'Featured', 'featured', TRUE) . '</li>';
-      $content .= '<li>' . tow_search_outer_tab_link($tab, 'Newest', 'newest') . '</li>';
-      $content .= '<li>' . tow_search_outer_tab_link($tab, 'Popular', 'popular') . '</li>';
-      $content .= '<li>' . tow_search_outer_tab_link($tab, 'Debated', 'debated', TRUE) . '</li>';
-      $content .= '<li>' . l('Create new dataset', 'node/add/dataset') . '</li></ul></div>'; */
-
-    // A set of links.
     $items = array();
     $items['featured'] = tow_search_outer_tab_link($tab, 'Featured', 'featured', TRUE);
     $items['newest'] = tow_search_outer_tab_link($tab, 'Newest', 'newest');
     $items['popular'] = tow_search_outer_tab_link($tab, 'Popular', 'popular');
     $items['debated'] = tow_search_outer_tab_link($tab, 'Debated', 'debated', TRUE);
     global $user;
-    $items['newdataset'] = ($user->uid) ? l('Create new dataset', 'node/add/dataset') : l('Create new dataset', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal')));
+    $items['newdataset'] = ($user->uid) ? l('New dataset', 'node/add/dataset') : l('New dataset', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal')));
 
     // Theme the block.
     $block['content'] = theme_item_list($items, NULL, 'ul');
-
-    // Construct block.
-    /* $block = array();
-      $block['title'] = NULL;
-      $block['content'] =  $content; */
 
     return $block;
 }
