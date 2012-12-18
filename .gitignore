@@ -7,9 +7,9 @@ cache/
 files/
 sites/*/files
 sites/*/private
-tmp/
 /css/
 /js/
+!sites/default/files/import
 
 # Ignore default text files
 .htaccess
