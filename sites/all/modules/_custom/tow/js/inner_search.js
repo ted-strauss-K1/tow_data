@@ -172,6 +172,14 @@ Drupal.behaviors.inner_search = function(context) {
     $('.saved-search-delete').live('click', function(e) {
         deleteSavedSearch(e, $(this));
     });
+    
+    //Saved search tags autocomplete
+    var timer = null;
+    $('#edit-ss-tags').live('keyup', function(e) {
+        clearTimeout(timer);
+        $this = $(this);
+        timer = setTimeout(function() { ssTagsAutocomplete(e, $this); }, 600);
+     });
 
 
 
@@ -1862,6 +1870,36 @@ Drupal.behaviors.inner_search = function(context) {
         }
         location.hash = hash;
     }
+    
+    /**
+     * SS tags
+     */
+    function ssTagsAutocomplete(event, selector) {
+        var urlSSTags = 'http://' + window.location.hostname + '/tags';
+        var ssTag = selector.val();
+        var iOLC = ssTag.lastIndexOf(',');
+        if (iOLC != -1) {
+            var textAfterLastComma = ssTag.substring(iOLC + 1);
+            ssTag = textAfterLastComma.replace(/^\s+/,'');
+        }
+        
+        if (ssTag == ''/* || event.keyCode == 8*/) {
+              $('.ss-tags-html').html('');
+              return false;
+        }
+        $.ajax({
+            url: urlSSTags,
+            data: {
+                'tag' : ssTag
+            },
+            success: function(data) {
+                var htmlToInsert = $(data).find('div.view-content');
+                $('.ss-tags-html').html(htmlToInsert);
+            }
+        });
+        return false;
+    }
+    
 }
 
 /**

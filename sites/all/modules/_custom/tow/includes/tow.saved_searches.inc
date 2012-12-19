@@ -154,6 +154,17 @@ function tow_saved_searches_save_search_form(&$form_state, $nid, $filters, $sele
             'placeholder' => t('Explain your findings...'),
         ),
     );
+    
+    //Saved search tags
+    $form['ss_tags'] = array(
+        '#type' => 'textfield',
+        '#title' => NULL,
+        '#suffix' => '<div class="ss-tags-html"></div>',
+        #'#autocomplete_path' => 'tags',
+        '#attributes' => array(
+            'placeholder' => t('Tags(optional but encouraged)'),
+        ),
+    );
 
     // NID.
     $form['nid'] = array(
