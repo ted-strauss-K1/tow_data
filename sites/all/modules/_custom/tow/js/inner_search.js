@@ -1683,9 +1683,7 @@ Drupal.behaviors.inner_search = function(context) {
             else {
                 $('#block-tow-saved_searches_list').html(data.saved_searches);
                 $.hrd.noty({
-                    'layout' : 'topRight',
                     'type' : 'success',
-                    'closeWith': 'click',
                     'text' : 'You posted a search'
                 });
             }
@@ -1724,9 +1722,7 @@ Drupal.behaviors.inner_search = function(context) {
         function deleteSearchAjaxSuccess(data) {
             $('#block-tow-saved_searches_list').html(data.saved_searches);
             $.hrd.noty({
-                'layout' : 'topRight',
                 'type' : 'success',
-                'closeWith': 'click',
                 'text' : 'You have deleted a saved search'
             });
         }
