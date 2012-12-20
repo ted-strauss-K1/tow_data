@@ -82,6 +82,8 @@ function tow_settings_dataset_feature_strongarm() {
     'comment_settings' => '30',
     'menu' => '-2',
     'taxonomy' => '-3',
+    'creativecommons' => '100',
+    'vud_node_widget_display' => '-10',
   );
   $export['content_extra_weights_dataset'] = $strongarm;
 

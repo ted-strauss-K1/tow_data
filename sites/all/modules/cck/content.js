@@ -73,8 +73,7 @@ jQuery.fn.contentPopulateOptions = function(options, selected) {
       html += '<option value="' + value + '"' + (is_selected ? ' selected="selected"' : '') +'>' + text + '</option>';
     });
 
-    $(this)
-      .html(html)
-      .attr('disabled', disabled ? 'disabled' : '');
+    if( disabled ) $(this).html(html).attr('disabled', disabled);
+    else $(this).html(html).removeAttr('disabled');
   });
 }

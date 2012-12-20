@@ -1,0 +1,16 @@
+diff --git a/sites/all/modules/cck/content.js b/sites/all/modules/cck/content.js
+index cb6fca7..31592e9 100644
+--- a/sites/all/modules/cck/content.js
++++ b/sites/all/modules/cck/content.js
+@@ -73,8 +73,7 @@ jQuery.fn.contentPopulateOptions = function(options, selected) {
+       html += '<option value="' + value + '"' + (is_selected ? ' selected="selected"' : '') +'>' + text + '</option>';
+     });
+ 
+-    $(this)
+-      .html(html)
+-      .attr('disabled', disabled ? 'disabled' : '');
++    if( disabled ) $(this).html(html).attr('disabled', disabled);
++    else $(this).html(html).removeAttr('disabled');
+   });
+ }
+\ No newline at end of file
