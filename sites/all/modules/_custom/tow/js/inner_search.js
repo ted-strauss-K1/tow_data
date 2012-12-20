@@ -421,44 +421,74 @@ Drupal.behaviors.inner_search = function(context) {
         var selected = selector.hasClass('selected');
         var disabled = selector.hasClass('unavailable');
         var tableset = selector.attr('tableset');
-        
+        var text = selector.text();
+        var type = selector.attr('f_type');
+
         if (!disabled) {
-            selector.addClass('available-selected');
+            var lastSelected = 0;
+
             if (selected) {
-                var lastSelected = 0;
                 $('.tow-dataset-field-link.selected').each(function() {
                     lastSelected++;
                 });
-                if (lastSelected < 2) {
-                    $('.tow-dataset-field-link').each(function() {
-                        $(this).addClass('available');
-                    });
-                }
-                else {
-                    $('.tow-dataset-field-link').each(function() {
-                        if ($(this).attr('tableset') == tableset) {
-                            $(this).addClass('available');
-                        }
-                    });
-                }
+            }
+            if (selected && lastSelected < 2) {
+                $('.tow-dataset-field-link').each(function() {
+                    $(this).addClass('available-hover');
+                    $(this).addClass('hover');
+                });
             }
             else {
                 $('.tow-dataset-field-link').each(function() {
+                    $(this).addClass('hover');
                     if ($(this).attr('tableset') == tableset) {
-                        $(this).addClass('available');
+                        if ($(this).hasClass('selected')) {
+                            $(this).addClass('selected-hover');
+                        }
+                        else {
+                            $(this).addClass('available-hover');
+                        }
+                    }
+                    else {
+                        $(this).addClass('unavailable-hover');
+                    }
+                });
+            }
+            if (selected) {
+                $('.tow-dataset-field-link').each(function() {
+                    if ($(this).attr('f_type') == type && $(this).text() == text) {
+                        $(this).removeClass('selected-hover');
+                        $(this).addClass('available-hover');
+                    }
+                });
+            }
+            else {
+                $('.tow-dataset-field-link').each(function() {
+                    if ($(this).attr('f_type') == type && $(this).text() == text) {
+                        $(this).addClass('selected-hover');
+                        $(this).removeClass('available-hover');
                     }
                 });
             }
         }
+        $('.tow-dataset-field-link.unavailable-hover').each(function() {
+            $(this).addClass('disabled');
+            $(this).removeClass('hover');
+        });
     }
     
     /**
      * Dataset field hover mouse out.
      */
     function searchFieldHoverOut(selector) {
-        selector.removeClass('available-selected');
+        $('.tow-dataset-field-link.unavailable-hover').each(function() {
+            $(this).removeClass('disabled');
+        });
         $('.tow-dataset-field-link').each(function() {
-            $(this).removeClass('available');
+            $(this).removeClass('selected-hover');
+            $(this).removeClass('available-hover');
+            $(this).removeClass('unavailable-hover');
+            $(this).removeClass('hover');
         });
     }
     
