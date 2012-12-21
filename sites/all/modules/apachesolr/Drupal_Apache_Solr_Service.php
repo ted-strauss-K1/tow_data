@@ -172,7 +172,7 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
     cache_clear_all("apachesolr:luke:", 'cache_apachesolr', TRUE);
     cache_clear_all("apachesolr:stats:", 'cache_apachesolr', TRUE);
     $this->luke = array();
-    # $this->stats = NULL;
+    $this->stats = NULL;
   }
 
   /**
@@ -290,17 +290,18 @@ class Drupal_Apache_Solr_Service extends Apache_Solr_Service {
     // should always work since '=' will be urlencoded anywhere else the
     // regex isn't expecting it.
     $queryString = preg_replace('/%5B(?:[0-9]|[1-9][0-9]+)%5D=/', '=', $queryString);
-//dpm(array($queryString));
+
     // Check string length of the query string, change method to POST
     // if longer than 4000 characters.
     if (strlen($queryString) > variable_get('apachesolr_search_post_threshold', 4000)) {
       $method = self::METHOD_POST;
     }
+
     if ($method == self::METHOD_GET) {
       return $this->_sendRawGet($this->_searchUrl . $this->_queryDelimiter . $queryString);
     }
     else if ($method == self::METHOD_POST) {
-      return $this->_sendRawPost($this->_searchUrl, $queryString, FALSE, 'application/x-www-form-urlencoded');
+      return $this->_sendRawPost($this->_searchUrl, $queryString, FALSE, 'application/x-www-form-urlencoded; charset=UTF-8');
     }
     else {
       throw new Exception("Unsupported method '$method', please use the Apache_Solr_Service::METHOD_* constants");

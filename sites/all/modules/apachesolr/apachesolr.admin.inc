@@ -39,7 +39,7 @@ function apachesolr_settings() {
     '#description' => t('Path that identifies the Solr request handler to be used.'),
   );
 
-  $numbers = drupal_map_assoc(array(0, 1, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000, 10000));
+  $numbers = drupal_map_assoc(array(1, 5, 10, 20, 50, 100, 200));
   $default_cron_limit = variable_get('apachesolr_cron_limit', 50);
   // apachesolr_cron_limit may be overridden in settings.php. If its current
   // value is not among the default set of options, add it.
@@ -147,7 +147,7 @@ function apachesolr_index_page() {
   }
 
   $output = '';
-/*  if (isset($data->index->numDocs)) {
+  if (isset($data->index->numDocs)) {
     $pending_docs = $delay_msg = $delete_msg = '';
     try {
       $stats_summary = $solr->getStatsSummary();
@@ -165,7 +165,7 @@ function apachesolr_index_page() {
     $pending_msg = $stats_summary['@pending_docs'] ? t('(@pending_docs sent but not yet processed)', $stats_summary) : '';
     $output .= '<p>' . t('Number of documents in index: @num !pending', array('@num' => $data->index->numDocs, '!pending' => $pending_msg)) . "</p>\n";
     $output .= $delete_msg;
-  } */
+  }
   $output .= '<p>' . l(t('View more details on the search index contents'), 'admin/reports/apachesolr') . "</p>\n";
   if (variable_get('apachesolr_read_only', APACHESOLR_READ_WRITE) == APACHESOLR_READ_WRITE) {
   // Display the Delete Index form.
@@ -719,7 +719,7 @@ function apachesolr_config_files_overview() {
   $xml = NULL;
   try {
     $solr = apachesolr_get_solr();
-    $response = $solr->makeServletRequest('admin/file');
+    $response = $solr->makeServletRequest('admin/file', array('wt' => 'xml'));
     $xml = simplexml_load_string($response->getRawResponse());
   }
   catch (Exception $e) {
@@ -752,7 +752,7 @@ function apachesolr_config_file($name) {
     $solr = apachesolr_get_solr();
     $response = $solr->makeServletRequest('admin/file', array('file' => $name));
     $raw_file = $response->getRawResponse();
-    
+
     $output = '<pre>' . check_plain($raw_file) . '</pre>';
     drupal_set_title(check_plain($name));
   }

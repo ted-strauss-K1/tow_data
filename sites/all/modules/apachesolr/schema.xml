@@ -10,7 +10,7 @@
  http://wiki.apache.org/solr/SchemaXml
 -->
 
-<schema name="drupal-1.4" version="1.2">
+<schema name="drupal-1.7" version="1.2">
     <!-- attribute "name" is the name of this schema and is only used for display purposes.
          Applications should change this to reflect the nature of the search collection.
          version="1.2" is Solr's version number for the schema syntax and semantics.  It should
@@ -152,8 +152,8 @@
         -->
     <fieldType name="text" class="solr.TextField" positionIncrementGap="100">
       <analyzer type="index">
-				<charFilter class="solr.MappingCharFilterFactory" mapping="mapping-ISOLatin1Accent.txt"/>
-				<tokenizer class="solr.WhitespaceTokenizerFactory"/>
+        <charFilter class="solr.MappingCharFilterFactory" mapping="mapping-ISOLatin1Accent.txt"/>
+        <tokenizer class="solr.WhitespaceTokenizerFactory"/>
         <!-- in this example, we will only use synonyms at query time
         <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
         -->
@@ -174,7 +174,7 @@
                 catenateNumbers="1"
                 catenateAll="0"
                 splitOnCaseChange="1"
-                preserveOriginal="1"/> 
+                preserveOriginal="1"/>
         <filter class="solr.LowerCaseFilterFactory"/>
         <filter class="solr.SnowballPorterFilterFactory" language="English" protected="protwords.txt"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
@@ -200,20 +200,9 @@
         <filter class="solr.LowerCaseFilterFactory"/>
         <filter class="solr.SnowballPorterFilterFactory" language="English" protected="protwords.txt"/>
         <filter class="solr.RemoveDuplicatesTokenFilterFactory"/>
-      </analyzer> 
+      </analyzer>
     </fieldType>
 
-    <!-- A text field that uses KeywordTokenizerFactory, i.e. text is not divided by tokens. -->				
-		<fieldType name="strtext" class="solr.TextField" positionIncrementGap="100">
-      <analyzer type="index">
-        <tokenizer class="solr.KeywordTokenizerFactory"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
-      </analyzer>
-      <analyzer type="query">
-			<tokenizer class="solr.KeywordTokenizerFactory"/>
-        <filter class="solr.LowerCaseFilterFactory"/>
-      </analyzer> 
-    </fieldType>
 
     <!-- Edge N gram type - for example for matching against queries with results 
         KeywordTokenizer leaves input string intact as a single term.
@@ -416,11 +405,6 @@
    <!-- Sortable version of the dynamic string field -->
    <dynamicField name="sort_ss_*" type="sortString" indexed="true" stored="false"/>
    <copyField source="ss_*" dest="sort_ss_*"/>
-
-   <dynamicField name="sts_*"  type="strtext"    indexed="true"  stored="true" multiValued="false" termVectors="true"/>
-   <!-- Version of the dynamic strtext field for facet search -->
-   <dynamicField name="f_sts_*"  type="strtext"    indexed="true"  stored="true" multiValued="false" termVectors="true"/>
-   <copyField source="sts_*" dest="f_sts_*"/>
   <!-- A random sort field -->
    <dynamicField name="random_*" type="rand" indexed="true" stored="true"/>
    <!-- This field is used to store node access records, as opposed to CCK field data -->

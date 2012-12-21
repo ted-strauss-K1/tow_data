@@ -529,6 +529,12 @@ function apachesolr_index_updated($updated = NULL) {
  * Implementation of hook_cron().
  */
 function apachesolr_cron() {
+
+  // Indexes in read-only mode do not change the index, so will not update, delete, or optimize during cron.
+  if (variable_get('apachesolr_read_only', APACHESOLR_READ_WRITE) == APACHESOLR_READ_ONLY) {
+    return;
+  }
+
   // Mass update and delete functions are in the include file.
   module_load_include('inc', 'apachesolr', 'apachesolr.index');
   apachesolr_cron_check_node_table();
@@ -612,7 +618,7 @@ function _apachesolr_nodeapi_delete($node, $set_message = TRUE) {
     // There was no exception, so delete from the table.
     db_query("DELETE FROM {apachesolr_search_node} WHERE nid = %d", $node->nid);
     if ($set_message && user_access('administer search') && variable_get('apachesolr_set_nodeapi_messages', 1)) {
-      ## apachesolr_set_stats_message('Deleted content will be removed from the Apache Solr search index in approximately @autocommit_time.');
+      apachesolr_set_stats_message('Deleted content will be removed from the Apache Solr search index in approximately @autocommit_time.');
     }
   }
 }
@@ -627,7 +633,7 @@ function _apachesolr_nodeapi_update($node, $set_message = TRUE) {
       // There was no exception, so update the table.
       db_query('UPDATE {apachesolr_search_node} SET changed = %d, status = %d WHERE nid = %d', time(), $node->status, $node->nid);
       if ($set_message && user_access('administer search') && variable_get('apachesolr_set_nodeapi_messages', 1)) {
-        ## apachesolr_set_stats_message('Unpublished content will be removed from the Apache Solr search index in approximately @autocommit_time.');
+        apachesolr_set_stats_message('Unpublished content will be removed from the Apache Solr search index in approximately @autocommit_time.');
       }
     }
   }
@@ -1776,7 +1782,7 @@ function theme_apachesolr_facet_link($facet_text, $path, $options = array(), $co
     $options['attributes']['class'][] = 'active';
   }
   $options['attributes']['class'] = implode(' ', $options['attributes']['class']);
-  return apachesolr_l($facet_text, $path, $options) . " ($count)";
+  return apachesolr_l($facet_text ." ($count)",  $path, $options);
 }
 
 /**
