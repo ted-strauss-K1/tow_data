@@ -70,7 +70,7 @@ Drupal.behaviors.Import = function(context) {
         if (grab_url != "") {
             var table = getChosenTable();
             $.ajax({
-                url: 'http://' + location.host + '/?q=import_grab/' + hash + '/' + dataset + '/' + table,
+                url: 'http://' + location.host + '/import_grab/' + hash + '/' + dataset + '/' + table,
                 data: {
                     grab_url : grab_url
                 },
@@ -91,7 +91,7 @@ Drupal.behaviors.Import = function(context) {
         }
 
         $.ajax({
-            url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
+            url: 'http://' + location.host + '/import_progress_get/' + hash + '/' + stage,
             dataType: 'json',
             success: function (data, textStatus) {
                 lpOnComplete(hash, stage, data.response, cycle);
@@ -277,7 +277,7 @@ Drupal.behaviors.Import = function(context) {
         var cycle = 0;
 
         $.ajax({
-            url: 'http://' + location.host + '/?q=import_progress_get/' + hash + '/' + stage,
+            url: 'http://' + location.host + '/import_progress_get/' + hash + '/' + stage,
             dataType: 'json',
             success: function (data, textStatus) {
                 lpOnComplete(hash, stage, data.response, cycle);

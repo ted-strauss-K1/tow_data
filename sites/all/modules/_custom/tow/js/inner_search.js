@@ -82,9 +82,9 @@ Drupal.behaviors.inner_search = function(context) {
         sortWidgetsLinkClick(e, 'type', sortCurrentTypeDirection);
     });
 
-    // Sort: reset all.
-    $('.sort-link-reset').live('click', function(e) {
-        sortResetAll(e);
+    // Sort: reset all. ***Changed to reset all filters***
+    $('.search-link-reset-all').live('click', function(e) {
+        searchResetAll(e, $(this));
     });
 
 
@@ -172,6 +172,14 @@ Drupal.behaviors.inner_search = function(context) {
     $('.saved-search-delete').live('click', function(e) {
         deleteSavedSearch(e, $(this));
     });
+    
+    //Saved search tags autocomplete
+    var timer = null;
+    $('#edit-ss-tags').live('keyup', function(e) {
+        clearTimeout(timer);
+        $this = $(this);
+        timer = setTimeout(function() { ssTagsAutocomplete(e, $this); }, 600);
+     });
 
 
 
@@ -217,9 +225,10 @@ Drupal.behaviors.inner_search = function(context) {
     }
 
     /**
-     * Widgets sorting reset.
+     * Widgets sorting reset. ***Reset all filters***
      */
-    function sortResetAll(event) {
+    function searchResetAll(event, selector) {
+        /*
         event.preventDefault();
 
         sortCurrentTitleDirection = '';
@@ -228,6 +237,12 @@ Drupal.behaviors.inner_search = function(context) {
         $('.tow-inner-search-widget-sort a[href*="title"]').text('title');
         $('.tow-inner-search-widget-sort a[href*="type"]').text('type');
         $('#tow-search-inner-hash-form').after(initialArrayOfWidgets);
+        */
+       
+        var url = selector.attr('href');
+        setHash(url);
+        
+        event.preventDefault();
     }
 
 
@@ -421,44 +436,74 @@ Drupal.behaviors.inner_search = function(context) {
         var selected = selector.hasClass('selected');
         var disabled = selector.hasClass('unavailable');
         var tableset = selector.attr('tableset');
-        
+        var text = selector.text();
+        var type = selector.attr('f_type');
+
         if (!disabled) {
-            selector.addClass('available-selected');
+            var lastSelected = 0;
+
             if (selected) {
-                var lastSelected = 0;
                 $('.tow-dataset-field-link.selected').each(function() {
                     lastSelected++;
                 });
-                if (lastSelected < 2) {
-                    $('.tow-dataset-field-link').each(function() {
-                        $(this).addClass('available');
-                    });
-                }
-                else {
-                    $('.tow-dataset-field-link').each(function() {
-                        if ($(this).attr('tableset') == tableset) {
-                            $(this).addClass('available');
-                        }
-                    });
-                }
+            }
+            if (selected && lastSelected < 2) {
+                $('.tow-dataset-field-link').each(function() {
+                    $(this).addClass('available-hover');
+                    $(this).addClass('hover');
+                });
             }
             else {
                 $('.tow-dataset-field-link').each(function() {
+                    $(this).addClass('hover');
                     if ($(this).attr('tableset') == tableset) {
-                        $(this).addClass('available');
+                        if ($(this).hasClass('selected')) {
+                            $(this).addClass('selected-hover');
+                        }
+                        else {
+                            $(this).addClass('available-hover');
+                        }
+                    }
+                    else {
+                        $(this).addClass('unavailable-hover');
+                    }
+                });
+            }
+            if (selected) {
+                $('.tow-dataset-field-link').each(function() {
+                    if ($(this).attr('f_type') == type && $(this).text() == text) {
+                        $(this).removeClass('selected-hover');
+                        $(this).addClass('available-hover');
+                    }
+                });
+            }
+            else {
+                $('.tow-dataset-field-link').each(function() {
+                    if ($(this).attr('f_type') == type && $(this).text() == text) {
+                        $(this).addClass('selected-hover');
+                        $(this).removeClass('available-hover');
                     }
                 });
             }
         }
+        $('.tow-dataset-field-link.unavailable-hover').each(function() {
+            $(this).addClass('disabled');
+            $(this).removeClass('hover');
+        });
     }
     
     /**
      * Dataset field hover mouse out.
      */
     function searchFieldHoverOut(selector) {
-        selector.removeClass('available-selected');
+        $('.tow-dataset-field-link.unavailable-hover').each(function() {
+            $(this).removeClass('disabled');
+        });
         $('.tow-dataset-field-link').each(function() {
-            $(this).removeClass('available');
+            $(this).removeClass('selected-hover');
+            $(this).removeClass('available-hover');
+            $(this).removeClass('unavailable-hover');
+            $(this).removeClass('hover');
         });
     }
     
@@ -1674,9 +1719,7 @@ Drupal.behaviors.inner_search = function(context) {
             else {
                 $('#block-tow-saved_searches_list').html(data.saved_searches);
                 $.hrd.noty({
-                    'layout' : 'topRight',
                     'type' : 'success',
-                    'closeWith': 'click',
                     'text' : 'You posted a search'
                 });
             }
@@ -1715,9 +1758,7 @@ Drupal.behaviors.inner_search = function(context) {
         function deleteSearchAjaxSuccess(data) {
             $('#block-tow-saved_searches_list').html(data.saved_searches);
             $.hrd.noty({
-                'layout' : 'topRight',
                 'type' : 'success',
-                'closeWith': 'click',
                 'text' : 'You have deleted a saved search'
             });
         }
@@ -1861,6 +1902,36 @@ Drupal.behaviors.inner_search = function(context) {
         }
         location.hash = hash;
     }
+    
+    /**
+     * SS tags
+     */
+    function ssTagsAutocomplete(event, selector) {
+        var urlSSTags = 'http://' + window.location.hostname + '/tags';
+        var ssTag = selector.val();
+        var iOLC = ssTag.lastIndexOf(',');
+        if (iOLC != -1) {
+            var textAfterLastComma = ssTag.substring(iOLC + 1);
+            ssTag = textAfterLastComma.replace(/^\s+/,'');
+        }
+        
+        if (ssTag == ''/* || event.keyCode == 8*/) {
+              $('.ss-tags-html').html('');
+              return false;
+        }
+        $.ajax({
+            url: urlSSTags,
+            data: {
+                'tag' : ssTag
+            },
+            success: function(data) {
+                var htmlToInsert = $(data).find('div.view-content');
+                $('.ss-tags-html').html(htmlToInsert);
+            }
+        });
+        return false;
+    }
+    
 }
 
 /**

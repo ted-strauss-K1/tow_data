@@ -71,16 +71,16 @@ function tow_pma_menu_block() {
 
     $dataset_request = db_fetch_array($result);
 
-    // Define menu items.    
+    // Define menu items.
+    $browse_has_submenu = ($subitems) ? 'browse-has-submenu' : NULL;
     $items = array();
-    $items['browse']['data'] = l('Browse', 'node/' . $_tow_dataset->nid);
-    $items['browse']['data'] .= ($subitems) ? ('<ul class="browse-submenu">' . $subitems . '</ul>'):NULL;
-    $items['browse']['class'] = ($subitems) ? 'browse-has-submenu':NULL;
+    $items['browse'] = l('Browse', 'node/' . $_tow_dataset->nid, $options = array('attributes' => array('class' => $browse_has_submenu)));
+    $items['browse'] .= ($subitems) ? ('<ul class="browse-submenu">' . $subitems . '</ul>') : NULL;
     $items['search'] = /*($_tow_grey_pma_menu) ? t('Search') : */l('Search', 'search_dataset/' . $_tow_dataset->nid);
     $res_doc = db_query("SELECT t.nid FROM {content_type_document} t WHERE t.field_doc_dataset_nid_value = %d", $_tow_dataset->nid);
     $dataset_doc = db_fetch_array($res_doc);
     $items['docs'] = (!$dataset_doc) ? l('Docs', 'node/add/document', array('query' => 'dataset=' . $_tow_dataset->nid)) : l('Docs', 'doc/' . $_tow_dataset->nid);
-    $items['new_dataset'] = ($user->uid) ? l('Create new dataset', 'node/add/dataset') : l('Create new dataset', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal')));
+    $items['new_dataset'] = ($user->uid) ? l('New dataset', 'node/add/dataset') : l('New dataset', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal')));
 
     //Set menu items according to user roles
     //Dataset access type: By request
