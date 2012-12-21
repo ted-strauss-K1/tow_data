@@ -263,11 +263,18 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
     foreach ($tables as $table_nid) {
         $table_fields = tow_apachesolr_table_fields($table_nid);
 
-        $key = tow_search_inner_linked_build_table_tablesets($table_nid);
-        if (isset($key)) {
-            $key = array_keys($key);
-            sort($key);
-            $key = implode('+', $key);
+        $linking_info = tow_search_inner_linked_build_table_tablesets($table_nid);
+        $indeces = array();
+        if (isset($linking_info)) {
+            foreach ($linking_info as $t) {
+                foreach ($t['select'] as $f) {
+                    $arg = $f['title'] . '_' . $f['type'];
+                    $indeces[$arg] = $arg;
+                }
+            }
+            $keys = array_keys($linking_info);
+            sort($keys);
+            $key = implode('+', $keys);
         }
         else {
             $key = $table_nid;
@@ -282,11 +289,12 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
             // Attributes.
             $options = array(
                 'attributes' => array(
-                    'class' => 'tow-dataset-field-link',
+                    'class' => 'tow-dataset-field-link available',
                     'f_type' => $field['type'],
                     'tableset' => $tableset,
                 ),
             );
+            $options['attributes']['class'] .= (in_array($field['title'] . '_' . $field['type'], $indeces)) ? ' index' : '';
             
             $sf_aux = $selected_fields;
             unset($sf_aux[0]);
@@ -309,7 +317,7 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
                 $href .= (empty($qsf)) ? '' : ((empty($qf)) ? '' : '&') . 'selected_fields=' . check_plain($qsf);
                 $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="' . $href . '" f_type="' . $options['attributes']['f_type'] . '" tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
             } else {
-                $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini unavailable"' . ' tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
+                $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini unavailable disabled"' . ' tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
             }
         }
     }

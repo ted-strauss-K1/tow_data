@@ -52,7 +52,7 @@ function tow_settings_saved_search_feature_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'comment_preview_saved_search';
-  $strongarm->value = '1';
+  $strongarm->value = '0';
   $export['comment_preview_saved_search'] = $strongarm;
 
   $strongarm = new stdClass;
@@ -66,7 +66,7 @@ function tow_settings_saved_search_feature_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'comment_subject_field_saved_search';
-  $strongarm->value = '1';
+  $strongarm->value = '0';
   $export['comment_subject_field_saved_search'] = $strongarm;
 
   $strongarm = new stdClass;
@@ -89,7 +89,7 @@ function tow_settings_saved_search_feature_strongarm() {
   $strongarm->disabled = FALSE; /* Edit this to true to make a default strongarm disabled initially */
   $strongarm->api_version = 1;
   $strongarm->name = 'form_build_id_saved_search';
-  $strongarm->value = 'form-ce492f2d84f7abecdeb0d45e283bb3dc';
+  $strongarm->value = 'form-3e7976093dc8498ddbe3e525e9c5d6d8';
   $export['form_build_id_saved_search'] = $strongarm;
 
   $strongarm = new stdClass;

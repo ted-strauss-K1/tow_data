@@ -320,51 +320,6 @@ function tow_import_check_request($hash, $dataset_nid, $table_nid) {
 }
 
 /**
- * Upload dargged files.
- */
-function tow_import_dragged() {
-
-    // Get params.
-    $hash = $_POST['hash'];
-    $dataset_nid = $_POST['dataset'];
-    $table_nid = $_POST['table'];
-
-    // Upload.
-    $to = tow_import_check_request($hash, $dataset_nid, $table_nid);
-    tow_import_upload($hash, $to);
-}
-
-/**
- * Grab file from outer source.
- */
-function tow_import_grab($hash, $dataset_nid, $table_nid) {
-
-    // Define a dataset and a table to grab the info to.
-    $to = tow_import_check_request($hash, $dataset_nid, $table_nid);
-
-    // Get info.
-    $grab_url = $_GET['grab_url'];
-    $file = file_get_contents($grab_url);
-
-    // Save file if it's possible.
-    if ($file) {
-        file_put_contents('sites/default/files/import/' . $hash, $file);
-        tow_import_progress_init($hash, TRUE, $grab_url, $to);
-    } else {
-        tow_import_progress_init($hash, FALSE, $grab_url, NULL, NULL);
-    }
-}
-
-/**
- * Import selected files.
- */
-function tow_import_selected($hash, $dataset_nid, $table_nid) {
-
-    $to = tow_import_check_request($hash, $dataset_nid, $table_nid);
-    tow_import_upload($hash, $to);
-}
-
-/**
  * Upload.
  */
 function tow_import_upload($hash, $to) {

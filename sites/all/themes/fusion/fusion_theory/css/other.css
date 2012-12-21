@@ -54,14 +54,15 @@ textarea#edit-body {
 /*--------------- Submit Buttons styling ---------------*/
 .node-form #edit-submit {
     margin-right: 4%;
+   /* width: 177px;*/
 }
 
 .node-form .form-submit {
-    width: 72px;
     height: 36px;   
     font-size: 14px;
     text-align: center;
     float: right;
+    width: auto;
 }
 /*--------------- End of Submit buttons styling ---------------*/
 
@@ -274,26 +275,32 @@ textarea#edit-body {
 }
 
 /*------style for item Browse------*/
-li:hover.browse-has-submenu {
-    background-color: #999999;
   
-}
 #block-tow-pma_menu li:hover.browse-has-submenu a:hover{
-  color: #ffffff;   
-}
-
-#block-tow-pma_menu li a:hover{
-    color: #666666;
-}
+  color: #ffffff; 
+ }
+ 
+ li:hover.browse-has-submenu{
+   background-color: #999999;
+ }
+ 
+ #block-tow-pma_menu ul li li a:hover{
+   background-color: #999999;     
+ }
+ 
 #header-group-inner #breadcrumbs{
   border-bottom: 2px solid black;      
 }
-#block-tow-pma_menu ul li ul{
-    border-top: 10px solid #cccccc;
+
+#block-tow-pma_menu ul.browse-submenu li{
+    border-bottom: none;
 }
 
-#block-tow-pma_menu ul.browse-submenu li:last-child{
-    border-bottom: none;
+#block-tow-pma_menu ul li ul{
+    background-color: #ffffff;  
+    border: 1px solid #000000;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+    
 }
 /*------style for tabs Tags and Users-----*/
 #block-menu-menu-users .menu li:last-child{

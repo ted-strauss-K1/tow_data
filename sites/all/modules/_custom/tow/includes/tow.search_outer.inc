@@ -274,37 +274,53 @@ function tow_search_outer_filter_form($form_state) {
     }
 
     //Rows
-  $form['size'] = array(
-    '#type' => 'select',
-    '#options' => tow_apachesolr_facet_menu_solr_range('sis_tow_amount_records', array(
-      '0' => t('any'),
-      '10' => t('10+'),
-      '100' => t('100+'),
-      '500' => t('500+'),
-      '1000' => t('1000+'),
-      '2000' => t('2000+'),
-      '5000' => t('5000+'),
-    ), TRUE),
-    '#title' => t('# rows'),  
-  );
-
+$options = tow_apachesolr_facet_menu_solr_range(
+            'sis_tow_amount_records', array(
+        '0' => t('any'),
+        '10' => t('10+'),
+        '100' => t('100+'),
+        '500' => t('500+'),
+        '1000' => t('1000+'),
+        '2000' => t('2000+'),
+        '5000' => t('5000+'),
+            ), TRUE
+    );
+        $value = array();
+        $value = '<div class="btn-group"><a class="btn dropdown-toggle" href="#" data-toggle="dropdown"># rows</a><ul class="dropdown-menu">';    
+            foreach ($options as $op) {
+                $value .= '<li>' . $op . '</li>';                
+            }
+        $value .= '</ul></div>';
+    $form['size'] = array(
+        '#title' => NULL,
+        '#value' => $value,
+        '#type' => 'item',
+    );
+  
     if ($nopost && $value = $values['size']) {
         $form['size']['#value'] = $value;
     }
 
-    //Searches
-  $form['saved_searches'] = array(
-    '#type' => 'select',
-    '#options' => tow_apachesolr_facet_menu_solr_range('sis_tow_amount_saved_searches', array(
+    //Searches  
+  $options = tow_apachesolr_facet_menu_solr_range('sis_tow_amount_saved_searches', array(
       '0' => t('any'),
       '1' => t('1+'),
       '5' => t('5+'),
       '10' => t('10+'),
       '20' => t('20+'),
       '50' => t('50+'),
-    ), TRUE),
-    '#title' => t('# searches'),
-  );
+    ), TRUE);
+    
+    $value = '<div class="btn-group"><a class="btn dropdown-toggle" href="#" data-toggle="dropdown"># searches</a><ul class="dropdown-menu">';    
+    foreach ($options as $op) {
+        $value .= '<li>' . $op . '</li>';
+    }
+    $value .= '</ul></div>';
+    $form['saved_searches'] = array(
+        '#title' => NULL,
+        '#value' => $value,
+        '#type' => 'item',
+    );
 
     if ($nopost && $value = $values['saved_searches']) {
         $form['saved_searches']['#value'] = $value;

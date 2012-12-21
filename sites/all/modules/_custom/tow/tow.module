@@ -696,27 +696,27 @@ function tow_menu() {
 
     // Upload dragged items.
     $items['import/upload_dragged'] = array(
-        'page callback' => 'tow_import_dragged',
+        'page callback' => 'tow_ajax_handlers_import_upload_dragged_files',
         'access arguments' => array('edit own dataset'),
-        'file' => 'includes/tow.import.inc',
+        'file' => 'includes/tow.ajax_handlers.inc',
         'type' => MENU_CALLBACK,
     );
 
     // Upload selected items.
     $items['import/upload_selected'] = array(
-        'page callback' => 'tow_import_selected',
+        'page callback' => 'tow_ajax_handlers_import_upload_selected_files',
         'page arguments' => array(2, 3, 4),
         'access arguments' => array('edit own dataset'),
-        'file' => 'includes/tow.import.inc',
+        'file' => 'includes/tow.ajax_handlers.inc',
         'type' => MENU_CALLBACK,
     );
 
     // Grab info.
     $items['import_grab'] = array(
-        'page callback' => 'tow_import_grab',
+        'page callback' => 'tow_ajax_handlers_import_upload_grab',
         'page arguments' => array(1, 2, 3, 4),
         'access arguments' => array('edit own dataset'),
-        'file' => 'includes/tow.import.inc',
+        'file' => 'includes/tow.ajax_handlers.inc',
         'type' => MENU_CALLBACK,
     );
 

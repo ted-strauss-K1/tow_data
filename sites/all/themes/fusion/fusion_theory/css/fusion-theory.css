@@ -442,7 +442,7 @@ div.tow-highcharts-handle {
 }
 #block-tow-search_outer_filter .form-item
 {
-	overflow:hidden;
+	overflow:visible;
 	 margin-bottom: 7px;
 	 text-align: left;
 	 line-height: 25px;
@@ -2355,4 +2355,9 @@ dt.profile-profile_bio
 .modalframe-page-content .password-description
 {
 	clear:both;
+}
+
+ul.dropdown-menu {
+    margin-left: 0;
+    padding-left: 5px;
 }
