@@ -1619,7 +1619,7 @@ Drupal.behaviors.inner_search = function(context) {
                         return (index + 1) + '. ' + title;
                     }
                 },
-                "sScrollY": "300",
+                "sScrollY": "",
                 "bStateSave": true,
                 "bScrollCollapse": true,
                 "bPaginate": false,
@@ -1627,8 +1627,14 @@ Drupal.behaviors.inner_search = function(context) {
                 "bSort": true,
                 "bInfo": false,
                 "bRetrieve": true,
-                "sScrollX": "100%"
+                "sScrollX": "100%",
+                "sWidth": ''
             });
+            
+            
+            $("#block-tow-search_inner_field_list").addClass("tab-pane active");
+            $("#block-tow-search_inner_facets").addClass("tab-pane");
+                               
         }
 
         $.ajax({

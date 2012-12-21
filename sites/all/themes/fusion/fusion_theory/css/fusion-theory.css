@@ -323,12 +323,21 @@ div.tow-highcharts-handle {
 .sticky-table
 {
 	padding-left:0px !important;
-	/*width: 100% !important;*/
+	width: 100% !important;
 }
 .dataTables_scrollBody 
 {
 	/*height:auto !important;*/
 }
+
+dataTables_scrollBody tbody tr td {
+    max-width: 100px;
+}
+
+.dataTables_wrapper table tr td {
+    max-width: 100px;
+}
+
 .page-table .dataTables_scrollBody 
 {
 	height:500px !important;
@@ -2280,7 +2289,8 @@ dt.profile-profile_bio
 /*Search page table css*/
 .dataTables_scroll table thead td span
 {
-    width:100px;
+    /*width:100px;*/
+    max-width:100px;
     padding:2px;
     border: 0px solid red;
 	overflow: hidden;
@@ -2291,7 +2301,8 @@ dt.profile-profile_bio
 
 .dataTables_scroll table tbody tr td span
 {
-    width:100px;
+    /*width:100px;*/
+    max-width:100px;
     padding: 0 1px;
 	line-height:21px;
     border: 0px solid red;
@@ -2300,6 +2311,10 @@ dt.profile-profile_bio
 	display:block;
 	white-space: nowrap;
 }
+
+/*.dataTables_scrollHead table tr th{
+    max-width: 100px;
+}*/
 
 .dataTables_scroll table thead td span:hover {
     background: none repeat scroll 0 0 #EEEEEE;
@@ -2320,6 +2335,7 @@ dt.profile-profile_bio
 {
 	width:700px !important;
 }
+
 #block-tow-saved_searches_description
 {
 	width:700px !important;
@@ -2337,8 +2353,8 @@ dt.profile-profile_bio
 }
 .fixed_head
 {
-	position:fixed;
-	top:0px;
+	position:fixed !important;
+	top:0px !important;
 	background:#fff;
 }
 
