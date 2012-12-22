@@ -1922,15 +1922,15 @@ function drupal_get_css($css = NULL) {
             // If a CSS file is not to be preprocessed and it's a module CSS file, it needs to *always* appear at the *top*,
             // regardless of whether preprocessing is on or off.
             if (!$preprocess && $type == 'module') {
-              $no_module_preprocess .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. base_path() . $file . $query_string .'" />'."\n";
+              $no_module_preprocess .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. file_create_url($file) . $query_string .'" />'."\n";
             }
             // If a CSS file is not to be preprocessed and it's a theme CSS file, it needs to *always* appear at the *bottom*,
             // regardless of whether preprocessing is on or off.
             else if (!$preprocess && $type == 'theme') {
-              $no_theme_preprocess .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. base_path() . $file . $query_string .'" />'."\n";
+              $no_theme_preprocess .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. file_create_url($file) . $query_string .'" />'."\n";
             }
             else {
-              $output .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. base_path() . $file . $query_string .'" />'."\n";
+              $output .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. file_create_url($file) . $query_string .'" />'."\n";
             }
           }
         }
@@ -1942,7 +1942,7 @@ function drupal_get_css($css = NULL) {
       // starting with "ad*".
       $filename = 'css_'. md5(serialize($types) . $query_string) .'.css';
       $preprocess_file = drupal_build_css_cache($types, $filename);
-      $output .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. base_path() . $preprocess_file .'" />'."\n";
+      $output .= '<link type="text/css" rel="stylesheet" media="'. $media .'" href="'. file_create_url($preprocess_file) .'" />'."\n";
     }
   }
 
@@ -2330,7 +2330,7 @@ function drupal_get_js($scope = 'header', $javascript = NULL) {
         // Additionally, go through any remaining scripts if JS preprocessing is on and output the non-cached ones.
         foreach ($data as $path => $info) {
           if (!$info['preprocess'] || !$is_writable || !$preprocess_js) {
-            $no_preprocess[$type] .= '<script type="text/javascript"'. ($info['defer'] ? ' defer="defer"' : '') .' src="'. base_path() . $path . ($info['cache'] ? $query_string : '?'. time()) ."\"></script>\n";
+            $no_preprocess[$type] .= '<script type="text/javascript"'. ($info['defer'] ? ' defer="defer"' : '') .' src="'. file_create_url($path) . ($info['cache'] ? $query_string : '?'. time()) ."\"></script>\n";
           }
           else {
             $files[$path] = $info;
@@ -2345,7 +2345,7 @@ function drupal_get_js($scope = 'header', $javascript = NULL) {
     // starting with "ad*".
     $filename = 'js_'. md5(serialize($files) . $query_string) .'.js';
     $preprocess_file = drupal_build_js_cache($files, $filename);
-    $preprocessed .= '<script type="text/javascript" src="'. base_path() . $preprocess_file .'"></script>'."\n";
+    $preprocessed .= '<script type="text/javascript" src="'. file_create_url($preprocess_file) .'"></script>'."\n";
   }
 
   // Keep the order of JS files consistent as some are preprocessed and others are not.
@@ -2538,9 +2538,60 @@ function drupal_to_js($var) {
       return $var;
     case 'resource':
     case 'string':
-      return '"'. str_replace(array("\r", "\n", "<", ">", "&"),
-                              array('\r', '\n', '\x3c', '\x3e', '\x26'),
-                              addslashes($var)) .'"';
+      // Always use Unicode escape sequences (\u0022) over JSON escape
+      // sequences (\") to prevent browsers interpreting these as
+      // special characters.
+      $replace_pairs = array(
+        // ", \ and U+0000 - U+001F must be escaped according to RFC 4627.
+        '\\' => '\u005C',
+        '"' => '\u0022',
+        "\x00" => '\u0000',
+        "\x01" => '\u0001',
+        "\x02" => '\u0002',
+        "\x03" => '\u0003',
+        "\x04" => '\u0004',
+        "\x05" => '\u0005',
+        "\x06" => '\u0006',
+        "\x07" => '\u0007',
+        "\x08" => '\u0008',
+        "\x09" => '\u0009',
+        "\x0a" => '\u000A',
+        "\x0b" => '\u000B',
+        "\x0c" => '\u000C',
+        "\x0d" => '\u000D',
+        "\x0e" => '\u000E',
+        "\x0f" => '\u000F',
+        "\x10" => '\u0010',
+        "\x11" => '\u0011',
+        "\x12" => '\u0012',
+        "\x13" => '\u0013',
+        "\x14" => '\u0014',
+        "\x15" => '\u0015',
+        "\x16" => '\u0016',
+        "\x17" => '\u0017',
+        "\x18" => '\u0018',
+        "\x19" => '\u0019',
+        "\x1a" => '\u001A',
+        "\x1b" => '\u001B',
+        "\x1c" => '\u001C',
+        "\x1d" => '\u001D',
+        "\x1e" => '\u001E',
+        "\x1f" => '\u001F',
+        // Prevent browsers from interpreting these as as special.
+        "'" => '\u0027',
+        '<' => '\u003C',
+        '>' => '\u003E',
+        '&' => '\u0026',
+        // Prevent browsers from interpreting the solidus as special and
+        // non-compliant JSON parsers from interpreting // as a comment.
+        '/' => '\u002F',
+        // While these are allowed unescaped according to ECMA-262, section
+        // 15.12.2, they cause problems in some JSON parsers.
+        "\xe2\x80\xa8" => '\u2028', // U+2028, Line Separator.
+        "\xe2\x80\xa9" => '\u2029', // U+2029, Paragraph Separator.
+      );
+
+      return '"'. strtr($var, $replace_pairs) .'"';
     case 'array':
       // Arrays in JSON can't be associative. If the array is empty or if it
       // has sequential whole number keys starting with 0, it's not associative
