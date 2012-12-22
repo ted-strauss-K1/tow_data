@@ -110,7 +110,7 @@ function tow_dataset_votes_block() {
     // No block in case of not a dataset.
     global $_tow_dataset;
     $viewed_dataset = node_load(arg(1));
-    if ($viewed_dataset->type != 'dataset') {
+    if (($viewed_dataset->type != 'dataset') || (arg(0) == 'search_dataset')) {
         return;
     }
 

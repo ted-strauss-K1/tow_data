@@ -82,9 +82,9 @@ Drupal.behaviors.inner_search = function(context) {
         sortWidgetsLinkClick(e, 'type', sortCurrentTypeDirection);
     });
 
-    // Sort: reset all.
-    $('.sort-link-reset').live('click', function(e) {
-        sortResetAll(e);
+    // Sort: reset all. ***Changed to reset all filters***
+    $('.search-link-reset-all').live('click', function(e) {
+        searchResetAll(e, $(this));
     });
 
 
@@ -172,6 +172,14 @@ Drupal.behaviors.inner_search = function(context) {
     $('.saved-search-delete').live('click', function(e) {
         deleteSavedSearch(e, $(this));
     });
+    
+    //Saved search tags autocomplete
+    var timer = null;
+    $('#edit-ss-tags').live('keyup', function(e) {
+        clearTimeout(timer);
+        $this = $(this);
+        timer = setTimeout(function() { ssTagsAutocomplete(e, $this); }, 600);
+     });
 
 
 
@@ -217,9 +225,10 @@ Drupal.behaviors.inner_search = function(context) {
     }
 
     /**
-     * Widgets sorting reset.
+     * Widgets sorting reset. ***Reset all filters***
      */
-    function sortResetAll(event) {
+    function searchResetAll(event, selector) {
+        /*
         event.preventDefault();
 
         sortCurrentTitleDirection = '';
@@ -228,6 +237,12 @@ Drupal.behaviors.inner_search = function(context) {
         $('.tow-inner-search-widget-sort a[href*="title"]').text('title');
         $('.tow-inner-search-widget-sort a[href*="type"]').text('type');
         $('#tow-search-inner-hash-form').after(initialArrayOfWidgets);
+        */
+       
+        var url = selector.attr('href');
+        setHash(url);
+        
+        event.preventDefault();
     }
 
 
@@ -1649,7 +1664,7 @@ Drupal.behaviors.inner_search = function(context) {
                         return (index + 1) + '. ' + title;
                     }
                 },
-                "sScrollY": "300",
+                "sScrollY": "",
                 "bStateSave": true,
                 "bScrollCollapse": true,
                 "bPaginate": false,
@@ -1657,8 +1672,14 @@ Drupal.behaviors.inner_search = function(context) {
                 "bSort": true,
                 "bInfo": false,
                 "bRetrieve": true,
-                "sScrollX": "100%"
+                "sScrollX": "100%",
+                "sWidth": ''
             });
+            
+            
+            $("#block-tow-search_inner_field_list").addClass("tab-pane active");
+            $("#block-tow-search_inner_facets").addClass("tab-pane");
+                               
         }
 
         $.ajax({
@@ -1698,9 +1719,7 @@ Drupal.behaviors.inner_search = function(context) {
             else {
                 $('#block-tow-saved_searches_list').html(data.saved_searches);
                 $.hrd.noty({
-                    'layout' : 'topRight',
                     'type' : 'success',
-                    'closeWith': 'click',
                     'text' : 'You posted a search'
                 });
             }
@@ -1739,9 +1758,7 @@ Drupal.behaviors.inner_search = function(context) {
         function deleteSearchAjaxSuccess(data) {
             $('#block-tow-saved_searches_list').html(data.saved_searches);
             $.hrd.noty({
-                'layout' : 'topRight',
                 'type' : 'success',
-                'closeWith': 'click',
                 'text' : 'You have deleted a saved search'
             });
         }
@@ -1885,6 +1902,36 @@ Drupal.behaviors.inner_search = function(context) {
         }
         location.hash = hash;
     }
+    
+    /**
+     * SS tags
+     */
+    function ssTagsAutocomplete(event, selector) {
+        var urlSSTags = 'http://' + window.location.hostname + '/tags';
+        var ssTag = selector.val();
+        var iOLC = ssTag.lastIndexOf(',');
+        if (iOLC != -1) {
+            var textAfterLastComma = ssTag.substring(iOLC + 1);
+            ssTag = textAfterLastComma.replace(/^\s+/,'');
+        }
+        
+        if (ssTag == ''/* || event.keyCode == 8*/) {
+              $('.ss-tags-html').html('');
+              return false;
+        }
+        $.ajax({
+            url: urlSSTags,
+            data: {
+                'tag' : ssTag
+            },
+            success: function(data) {
+                var htmlToInsert = $(data).find('div.view-content');
+                $('.ss-tags-html').html(htmlToInsert);
+            }
+        });
+        return false;
+    }
+    
 }
 
 /**
