@@ -57,6 +57,7 @@ Drupal.behaviors.inner_search = function(context) {
                         counter++;
                     }
                 });
+                firstPageLoad = false;
                 var selectedFieldsToSend = JSON.stringify(selectedFields);
                 var url = 'http://' + window.location.hostname + window.location.pathname + '#?' + 'selected_fields=' + selectedFieldsToSend;
                 setHash(url);
