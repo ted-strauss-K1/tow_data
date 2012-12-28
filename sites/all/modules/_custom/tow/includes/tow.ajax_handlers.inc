@@ -10,6 +10,97 @@
  * ************************************************************************************************** */
 
 /**
+ * Delete comment.
+ */
+function tow_ajax_handlers_comment_delete() {
+    module_load_include('inc', 'comment', 'comment.admin');
+    
+    $cid = $_GET['cid'];
+    $dataset_nid = $_GET['dataset_nid'];
+    $confirm = ($_GET['confirm'] == 'true') ? TRUE : FALSE;
+    
+    if ($confirm) {
+        $comment = _comment_load($cid);
+        _comment_delete_thread($comment);
+        _comment_update_node_statistics($comment->nid);
+    }
+    
+    $block = tow_saved_searches_list_block($dataset_nid);
+    $json = array(
+        'saved_searches' => $block['content'],
+    );
+    
+    return drupal_json($json);
+}
+
+/**
+ * Delete comment.
+ */
+function tow_ajax_handlers_comment_form() {
+    module_load_include('inc', 'comment', 'comment.pages');
+    
+    $op = $_GET['op'];
+    
+    $form = 'Access denied!';
+    
+    if ($op == 'edit') {
+        $cid = $_GET['cid'];
+        $form = comment_edit($cid);
+    }
+    if ($op == 'reply') {
+        $node = node_load($_GET['nid']);
+        $pid = $_GET['pid'];
+        $form = comment_form_box(array('pid' => $pid, 'nid' => $node->nid), t('Reply'));
+    }
+    
+    $json = array(
+        'form' => $form,
+    );
+    return drupal_json($json);
+}
+
+/**
+ * Save comment.
+ */
+function tow_ajax_handlers_comment_save() {
+    global $user;
+    
+    $subject = $_GET['subject'];
+    $cid = ($_GET['cid'] == '') ? NULL : $_GET['cid'];
+    $pid = ($_GET['pid'] == '') ? NULL : $_GET['pid'];
+    $nid = ($_GET['nid'] == '') ? NULL : $_GET['nid'];
+    $form_build_id = $_GET['form_build_id'];
+    $form_token = $_GET['form_token'];
+    $dataset_nid = $_GET['dataset_nid'];
+    
+    $edit = array(
+        'author' => $user->name,
+        'comment' => $subject,
+        'cid' => $cid,
+        'pid' => $pid,
+        'nid' => $nid,
+        'uid' => $user->uid,
+        'op' => 'Save',
+        'submit' => 'Save',
+        'form_build_id' => $form_build_id,
+        'form_token' => $form_token,
+        'form_id' => 'comment_form',
+        'subject' => $subject,
+        'date' => 'now',
+        'timestamp' => time(),
+        'name' => $user->name,
+    );
+    comment_save($edit);
+
+    $block = tow_saved_searches_list_block($dataset_nid);
+    $json = array(
+        'saved_searches' => $block['content'],
+    );
+    
+    return drupal_json($json);
+}
+
+/**
  * Handles the creation of a saved search with Ajax.
  */
 function tow_ajax_handlers_create_saved_search($nid) {

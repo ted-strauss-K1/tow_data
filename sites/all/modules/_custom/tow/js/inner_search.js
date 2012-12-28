@@ -181,6 +181,24 @@ Drupal.behaviors.inner_search = function(context) {
         $this = $(this);
         timer = setTimeout(function() { ssTagsAutocomplete(e, $this); }, 600);
      });
+     
+     // Delete comment.
+     $('.comment_delete a').live('click', function(e) {
+         commentDelete(e, $(this));
+     });
+     
+     // Replacements of comment links with comment forms.
+     $('.comment_edit a').live('click', function(e) {
+         commentForm(e, $(this), 'edit');
+     });
+     $('.comment_reply a').live('click', function(e) {
+         commentForm(e, $(this), 'reply');
+     });
+     
+     // Save comment.
+     $('[id^="comment-form"] .form-submit').live('click', function(e) {
+         commentSave(e, $(this));
+     });
 
 
 
@@ -1773,6 +1791,142 @@ Drupal.behaviors.inner_search = function(context) {
             },
             success: function(data) {
                 deleteSearchAjaxSuccess(data);
+            },
+            dataType: 'json'
+        });
+
+        event.preventDefault();
+        return false;
+    }
+    
+    /**
+     * Save comment with AJAX.
+     */
+    function commentDelete(event, selector) {
+        var urlCD = 'http://' + window.location.hostname + '/ajax/comment/delete';
+        var confirmToSend = window.confirm('Are you sure you want to delete this comment? This action cannot be undone.');
+        
+        var cid = selector.attr('href').split('/')[3];
+        
+        var dataset = window.location.pathname.split('/')[2];
+        
+        /**
+         * Comment saving.
+         */
+        function deleteCommentSuccess(data) {
+            $('#block-tow-saved_searches_list').html(data.saved_searches);
+        }
+
+        // AJAX.
+        $.ajax({
+            url: urlCD,
+            data: {
+                'cid' : cid,
+                'dataset_nid' : dataset,
+                'confirm' : confirmToSend
+            },
+            success: function(data) {
+                deleteCommentSuccess(data);
+            },
+            dataType: 'json'
+        });
+
+        event.preventDefault();
+        return false;
+    }
+
+    /**
+     * Comment form with AJAX.
+     */
+    function commentForm(event, selector, op) {
+        var urlCF = 'http://' + window.location.hostname + '/ajax/comment/form';
+        
+        var nid, cid, pid;
+        if (op == 'edit') {
+            cid = selector.attr('href').split('/')[3];
+            nid = '';
+            pid = '';
+        }
+        if (op == 'reply') {
+            cid = '';
+            nid = selector.attr('href').split('/')[3];
+            pid = selector.attr('href').split('/')[4];
+        }
+        
+        /**
+         * Saved search creation.
+         */
+        function commentFormSuccess(data) {
+            selector.parent().parent().parent().html(data.form);
+        }
+
+        // AJAX.
+        $.ajax({
+            url: urlCF,
+            data: {
+                'cid' : cid,
+                'pid' : pid,
+                'nid' : nid,
+                'op' : op
+            },
+            success: function(data) {
+                commentFormSuccess(data);
+            },
+            dataType: 'json'
+        });
+
+        event.preventDefault();
+        return false;
+    }
+    
+    /**
+     * Save comment with AJAX.
+     */
+    function commentSave(event, selector) {
+        var urlSC = 'http://' + window.location.hostname + '/ajax/comment/save';
+        
+        var nid, cid, pid, formBuildId, formToken, subject, action;
+        formBuildId = selector.parent().parent().find('[name="form_build_id"]').val();
+        formToken = selector.parent().parent().find('[name="form_token"]').val();
+        
+        action = selector.parent().parent().attr('action').split('/');
+        
+        if (action[2] == 'reply') {
+            cid = '';
+            nid = action[3];
+            pid = (action[4]) ? action[4] : '';
+        }
+        if (action[2] == 'edit') {
+            cid = action[3];
+            nid = '';
+            pid = '';
+        }
+        
+        subject = selector.parent().parent().find('[name="comment"]').val();
+        
+        var dataset = window.location.pathname.split('/')[2];
+        
+        /**
+         * Comment saving.
+         */
+        function saveCommentSuccess(data) {
+            $('#block-tow-saved_searches_list').html(data.saved_searches);
+        }
+
+        // AJAX.
+        $.ajax({
+            url: urlSC,
+            data: {
+                'subject' : subject,
+                'cid' : cid,
+                'pid' : pid,
+                'nid' : nid,
+                'form_build_id' : formBuildId,
+                'form_token' : formToken,
+                'dataset_nid' : dataset
+            },
+            success: function(data) {
+                saveCommentSuccess(data);
             },
             dataType: 'json'
         });
