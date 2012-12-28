@@ -26,7 +26,8 @@ or non-blocking requests in parallel. Set timeouts, max simultaneous connection
 limits, chunk size, and max redirects to follow. Can handle data with
 content-encoding and transfer-encoding headers set. Correctly follows
 redirects. Option to forward the referrer when a redirect is found. Cookie
-extraction and parsing into key value pairs.
+extraction and parsing into key value pairs. Can multipart encode data so files
+can easily be sent in a HTTP request.
 
 
 REQUIREMENTS
@@ -83,6 +84,7 @@ httprl_pr()
 httprl_fast403()
  - Issue a 403 and exit.
 
+
 TECHNICAL DETAILS
 -----------------
 
@@ -92,15 +94,34 @@ the http response; Non-Blocking will close the connection not waiting for the
 response back. The API for httprl is similar to the Drupal 7 version of
 drupal_http_request().
 
+HTTPRL can be used independent of drupal. For basic operations it doesn't
+require any built in drupal functions.
+
 
 CODE EXAMPLES
 -------------
+
+**Simple HTTP**
+
+Request http://drupal.org/.
+
+    <?php
+    // Queue up the request.
+    httprl_request('http://drupal.org/');
+    // Execute request.
+    $request = httprl_send_request();
+
+    // Echo out the results.
+    echo httprl_pr($request);
+    ?>
+
 
 Request this servers own front page & the node page.
 
     <?php
     // Build URL to point to front page of this server.
     $url_front = httprl_build_url_self();
+    // Build URL to point to /node on this server.
     $url_node = httprl_build_url_self('node');
     // Queue up the requests.
     httprl_request($url_front);
@@ -112,6 +133,8 @@ Request this servers own front page & the node page.
     echo httprl_pr($request);
     ?>
 
+
+**Non Blocking HTTP Operations**
 
 Request 10 URLs in a non blocking manner on this server. Checkout watchdog as
 this should generate 10 404s and the $request object won't contain much info.
@@ -136,14 +159,89 @@ this should generate 10 404s and the $request object won't contain much info.
     ?>
 
 
-print 'My Text'; cut the connection by sending the data over the wire and do
-processing in the background.
+Request 10 URLs in a non blocking manner with one httprl_request() call. These
+URLs will all have the same options.
 
     <?php
-    httprl_background_processing('My Text');
-    // Everything after this point does not affect page load time.
+    // Set the blocking mode.
+    $options = array(
+      'method' => 'HEAD',
+      'blocking' => FALSE,
+    );
+    // Queue up the requests.
+    $max = 10;
+    $urls = array();
+    for ($i=1; $i <= $max; $i++) {
+      // Build URL to a page that doesn't exist.
+      $urls[] = httprl_build_url_self('asdf-asdf-asdf-' . $i);
+    }
+    // Queue up the requests.
+    httprl_request($urls, $options);
+    // Execute requests.
+    $request = httprl_send_request();
+
+    // Echo out the results.
+    echo httprl_pr($request);
     ?>
 
+
+Request 1000 URLs in a non blocking manner with one httprl_request() call. These
+URLs will all have the same options. This will saturate the server and any
+connections that couldn't be made will be dropped.
+
+    <?php
+    // Set the blocking mode.
+    $options = array(
+      'method' => 'HEAD',
+      'blocking' => FALSE,
+    );
+    // Queue up the requests.
+    $max = 1000;
+    $urls = array();
+    for ($i=1; $i <= $max; $i++) {
+      // Build URL to a page that doesn't exist.
+      $urls[] = httprl_build_url_self('asdf-asdf-asdf-' . $i);
+    }
+    // Queue up the requests.
+    httprl_request($urls, $options);
+    // Execute requests.
+    $request = httprl_send_request();
+
+    // Echo out the results.
+    echo httprl_pr($request);
+    ?>
+
+
+Request 1000 URLs in a non blocking manner with one httprl_request() call. These
+URLs will all have the same options. This will saturate the server. All 1000
+requests will eventually hit the server due to it waiting for the connection to
+be established; `async_connect` is FALSE.
+
+    <?php
+    // Set the blocking mode.
+    $options = array(
+      'method' => 'HEAD',
+      'blocking' => FALSE,
+      'async_connect' => FALSE,
+    );
+    // Queue up the requests.
+    $max = 1000;
+    $urls = array();
+    for ($i=1; $i <= $max; $i++) {
+      // Build URL to a page that doesn't exist.
+      $urls[] = httprl_build_url_self('asdf-asdf-asdf-' . $i);
+    }
+    // Queue up the requests.
+    httprl_request($urls, $options);
+    // Execute requests.
+    $request = httprl_send_request();
+
+    // Echo out the results.
+    echo httprl_pr($request);
+    ?>
+
+
+**HTTP Operations and Callbacks**
 
 Use a callback in the event loop to do processing on the request. In this case
 we are going to use httprl_pr() as the callback function.
@@ -237,6 +335,100 @@ instead of returning a value.
     ?>
 
 
+**More Advanced HTTP Operations**
+
+Hit 4 different URLs, Using at least 2 that has a status code of 200 and
+erroring out the others that didn't return fast. Data is truncated as well.
+
+    <?php
+    // Array of URLs to get.
+    $urls = array(
+      'http://google.com/',
+      'http://bing.com/',
+      'http://yahoo.com/',
+      'http://www.duckduckgo.com/',
+      'http://www.drupal.org/',
+    );
+
+    // Process list of URLs.
+    $options = array(
+      'alter_all_streams_function' => 'need_two_good_results',
+      'callback' => array(array('function' => 'limit_data_size')),
+    );
+    // Queue up the requests.
+    httprl_request($urls, $options);
+
+    // Execute requests.
+    $requests = httprl_send_request();
+
+    // Print what was done.
+    echo httprl_pr($requests);
+
+    function need_two_good_results($id, &$responses) {
+      static $counter = 0;
+      foreach ($responses as $id => &$result) {
+        // Skip if we got a 200.
+        if ($result->code == 200) {
+          $counter += 1;
+          continue;
+        }
+        if ($result->status == 'Done.') {
+          continue;
+        }
+
+        if ($counter >= 2) {
+          // Set the code to request was aborted.
+          $result->code = HTTPRL_REQUEST_ABORTED;
+          $result->error = 'Software caused connection abort.';
+          // Set status to done and set timeout.
+          $result->status = 'Done.';
+          $result->options['timeout'] -= $result->running_time;
+
+          // Close the file pointer and remove from the stream from the array.
+          fclose($result->fp);
+          unset($result->fp);
+        }
+      }
+    }
+
+    function limit_data_size(&$result) {
+      // Only use the first and last 256 characters in the data array.
+      $result->data = substr($result->data, 0, 256) . "\n\n ... \n\n" . substr($result->data, strlen($result->data)-256);
+    }
+    ?>
+
+
+Send 2 files in one field via a POST request.
+
+    <?php
+    // Send request to front page.
+    $url_front = httprl_build_url_self();
+    // Set options.
+    $options = array(
+      'method' => 'POST',
+      'data' => array(
+        'x' => 1,
+        'y' => 2,
+        'z' => 3,
+        'files' => array(
+          'core_js' => array(
+            'misc/form.js',
+            'misc/batch.js',
+          ),
+        ),
+      ),
+    );
+    // Queue up the request.
+    httprl_request($url_front, $options);
+    // Execute request.
+    $request = httprl_send_request();
+    // Echo what was returned.
+    echo httprl_pr($request);
+    ?>
+
+
+**Threading Examples**
+
 Use 2 threads to load up 4 different nodes.
 
     <?php
@@ -313,32 +505,6 @@ D6 & D7.
     ?>
 
 
-Request multiple URLs with one httprl_request() call. These URLs will all have
-the same options.
-
-    <?php
-    // Set the blocking mode.
-    $options = array(
-      'method' => 'HEAD',
-      'blocking' => FALSE,
-    );
-    // Queue up the requests.
-    $max = 10;
-    $urls = array();
-    for ($i=1; $i <= $max; $i++) {
-      // Build URL to a page that doesn't exist.
-      $urls[] = httprl_build_url_self('asdf-asdf-asdf-' . $i);
-    }
-    // Queue up the requests.
-    httprl_request($urls, $options);
-    // Execute requests.
-    $request = httprl_send_request();
-
-    // Echo out the results.
-    echo httprl_pr($request);
-    ?>
-
-
 Get 2 results from 2 different queries at the hook_boot bootstrap level in D6.
 
     <?php
@@ -367,7 +533,7 @@ Get 2 results from 2 different queries at the hook_boot bootstrap level in D6.
       // Second Query.
       array(
         'type' => 'function',
-        'call' => 'db_query',
+        'call' => 'db_query_range',
         'args' => array('SELECT filename FROM {system} ORDER BY filename DESC', 0, 1),
       ),
       array(
@@ -535,60 +701,12 @@ non blocking background request.
     ?>
 
 
-Hit 4 different URLs, Using at least 2 that has a status code of 200 and
-erroring out on the others that didn't return. Data is truncated as well.
+print 'My Text'; cut the connection by sending the data over the wire and do
+processing in the background.
 
-    // Array of URLs to get.
-    $urls = array(
-      'http://google.com/',
-      'http://bing.com/',
-      'http://yahoo.com/',
-      'http://www.duckduckgo.com/',
-      'http://www.drupal.org/',
-    );
-
-    // Process list of URLs.
-    $options = array(
-      'alter_all_streams_function' => 'need_two_good_results',
-      'callback' => array(array('function' => 'limit_data_size')),
-    );
-    // Queue up the requests.
-    httprl_request($urls, $options);
-
-    // Execute requests.
-    $requests = httprl_send_request();
-
-    // Print what was done.
-    echo httprl_pr($requests);
-
-    function need_two_good_results($id, &$responses, &$streams, $current_time) {
-      static $counter = 0;
-      foreach ($responses as $id => &$result) {
-        // Skip if we got a 200.
-        if ($result->code == 200) {
-          $counter = $counter + 1;
-          continue;
-        }
-        if ($result->status == 'Done.') {
-          continue;
-        }
-
-        if ($counter >= 2) {
-          // Set the code to request was aborted.
-          $result->code = HTTPRL_REQUEST_ABORTED;
-          $result->status = 'Done.';
-          $result->options['timeout'] = $result->options['timeout'] - $current_time;
-
-          // Close the file pointer and remove from the stream from the array.
-          fclose($streams[$id]);
-          unset($streams[$id]);
-        }
-      }
-    }
-
-    function limit_data_size(&$result) {
-      // Only use the first and last 256 characters in the data array.
-      $result->data = substr($result->data, 0, 256) . "\n\n ... \n\n" . substr($result->data, strlen($result->data)-256);
-    }
-
-
+    <?php
+    httprl_background_processing('My Text');
+    // Everything after this point does not affect page load time.
+    sleep(5);
+    echo 'You should not see this text';
+    ?>
