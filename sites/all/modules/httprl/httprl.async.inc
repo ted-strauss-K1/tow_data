@@ -54,7 +54,7 @@ function httprl_async_page() {
 
   // Run the function.
   if (!empty($_POST['function'])) {
-     $data = httprl_run_function($_POST['function'], $args);
+    $data = httprl_run_function($_POST['function'], $args);
   }
   // Run an array of functions.
   else {
