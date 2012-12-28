@@ -101,7 +101,7 @@
 						border: '1px solid #eee',
 						boxShadow: "0 0 5px rgba(0, 0, 0, 0.5)"
 					*/});
-					this.$message.css({fontSize: '13px', textAlign: 'left'});
+					this.$message.css({fontSize: '13px', textAlign: 'center', maxWidth: "100%"});
 				break;
 				case 'topLeft': case 'topRight':
 				case 'bottomLeft': case 'bottomRight':
