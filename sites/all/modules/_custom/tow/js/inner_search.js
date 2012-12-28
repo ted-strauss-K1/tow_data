@@ -112,7 +112,14 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
     // Dataset field hover.
-    $('.tow-dataset-field-link').live({ mouseenter: function() { searchFieldHoverIn($(this)); }, mouseleave: function() { searchFieldHoverOut($(this)); } });
+    $('.tow-dataset-field-link').live({
+        mouseenter: function() {
+            searchFieldHoverIn($(this));
+        },
+        mouseleave: function() {
+            searchFieldHoverOut($(this));
+        }
+    });
 
     // Facet click.
     $('a.apachesolr-facet, a.apachesolr-hidden-facet, .tow-inner-search-selected').live('click', function(e) {
@@ -172,14 +179,16 @@ Drupal.behaviors.inner_search = function(context) {
     $('.saved-search-delete').live('click', function(e) {
         deleteSavedSearch(e, $(this));
     });
-    
+
     //Saved search tags autocomplete
     var timer = null;
     $('#edit-ss-tags').live('keyup', function(e) {
         clearTimeout(timer);
         $this = $(this);
-        timer = setTimeout(function() { ssTagsAutocomplete(e, $this); }, 600);
-     });
+        timer = setTimeout(function() {
+            ssTagsAutocomplete(e, $this);
+        }, 600);
+    });
 
 
 
@@ -238,10 +247,10 @@ Drupal.behaviors.inner_search = function(context) {
         $('.tow-inner-search-widget-sort a[href*="type"]').text('type');
         $('#tow-search-inner-hash-form').after(initialArrayOfWidgets);
         */
-       
+
         var url = selector.attr('href');
         setHash(url);
-        
+
         event.preventDefault();
     }
 
@@ -491,7 +500,7 @@ Drupal.behaviors.inner_search = function(context) {
             $(this).removeClass('hover');
         });
     }
-    
+
     /**
      * Dataset field hover mouse out.
      */
@@ -506,13 +515,13 @@ Drupal.behaviors.inner_search = function(context) {
             $(this).removeClass('hover');
         });
     }
-    
+
     /**
      * Facet click.
      */
     function searchFacetClickUpdate(event, selector) {
         event.preventDefault();
-        
+
         var url = selector.attr('href');
         var filtersToSend = getUrlQueryParam(url, 'filters');
         var selectedFieldsToSend = getUrlQueryParam(url, 'selected_fields');
@@ -534,7 +543,7 @@ Drupal.behaviors.inner_search = function(context) {
             selector.parent().find('.apachesolr-hidden-facet').addClass('hidden');
             selector.text(Drupal.t('Show more'));
         }
-        
+
         event.preventDefault();
         return false;
     }
@@ -1675,11 +1684,31 @@ Drupal.behaviors.inner_search = function(context) {
                 "sScrollX": "100%",
                 "sWidth": ''
             });
-            
-            
+
+
             $("#block-tow-search_inner_field_list").addClass("tab-pane active");
             $("#block-tow-search_inner_facets").addClass("tab-pane");
-                               
+
+            var access = $(".dataTables_scrollHead");
+
+            $('#InnerSearchTab').click(function() {
+                setTimeout(function () {
+                    pos = access.offset();
+                    console.log('pos: ', pos.top);
+                }, 200);
+            });
+            var pos = access.offset();
+            $(window).scroll(function() {
+                if ($(this).scrollTop() > pos.top) {
+                    access.addClass('fixed_head');
+                    access.stop().animate({
+                        marginTop: $(window).scrollTop() - pos.top
+                        },0);
+                } else {
+                    access.removeClass('fixed_head');
+                }
+            });
+
         }
 
         $.ajax({
@@ -1751,7 +1780,7 @@ Drupal.behaviors.inner_search = function(context) {
         var urlSSD = 'http://' + window.location.hostname + window.location.pathname + '/ajax/delete_search';
         var confirmToSend = window.confirm('Are you sure you want to delete ' + selector.parent().children().find('.title').children().attr('title') + '? This action cannot be undone.');
         var ssNidToSend = selector.attr('href').split('/')[2];
-        
+
         /**
          * Saved search creation.
          */
@@ -1779,7 +1808,7 @@ Drupal.behaviors.inner_search = function(context) {
         event.preventDefault();
         return false;
     }
-    
+
     /**
      * Widgets sort according to sort type and sort direction.
      */
@@ -1902,7 +1931,7 @@ Drupal.behaviors.inner_search = function(context) {
         }
         location.hash = hash;
     }
-    
+
     /**
      * SS tags
      */
@@ -1914,10 +1943,10 @@ Drupal.behaviors.inner_search = function(context) {
             var textAfterLastComma = ssTag.substring(iOLC + 1);
             ssTag = textAfterLastComma.replace(/^\s+/,'');
         }
-        
+
         if (ssTag == ''/* || event.keyCode == 8*/) {
-              $('.ss-tags-html').html('');
-              return false;
+            $('.ss-tags-html').html('');
+            return false;
         }
         $.ajax({
             url: urlSSTags,
@@ -1931,7 +1960,7 @@ Drupal.behaviors.inner_search = function(context) {
         });
         return false;
     }
-    
+
 }
 
 /**
