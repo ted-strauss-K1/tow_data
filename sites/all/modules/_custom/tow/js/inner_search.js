@@ -113,7 +113,14 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
     // Dataset field hover.
-    $('.tow-dataset-field-link').live({ mouseenter: function() { searchFieldHoverIn($(this)); }, mouseleave: function() { searchFieldHoverOut($(this)); } });
+    $('.tow-dataset-field-link').live({
+        mouseenter: function() {
+            searchFieldHoverIn($(this));
+        },
+        mouseleave: function() {
+            searchFieldHoverOut($(this));
+        }
+    });
 
     // Facet click.
     $('a.apachesolr-facet, a.apachesolr-hidden-facet, .tow-inner-search-selected').live('click', function(e) {
@@ -173,32 +180,34 @@ Drupal.behaviors.inner_search = function(context) {
     $('.saved-search-delete').live('click', function(e) {
         deleteSavedSearch(e, $(this));
     });
-    
-    //Saved search tags autocomplete
+
+    // Saved search tags autocomplete.
     var timer = null;
     $('#edit-ss-tags').live('keyup', function(e) {
         clearTimeout(timer);
         $this = $(this);
-        timer = setTimeout(function() { ssTagsAutocomplete(e, $this); }, 600);
-     });
-     
-     // Delete comment.
-     $('.comment_delete a').live('click', function(e) {
-         commentDelete(e, $(this));
-     });
-     
-     // Replacements of comment links with comment forms.
-     $('.comment_edit a').live('click', function(e) {
-         commentForm(e, $(this), 'edit');
-     });
-     $('.comment_reply a').live('click', function(e) {
-         commentForm(e, $(this), 'reply');
-     });
-     
-     // Save comment.
-     $('[id^="comment-form"] .form-submit').live('click', function(e) {
-         commentSave(e, $(this));
-     });
+        timer = setTimeout(function() {
+            ssTagsAutocomplete(e, $this);
+        }, 600);
+    });
+
+    // Delete comment.
+    $('.comment_delete a').live('click', function(e) {
+        commentDelete(e, $(this));
+    });
+
+    // Replacements of comment links with comment forms.
+    $('.comment_edit a').live('click', function(e) {
+        commentForm(e, $(this), 'edit');
+    });
+    $('.comment_reply a').live('click', function(e) {
+        commentForm(e, $(this), 'reply');
+    });
+
+    // Save comment.
+    $('[id^="comment-form"] .form-submit').live('click', function(e) {
+        commentSave(e, $(this));
+    });
 
 
 
@@ -257,10 +266,10 @@ Drupal.behaviors.inner_search = function(context) {
         $('.tow-inner-search-widget-sort a[href*="type"]').text('type');
         $('#tow-search-inner-hash-form').after(initialArrayOfWidgets);
         */
-       
+
         var url = selector.attr('href');
         setHash(url);
-        
+
         event.preventDefault();
     }
 
@@ -510,7 +519,7 @@ Drupal.behaviors.inner_search = function(context) {
             $(this).removeClass('hover');
         });
     }
-    
+
     /**
      * Dataset field hover mouse out.
      */
@@ -525,13 +534,13 @@ Drupal.behaviors.inner_search = function(context) {
             $(this).removeClass('hover');
         });
     }
-    
+
     /**
      * Facet click.
      */
     function searchFacetClickUpdate(event, selector) {
         event.preventDefault();
-        
+
         var url = selector.attr('href');
         var filtersToSend = getUrlQueryParam(url, 'filters');
         var selectedFieldsToSend = getUrlQueryParam(url, 'selected_fields');
@@ -553,7 +562,7 @@ Drupal.behaviors.inner_search = function(context) {
             selector.parent().find('.apachesolr-hidden-facet').addClass('hidden');
             selector.text(Drupal.t('Show more'));
         }
-        
+
         event.preventDefault();
         return false;
     }
@@ -1694,11 +1703,31 @@ Drupal.behaviors.inner_search = function(context) {
                 "sScrollX": "100%",
                 "sWidth": ''
             });
-            
-            
+
+
             $("#block-tow-search_inner_field_list").addClass("tab-pane active");
             $("#block-tow-search_inner_facets").addClass("tab-pane");
-                               
+
+            var access = $(".dataTables_scrollHead");
+
+            $('#InnerSearchTab').click(function() {
+                setTimeout(function () {
+                    pos = access.offset();
+                    console.log('pos: ', pos.top);
+                }, 200);
+            });
+            var pos = access.offset();
+            $(window).scroll(function() {
+                if ($(this).scrollTop() > pos.top) {
+                    access.addClass('fixed_head');
+                    access.stop().animate({
+                        marginTop: $(window).scrollTop() - pos.top
+                    },0);
+                } else {
+                    access.removeClass('fixed_head');
+                }
+            });
+
         }
 
         $.ajax({
@@ -1770,7 +1799,7 @@ Drupal.behaviors.inner_search = function(context) {
         var urlSSD = 'http://' + window.location.hostname + window.location.pathname + '/ajax/delete_search';
         var confirmToSend = window.confirm('Are you sure you want to delete ' + selector.parent().children().find('.title').children().attr('title') + '? This action cannot be undone.');
         var ssNidToSend = selector.attr('href').split('/')[2];
-        
+
         /**
          * Saved search creation.
          */
@@ -1798,18 +1827,18 @@ Drupal.behaviors.inner_search = function(context) {
         event.preventDefault();
         return false;
     }
-    
+
     /**
      * Save comment with AJAX.
      */
     function commentDelete(event, selector) {
         var urlCD = 'http://' + window.location.hostname + '/ajax/comment/delete';
         var confirmToSend = window.confirm('Are you sure you want to delete this comment? This action cannot be undone.');
-        
+
         var cid = selector.attr('href').split('/')[3];
-        
+
         var dataset = window.location.pathname.split('/')[2];
-        
+
         /**
          * Comment saving.
          */
@@ -1840,7 +1869,7 @@ Drupal.behaviors.inner_search = function(context) {
      */
     function commentForm(event, selector, op) {
         var urlCF = 'http://' + window.location.hostname + '/ajax/comment/form';
-        
+
         var nid, cid, pid;
         if (op == 'edit') {
             cid = selector.attr('href').split('/')[3];
@@ -1852,7 +1881,7 @@ Drupal.behaviors.inner_search = function(context) {
             nid = selector.attr('href').split('/')[3];
             pid = selector.attr('href').split('/')[4];
         }
-        
+
         /**
          * Saved search creation.
          */
@@ -1878,19 +1907,19 @@ Drupal.behaviors.inner_search = function(context) {
         event.preventDefault();
         return false;
     }
-    
+
     /**
      * Save comment with AJAX.
      */
     function commentSave(event, selector) {
         var urlSC = 'http://' + window.location.hostname + '/ajax/comment/save';
-        
+
         var nid, cid, pid, formBuildId, formToken, subject, action;
         formBuildId = selector.parent().parent().find('[name="form_build_id"]').val();
         formToken = selector.parent().parent().find('[name="form_token"]').val();
-        
+
         action = selector.parent().parent().attr('action').split('/');
-        
+
         if (action[2] == 'reply') {
             cid = '';
             nid = action[3];
@@ -1901,11 +1930,11 @@ Drupal.behaviors.inner_search = function(context) {
             nid = '';
             pid = '';
         }
-        
+
         subject = selector.parent().parent().find('[name="comment"]').val();
-        
+
         var dataset = window.location.pathname.split('/')[2];
-        
+
         /**
          * Comment saving.
          */
@@ -1934,7 +1963,7 @@ Drupal.behaviors.inner_search = function(context) {
         event.preventDefault();
         return false;
     }
-    
+
     /**
      * Widgets sort according to sort type and sort direction.
      */
@@ -2057,7 +2086,7 @@ Drupal.behaviors.inner_search = function(context) {
         }
         location.hash = hash;
     }
-    
+
     /**
      * SS tags
      */
@@ -2069,10 +2098,10 @@ Drupal.behaviors.inner_search = function(context) {
             var textAfterLastComma = ssTag.substring(iOLC + 1);
             ssTag = textAfterLastComma.replace(/^\s+/,'');
         }
-        
+
         if (ssTag == ''/* || event.keyCode == 8*/) {
-              $('.ss-tags-html').html('');
-              return false;
+            $('.ss-tags-html').html('');
+            return false;
         }
         $.ajax({
             url: urlSSTags,
@@ -2086,7 +2115,7 @@ Drupal.behaviors.inner_search = function(context) {
         });
         return false;
     }
-    
+
 }
 
 /**

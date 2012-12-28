@@ -2353,9 +2353,10 @@ dt.profile-profile_bio
 }
 .fixed_head
 {
-	position:fixed !important;
-	top:0px !important;
+	position:absolute !important;
 	background:#fff;
+        z-index: 10;
+        
 }
 
 .modalframe-page-content .password-parent {
