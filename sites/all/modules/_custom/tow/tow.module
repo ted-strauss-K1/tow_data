@@ -369,6 +369,22 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
             $form['_author'] = NULL;
             $form['comment_filter']['format'] = NULL;
             $form['comment_filter']['comment']['#resizable'] = FALSE;
+            
+            $action = parse_url($form['#action']);
+            if ($action['path'] == '/ajax/comment/form') {
+                $aux = explode('&', $action['query']);
+                foreach ($aux as $q) {
+                    $q = explode('=', $q);
+                    $query[$q[0]] = $q[1];
+                }
+                if ($query['op'] == 'edit') {
+                    $form['#action'] = '/comment/edit/' . $query['cid'];
+                }
+                if ($query['op'] == 'reply') {
+                    $form['#action'] = '/comment/reply/' . $query['nid'] . (($query['pid'] == '') ? '' : ('/' . $query['pid']));
+                }
+                unset($form['admin']);
+            }
             break;
         
         // User profile form.
@@ -811,23 +827,50 @@ function tow_menu() {
     // Add test menu items.
     $items = array_merge($items, tow_tests_menu());
     
-    //User dataset access through noty messages
+    // User dataset access through noty messages.
     $items['notyaccess_ajax/%/%/%'] = array(
-    'page callback' => 'tow_ajax_handlers_noty_access', 
-    'page arguments' => array(1, 2, 3),
-    'access arguments' => array('access content'),
-    'file' => 'includes/tow.ajax_handlers.inc',
-    'type' => MENU_CALLBACK,
+        'page callback' => 'tow_ajax_handlers_noty_access', 
+        'page arguments' => array(1, 2, 3),
+        'access arguments' => array('access content'),
+        'file' => 'includes/tow.ajax_handlers.inc',
+        'type' => MENU_CALLBACK,
     );
     
     //Dataset doc
     $items['doc'] = array(
-    'access arguments' => array('access content'),
-    'page arguments' => array(1),
-    'page callback' => 'tow_dataset_doc_output',
-    'file' => 'includes/tow.dataset.inc',
+        'access arguments' => array('access content'),
+        'page arguments' => array(1),
+        'page callback' => 'tow_dataset_doc_output',
+        'file' => 'includes/tow.dataset.inc',
     );
 
+    // Delete comment.
+    $items['ajax/comment/delete'] = array(
+        'title' => 'Delete comment',
+        'page callback' => 'tow_ajax_handlers_comment_delete',
+        'access arguments' => array('post comments without approval'),
+        'file' => 'includes/tow.ajax_handlers.inc',
+        'type' => MENU_CALLBACK,
+    );
+
+    // Comment form.
+    $items['ajax/comment/form'] = array(
+        'title' => 'Comment form',
+        'page callback' => 'tow_ajax_handlers_comment_form',
+        'access arguments' => array('post comments without approval'),
+        'file' => 'includes/tow.ajax_handlers.inc',
+        'type' => MENU_CALLBACK,
+    );
+
+    // Save comment.
+    $items['ajax/comment/save'] = array(
+        'title' => 'Save comment',
+        'page callback' => 'tow_ajax_handlers_comment_save',
+        'access arguments' => array('post comments without approval'),
+        'file' => 'includes/tow.ajax_handlers.inc',
+        'type' => MENU_CALLBACK,
+    );
+    
     return $items;
 }
 

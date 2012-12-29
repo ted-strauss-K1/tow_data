@@ -7,7 +7,7 @@ $.hrd.noty = function(options) {
 		dismissQueue: true,
 		timeout: 5000,
 		force: true,
-		layout: 'top'
+		layout: 'topCenter'
 	};
         }
         else {
@@ -15,7 +15,7 @@ $.hrd.noty = function(options) {
 		text: options['text'],
 		type: options['type'],
 		dismissQueue: true,
-		layout: 'top',
+		layout: 'topCenter',
 		closeWith: ['button'],
 		force: true
             };
