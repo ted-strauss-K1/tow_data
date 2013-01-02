@@ -1,5 +1,5 @@
-/* header top menu */ 
- 
+/* header top menu */
+
 
 #header-top-wrapper h2.title {
 	visibility: hidden;
@@ -32,7 +32,7 @@ ul.menu li.leaf a {
 	margin-bottom: 30px;
 }
 /* Breadcramp menu style*/
-   
+
    #header-group-inner #breadcrumbs {
 	border-bottom: 1px solid #000;
 	background-color: #cccccc;
@@ -71,7 +71,7 @@ a:hover {
 
 #preface-bottom-inner .row, .nested, .block
 {
-	overflow:visible; 
+	overflow:visible;
 }
 #content-content
 {
@@ -85,7 +85,7 @@ a:hover {
 #block-tow-pma_menu ul li {
 	list-style: none;
 	float: left;
-	font-size:17px; 
+	font-size:17px;
 }
 #block-tow-pma_menu ul li a {
 	display: block;
@@ -98,7 +98,7 @@ a:hover {
 	border:1px solid #CCCCCC;
 	margin-top: 0px !important;
 	width:200px;
-    z-index:5;	
+    z-index:5;
     top:31px;
 	left:0px;
 	background:#999999;
@@ -120,19 +120,19 @@ a:hover {
 #block-tow-pma_menu ul li:hover ul, #block-tow-pma_menu ul li.hover ul {
 	display: block;
 	position: absolute;
-	margin: 0;        
+	margin: 0;
 	padding: 0; }
 #block-tow-pma_menu ul li:hover li, #block-tow-pma_menu ul li.hover li {
 	float: none; }
 #block-tow-pma_menu ul li:hover li a, #block-tow-pma_menu ul li.hover li a {
-	color: #000; 
+	color: #000;
 	}
 #block-tow-pma_menu ul li li a:hover {
 	background-color: #CCCCCC;
 	color:#000;
 }
-	  
-  
+
+
 /*#block-tow-pma_menu ul {
 	margin:0px;
 	padding:0px;
@@ -193,7 +193,7 @@ a:hover {
 }
 #block-tow-search_outer_tabs li:last-child
 {
-	float:right;	
+	float:right;
 }
 #block-tow-search_outer_tabs .inner
 {
@@ -233,7 +233,7 @@ div.view-content {
 	border-bottom: 2px solid black;
 }
 /* posted by block   */
-	
+
 #content-group {
 	/*margin-right: 10px;
     width: 710px;*/
@@ -280,12 +280,14 @@ a.tow-inner-search-selected {
 	color: white;
 	background-color: black;
 }
+/*
 div.tow-inner-search-widget {
 	padding-top: 10px;
 	padding-bottom: 10px;
 	border-bottom-width: 1px;
 	border-bottom-style: dotted;
 }
+*/
 div.tow-inner-search-highcharts-container {
 	height: 168px;
 	position: relative;
@@ -325,7 +327,7 @@ div.tow-highcharts-handle {
 	padding-left:0px !important;
 	width: 100% !important;
 }
-.dataTables_scrollBody 
+.dataTables_scrollBody
 {
 	/*height:auto !important;*/
 }
@@ -338,7 +340,7 @@ dataTables_scrollBody tbody tr td {
     max-width: 100px;
 }
 
-.page-table .dataTables_scrollBody 
+.page-table .dataTables_scrollBody
 {
 	height:500px !important;
 }
@@ -577,7 +579,7 @@ dataTables_scrollBody tbody tr td {
 	  height: 530px !important;
     width: 480px !important;
 }
-.modalframe .ui-dialog-titlebar 
+.modalframe .ui-dialog-titlebar
 {
     background-color: #fff;
     border: 0px solid #6694C6;
@@ -1164,7 +1166,7 @@ dataTables_scrollBody tbody tr td {
     padding-bottom: 6px;
 	width: 100%;
 }
-.page-user .rec_detail 
+.page-user .rec_detail
 {
     float: left;
     width: 585px;
@@ -1237,7 +1239,7 @@ dataTables_scrollBody tbody tr td {
     text-align: center;
     width: 198px;
 }
-.grid16-13 
+.grid16-13
 {
     width: 710px !important;
 	margin-right: 10px;
@@ -1339,7 +1341,7 @@ dataTables_scrollBody tbody tr td {
 
 
 
-.view-tags .views-field-name a 
+.view-tags .views-field-name a
 {
   display: inline-block;
   *display: inline;
@@ -1444,7 +1446,7 @@ dataTables_scrollBody tbody tr td {
 	line-height: 25px;
 }
 
-.view-tags table td 
+.view-tags table td
 {
     border-bottom: 1px dotted #E0E0E0;
     padding-bottom: 12px;
@@ -1605,11 +1607,11 @@ block-menu-menu-users .inner
 	margin-top: 24px;
 }
 
-.view-Users table tr td 
+.view-Users table tr td
 {
     overflow: hidden;
 }
-.view-Users table tr td 
+.view-Users table tr td
 {
     clear: both;
     height: 85px;
@@ -2231,11 +2233,11 @@ dt.profile-profile_bio
 	cursor:pointer;
 }
 
-.modalframe-page-content .log-tab:hover 
+.modalframe-page-content .log-tab:hover
 {
 
 }
-.modalframe-page-content .sign-tab:hover 
+.modalframe-page-content .sign-tab:hover
 {
 
 }
@@ -2323,7 +2325,7 @@ dt.profile-profile_bio
     white-space: normal;
 	cursor:pointer;
 }
-.dataTables_scroll table tbody tr td span:hover 
+.dataTables_scroll table tbody tr td span:hover
 {
     background: none repeat scroll 0 0 #EEEEEE;
     display: block;
@@ -2348,7 +2350,7 @@ dt.profile-profile_bio
 {
 	float: left;
     margin-right: 10px;
-    min-height: 350px;
+    /* min-height: 350px; */
 	width: 215px;
 }
 .fixed_head
@@ -2356,7 +2358,7 @@ dt.profile-profile_bio
 	position:absolute !important;
 	background:#fff;
         z-index: 10;
-        
+
 }
 
 .modalframe-page-content .password-parent {
@@ -2387,4 +2389,19 @@ ul.dropdown-menu {
 .page-search-dataset #InnerSearchTab {
     margin-left: 0;
     margin-top: 25px;
+}
+
+.three-in-one {
+    float: left;
+    border-bottom-width: 1px;
+    border-bottom-style: dotted;
+    margin-top: 10px;
+}
+
+.three-in-one legend {
+    border: none;
+}
+
+.tow-inner-search-widget > form {
+    margin: 0 !important;
 }
