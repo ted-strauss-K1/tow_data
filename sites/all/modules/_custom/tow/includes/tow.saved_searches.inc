@@ -145,7 +145,7 @@ function tow_saved_searches_save_search_form(&$form_state, $nid, $filters, $sele
     $form = array();
 
     // Saved search comment(title).
-    $form['comment'] = array(
+    $form['ss_comment'] = array(
         '#type' => 'textarea',
         '#title' => NULL,
         '#rows' => 2,
@@ -242,7 +242,7 @@ function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
     $rows_amount = $form_state['values']['rows_amount'];
 
     // Saved search comment(title).
-    $ss_comment = $form['comment']['#value'];
+    $ss_comment = $form['ss_comment']['#value'];
 
     // Create saved search.
     $saved_search = tow_saved_searches_saved_search_create($node, $ss_comment, $filters, $selected_fields, $rows_amount);
