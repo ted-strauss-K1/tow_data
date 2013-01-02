@@ -1642,7 +1642,9 @@ Drupal.behaviors.inner_search = function(context) {
             if (data.save_search !== null) {
                 $('div#block-tow-saved_searches_description div.content').html(data.save_search);
             }
+            if (data.save_this_search !== null) {
             $('div#block-tow-saved_searches_save_search div.content').html(data.save_this_search);
+            }
 
             // Returns collapsibility.
             Drupal.behaviors.collapse();
