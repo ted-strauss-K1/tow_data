@@ -2378,3 +2378,13 @@ ul.dropdown-menu {
     margin-left: 0;
     padding-left: 5px;
 }
+
+#InnerSearchTab {
+    height: 26px;
+}
+
+/* Inner-search Tabs styling */
+.page-search-dataset #InnerSearchTab {
+    margin-left: 0;
+    margin-top: 25px;
+}

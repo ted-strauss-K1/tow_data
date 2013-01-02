@@ -110,11 +110,12 @@ $("#block-menu-menu-signing").show();
 
                         <?php if ($content_top || $help || $messages): ?>
                         <div id="content-top" class="content-top row nested">
-                            <?php /* Tabs making */
-print('<ul id="InnerSearchTab" class="nav nav-tabs">
-            <li class="active"><a href="#block-tow-search_inner_field_list" data-toggle="tab" class="active">Fields</a></li>
-            <li><a href="#block-tow-search_inner_facets" data-toggle="tab">Filters</a></li>
-       </ul>');?>
+                            
+                            <script>
+                                $(document).ready(function() {$("#block-tow-search_inner_field_list").addClass("active");});
+                                $(document).ready(function() {$("#block-tow-saved_searches_description").append('<ul id="InnerSearchTab" class="nav nav-tabs"><li><a href="#block-tow-search_inner_field_list" data-toggle="tab">Fields</a></li><li><a href="#block-tow-search_inner_facets" data-toggle="tab">Filters</a></li></ul>')});
+                            </script>
+                            
                           <div id="content-top-inner" class="content-top-inner inner">
                             <?php print theme('grid_block', $help, 'content-help'); ?>
                             <?php print theme('grid_block', $messages, 'content-messages'); ?>
