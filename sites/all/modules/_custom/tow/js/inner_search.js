@@ -1680,6 +1680,12 @@ Drupal.behaviors.inner_search = function(context) {
             });
 
             $('div.content-content').html(data.search);
+            
+            //Wrap every three widgets
+            var divs = $("div.tow-inner-search-widget");
+            for(var i = 0; i < divs.length; i+=3) {
+              divs.slice(i, i+3).wrapAll("<div class='three-in-one'></div>");
+            }
 
             // Number of rows in searchtable.
             var numberOfRows = $('#datatable-1 tbody tr').size();
