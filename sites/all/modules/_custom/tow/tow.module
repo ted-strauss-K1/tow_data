@@ -235,6 +235,7 @@ function tow_block($op = 'list', $delta = 0) {
 
             // 'Saved Searches' block.
             if ($delta == 'saved_searches_list') {
+                drupal_add_css('sites/all/modules/vote_up_down/widgets/upanddown/upanddown.css');
                 return tow_saved_searches_list_block();
             }
 

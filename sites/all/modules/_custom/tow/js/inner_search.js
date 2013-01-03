@@ -1773,7 +1773,7 @@ Drupal.behaviors.inner_search = function(context) {
                 alert(data.message);
             }
             else {
-                $('#block-tow-saved_searches_list').html(data.saved_searches);
+                $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
                 $.hrd.noty({
                     'type' : 'success',
                     'text' : 'You posted a search'
@@ -1812,7 +1812,7 @@ Drupal.behaviors.inner_search = function(context) {
          * Saved search creation.
          */
         function deleteSearchAjaxSuccess(data) {
-            $('#block-tow-saved_searches_list').html(data.saved_searches);
+            $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
             $.hrd.noty({
                 'type' : 'success',
                 'text' : 'You have deleted a saved search'
@@ -1851,7 +1851,7 @@ Drupal.behaviors.inner_search = function(context) {
          * Comment saving.
          */
         function deleteCommentSuccess(data) {
-            $('#block-tow-saved_searches_list').html(data.saved_searches);
+            $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
         }
 
         // AJAX.
@@ -1947,7 +1947,7 @@ Drupal.behaviors.inner_search = function(context) {
          * Comment saving.
          */
         function saveCommentSuccess(data) {
-            $('#block-tow-saved_searches_list').html(data.saved_searches);
+            $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
         }
 
         // AJAX.
