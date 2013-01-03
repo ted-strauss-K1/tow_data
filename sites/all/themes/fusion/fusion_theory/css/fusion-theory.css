@@ -2405,3 +2405,24 @@ ul.dropdown-menu {
 .tow-inner-search-widget > form {
     margin: 0 !important;
 }
+
+.fixed_jspHorizontalBar
+{
+    background:#fff;
+    z-index: 10;
+    position: fixed !important;
+    left: auto !important;
+    width: auto !important;
+    bottom: 25px !important;
+
+}
+
+.fixed_jspHorizontalBar:after {
+    content: "";
+    height: 25px;
+    width: 100%;
+    position: fixed;
+    background-color: white;
+    left: 0;
+    bottom: 0;
+}
