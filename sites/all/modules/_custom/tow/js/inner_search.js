@@ -1763,7 +1763,7 @@ Drupal.behaviors.inner_search = function(context) {
         var filters = $('#edit-filters').val();
         var selectedFields = $('#edit-selected-fields').val();
         var rowsAmount = $('#edit-rows-amount').val();
-        var sSComment = $('#edit-comment').val();
+        var sSComment = $('#edit-ss-comment').val();
 
         /**
          * Saved search creation.
