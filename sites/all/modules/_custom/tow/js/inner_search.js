@@ -1680,7 +1680,7 @@ Drupal.behaviors.inner_search = function(context) {
             });
 
             $('div.content-content').html(data.search);
-            
+
             //Wrap every three widgets
             var divs = $("div.tow-inner-search-widget");
             for(var i = 0; i < divs.length; i+=3) {
@@ -1692,7 +1692,7 @@ Drupal.behaviors.inner_search = function(context) {
             $('#tow-search-inner-save-search-form').children('div').children('[name="rows_amount"]').val(numberOfRows);
 
             var oTable = $('#datatable-1').dataTable({
-                "sDom": 'C<"clear">frti',
+                "sDom": 'C<"clear">rti',
                 "oColVis": {
                     "fnLabel": function (index, title, th) {
                         return (index + 1) + '. ' + title;
@@ -1710,8 +1710,10 @@ Drupal.behaviors.inner_search = function(context) {
                 "sScrollXInner": "100%",
                 "sWidth": ''
             });
-            
-            $(".dataTables_scroll").jScrollPane({showArrows: true}); /* This is a scroller implementation */
+
+            $(".dataTables_scroll").jScrollPane({
+                showArrows: true
+            }); /* This is a scroller implementation */
 
             $("#block-tow-search_inner_field_list").addClass("tab-pane active");
             $("#block-tow-search_inner_facets").addClass("tab-pane");
@@ -1725,23 +1727,31 @@ Drupal.behaviors.inner_search = function(context) {
             });
             var pos = access.offset();
             $(window).scroll(function() {
-                
-                if (pos != null && $(this).scrollTop() > pos.top - $(window).height() + $(".dataTables_scrollHead").height() + 25) {                    
+
+                if (pos != null && $(this).scrollTop() > pos.top - $(window).height() + $(".dataTables_scrollHead").height() + 25) {
                     $(".jspHorizontalBar").addClass('fixed_jspHorizontalBar');
-                    
+
                 } else {
                     $(".jspHorizontalBar").removeClass('fixed_jspHorizontalBar');
                 }
-                
+
                 if (pos != null && $(this).scrollTop() > pos.top) {
                     access.addClass('fixed_head');
                     access.stop().animate({
                         marginTop: $(window).scrollTop() - pos.top
                     },0);
-                    
+
                 } else {
                     access.removeClass('fixed_head');
                 }
+            });
+            /* Here is a function, that allows a horizontal scrolling via mouse scroll (+ jquery.mousewheel.min.js */
+            $(".dataTables_scrollBody").mousewheel(function(event, delta) {
+                var delta = delta * 30;
+                var test = parseInt($('.jspPane').css('left'), 10);
+                var lefttable = test + delta + "px";
+                $(".jspPane").css('left',lefttable);
+                event.preventDefault();
             });
 
         }
