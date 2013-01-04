@@ -226,7 +226,9 @@ function tow_search_inner_within_dataset($nid, $ajax = FALSE) {
     // Collect the search results:
     $results = search_data($keys, 'tow_inner_search');
 
-    // Add javascript.
+    // Add javascript&css.
+    drupal_add_css('sites/all/modules/datatables/dataTables/media/css/demo_table.css');
+    drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/jquery.ba-hashchange.min.js');
     drupal_add_js('misc/collapse.js');
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
