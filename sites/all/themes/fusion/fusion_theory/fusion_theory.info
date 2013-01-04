@@ -14,7 +14,6 @@ stylesheets[all][] = css/bootstrap.min.css
 stylesheets[all][] = css/tow.css
 stylesheets[all][] = js/scroller/jquery.jscrollpane.css
 
-scripts[] = js/noty/promise.js
 scripts[] = js/noty/jquery.noty.js
 scripts[] = js/noty/noty.js
 scripts[] = js/noty/default.js
@@ -23,6 +22,7 @@ scripts[] = js/noty/top.js
 scripts[] = js/noty/topCenter.js
 scripts[] = js/bootstrap/bootstrap.min.js
 scripts[] = js/scroller/jquery.jscrollpane.min.js
+scripts[] = js/scroller/jquery.mousewheel.min.js
 
 /*regions[sidebar_first = sidebar first */
 regions[sidebar_last] = sidebar last

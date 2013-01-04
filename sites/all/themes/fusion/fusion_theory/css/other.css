@@ -312,9 +312,25 @@ ul#noty_topCenter_layout_container{
 #block-menu-menu-tags .menu li:last-child{
     float: right;
 }
+
+.navbar #block-menu-primary-links .menu > li > a.active{
+    font-weight: bold; 
+    color: #000000;
+}
 /*------style for active item menu------*/
 
-#block-tow-pma_menu ul>li a {
+#block-tow-pma_menu li a.active {
+    font-weight: bold;
+}
+
+ul.menu li.leaf a.active{
+    font-weight: bold; 
+    color: #000000;
+}
+
+
+
+/*#block-tow-pma_menu ul>li a {
     padding: 3px 10px !important;
 }
 
@@ -323,4 +339,24 @@ ul#noty_topCenter_layout_container{
 }
 #block-tow-pma_menu ul>li {
     padding: 0px!important;
+}*/
+
+/*------Style for title "Fields" Search description-----*/
+
+#block-tow-search_inner_field_list h2.title,
+#block-tow-search_inner_facets h2.title{
+   display: none;
 }
+
+.page-search-dataset .dataTables_scrollHead th{
+    cursor:pointer;
+    text-align: center;
+    vertical-align: middle;
+}
+
+button.ColVis_Button{
+    float:right;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
