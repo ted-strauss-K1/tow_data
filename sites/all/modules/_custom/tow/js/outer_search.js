@@ -1,6 +1,9 @@
 Drupal.behaviors.outer_search = function(context) {
     var default_tab = '#newest';
-
+    
+    //Add class to 'Data' in primary menu
+    $('#block-menu-primary-links ul.menu li.first').addClass('active-trail');
+    
     // Hide hidden facets.
     $('.apachesolr-hidden-facet', context).addClass('hidden');
 

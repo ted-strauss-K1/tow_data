@@ -549,14 +549,6 @@ function tow_menu() {
         'file' => 'includes/tow.admin.inc',
     );
 
-    // Dataset creation link.
-    $items['data'] = array(
-        'access arguments' => array('access content'),
-        'title' => 'Data',
-        'page callback' => 'tow_data',
-        'menu_name' => 'primary-links',
-    );
-
     // Table node.
     $items['table'] = array(
         'access arguments' => array('access content'),
@@ -1467,14 +1459,6 @@ function tow_submit_maintanance_mode($form, &$form_state) {
 /* * **************************************************************************************************
  * Common functions
  * ************************************************************************************************** */
-
-/**
- * Returns a link for creation a dataset.
- */
-function tow_data() {
-    drupal_goto('<front>');
-    //return l('Create a new dataset', 'node/add/dataset', array('attributes' => array('class' => 'create-dataset-link')));
-}
 
 /**
  * When table is published/unpublished, perform the same change of status for records connected.

@@ -6,18 +6,20 @@
 function tow_menu_primary_links_feature_menu_default_menu_links() {
   $menu_links = array();
 
-  // Exported menu link: primary-links:data
-  $menu_links['primary-links:data'] = array(
+  // Exported menu link: primary-links:<front>
+  $menu_links['primary-links:<front>'] = array(
     'menu_name' => 'primary-links',
-    'link_path' => 'data',
-    'router_path' => 'data',
+    'link_path' => '<front>',
+    'router_path' => '',
     'link_title' => 'Data',
-    'options' => array(),
-    'module' => 'system',
+    'options' => array(
+      'attributes' => array(),
+    ),
+    'module' => 'menu',
     'hidden' => '0',
-    'external' => '0',
+    'external' => '1',
     'has_children' => '0',
-    'expanded' => '0',
+    'expanded' => '1',
     'weight' => '0',
   );
   // Exported menu link: primary-links:tags
