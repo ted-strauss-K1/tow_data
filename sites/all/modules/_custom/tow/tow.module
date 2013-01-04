@@ -235,6 +235,7 @@ function tow_block($op = 'list', $delta = 0) {
 
             // 'Saved Searches' block.
             if ($delta == 'saved_searches_list') {
+                drupal_add_css('sites/all/modules/vote_up_down/widgets/upanddown/upanddown.css');
                 return tow_saved_searches_list_block();
             }
 
@@ -470,8 +471,8 @@ function tow_init() {
     if (arg(0) == 'search_dataset' && arg(1)) {
         $node = node_load(arg(1));
         if ($node->type == 'dataset') {
-            drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
-            drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
+            #drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/media/js/jquery.dataTables.js');
+            #drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_browse.js');
         }
     }
 
@@ -546,14 +547,6 @@ function tow_menu() {
         'page callback' => 'drupal_get_form',
         'page arguments' => array('tow_admin_settings_form'),
         'file' => 'includes/tow.admin.inc',
-    );
-
-    // Dataset creation link.
-    $items['data'] = array(
-        'access arguments' => array('access content'),
-        'title' => 'Data',
-        'page callback' => 'tow_data',
-        'menu_name' => 'primary-links',
     );
 
     // Table node.
@@ -1466,14 +1459,6 @@ function tow_submit_maintanance_mode($form, &$form_state) {
 /* * **************************************************************************************************
  * Common functions
  * ************************************************************************************************** */
-
-/**
- * Returns a link for creation a dataset.
- */
-function tow_data() {
-    drupal_goto('<front>');
-    //return l('Create a new dataset', 'node/add/dataset', array('attributes' => array('class' => 'create-dataset-link')));
-}
 
 /**
  * When table is published/unpublished, perform the same change of status for records connected.

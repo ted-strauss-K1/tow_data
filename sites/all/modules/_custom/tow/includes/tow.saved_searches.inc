@@ -54,7 +54,7 @@ function tow_saved_searches_list_block($nid = NULL) {
         $saved_searches[] = node_load($result->nid);
     }
 
-    $block['title'] = t('User analysis');
+    #$block['title'] = t('User analysis');
     $block['content'] = '<span class="saved_search-preamble" style="display:none;"><strong>Search history</strong></span>';
 
     foreach ($saved_searches as $node) {
@@ -76,6 +76,8 @@ function tow_saved_searches_list_block($nid = NULL) {
 
         $block['content'] .= $output;
     }
+    
+    $block['title'] = ($block['content'] == '<span class="saved_search-preamble" style="display:none;"><strong>Search history</strong></span>') ? NULL : t('User analysis');
 
     return $block;
 }

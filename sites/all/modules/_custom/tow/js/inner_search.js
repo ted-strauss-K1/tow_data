@@ -1642,7 +1642,9 @@ Drupal.behaviors.inner_search = function(context) {
             if (data.save_search !== null) {
                 $('div#block-tow-saved_searches_description div.content').html(data.save_search);
             }
+            if (data.save_this_search !== null) {
             $('div#block-tow-saved_searches_save_search div.content').html(data.save_this_search);
+            }
 
             // Returns collapsibility.
             Drupal.behaviors.collapse();
@@ -1781,7 +1783,7 @@ Drupal.behaviors.inner_search = function(context) {
         var filters = $('#edit-filters').val();
         var selectedFields = $('#edit-selected-fields').val();
         var rowsAmount = $('#edit-rows-amount').val();
-        var sSComment = $('#edit-comment').val();
+        var sSComment = $('#edit-ss-comment').val();
 
         /**
          * Saved search creation.
@@ -1791,7 +1793,11 @@ Drupal.behaviors.inner_search = function(context) {
                 alert(data.message);
             }
             else {
-                $('#block-tow-saved_searches_list').html(data.saved_searches);
+                $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
+                
+                //Returns voting AJAX
+                Drupal.behaviors.CToolsAJAX();
+                
                 $.hrd.noty({
                     'type' : 'success',
                     'text' : 'You posted a search'
@@ -1827,10 +1833,14 @@ Drupal.behaviors.inner_search = function(context) {
         var ssNidToSend = selector.attr('href').split('/')[2];
 
         /**
-         * Saved search creation.
+         * Saved search deletion.
          */
         function deleteSearchAjaxSuccess(data) {
-            $('#block-tow-saved_searches_list').html(data.saved_searches);
+            $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
+            
+            //Returns voting AJAX
+            Drupal.behaviors.CToolsAJAX();
+
             $.hrd.noty({
                 'type' : 'success',
                 'text' : 'You have deleted a saved search'
@@ -1855,7 +1865,7 @@ Drupal.behaviors.inner_search = function(context) {
     }
 
     /**
-     * Save comment with AJAX.
+     * Delete comment with AJAX.
      */
     function commentDelete(event, selector) {
         var urlCD = 'http://' + window.location.hostname + '/ajax/comment/delete';
@@ -1866,10 +1876,13 @@ Drupal.behaviors.inner_search = function(context) {
         var dataset = window.location.pathname.split('/')[2];
 
         /**
-         * Comment saving.
+         * Comment deleting.
          */
         function deleteCommentSuccess(data) {
-            $('#block-tow-saved_searches_list').html(data.saved_searches);
+            $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
+            
+            //Returns voting AJAX
+            Drupal.behaviors.CToolsAJAX();
         }
 
         // AJAX.
@@ -1965,7 +1978,10 @@ Drupal.behaviors.inner_search = function(context) {
          * Comment saving.
          */
         function saveCommentSuccess(data) {
-            $('#block-tow-saved_searches_list').html(data.saved_searches);
+            $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
+            
+            //Returns voting AJAX
+            Drupal.behaviors.CToolsAJAX();
         }
 
         // AJAX.
