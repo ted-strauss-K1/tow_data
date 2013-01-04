@@ -1686,7 +1686,7 @@ Drupal.behaviors.inner_search = function(context) {
             //Wrap every three widgets
             var divs = $("div.tow-inner-search-widget");
             for(var i = 0; i < divs.length; i+=3) {
-              divs.slice(i, i+3).wrapAll("<div class='three-in-one'></div>");
+                divs.slice(i, i+3).wrapAll("<div class='three-in-one'></div>");
             }
 
             // Number of rows in searchtable.
@@ -1709,9 +1709,11 @@ Drupal.behaviors.inner_search = function(context) {
                 "bInfo": false,
                 "bRetrieve": true,
                 "sScrollX": "100%",
+                "sScrollXInner": "100%",
                 "sWidth": ''
             });
-
+            
+            $(".dataTables_scroll").jScrollPane({showArrows: true}); /* This is a scroller implementation */
 
             $("#block-tow-search_inner_field_list").addClass("tab-pane active");
             $("#block-tow-search_inner_facets").addClass("tab-pane");
@@ -1721,16 +1723,24 @@ Drupal.behaviors.inner_search = function(context) {
             $('#InnerSearchTab').click(function() {
                 setTimeout(function () {
                     pos = access.offset();
-                    console.log('pos: ', pos.top);
                 }, 200);
             });
             var pos = access.offset();
             $(window).scroll(function() {
-                if ($(this).scrollTop() > pos.top) {
+                
+                if (pos != null && $(this).scrollTop() > pos.top - $(window).height() + $(".dataTables_scrollHead").height() + 25) {                    
+                    $(".jspHorizontalBar").addClass('fixed_jspHorizontalBar');
+                    
+                } else {
+                    $(".jspHorizontalBar").removeClass('fixed_jspHorizontalBar');
+                }
+                
+                if (pos != null && $(this).scrollTop() > pos.top) {
                     access.addClass('fixed_head');
                     access.stop().animate({
                         marginTop: $(window).scrollTop() - pos.top
                     },0);
+                    
                 } else {
                     access.removeClass('fixed_head');
                 }

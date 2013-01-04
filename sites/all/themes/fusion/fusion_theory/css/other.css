@@ -312,4 +312,15 @@ ul#noty_topCenter_layout_container{
 #block-menu-menu-tags .menu li:last-child{
     float: right;
 }
+/*------style for active item menu------*/
 
+#block-tow-pma_menu ul>li a {
+    padding: 3px 10px !important;
+}
+
+#block-tow-pma_menu li a.active {
+    background: #DDDDDD;
+}
+#block-tow-pma_menu ul>li {
+    padding: 0px!important;
+}
