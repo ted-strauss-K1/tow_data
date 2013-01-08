@@ -328,8 +328,6 @@ ul.menu li.leaf a.active{
     color: #000000;
 }
 
-
-
 /*#block-tow-pma_menu ul>li a {
     padding: 3px 10px !important;
 }
@@ -360,3 +358,19 @@ button.ColVis_Button{
     margin-bottom: 10px;
 }
 
+/*----Style for Tabs Fields Filters-----*/
+
+.nav-tabs > .active > a,
+.nav-tabs > .active > a:hover {
+    padding-bottom: 8.5px;    
+}
+
+.three-in-one .item-list ul {
+    clear: left;
+}
+
+.three-in-one legend {
+    float: left;
+    padding-right: 5px;
+    width: auto;
+}
