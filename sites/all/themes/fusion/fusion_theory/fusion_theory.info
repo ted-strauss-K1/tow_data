@@ -21,7 +21,7 @@ scripts[] = js/noty/topRight.js
 scripts[] = js/noty/top.js
 scripts[] = js/noty/topCenter.js
 scripts[] = js/bootstrap/bootstrap.min.js
-scripts[] = js/scroller/jquery.jscrollpane.min.js
+scripts[] = js/scroller/jquery.jscrollpane.js
 scripts[] = js/scroller/jquery.mousewheel.min.js
 
 /*regions[sidebar_first = sidebar first */

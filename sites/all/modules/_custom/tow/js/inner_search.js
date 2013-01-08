@@ -1643,7 +1643,7 @@ Drupal.behaviors.inner_search = function(context) {
                 $('div#block-tow-saved_searches_description div.content').html(data.save_search);
             }
             if (data.save_this_search !== null) {
-            $('div#block-tow-saved_searches_save_search div.content').html(data.save_this_search);
+                $('div#block-tow-saved_searches_save_search div.content').html(data.save_this_search);
             }
 
             // Returns collapsibility.
@@ -1716,7 +1716,12 @@ Drupal.behaviors.inner_search = function(context) {
             $(".dataTables_scroll").jScrollPane({
                 showArrows: true
             }); /* This is a scroller implementation */
-
+            var jsp_element = $(".dataTables_scroll").jScrollPane({
+                showArrows: true
+            });
+            var jsp_api = jsp_element.data('jsp');
+            var scrollableX = jsp_api.getIsScrollableH();
+            
             $("#block-tow-search_inner_field_list").addClass("tab-pane active");
             $("#block-tow-search_inner_facets").addClass("tab-pane");
 
@@ -1748,13 +1753,16 @@ Drupal.behaviors.inner_search = function(context) {
                 }
             });
             /* Here is a function, that allows a horizontal scrolling via mouse scroll (+ jquery.mousewheel.min.js */
-            $(".dataTables_scrollBody").mousewheel(function(event, delta) {
-                var delta = delta * 30;
-                var test = parseInt($('.jspPane').css('left'), 10);
-                var lefttable = test + delta + "px";
-                $(".jspPane").css('left',lefttable);
-                event.preventDefault();
-            });
+
+            if (scrollableX) {
+                $(".dataTables_scrollBody").mousewheel(function(event, delta) {
+                    var delta = delta * 30;
+                    var test = parseInt($('.jspPane').css('left'), 10);
+                    var lefttable = test + delta + "px";
+                    $(".jspPane").css('left',lefttable);
+                    event.preventDefault();
+                });
+            }
 
         }
 
@@ -1794,10 +1802,10 @@ Drupal.behaviors.inner_search = function(context) {
             }
             else {
                 $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
-                
+
                 //Returns voting AJAX
                 Drupal.behaviors.CToolsAJAX();
-                
+
                 $.hrd.noty({
                     'type' : 'success',
                     'text' : 'You posted a search'
@@ -1837,7 +1845,7 @@ Drupal.behaviors.inner_search = function(context) {
          */
         function deleteSearchAjaxSuccess(data) {
             $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
-            
+
             //Returns voting AJAX
             Drupal.behaviors.CToolsAJAX();
 
@@ -1880,7 +1888,7 @@ Drupal.behaviors.inner_search = function(context) {
          */
         function deleteCommentSuccess(data) {
             $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
-            
+
             //Returns voting AJAX
             Drupal.behaviors.CToolsAJAX();
         }
@@ -1979,7 +1987,7 @@ Drupal.behaviors.inner_search = function(context) {
          */
         function saveCommentSuccess(data) {
             $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
-            
+
             //Returns voting AJAX
             Drupal.behaviors.CToolsAJAX();
         }
