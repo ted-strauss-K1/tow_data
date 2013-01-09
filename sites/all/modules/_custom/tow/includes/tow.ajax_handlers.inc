@@ -233,22 +233,19 @@ function tow_ajax_handlers_dataset_refresh_table_samples($dnid) {
 
     // Prepare dataset.
     $dataset = node_load($dnid);
-    dcp($dataset);
     tow_dataset_summary($dataset);
 
     // Generate the output.
     $output = '';
     if (isset($dataset->summary['view_table'])) {
-        $output .= '<div class="sample-tables">';
         $output .= '<span class="field-label">Some random samples from this data set</span>';
-        $output .= '<span>&nbsp;(<a href= "node/' . $dataset->nid . '">refresh</a> for a new sample)</span>';
+        $output .= '<span>&nbsp;(<a href= "/node/' . $dataset->nid . '">refresh</a> for a new sample)</span>';
         foreach ($dataset->summary['view_table'] as $t) {
             $output .= '<div class="random-table">';
             $output .= $t['title'];
             $output .= $t['table'];
             $output .= '</div>';
         }
-        $output .= '</div>';
     }
 
     // JSON.
