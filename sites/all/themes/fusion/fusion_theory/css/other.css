@@ -374,3 +374,18 @@ button.ColVis_Button{
     padding-right: 5px;
     width: auto;
 }
+
+/*-----Style for Scroller------*/
+
+.jspDrag {
+    background: url("../js/scroller/images/Scroll.png") repeat-x !important;
+    border: 1px solid #979797;
+    height:14px!important
+ }
+ 
+ .jspHover{
+     background-color: #CCEAFA;
+     border-color: #334C95;
+ }
+
+ 
