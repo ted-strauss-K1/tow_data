@@ -38,6 +38,7 @@ Drupal.behaviors.inner_search = function(context) {
     /***** Page *****/
 
     // Hashchange.
+    if (context == document) {
     $(window).hashchange(function() {
         if (firstPageLoad) {
             if (window.location.hash == '') {
@@ -70,6 +71,7 @@ Drupal.behaviors.inner_search = function(context) {
             hashChange();
         }
     });
+    }
     $(window).hashchange();
 
 
@@ -84,7 +86,7 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
     // Sort: reset all. ***Changed to reset all filters***
-    $('.search-link-reset-all').live('click', function(e) {
+    $('.search-link-reset-all', context).live('click', function(e) {
         searchResetAll(e, $(this));
     });
 
@@ -108,7 +110,7 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
     // Dataset field click.
-    $('.tow-dataset-field-link').live('click', function(e) {
+    $('.tow-dataset-field-link', context).live('click', function(e) {
         searchSelectField(e, $(this));
     });
 
@@ -123,7 +125,7 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
     // Facet click.
-    $('a.apachesolr-facet, a.apachesolr-hidden-facet, .tow-inner-search-selected').live('click', function(e) {
+    $('a.apachesolr-facet, a.apachesolr-hidden-facet, .tow-inner-search-selected', context).live('click', function(e) {
         searchFacetClickUpdate(e, $(this));
     });
 
@@ -139,17 +141,17 @@ Drupal.behaviors.inner_search = function(context) {
     .appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
 
     // Text fields search.
-    $('#block-tow-search_inner_facets .form-text').live('change', function() {
+    $('#block-tow-search_inner_facets .form-text', context).live('change', function() {
         searchTextFieldChange($(this));
     });
 
     // AJAX highcharts "on-line" reloading.
-    $('.tow-inner-search-highcharts-container .detail-container').live('mouseup', function(e) {
+    $('.tow-inner-search-highcharts-container .detail-container', context).live('mouseup', function(e) {
         searchNumericWidgetChangeRange(e, $(this));
     });
 
     // Including/excluding empty values.
-    $('[name="include_empty"]').live('click', function(e) {
+    $('[name="include_empty"]', context).live('click', function(e) {
         searchIncludeEmptyValues(e, $(this));
     });
 
@@ -158,12 +160,12 @@ Drupal.behaviors.inner_search = function(context) {
     /***** Highcharts *****/
 
     // Highcharts basic chart behavior.
-    $('div.tow-inner-search-highcharts-container').each(function(index) {
+    $('div.tow-inner-search-highcharts-container', context).each(function(index) {
         highchartsTestChart($(this));
     });
 
     // Highcharts bar chart behavior.
-    $('div.tow-inner-search-highcharts-bar-container').each(function(index) {
+    $('div.tow-inner-search-highcharts-bar-container', context).each(function(index) {
         highchartsTestBarChart($(this));
     });
 
@@ -172,18 +174,18 @@ Drupal.behaviors.inner_search = function(context) {
     /***** Saved Searches *****/
 
     // Save search button click.
-    $('#edit-save-search').live('click', function(e) {
+    $('#edit-save-search', context).live('click', function(e) {
         saveSearch(e);
     });
 
     // Delete saved search link click.
-    $('.saved-search-delete').live('click', function(e) {
+    $('.saved-search-delete', context).live('click', function(e) {
         deleteSavedSearch(e, $(this));
     });
 
     // Saved search tags autocomplete.
     var timer = null;
-    $('#edit-ss-tags').live('keyup', function(e) {
+    $('#edit-ss-tags', context).live('keyup', function(e) {
         clearTimeout(timer);
         $this = $(this);
         timer = setTimeout(function() {
@@ -192,20 +194,20 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
     // Delete comment.
-    $('.comment_delete a').live('click', function(e) {
+    $('.comment_delete a', context).live('click', function(e) {
         commentDelete(e, $(this));
     });
 
     // Replacements of comment links with comment forms.
-    $('.comment_edit a').live('click', function(e) {
+    $('.comment_edit a', context).live('click', function(e) {
         commentForm(e, $(this), 'edit');
     });
-    $('.comment_reply a').live('click', function(e) {
+    $('.comment_reply a', context).live('click', function(e) {
         commentForm(e, $(this), 'reply');
     });
 
     // Save comment.
-    $('[id^="comment-form"] .form-submit').live('click', function(e) {
+    $('[id^="comment-form"] .form-submit', context).live('click', function(e) {
         commentSave(e, $(this));
     });
 
@@ -1781,6 +1783,8 @@ Drupal.behaviors.inner_search = function(context) {
             },
             dataType: 'json'
         });
+        
+        return false;
     }
 
     /**
@@ -1802,10 +1806,11 @@ Drupal.behaviors.inner_search = function(context) {
             }
             else {
                 $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
-
-                //Returns voting AJAX
+                
+                //Returns voting AJAX&flag bookmarks
                 Drupal.behaviors.CToolsAJAX();
-
+                Drupal.flagLink();
+                
                 $.hrd.noty({
                     'type' : 'success',
                     'text' : 'You posted a search'
@@ -1845,9 +1850,9 @@ Drupal.behaviors.inner_search = function(context) {
          */
         function deleteSearchAjaxSuccess(data) {
             $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
-
-            //Returns voting AJAX
+            //Returns voting AJAX&flag bookmarks
             Drupal.behaviors.CToolsAJAX();
+            Drupal.flagLink();
 
             $.hrd.noty({
                 'type' : 'success',
@@ -1888,9 +1893,9 @@ Drupal.behaviors.inner_search = function(context) {
          */
         function deleteCommentSuccess(data) {
             $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
-
-            //Returns voting AJAX
+            //Returns voting AJAX&flag bookmarks
             Drupal.behaviors.CToolsAJAX();
+            Drupal.flagLink();
         }
 
         // AJAX.
@@ -1987,9 +1992,9 @@ Drupal.behaviors.inner_search = function(context) {
          */
         function saveCommentSuccess(data) {
             $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
-
-            //Returns voting AJAX
+            //Returns voting AJAX&flag bookmarks
             Drupal.behaviors.CToolsAJAX();
+            Drupal.flagLink();
         }
 
         // AJAX.

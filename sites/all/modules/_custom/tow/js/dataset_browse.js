@@ -137,7 +137,7 @@ if($('#datatable-1').size() != 0) {
 }
 
 //AJAX 'refresh'
-        $('div.sample-tables span a').live('click', function(e) {
+        $('div.sample-tables span a', context).live('click', function(e) {
             e.preventDefault();
             refresh_samples_ajax();
         });
@@ -168,7 +168,7 @@ if($('#datatable-1').size() != 0) {
 
 
 
-        $('#edit-access-type').live('change', function() {
+        $('#edit-access-type', context).live('change', function() {
             //textToReplace = $('#edit-access-type option[value="'+accessToSend+'"]').text();
             accessToSend = $('#edit-access-type :selected').val();
 
@@ -245,7 +245,3 @@ if($('#datatable-1').size() != 0) {
     
 
 }
-
-
-
-
