@@ -8,6 +8,10 @@
     display: none;
 }
 
+.h200 {
+    height: 200px;
+}
+
 .pos-rel {
     position: relative;
 }

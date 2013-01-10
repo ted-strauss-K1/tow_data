@@ -177,6 +177,15 @@ Drupal.behaviors.inner_search = function(context) {
     $('#edit-save-search', context).live('click', function(e) {
         saveSearch(e);
     });
+    
+    //Textarea expanding
+    $('#edit-ss-comment', context).live('focus', function() {
+        $(this).addClass('h200');
+    });
+    //Textarea minimizing
+    /*$('#edit-ss-comment', context).live('blur', function() {
+        $(this).removeClass('h200');
+    });*/
 
     // Delete saved search link click.
     $('.saved-search-delete', context).live('click', function(e) {
