@@ -124,12 +124,15 @@ function tow_ajax_handlers_create_saved_search($nid) {
 
     //Saved search comment (title)
     $ss_comment = $_GET['ss_comment'];
+    
+    //Saved search tags
+    $ss_tags = $_GET['ss_tags'];
 
     // Rows amount.
     $rows_amount = $_GET['rows_amount'];
 
     // Create saved search.
-    $saved_search = tow_saved_searches_saved_search_create($node, $ss_comment, $filters, $selected_fields, $rows_amount);
+    $saved_search = tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters, $selected_fields, $rows_amount);
 
     // Validation.
     if ($saved_search == NULL) {
@@ -163,7 +166,7 @@ function tow_ajax_handlers_create_saved_search($nid) {
 
 
 /**
- * Handles the creation of a saved search with Ajax.
+ * Handles the deletion of a saved search with Ajax.
  */
 function tow_ajax_handlers_delete_saved_search($dataset_nid) {
 
@@ -179,6 +182,56 @@ function tow_ajax_handlers_delete_saved_search($dataset_nid) {
     db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $dataset_nid);
 
     return drupal_json($json);
+}
+
+/**
+ * Handles saved search tags autocomplete with Ajax.
+ */
+function tow_ajax_handlers_ss_tags_autocomplete($string) {
+  $voc_id = _tow_apachesolr_taxonomy_get_vid('Saved search tags');
+    
+  $array = drupal_explode_tags($string);
+  // Fetch last value
+  $last_string = trim(array_pop($array));
+  $matches = array();
+  if ($last_string){
+  //search table for tags that contain letters the user enters in the form
+  $result = db_query_range("
+      
+    SELECT
+      td.name AS name,
+      td.description AS description,
+      td.tid AS tid,
+      td.vid AS vid,
+    (SELECT COUNT(*) FROM {term_node} tntn WHERE tntn.tid = td.tid) AS count
+        
+      FROM
+        {term_data} td
+        
+      JOIN
+        {term_node} tn
+      
+      ON
+        td.tid = tn.tid
+
+      WHERE
+          LOWER(td.name) LIKE LOWER('%%%s%') 
+        AND
+          td.vid = %d
+          
+   ", $last_string, $voc_id, 0, 10);
+  
+  $prefix = count($array) ? implode(', ', $array) .', ' : '';
+  // add matches to $matches
+  while ($data = db_fetch_object($result)) {
+    $ss_tag_name = '<div class="ss-tag-name">' . check_plain($data->name . ' × ' . $data->count) . '</div>';
+    $ss_tag_description = ($data->description != '') ? ('<div class="ss-tag-description">' . check_plain('description: ' . $data->description) . '</div>') : NULL;
+    $matches[$prefix . $data->name] = $ss_tag_name . $ss_tag_description;
+  }
+  }
+  // return for JS
+  print drupal_to_js($matches);
+  exit();
 }
 
 /**
@@ -233,22 +286,19 @@ function tow_ajax_handlers_dataset_refresh_table_samples($dnid) {
 
     // Prepare dataset.
     $dataset = node_load($dnid);
-    dcp($dataset);
     tow_dataset_summary($dataset);
 
     // Generate the output.
     $output = '';
     if (isset($dataset->summary['view_table'])) {
-        $output .= '<div class="sample-tables">';
         $output .= '<span class="field-label">Some random samples from this data set</span>';
-        $output .= '<span>&nbsp;(<a href= "node/' . $dataset->nid . '">refresh</a> for a new sample)</span>';
+        $output .= '<span>&nbsp;(<a href= "/node/' . $dataset->nid . '">refresh</a> for a new sample)</span>';
         foreach ($dataset->summary['view_table'] as $t) {
             $output .= '<div class="random-table">';
             $output .= $t['title'];
             $output .= $t['table'];
             $output .= '</div>';
         }
-        $output .= '</div>';
     }
 
     // JSON.
