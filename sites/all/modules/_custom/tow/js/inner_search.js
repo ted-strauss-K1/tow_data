@@ -39,38 +39,38 @@ Drupal.behaviors.inner_search = function(context) {
 
     // Hashchange.
     if (context == document) {
-    $(window).hashchange(function() {
-        if (firstPageLoad) {
-            if (window.location.hash == '') {
-                var counter = 0;
-                var selectedFields = {};
-                $('.btn-group.table-field-buttons-1').children().each(function(index) {
-                    if (counter < firstPageLoadFieldsCount) {
-                        $(this).addClass('selected');
-                        var text = $(this).text();
-                        var type = $(this).attr('f_type');
-                        $('.tow-dataset-field-link').each(function() {
-                            if ($(this).text() == text && ($(this).attr('f_type') == type)) {
-                                $(this).addClass('selected');
-                            }
-                        });
-                        selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
-                        counter++;
-                    }
-                });
-                firstPageLoad = false;
-                var selectedFieldsToSend = JSON.stringify(selectedFields);
-                var url = 'http://' + window.location.hostname + window.location.pathname + '#?' + 'selected_fields=' + selectedFieldsToSend;
-                setHash(url);
+        $(window).hashchange(function() {
+            if (firstPageLoad) {
+                if (window.location.hash == '') {
+                    var counter = 0;
+                    var selectedFields = {};
+                    $('.btn-group.table-field-buttons-1').children().each(function(index) {
+                        if (counter < firstPageLoadFieldsCount) {
+                            $(this).addClass('selected');
+                            var text = $(this).text();
+                            var type = $(this).attr('f_type');
+                            $('.tow-dataset-field-link').each(function() {
+                                if ($(this).text() == text && ($(this).attr('f_type') == type)) {
+                                    $(this).addClass('selected');
+                                }
+                            });
+                            selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
+                            counter++;
+                        }
+                    });
+                    firstPageLoad = false;
+                    var selectedFieldsToSend = JSON.stringify(selectedFields);
+                    var url = 'http://' + window.location.hostname + window.location.pathname + '#?' + 'selected_fields=' + selectedFieldsToSend;
+                    setHash(url);
+                }
+                else {
+                    hashChange();
+                }
             }
             else {
                 hashChange();
             }
-        }
-        else {
-            hashChange();
-        }
-    });
+        });
     }
     $(window).hashchange();
 
@@ -1717,55 +1717,97 @@ Drupal.behaviors.inner_search = function(context) {
 
             $(".dataTables_scroll").jScrollPane({
                 showArrows: true
-            }); /* This is a scroller implementation */
+            });
+
+            /* This is a scroller implementation */
+
+
             var jsp_element = $(".dataTables_scroll").jScrollPane({
                 showArrows: true
             });
-            var jsp_api = jsp_element.data('jsp');
-            var scrollableX = jsp_api.getIsScrollableH();
-            
-            $("#block-tow-search_inner_field_list").addClass("tab-pane active");
-            $("#block-tow-search_inner_facets").addClass("tab-pane");
 
-            var access = $(".dataTables_scrollHead");
+            if (jsp_element.data('jsp')){
+                var jsp_api = jsp_element.data('jsp');
+                var scrollableX = jsp_api.getIsScrollableH();
 
-            $('#InnerSearchTab').click(function() {
-                setTimeout(function () {
-                    pos = access.offset();
-                }, 200);
-            });
-            var pos = access.offset();
-            $(window).scroll(function() {
 
-                if (pos != null && $(this).scrollTop() > pos.top - $(window).height() + $(".dataTables_scrollHead").height() + 25) {
-                    $(".jspHorizontalBar").addClass('fixed_jspHorizontalBar');
+                $("#block-tow-search_inner_field_list").addClass("tab-pane active");
+                $("#block-tow-search_inner_facets").addClass("tab-pane");
 
-                } else {
-                    $(".jspHorizontalBar").removeClass('fixed_jspHorizontalBar');
-                }
+                var access = $(".dataTables_scrollHead");
 
-                if (pos != null && $(this).scrollTop() > pos.top) {
-                    access.addClass('fixed_head');
-                    access.stop().animate({
-                        marginTop: $(window).scrollTop() - pos.top
-                    },0);
-
-                } else {
-                    access.removeClass('fixed_head');
-                }
-            });
-            /* Here is a function, that allows a horizontal scrolling via mouse scroll (+ jquery.mousewheel.min.js */
-
-            if (scrollableX) {
-                $(".dataTables_scrollBody").mousewheel(function(event, delta) {
-                    var delta = delta * 30;
-                    var test = parseInt($('.jspPane').css('left'), 10);
-                    var lefttable = test + delta + "px";
-                    $(".jspPane").css('left',lefttable);
-                    event.preventDefault();
+                $('#InnerSearchTab').click(function() {
+                    setTimeout(function () {
+                        pos = access.offset();
+                    }, 200);
                 });
-            }
+                var pos = access.offset();
+                $(window).scroll(function() {
 
+                    if (pos != null && $(this).scrollTop() > pos.top - $(window).height() + $(".dataTables_scrollHead").height() + 25) {
+                        $(".jspHorizontalBar").addClass('fixed_jspHorizontalBar');
+
+                    } else {
+                        $(".jspHorizontalBar").removeClass('fixed_jspHorizontalBar');
+                    }
+
+                    if (pos != null && $(this).scrollTop() > pos.top) {
+                        access.addClass('fixed_head');
+                        access.stop().animate({
+                            marginTop: $(window).scrollTop() - pos.top
+                        },0);
+
+                    } else {
+                        access.removeClass('fixed_head');
+                    }
+                });
+                /* Here is a function, that allows a horizontal scrolling via mouse scroll (+ jquery.mousewheel.min.js */
+
+                if (scrollableX) {
+                    $(".jspHorizontalBar").mousewheel(function(event, delta) {
+                        var delta = delta * 30;
+                        var test = parseInt($('.jspPane').css('left'), 10);
+                        var lefttable = test + delta + "px";
+                        $(".jspPane").css('left',lefttable);
+                        event.preventDefault();
+                    });
+                }
+
+                /* Scroller styling */
+                /* Left Button */
+                $(".jspArrowLeft").mouseenter(function(){
+                    $(this).addClass('jspArrowLeftHover');
+                });
+                $(".jspArrowLeft").mouseleave(function(){
+                    $(this).removeClass('jspArrowLeftHover');
+                });
+
+                $(".jspArrowLeft").mousedown(function(){
+                    $(this).addClass('ButtonLeft');
+                });
+
+                $(".jspArrowLeft").mouseup(function(){
+                    $(this).removeClass('ButtonLeft');
+                });
+
+
+                /* Right Button */
+                $(".jspArrowRight").mouseenter(function(){
+                    $(this).addClass('jspArrowRightHover');
+                });
+                $(".jspArrowRight").mouseleave(function(){
+                    $(this).removeClass('jspArrowRightHover');
+                });
+
+                $(".jspArrowRight").mousedown(function(){
+                    $(this).addClass('ButtonRight');
+                });
+
+                $(".jspArrowRight").mouseup(function(){
+                    $(this).removeClass('ButtonRight');
+                });
+
+            }
         }
 
         $.ajax({
@@ -1783,7 +1825,7 @@ Drupal.behaviors.inner_search = function(context) {
             },
             dataType: 'json'
         });
-        
+
         return false;
     }
 
@@ -1806,11 +1848,11 @@ Drupal.behaviors.inner_search = function(context) {
             }
             else {
                 $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
-                
+
                 //Returns voting AJAX&flag bookmarks
                 Drupal.behaviors.CToolsAJAX();
                 Drupal.flagLink();
-                
+
                 $.hrd.noty({
                     'type' : 'success',
                     'text' : 'You posted a search'
