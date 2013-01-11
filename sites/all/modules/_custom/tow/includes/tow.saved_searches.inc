@@ -162,7 +162,7 @@ function tow_saved_searches_save_search_form(&$form_state, $nid, $filters, $sele
         '#type' => 'textfield',
         '#title' => NULL,
         '#suffix' => '<div class="ss-tags-html"></div>',
-        #'#autocomplete_path' => 'tags',
+        '#autocomplete_path' => 'ss_tags/autocomplete',
         '#attributes' => array(
             'placeholder' => t('Tags(optional but encouraged)'),
         ),
@@ -245,9 +245,12 @@ function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
 
     // Saved search comment(title).
     $ss_comment = $form['ss_comment']['#value'];
+    
+    //Saved search tags
+    $ss_tags = $form['ss_tags']['#value'];
 
     // Create saved search.
-    $saved_search = tow_saved_searches_saved_search_create($node, $ss_comment, $filters, $selected_fields, $rows_amount);
+    $saved_search = tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters, $selected_fields, $rows_amount);
 
     // Put it to the form.
     $form_state['#saved_search'] = $saved_search;
@@ -363,13 +366,30 @@ function tow_saved_searches_get_selected_fields($selected_fields) {
 /**
  * Constructs a Saved Search node object.
  */
-function tow_saved_searches_saved_search_create($node, $ss_comment, $filters, $selected_fields, $rows_amount = 0) {
+function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters, $selected_fields, $rows_amount = 0) {
     module_load_include('inc', 'node', 'node.pages');
 
     // Prepare a new Saved Search object.
     $saved_search = new stdClass();
     $saved_search->type = 'saved_search';
     $saved_search->title = ($ss_comment) ? $ss_comment : t('New Saved Search');
+    
+    $saved_search->taxonomy = array();
+    $voc_id = _tow_apachesolr_taxonomy_get_vid('Saved search tags');
+    $ss_tags_array = drupal_explode_tags($ss_tags);
+    foreach ($ss_tags_array as $tag) {
+        $ss_tag_object = _tow_taxonomy_get_term($tag, $voc_id);
+        if ($ss_tag_object) {
+            foreach ($ss_tag_object as $object) {
+                $saved_search->taxonomy[$object->tid] = $object;
+            }
+        }
+        else {
+            $new_term_id = _tow_add_taxonomy_term($tag, $voc_id);
+            $new_term = taxonomy_get_term($new_term_id);
+            $saved_search->taxonomy[$new_term_id] = $new_term;
+        }
+    }
     node_object_prepare($saved_search);
 
     // Do this if the search belongs to a whole dataset.

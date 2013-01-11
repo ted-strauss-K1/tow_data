@@ -864,6 +864,15 @@ function tow_menu() {
         'type' => MENU_CALLBACK,
     );
     
+    // Saved search tags autocomplete.
+    $items['ss_tags/autocomplete'] = array(
+        'title' => 'Autocomplete for ss_tags',
+        'page callback' => 'tow_ajax_handlers_ss_tags_autocomplete',
+        'access arguments' => array('access content'),
+        'file' => 'includes/tow.ajax_handlers.inc',
+        'type' => MENU_CALLBACK,
+    );
+    
     return $items;
 }
 
@@ -1728,4 +1737,32 @@ function _tow_show_validation_error($error, $err_field_names, $err_msgs) {
         // Exclude repeating messages.
         $_SESSION['messages']['error'] = array_unique($_SESSION['messages']['error']);
     }
+}
+
+/**
+ * Get taxonomy term object from known vocabulary.
+ */
+function _tow_taxonomy_get_term($name, $voc_id) {
+  $db_result = db_query(db_rewrite_sql("SELECT t.tid, t.vid, t.* FROM {term_data} t WHERE LOWER(t.name) = LOWER('%s') AND t.vid = %d", 't', 'tid'), trim($name), $voc_id);
+  $result = array();
+  while ($term = db_fetch_object($db_result)) {
+    $result[] = $term;
+  }
+
+  return $result;
+}
+
+/**
+ * Get taxonomy term object from known vocabulary.
+ */
+function _tow_add_taxonomy_term($name, $vid, $description = '', $weight = 0) {
+
+  $form_values = array();
+  $form_values['name'] = $name;
+  $form_values['description'] = $description;
+  $form_values['vid'] = $vid;
+  $form_values['weight'] = $weight;
+  taxonomy_save_term($form_values);
+
+  return $form_values['tid'];
 }

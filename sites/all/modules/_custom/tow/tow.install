@@ -85,6 +85,21 @@ function tow_install() {
         'nodes' => array('dataset' => 'dataset'),
     );
     taxonomy_save_vocabulary($vocabulary);
+    
+    $vocabulary = array(
+        'name' => t('Saved search tags'),
+        'description' => '',
+        'help' => '',
+        'relations' => 1,
+        'hierarchy' => 0,
+        'multiple' => 0,
+        'required' => 0,
+        'tags' => 1,
+        'module' => 'tow',
+        'weight' => 0,
+        'nodes' => array('saved_search' => 'saved_search'),
+    );
+    taxonomy_save_vocabulary($vocabulary);
 
     // Clear caches and rebuild menu.
     content_clear_type_cache(TRUE);
