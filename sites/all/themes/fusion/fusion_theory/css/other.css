@@ -377,15 +377,78 @@ button.ColVis_Button{
 
 /*-----Style for Scroller------*/
 
+.jspHorizontalBar{
+    height: 14px!important;
+}
+
 .jspDrag {
     background: url("../js/scroller/images/Scroll.png") repeat-x !important;
     border: 1px solid #979797;
-    height:14px!important
+    border-radius: 2px 2px 2px 2px;
+    height:12px!important
  }
+ 
+ /*.Middle{
+     background: url("../js/scroller/images/middle1.png")no-repeat!important;
+     text-align: center;
+     
+ }*/
  
  .jspHover{
-     background-color: #CCEAFA;
-     border-color: #334C95;
+     background:url("../js/scroller/images/Scroll4.png") repeat-x transparent!important;
+     border: 1px solid #3C7FB1;
+     border-radius: 2px 2px 2px 2px;
+     height: 12px!important
  }
 
+ .jspArrowLeft {
+     background: url("../js/scroller/images/buttonleft.png")no-repeat!important;
+ }
  
+ .jspArrowLeftHover{
+     background: url("../js/scroller/images/buttonleft1.png")no-repeat!important;
+     border: 1px solid #3C7FB1;
+     border-radius: 2px 2px 2px 2px;
+     height: 12px!important; 
+     width: 15px!important;
+ }
+ 
+ .jspArrowRight{
+     background: url("../js/scroller/images/buttonright.png")no-repeat!important;
+}
+
+.jspArrowRightHover{
+     background: url("../js/scroller/images/buttonright1.png")no-repeat!important;
+     border: 1px solid #3C7FB1;
+     border-radius: 2px 2px 2px 2px; 
+     height: 12px!important; 
+     width: 15px!important;
+}
+
+.jspActive {
+     background: url("../js/scroller/images/Scroll5.png")repeat-x transparent!important;
+     border: 1px solid #3C7FB1;
+     border-radius: 2px 2px 2px 2px;
+     height: 12px!important;
+}
+
+.ButtonLeft {
+    background: url("../js/scroller/images/buttonleft2.png")no-repeat !important;
+    border: 1px solid #3C7FB1;
+     border-radius: 2px 2px 2px 2px;
+     height: 12px!important; 
+     width: 15px!important;    
+}
+
+.ButtonRight{
+   background: url("../js/scroller/images/buttonright2.png")no-repeat !important;
+    border: 1px solid #3C7FB1;
+     border-radius: 2px 2px 2px 2px;
+     height: 12px!important; 
+     width: 15px!important;      
+}
+
+.jspHorizontalBar{
+   background-color: #E5E5E5!important; 
+}
+
