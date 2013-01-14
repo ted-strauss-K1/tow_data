@@ -174,7 +174,7 @@ Drupal.behaviors.inner_search = function(context) {
     /***** Saved Searches *****/
 
     // Save search button click.
-    $('#edit-save-search', context).live('click', function(e) {
+    $('#tow-saved-searches-save-search-form', context).live('submit', function(e) {
         saveSearch(e);
     });
     
