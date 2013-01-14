@@ -178,6 +178,28 @@ Drupal.behaviors.inner_search = function(context) {
         saveSearch(e);
     });
     
+    //Saved search tags autocomplete. Add commas
+    $('#autocomplete ul li div.ss-tag-name', context).live('click', function(e) {
+       if($('#edit-ss-tags').val()) {
+            setTimeout(function() {
+                var liveValue = $('#edit-ss-tags').val();
+                $('#edit-ss-tags').val(liveValue + ', ');
+             }, 150);
+       }
+    });
+    $('#edit-ss-tags', context).live('keypress', function(e) {
+        if(e.which == 13) {
+            if($(this).val()) {
+                setTimeout(function() {
+                    var liveValue = $('#edit-ss-tags').val();
+                    if (liveValue.substr(-2) != ', ') {
+                        $('#edit-ss-tags').val(liveValue + ', ');
+                    }
+                 }, 150);
+            }
+        }
+    });
+    
     //Textarea expanding
     $('#edit-ss-comment', context).live('focus', function() {
         $(this).addClass('h200');
