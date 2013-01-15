@@ -194,10 +194,13 @@ function tow_dataset_stats_block() {
  * Part of hook_form_alter() implementation.
  */
 function tow_dataset_form_alter(&$form, &$form_state) {
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/dataset_tags.js');    
+    
     $form['buttons']['submit']['#value'] = t('Save and import data');
     $form['#validate'][] = 'tow_dataset_dont_validate_cancel';
     $form['#submit'][] = 'tow_dataset_submit_redirect';
-    
+    $voc_id = _tow_apachesolr_taxonomy_get_vid('Dataset tags');
+    $form['taxonomy']['tags'][$voc_id]['#autocomplete_path'] = 'tow/tags/autocomplete/Dataset tags';
     //Set breadcrumbs
     if (arg(1) == 'add'){
         $bc[] = l('Data', '<front>');
