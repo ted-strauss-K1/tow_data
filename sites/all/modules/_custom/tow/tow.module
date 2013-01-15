@@ -874,6 +874,12 @@ function tow_menu() {
         'type' => MENU_CALLBACK,
     );
     
+    //About
+    $items['about'] = array(
+        'access arguments' => array('access content'),
+        'page callback' => '_tow_about_output',
+    );
+    
     return $items;
 }
 
@@ -1766,4 +1772,12 @@ function _tow_add_taxonomy_term($name, $vid, $description = '', $weight = 0) {
   taxonomy_save_term($form_values);
 
   return $form_values['tid'];
+}
+
+/**
+ * About page
+ */
+function _tow_about_output() {
+  $output = 'The page is under development. About information will be added soon...';
+  return $output;
 }
