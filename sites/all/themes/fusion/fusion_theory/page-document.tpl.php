@@ -45,9 +45,19 @@ $("#block-menu-menu-signing").show();
       <div id="skip">
         <a href="#main-content-area"><?php print t('Skip to Main Content Area'); ?></a>
       </div>
-
+                <!-- logo block -->
+                <div id="logo-ht-wrapper" class="logo-ht-wrapper full-width">
+                    <div id="logo-ht" class="logo-ht row <?php print ('grid_row' . ' header-top ' . $grid_width); ?>">
+                        <?php if ($logo): ?>
+                            <div id="logo">
+                                <a href="<?php print check_url($front_page); ?>" title="<?php print t('Home'); ?>"><img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" /></a>
+                            </div>
+                        <?php endif; ?>
+                        <?php print $header_top; ?>
+                    </div>
+                </div>
       <!-- header-top row: width = grid_width -->
-      <?php print theme('grid_row', $header_top, 'header-top', 'full-width', $grid_width); ?>
+      <?php //print theme('grid_row', $header_top, 'header-top', 'full-width', $grid_width); ?>
 
       <!-- header-group row: width = grid_width -->
       <div id="header-group-wrapper" class="header-group-wrapper full-width">
@@ -56,14 +66,9 @@ $("#block-menu-menu-signing").show();
             <?php print theme('grid_block', theme('links', $secondary_links), 'secondary-menu'); ?>
             <?php print theme('grid_block', $search_box, 'search-box'); ?>
 
-            <?php if ($logo || $site_name || $site_slogan): ?>
+            <?php if ($site_name || $site_slogan): ?>
             <div id="header-site-info" class="header-site-info block">
               <div id="header-site-info-inner" class="header-site-info-inner inner">
-                <?php if ($logo): ?>
-                <div id="logo">
-                  <a href="<?php print check_url($front_page); ?>" title="<?php print t('Home'); ?>"><img src="<?php print $logo; ?>" alt="<?php print t('Home'); ?>" /></a>
-                </div>
-                <?php endif; ?>
                 <?php if ($site_name || $site_slogan): ?>
                 <div id="site-name-wrapper" class="clearfix">
                   <?php if ($site_name): ?>
