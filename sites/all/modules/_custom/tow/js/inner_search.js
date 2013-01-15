@@ -174,9 +174,40 @@ Drupal.behaviors.inner_search = function(context) {
     /***** Saved Searches *****/
 
     // Save search button click.
-    $('#edit-save-search', context).live('click', function(e) {
+    $('#tow-saved-searches-save-search-form', context).live('submit', function(e) {
         saveSearch(e);
     });
+
+    //Saved search tags autocomplete. Add commas
+    $('#autocomplete ul li div div', context).live('click', function(e) {
+       if($('#edit-ss-tags').val()) {
+            setTimeout(function() {
+                var liveValue = $('#edit-ss-tags').val();
+                $('#edit-ss-tags').val(liveValue + ', ');
+             }, 150);
+       }
+    });
+    $('#edit-ss-tags', context).live('keypress', function(e) {
+        if(e.which == 13) {
+            if($(this).val()) {
+                setTimeout(function() {
+                    var liveValue = $('#edit-ss-tags').val();
+                    if (liveValue.substr(-2) != ', ') {
+                        $('#edit-ss-tags').val(liveValue + ', ');
+                    }
+                 }, 150);
+            }
+        }
+    });
+    
+    //Textarea expanding
+    $('#edit-ss-comment', context).live('focus', function() {
+        $(this).addClass('h200');
+    });
+    //Textarea minimizing
+    /*$('#edit-ss-comment', context).live('blur', function() {
+        $(this).removeClass('h200');
+    });*/
 
     // Delete saved search link click.
     $('.saved-search-delete', context).live('click', function(e) {

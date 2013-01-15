@@ -187,8 +187,8 @@ function tow_ajax_handlers_delete_saved_search($dataset_nid) {
 /**
  * Handles saved search tags autocomplete with Ajax.
  */
-function tow_ajax_handlers_ss_tags_autocomplete($string) {
-  $voc_id = _tow_apachesolr_taxonomy_get_vid('Saved search tags');
+function tow_ajax_handlers_tags_autocomplete($voc_name, $string) {
+  $voc_id = _tow_apachesolr_taxonomy_get_vid($voc_name);
     
   $array = drupal_explode_tags($string);
   // Fetch last value
@@ -224,9 +224,9 @@ function tow_ajax_handlers_ss_tags_autocomplete($string) {
   $prefix = count($array) ? implode(', ', $array) .', ' : '';
   // add matches to $matches
   while ($data = db_fetch_object($result)) {
-    $ss_tag_name = '<div class="ss-tag-name">' . check_plain($data->name . ' × ' . $data->count) . '</div>';
-    $ss_tag_description = ($data->description != '') ? ('<div class="ss-tag-description">' . check_plain('description: ' . $data->description) . '</div>') : NULL;
-    $matches[$prefix . $data->name] = $ss_tag_name . $ss_tag_description;
+    $tag_name = '<div class="tag-name">' . check_plain($data->name . ' × ' . $data->count) . '</div>';
+    $tag_description = ($data->description != '') ? ('<div class="tag-description">' . check_plain('description: ' . $data->description) . '</div>') : NULL;
+    $matches[$prefix . $data->name] = $tag_name . $tag_description;
   }
   }
   // return for JS

@@ -865,12 +865,19 @@ function tow_menu() {
     );
     
     // Saved search tags autocomplete.
-    $items['ss_tags/autocomplete'] = array(
+    $items['tow/tags/autocomplete/%'] = array(
         'title' => 'Autocomplete for ss_tags',
-        'page callback' => 'tow_ajax_handlers_ss_tags_autocomplete',
+        'page callback' => 'tow_ajax_handlers_tags_autocomplete',
+        'page arguments' => array(3),
         'access arguments' => array('access content'),
         'file' => 'includes/tow.ajax_handlers.inc',
         'type' => MENU_CALLBACK,
+    );
+    
+    //About
+    $items['about'] = array(
+        'access arguments' => array('access content'),
+        'page callback' => '_tow_about_output',
     );
     
     return $items;
@@ -1765,4 +1772,12 @@ function _tow_add_taxonomy_term($name, $vid, $description = '', $weight = 0) {
   taxonomy_save_term($form_values);
 
   return $form_values['tid'];
+}
+
+/**
+ * About page
+ */
+function _tow_about_output() {
+  $output = 'The page is under development. About information will be added soon...';
+  return $output;
 }

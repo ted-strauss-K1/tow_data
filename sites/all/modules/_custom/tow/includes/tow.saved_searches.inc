@@ -162,7 +162,7 @@ function tow_saved_searches_save_search_form(&$form_state, $nid, $filters, $sele
         '#type' => 'textfield',
         '#title' => NULL,
         '#suffix' => '<div class="ss-tags-html"></div>',
-        '#autocomplete_path' => 'ss_tags/autocomplete',
+        '#autocomplete_path' => 'tow/tags/autocomplete/Saved search tags',
         '#attributes' => array(
             'placeholder' => t('Tags(optional but encouraged)'),
         ),
