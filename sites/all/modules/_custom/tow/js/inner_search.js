@@ -179,7 +179,7 @@ Drupal.behaviors.inner_search = function(context) {
     });
     
     //Saved search tags autocomplete. Add commas
-    $('#autocomplete ul li div.ss-tag-name', context).live('click', function(e) {
+    $('#autocomplete ul li div.tag-name', context).live('click', function(e) {
        if($('#edit-ss-tags').val()) {
             setTimeout(function() {
                 var liveValue = $('#edit-ss-tags').val();
