@@ -872,6 +872,7 @@ Drupal.behaviors.inner_search = function(context) {
                         marginTop: 3,
                         marginLeft: 25,
                         marginRight: 10,
+                        width: 215,
                         events: {
                             mousedown: function(e) {
                                 isMouseDown = true;
@@ -1041,6 +1042,7 @@ Drupal.behaviors.inner_search = function(context) {
                         marginLeft: 25,
                         marginRight: 10,
                         type: 'spline',
+                        width: 215,
                         plotBorderWidth: 1
                     },
                     credits: {
