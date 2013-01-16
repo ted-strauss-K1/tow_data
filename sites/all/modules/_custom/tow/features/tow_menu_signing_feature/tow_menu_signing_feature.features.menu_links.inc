@@ -23,12 +23,28 @@ function tow_menu_signing_feature_menu_default_menu_links() {
     'expanded' => '0',
     'weight' => '-50',
   );
+  // Exported menu link: menu-signing:about
+  $menu_links['menu-signing:about'] = array(
+    'menu_name' => 'menu-signing',
+    'link_path' => 'about',
+    'router_path' => 'about',
+    'link_title' => 'About',
+    'options' => array(
+      'attributes' => array(),
+    ),
+    'module' => 'menu',
+    'hidden' => '0',
+    'external' => '0',
+    'has_children' => '0',
+    'expanded' => '0',
+    'weight' => '0',
+  );
   // Exported menu link: menu-signing:logout
   $menu_links['menu-signing:logout'] = array(
     'menu_name' => 'menu-signing',
     'link_path' => 'logout',
     'router_path' => 'logout',
-    'link_title' => 'sign out',
+    'link_title' => 'Sign out',
     'options' => array(
       'attributes' => array(),
     ),
@@ -79,9 +95,10 @@ function tow_menu_signing_feature_menu_default_menu_links() {
   );
   // Translatables
   // Included for use with string extractors like potx.
+  t('About');
+  t('Sign out');
   t('[realname] [token_custom_points]');
   t('login');
-  t('sign out');
   t('sign up');
 
 
