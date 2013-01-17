@@ -54,7 +54,7 @@ textarea#edit-body {
 /*--------------- Submit Buttons styling ---------------*/
 .node-form #edit-submit {
     margin-right: 4%;
-   /* width: 177px;*/
+    /* width: 177px;*/
 }
 
 .node-form .form-submit {
@@ -191,7 +191,7 @@ ul#noty_topCenter_layout_container{
     /*border: none !important;*/
     border-radius: 0 !important;
     background-color: #222224 !important;
-  /*  border: 1px solid #000000;*/
+    /*  border: 1px solid #000000;*/
 }
 
 .error-noty-class .noty_bar .noty_text {
@@ -258,10 +258,10 @@ ul#noty_topCenter_layout_container{
 }
 
 .default-noty-class {
-  background: none !important;
-  border: none !important;
-  border-radius: 0 !important;
-  background-color: #666666 !important;
+    background: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background-color: #666666 !important;
 }
 
 .default-noty-class .noty_bar .noty_text {
@@ -279,19 +279,19 @@ ul#noty_topCenter_layout_container{
 /*------style for item Browse------*/
 
 #block-tow-pma_menu li:hover.browse-has-submenu a:hover{
-  color: #ffffff;
- }
+    color: #ffffff;
+}
 
- li:hover.browse-has-submenu{
-   background-color: #999999;
- }
+li:hover.browse-has-submenu{
+    background-color: #999999;
+}
 
- #block-tow-pma_menu ul li li a:hover{
-   background-color: #999999;
- }
+#block-tow-pma_menu ul li li a:hover{
+    background-color: #999999;
+}
 
 #header-group-inner #breadcrumbs{
-  border-bottom: 2px solid black;
+    border-bottom: 2px solid black;
 }
 
 #block-tow-pma_menu ul.browse-submenu li{
@@ -314,7 +314,7 @@ ul#noty_topCenter_layout_container{
 }
 
 .navbar #block-menu-primary-links .menu > li > a.active{
-    font-weight: bold; 
+    font-weight: bold;
     color: #000000;
 }
 /*------style for active item menu------*/
@@ -324,7 +324,7 @@ ul#noty_topCenter_layout_container{
 }
 
 ul.menu li.leaf a.active{
-    font-weight: bold; 
+    font-weight: bold;
     color: #000000;
 }
 
@@ -343,7 +343,7 @@ ul.menu li.leaf a.active{
 
 #block-tow-search_inner_field_list h2.title,
 #block-tow-search_inner_facets h2.title{
-   display: none;
+    display: none;
 }
 
 .page-search-dataset .dataTables_scrollHead th{
@@ -362,7 +362,7 @@ button.ColVis_Button{
 
 .nav-tabs > .active > a,
 .nav-tabs > .active > a:hover {
-    padding-bottom: 8.5px;    
+    padding-bottom: 8.5px;
 }
 
 .three-in-one .item-list ul {
@@ -386,69 +386,83 @@ button.ColVis_Button{
     border: 1px solid #979797;
     border-radius: 2px 2px 2px 2px;
     height:12px!important
- }
- 
- /*.Middle{
-     background: url("../js/scroller/images/middle1.png")no-repeat!important;
-     text-align: center;
-     
- }*/
- 
- .jspHover{
-     background:url("../js/scroller/images/Scroll4.png") repeat-x transparent!important;
-     border: 1px solid #3C7FB1;
-     border-radius: 2px 2px 2px 2px;
-     height: 12px!important
- }
+}
 
- .jspArrowLeft {
-     background: url("../js/scroller/images/buttonleft.png")no-repeat!important;
- }
- 
- .jspArrowLeftHover{
-     background: url("../js/scroller/images/buttonleft1.png")no-repeat!important;
-     border: 1px solid #3C7FB1;
-     border-radius: 2px 2px 2px 2px;
-     height: 12px!important; 
-     width: 15px!important;
- }
- 
- .jspArrowRight{
-     background: url("../js/scroller/images/buttonright.png")no-repeat!important;
+
+.jspHover{
+    background:url("../js/scroller/images/Scroll4.png") repeat-x transparent!important;
+    border: 1px solid #3C7FB1;
+    border-radius: 2px 2px 2px 2px;
+    height: 12px!important
+}
+
+.jspArrowLeft {
+    background: url("../js/scroller/images/buttonleft.png")no-repeat!important;
+}
+
+.jspArrowLeftHover{
+    background: url("../js/scroller/images/buttonleft1.png")no-repeat!important;
+    border: 1px solid #3C7FB1;
+    border-radius: 2px 2px 2px 2px;
+    height: 12px!important;
+    width: 15px!important;
+}
+
+.jspArrowRight{
+    background: url("../js/scroller/images/buttonright.png")no-repeat!important;
 }
 
 .jspArrowRightHover{
-     background: url("../js/scroller/images/buttonright1.png")no-repeat!important;
-     border: 1px solid #3C7FB1;
-     border-radius: 2px 2px 2px 2px; 
-     height: 12px!important; 
-     width: 15px!important;
+    background: url("../js/scroller/images/buttonright1.png")no-repeat!important;
+    border: 1px solid #3C7FB1;
+    border-radius: 2px 2px 2px 2px;
+    height: 12px!important;
+    width: 15px!important;
 }
 
 .jspActive {
-     background: url("../js/scroller/images/Scroll5.png")repeat-x transparent!important;
-     border: 1px solid #3C7FB1;
-     border-radius: 2px 2px 2px 2px;
-     height: 12px!important;
+    background: url("../js/scroller/images/Scroll5.png")repeat-x transparent!important;
+    border: 1px solid #3C7FB1;
+    border-radius: 2px 2px 2px 2px;
+    height: 12px!important;
 }
 
 .ButtonLeft {
     background: url("../js/scroller/images/buttonleft2.png")no-repeat !important;
     border: 1px solid #3C7FB1;
-     border-radius: 2px 2px 2px 2px;
-     height: 12px!important; 
-     width: 15px!important;    
+    border-radius: 2px 2px 2px 2px;
+    height: 12px!important;
+    width: 15px!important;
 }
 
 .ButtonRight{
-   background: url("../js/scroller/images/buttonright2.png")no-repeat !important;
+    background: url("../js/scroller/images/buttonright2.png")no-repeat !important;
     border: 1px solid #3C7FB1;
-     border-radius: 2px 2px 2px 2px;
-     height: 12px!important; 
-     width: 15px!important;      
+    border-radius: 2px 2px 2px 2px;
+    height: 12px!important;
+    width: 15px!important;
 }
 
 .jspHorizontalBar{
-   background-color: #E5E5E5!important; 
+    background-color: #E5E5E5!important;
+}
+
+.scrollmiddleimg {
+    background: url("/sites/all/themes/fusion/fusion_theory/js/scroller/images/middle1.png")no-repeat !important;
+    margin: 3px auto !important;
+    height: 5px;
+    width: 10px;
+}
+
+/*---------Styles for inner-search widget-------*/
+/*.three-in-one .form-item label.option {
+    display: none;
+}*/
+
+/*div[class*="test"]*/
+
+
+div[id*="edit-include-empty"]{
+    display: none;
 }
 
