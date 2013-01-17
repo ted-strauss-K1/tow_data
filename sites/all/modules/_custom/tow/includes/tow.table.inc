@@ -94,6 +94,7 @@ function tow_table_field_add_form($form_state, $node, $existing_fields) {
     $form['field_add']['unit'] = array(
         '#type' => 'textfield',
         '#description' => t('Enter unit'),
+        '#autocomplete_path' => 'tow/tags/autocomplete/Units',
         '#size' => 20,
         '#maxlength' => 20,
     );
@@ -233,6 +234,7 @@ function tow_table_form_alter(&$form, &$form_state) {
                 '#type' => 'textfield',
                 '#default_value' => _tow_field_remove_fake($units_array[$key]['value']),
                 '#size' => 5,
+                '#autocomplete_path' => 'tow/tags/autocomplete/Units',
             );
 
             // Index: Yes / No.
@@ -285,6 +287,7 @@ function tow_table_form_alter(&$form, &$form_state) {
             '#description' => t('Enter unit'),
             '#size' => 20,
             '#maxlength' => 20,
+            '#autocomplete_path' => 'tow/tags/autocomplete/Units',
         );
 
         $form['field_add']['enum_options'] = array(
@@ -1504,6 +1507,13 @@ function tow_table_field_add_form_submit($form, &$form_state) {
 
     // Add unit to the units array.
     $node->field_units[] = array('value' => $unit);
+    
+    //Add unit to taxonomy dictionary if new
+    $voc_id = _tow_apachesolr_taxonomy_get_vid('Units');
+    $units_tag_object = _tow_taxonomy_get_term($unit, $voc_id);
+        if (!$units_tag_object) {
+            _tow_add_taxonomy_term($unit, $voc_id);
+        }
 
     try {
         node_save($node);

@@ -189,45 +189,77 @@ function tow_ajax_handlers_delete_saved_search($dataset_nid) {
  */
 function tow_ajax_handlers_tags_autocomplete($voc_name, $string) {
   $voc_id = _tow_apachesolr_taxonomy_get_vid($voc_name);
-    
-  $array = drupal_explode_tags($string);
-  // Fetch last value
-  $last_string = trim(array_pop($array));
   $matches = array();
-  if ($last_string){
-  //search table for tags that contain letters the user enters in the form
-  $result = db_query_range("
-      
-    SELECT
-      td.name AS name,
-      td.description AS description,
-      td.tid AS tid,
-      td.vid AS vid,
-    (SELECT COUNT(*) FROM {term_node} tntn WHERE tntn.tid = td.tid) AS count
-        
-      FROM
-        {term_data} td
-        
-      JOIN
-        {term_node} tn
-      
-      ON
-        td.tid = tn.tid
-
-      WHERE
-          LOWER(td.name) LIKE LOWER('%%%s%') 
-        AND
-          td.vid = %d
-          
-   ", $last_string, $voc_id, 0, 10);
   
-  $prefix = count($array) ? implode(', ', $array) .', ' : '';
-  // add matches to $matches
-  while ($data = db_fetch_object($result)) {
-    $tag_name = '<div class="tag-name">' . check_plain($data->name . ' × ' . $data->count) . '</div>';
-    $tag_description = ($data->description != '') ? ('<div class="tag-description">' . check_plain('description: ' . $data->description) . '</div>') : NULL;
-    $matches[$prefix . $data->name] = $tag_name . $tag_description;
+  if ($voc_name != 'Units') {  
+    $array = drupal_explode_tags($string);
+    // Fetch last value
+    $last_string = trim(array_pop($array));
+    if ($last_string){
+        //search table for tags that contain letters the user enters in the form
+        $result = db_query_range("
+
+          SELECT
+            td.name AS name,
+            td.description AS description,
+            td.tid AS tid,
+            td.vid AS vid,
+          (SELECT COUNT(*) FROM {term_node} tntn WHERE tntn.tid = td.tid) AS count
+
+            FROM
+              {term_data} td
+
+            JOIN
+              {term_node} tn
+
+            ON
+              td.tid = tn.tid
+
+            WHERE
+                LOWER(td.name) LIKE LOWER('%%%s%') 
+              AND
+                td.vid = %d
+
+         ", $last_string, $voc_id, 0, 10);
+
+        $prefix = count($array) ? implode(', ', $array) .', ' : '';
+        // add matches to $matches
+        while ($data = db_fetch_object($result)) {
+          $tag_name = '<div class="tag-name">' . check_plain($data->name . ' × ' . $data->count) . '</div>';
+          $tag_description = ($data->description != '') ? ('<div class="tag-description">' . check_plain('description: ' . $data->description) . '</div>') : NULL;
+          $matches[$prefix . $data->name] = $tag_name . $tag_description;
+        }
+    }
   }
+  else {
+    $result = db_query_range("
+
+          SELECT
+            td.name AS name,
+            td.description AS description
+
+            FROM
+              {term_data} td
+
+            WHERE
+                LOWER(td.name) LIKE LOWER('%%%s%') 
+              AND
+                td.vid = %d
+              AND
+                td.name != 'iWy2KupFUYKV4c9wmSrR'
+
+         ", $string, $voc_id, 0, 10);
+    // add matches to $matches
+    while ($data = db_fetch_object($result)) {
+        $count_result = db_query("SELECT COUNT(*) AS count FROM {content_field_units} fu WHERE LOWER(fu.field_units_value) = LOWER('%s')", $data->name);
+        while ($count_data = db_fetch_object($count_result)) {
+            if ($count_data->count != 0) {
+              $tag_name = '<div class="tag-name">' . check_plain($data->name . ' × ' . $count_data->count) . '</div>';
+              $tag_description = ($data->description != '') ? ('<div class="tag-description">' . check_plain('description: ' . $data->description) . '</div>') : NULL;
+              $matches[$data->name] = $tag_name . $tag_description;
+            }
+        }
+    }
   }
   // return for JS
   print drupal_to_js($matches);

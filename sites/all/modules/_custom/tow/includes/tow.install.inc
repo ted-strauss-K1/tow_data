@@ -124,7 +124,7 @@ function tow_install_fields() {
     $fields[] = tow_cck_textfield('field_enum_options', 'table', t('Enum Options'), $weight++, $format, $exclude, 0, 1);
     $fields[] = tow_cck_textfield('field_weights', 'table', t('Weights'), $weight++, $format, $exclude);
     $fields[] = tow_cck_textfield('field_indexes', 'table', t('Indexes'), $weight++, $format, $exclude);
-    $fields[] = tow_cck_textfield('field_units', 'table', t('Units'), $weight++, $format, $exclude);
+    $fields[] = tow_cck_textfield('field_units', 'table', t('Units'), $weight++, $format, $exclude, 0, 1);
     $php = '
     $dataset_nids_res = db_query(db_rewrite_sql("SELECT n.nid FROM {node} n WHERE n.type = \'dataset\'"));
     while ($dataset_nid = db_fetch_array($dataset_nids_res)) {
