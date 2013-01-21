@@ -1,8 +1,8 @@
 diff --git a/includes/common.inc b/includes/common.inc
-index b86f2d2..af35c51 100644
+index 2abf198..72fc624 100644
 --- a/includes/common.inc
 +++ b/includes/common.inc
-@@ -1922,15 +1922,15 @@ function drupal_get_css($css = NULL) {
+@@ -1934,15 +1934,15 @@ function drupal_get_css($css = NULL) {
              // If a CSS file is not to be preprocessed and it's a module CSS file, it needs to *always* appear at the *top*,
              // regardless of whether preprocessing is on or off.
              if (!$preprocess && $type == 'module') {
@@ -21,7 +21,7 @@ index b86f2d2..af35c51 100644
              }
            }
          }
-@@ -1942,7 +1942,7 @@ function drupal_get_css($css = NULL) {
+@@ -1954,7 +1954,7 @@ function drupal_get_css($css = NULL) {
        // starting with "ad*".
        $filename = 'css_'. md5(serialize($types) . $query_string) .'.css';
        $preprocess_file = drupal_build_css_cache($types, $filename);
@@ -30,7 +30,7 @@ index b86f2d2..af35c51 100644
      }
    }
  
-@@ -2330,7 +2330,7 @@ function drupal_get_js($scope = 'header', $javascript = NULL) {
+@@ -2342,7 +2342,7 @@ function drupal_get_js($scope = 'header', $javascript = NULL) {
          // Additionally, go through any remaining scripts if JS preprocessing is on and output the non-cached ones.
          foreach ($data as $path => $info) {
            if (!$info['preprocess'] || !$is_writable || !$preprocess_js) {
@@ -39,7 +39,7 @@ index b86f2d2..af35c51 100644
            }
            else {
              $files[$path] = $info;
-@@ -2345,7 +2345,7 @@ function drupal_get_js($scope = 'header', $javascript = NULL) {
+@@ -2357,7 +2357,7 @@ function drupal_get_js($scope = 'header', $javascript = NULL) {
      // starting with "ad*".
      $filename = 'js_'. md5(serialize($files) . $query_string) .'.js';
      $preprocess_file = drupal_build_js_cache($files, $filename);
@@ -49,7 +49,7 @@ index b86f2d2..af35c51 100644
  
    // Keep the order of JS files consistent as some are preprocessed and others are not.
 diff --git a/includes/file.inc b/includes/file.inc
-index bbcf9dc..89712a0 100644
+index 0736f8b..9b80474 100644
 --- a/includes/file.inc
 +++ b/includes/file.inc
 @@ -34,19 +34,52 @@ define('FILE_STATUS_PERMANENT', 1);
@@ -74,7 +74,7 @@ index bbcf9dc..89712a0 100644
 + *   A string containing a URL that can be used to access the file.
   */
  function file_create_url($path) {
--  // Strip file_directory_path from $path. We only include relative paths in urls.
+-  // Strip file_directory_path from $path. We only include relative paths in URLs.
 -  if (strpos($path, file_directory_path() .'/') === 0) {
 -    $path = trim(substr($path, strlen(file_directory_path())), '\\/');
 +  // Clean up Windows paths.
@@ -116,7 +116,7 @@ index bbcf9dc..89712a0 100644
  }
  
 diff --git a/includes/form.inc b/includes/form.inc
-index e6d2a6a..5a9940b 100644
+index 514641d..11445b4 100644
 --- a/includes/form.inc
 +++ b/includes/form.inc
 @@ -1997,7 +1997,7 @@ function theme_image_button($element) {
@@ -129,7 +129,7 @@ index e6d2a6a..5a9940b 100644
      "/>\n";
  }
 diff --git a/includes/theme.inc b/includes/theme.inc
-index e1e45e0..c311fc6 100644
+index fbb4634..6866ccd 100644
 --- a/includes/theme.inc
 +++ b/includes/theme.inc
 @@ -1033,24 +1033,24 @@ function theme_get_setting($setting_name, $refresh = FALSE) {

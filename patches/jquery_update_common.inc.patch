@@ -2,7 +2,7 @@ diff --git a/includes/common.inc b/includes/common.inc
 index af35c51..c318711 100644
 --- a/includes/common.inc
 +++ b/includes/common.inc
-@@ -2538,9 +2538,60 @@ function drupal_to_js($var) {
+@@ -2550,9 +2550,60 @@ function drupal_to_js($var) {
        return $var;
      case 'resource':
      case 'string':

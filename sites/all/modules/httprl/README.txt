@@ -27,7 +27,8 @@ limits, chunk size, and max redirects to follow. Can handle data with
 content-encoding and transfer-encoding headers set. Correctly follows
 redirects. Option to forward the referrer when a redirect is found. Cookie
 extraction and parsing into key value pairs. Can multipart encode data so files
-can easily be sent in a HTTP request.
+can easily be sent in a HTTP request. Will emulate a range request if the server
+does not support range requests.
 
 
 REQUIREMENTS
@@ -53,6 +54,10 @@ Settings page is located at:
  * IP Address to send all self server requests to. If left blank it will use the
    same server as the request. If set to -1 it will use the host name instead of
    an IP address. This controls the output of httprl_build_url_self().
+ * Enable background callbacks. If disabled all background_callback keys will
+   be turned into callback & httprl_queue_background_callback will return NULL
+   and not queue up the request. Note that background callbacks will
+   automatically be disabled if the site is in maintenance mode.
 
 
 API OVERVIEW
@@ -71,6 +76,8 @@ httprl_queue_background_callback()
  - Queue a special HTTP request (used for threading) in httprl_send_request().
 
 Other Functions:
+httprl_is_background_callback_capable()
+ - See if httprl can issue a background callback.
 httprl_background_processing()
  - Output text, close connection, continue processing in the background.
 httprl_strlen()
@@ -113,6 +120,21 @@ Request http://drupal.org/.
 
     // Echo out the results.
     echo httprl_pr($request);
+    ?>
+
+
+Request http://drupal.org/robots.txt and save it to tmp folder.
+
+    <?php
+    // Queue up the request.
+    httprl_request('http://drupal.org/robots.txt');
+    // Execute request.
+    $request = httprl_send_request();
+
+    // Save file if we got a 200 back.
+    if ($request['http://drupal.org/robots.txt']->code == 200) {
+      file_put_contents('/tmp/robots.txt', $request['http://drupal.org/robots.txt']->data);
+    }
     ?>
 
 
@@ -194,6 +216,8 @@ connections that couldn't be made will be dropped.
     $options = array(
       'method' => 'HEAD',
       'blocking' => FALSE,
+      'domain_connections' => 1000,
+      'global_connections' => 1000,
     );
     // Queue up the requests.
     $max = 1000;
@@ -213,9 +237,9 @@ connections that couldn't be made will be dropped.
 
 
 Request 1000 URLs in a non blocking manner with one httprl_request() call. These
-URLs will all have the same options. This will saturate the server. All 1000
-requests will eventually hit the server due to it waiting for the connection to
-be established; `async_connect` is FALSE.
+URLs will all have the same options. This will saturate the server. Usually all
+1000 requests will eventually hit the server due to it waiting for the
+connection to be established; `async_connect` is FALSE.
 
     <?php
     // Set the blocking mode.
@@ -223,6 +247,10 @@ be established; `async_connect` is FALSE.
       'method' => 'HEAD',
       'blocking' => FALSE,
       'async_connect' => FALSE,
+      // domain_connections must be smaller than the servers max number of
+      // clients.
+      'domain_connections' => 32,
+      'global_connections' => 1000,
     );
     // Queue up the requests.
     $max = 1000;
@@ -338,7 +366,8 @@ instead of returning a value.
 **More Advanced HTTP Operations**
 
 Hit 4 different URLs, Using at least 2 that has a status code of 200 and
-erroring out the others that didn't return fast. Data is truncated as well.
+erroring out the others that didn't return fast. Using the Range header so only
+the first and last 128 bytes are returned.
 
     <?php
     // Array of URLs to get.
@@ -353,7 +382,7 @@ erroring out the others that didn't return fast. Data is truncated as well.
     // Process list of URLs.
     $options = array(
       'alter_all_streams_function' => 'need_two_good_results',
-      'callback' => array(array('function' => 'limit_data_size')),
+      'headers' => array('Range' => 'bytes=0-127,-128'),
     );
     // Queue up the requests.
     httprl_request($urls, $options);
@@ -389,11 +418,6 @@ erroring out the others that didn't return fast. Data is truncated as well.
           unset($result->fp);
         }
       }
-    }
-
-    function limit_data_size(&$result) {
-      // Only use the first and last 256 characters in the data array.
-      $result->data = substr($result->data, 0, 256) . "\n\n ... \n\n" . substr($result->data, strlen($result->data)-256);
     }
     ?>
 
@@ -432,6 +456,11 @@ Send 2 files in one field via a POST request.
 Use 2 threads to load up 4 different nodes.
 
     <?php
+    // Bail out here if background callbacks are disabled.
+    if (!httprl_is_background_callback_capable()) {
+      return FALSE;
+    }
+
     // List of nodes to load; 241-244.
     $nodes = array(241 => '', 242 => '', 243 => '', 244 => '');
     foreach ($nodes as $nid => &$node) {
@@ -462,6 +491,11 @@ Run a function in the background. Notice that there is no return or printed key
 in the callback options.
 
     <?php
+    // Bail out here if background callbacks are disabled.
+    if (!httprl_is_background_callback_capable()) {
+      return FALSE;
+    }
+
     // Setup callback options array; call watchdog in the background.
     $callback_options = array(
       array(
@@ -487,6 +521,11 @@ D6 & D7.
 
     // Show first module before running system_get_files_database().
     echo httprl_pr(current($modules));
+
+    // Bail out here if background callbacks are disabled.
+    if (!httprl_is_background_callback_capable()) {
+      return FALSE;
+    }
 
     $callback_options = array(
       array(
@@ -514,6 +553,11 @@ Get 2 results from 2 different queries at the hook_boot bootstrap level in D6.
     echo $x . "<br \>\n" . $y . "<br \>\n";
     unset($x, $y);
 
+
+    // Bail out here if background callbacks are disabled.
+    if (!httprl_is_background_callback_capable()) {
+      return FALSE;
+    }
 
     // Run above 2 queries and get the result via a background callback.
     $args = array(
@@ -571,6 +615,12 @@ Get 2 results from 2 different queries at the hook_boot bootstrap level in D7.
       ->fetchField();
     echo $x . "<br \>\n" . $y . "<br \>\n";
     unset($x, $y);
+
+
+    // Bail out here if background callbacks are disabled.
+    if (!httprl_is_background_callback_capable()) {
+      return FALSE;
+    }
 
     // Run above 2 queries and get the result via a background callback.
     $args = array(
@@ -660,6 +710,11 @@ non blocking background request.
     module_load_include('inc', 'system', 'system.admin');
     system_clear_cache_submit();
 
+
+    // Bail out here if background callbacks are disabled.
+    if (!httprl_is_background_callback_capable()) {
+      return FALSE;
+    }
 
     // How to do it in a non blocking background request.
     $args = array(

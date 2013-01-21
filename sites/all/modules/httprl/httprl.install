@@ -75,8 +75,18 @@ function httprl_requirements($phase) {
       return $requirements;
     }
 
-    global $_httprl;
+    if ((defined('VERSION') && substr(VERSION, 0, 1) >= 7 && variable_get('maintenance_mode', 0)) || variable_get('site_offline', 0)) {
+      if (empty($requirements)) {
+        $requirements['httprl'] = array(
+          'title'     => $t('HTTPRL'),
+          'severity'  => REQUIREMENT_INFO,
+          'value'     => $phase == 'install' ? TRUE : $t('All the required functions are enabled, but non blocking requests can not be tested while the site is in maintenance mode.'),
+        );
+      }
+      return $requirements;
+    }
 
+    global $_httprl;
     // Test the non-blocking url.
     if (!httprl_install_http_test(2, FALSE)) {
       // Test the blocking url.
