@@ -50,6 +50,15 @@ function httprl_async_page() {
   // Release the lock.
   httprl_lock_release($_POST['temp_key']);
 
+  // Set time limit.
+  if (isset($_POST['php_timeout']) && is_numeric($_POST['php_timeout']))  {
+    // Copy of drupal_set_time_limit().
+    if (function_exists('set_time_limit')) {
+      @set_time_limit($_POST['php_timeout']);
+    }
+  }
+
+  // Extract Data.
   $args = unserialize($_POST['args']);
 
   // Run the function.
