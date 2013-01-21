@@ -112,7 +112,7 @@ function tow_field_delete_confirm($form_state, $table_nid, $type, $delta, $index
 
     // Error 403 if no access to table.
     $_tow_table = node_load($table_nid);
-    if ($user->uid != $node->uid && !user_access('edit any table')) {
+    if ($user->uid != $_tow_table->uid && !user_access('edit any table')) {
         drupal_access_denied();
         die();
     }
