@@ -962,11 +962,16 @@ function tow_nodeapi(&$node, $op) {
         if ($node->type == 'dataset') {
             global $_tow_dataset;
             $_tow_dataset = $node;
-
-            /*$is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $_tow_dataset->uid));
+            #if ($_SERVER['SCRIPT_NAME'] == '/cron.php')
+            $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $_tow_dataset->uid));
             if (!$is_admin) {
-                #db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
-            }*/
+                if ((strpos(request_uri(), "/cron.php") === 0) && ($user->uid == 0)) {
+                    //from crontab
+                }
+                else {
+                    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
+                }
+            }
         }
     }
 
