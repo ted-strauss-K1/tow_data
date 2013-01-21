@@ -17,11 +17,11 @@ function tow_statistics_dataset_extract($nid) {
     $_tow_dataset_statistics = db_fetch_array(db_query("
 
     SELECT
-      t.count AS count,
+      t.totalcount AS count,
       t.timestamp AS timestamp
 
       FROM
-        {tow_node_views_counter} t
+        {node_counter} t
 
       WHERE
         t.nid = %d
