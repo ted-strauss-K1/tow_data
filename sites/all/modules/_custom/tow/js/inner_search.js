@@ -91,6 +91,12 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
 
+    /***** Fields/Filters tabs *****/
+    
+    $("#block-tow-saved_searches_description").append('<ul id="InnerSearchTab" class="nav nav-tabs"><li class="active"><a href="#block-tow-search_inner_field_list" data-toggle="tab">Fields</a></li><li><a href="#block-tow-search_inner_facets" data-toggle="tab">Filters</a></li></ul>');
+    $("#block-tow-search_inner_field_list").addClass("tab-pane active");
+    $("#block-tow-search_inner_facets").addClass("tab-pane");
+
 
     /***** Search *****/
 
@@ -1708,7 +1714,7 @@ Drupal.behaviors.inner_search = function(context) {
             });
 
             $('div.content-content').html(data.search);
-
+            
             //Wrap every three widgets
             var divs = $("div.tow-inner-search-widget");
             for(var i = 0; i < divs.length; i+=3) {
@@ -1755,10 +1761,6 @@ Drupal.behaviors.inner_search = function(context) {
             if (jsp_element.data('jsp')){
                 var jsp_api = jsp_element.data('jsp');
                 var scrollableX = jsp_api.getIsScrollableH();
-
-
-                $("#block-tow-search_inner_field_list").addClass("tab-pane active");
-                $("#block-tow-search_inner_facets").addClass("tab-pane");
 
                 var access = $(".dataTables_scrollHead");
 
