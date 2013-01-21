@@ -214,16 +214,6 @@ Drupal.behaviors.inner_search = function(context) {
         deleteSavedSearch(e, $(this));
     });
 
-    // Saved search tags autocomplete.
-    var timer = null;
-    $('#edit-ss-tags', context).live('keyup', function(e) {
-        clearTimeout(timer);
-        $this = $(this);
-        timer = setTimeout(function() {
-            ssTagsAutocomplete(e, $this);
-        }, 600);
-    });
-
     // Delete comment.
     $('.comment_delete a', context).live('click', function(e) {
         commentDelete(e, $(this));
@@ -1681,8 +1671,9 @@ Drupal.behaviors.inner_search = function(context) {
                 $('div#block-tow-saved_searches_save_search div.content').html(data.save_this_search);
             }
 
-            // Returns collapsibility.
+            // Returns collapsibility&autocomplete.
             Drupal.behaviors.collapse();
+            Drupal.behaviors.autocomplete();
 
             // Returning user-selected collapsibility.
             $('.tow-inner-search-widget fieldset').each(function() {
@@ -1874,6 +1865,7 @@ Drupal.behaviors.inner_search = function(context) {
         var selectedFields = $('#edit-selected-fields').val();
         var rowsAmount = $('#edit-rows-amount').val();
         var sSComment = $('#edit-ss-comment').val();
+        var sSTags = $('#edit-ss-tags').val();
 
         /**
          * Saved search creation.
@@ -1903,6 +1895,7 @@ Drupal.behaviors.inner_search = function(context) {
                 'filters' : filters,
                 'rows_amount' : rowsAmount,
                 'ss_comment' : sSComment,
+                'ss_tags' : sSTags,
                 'selected_fields' : selectedFields
             },
             success: function(data) {
@@ -2218,35 +2211,6 @@ Drupal.behaviors.inner_search = function(context) {
             }
         }
         location.hash = hash;
-    }
-
-    /**
-     * SS tags
-     */
-    function ssTagsAutocomplete(event, selector) {
-        var urlSSTags = 'http://' + window.location.hostname + '/tags';
-        var ssTag = selector.val();
-        var iOLC = ssTag.lastIndexOf(',');
-        if (iOLC != -1) {
-            var textAfterLastComma = ssTag.substring(iOLC + 1);
-            ssTag = textAfterLastComma.replace(/^\s+/,'');
-        }
-
-        if (ssTag == ''/* || event.keyCode == 8*/) {
-            $('.ss-tags-html').html('');
-            return false;
-        }
-        $.ajax({
-            url: urlSSTags,
-            data: {
-                'tag' : ssTag
-            },
-            success: function(data) {
-                var htmlToInsert = $(data).find('div.view-content');
-                $('.ss-tags-html').html(htmlToInsert);
-            }
-        });
-        return false;
     }
 
 }
