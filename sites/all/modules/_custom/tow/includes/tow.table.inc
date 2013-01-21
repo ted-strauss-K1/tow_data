@@ -134,6 +134,14 @@ function tow_table_form_alter(&$form, &$form_state) {
     unset($form['menu']);
     unset($form['revision_information']);
     unset($form['comment_settings']);
+    $form['body_field']['teaser_include']['#access'] = FALSE;
+    $form['body_field']['format']['#access'] = FALSE;
+    $form['field_weights']['#access'] = FALSE;
+    $form['field_indexes']['#access'] = FALSE;
+    $form['field_units']['#access'] = FALSE;
+    $form['field_available_positions']['#access'] = FALSE;
+    unset($form['author']);
+    unset($form['options']);
 
     // Hide native CCK fields.
     foreach (tow_possible_fields() as $field_type) {
