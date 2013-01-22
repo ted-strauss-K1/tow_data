@@ -1003,7 +1003,7 @@ function tow_cck_table_feature_content_default_fields() {
     'widget_active' => '1',
     'type' => 'text',
     'required' => '0',
-    'multiple' => '0',
+    'multiple' => '1',
     'module' => 'text',
     'active' => '1',
     'text_processing' => '0',
@@ -1016,7 +1016,7 @@ function tow_cck_table_feature_content_default_fields() {
       'default_value' => array(
         '0' => array(
           'value' => '',
-          '_error_element' => 'default_value_widget][field_title_int][0][value',
+          '_error_element' => 'default_value_widget][field_units][0][value',
         ),
       ),
       'default_value_php' => NULL,
