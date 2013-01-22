@@ -40,7 +40,7 @@ ul.menu li.leaf a {
 	min-height: 70px;
 }
 #header-group-wrapper, #header-group-inner {
-	height: 141px;
+	/* height: 141px; */
 }
 #breadcrumbs {
 	margin-bottom: 0px;

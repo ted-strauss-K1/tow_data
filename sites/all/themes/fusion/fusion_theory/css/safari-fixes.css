@@ -1,0 +1,15 @@
+
+/* 
+ * To change this template, choose Tools | Templates
+ * and open the template in the editor.
+*/
+.nav-tabs > li > a,
+.nav-tabs > li > a:hover {
+    border-bottom-width: 1px!important;
+    padding-bottom: 7.6px!important;
+}
+
+/*body{
+    background: #000;
+}*/
+

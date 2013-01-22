@@ -3694,7 +3694,7 @@ input[type="submit"].btn.btn-mini {
 }
 
 .nav > li > a {
-  /*display: block;*/
+  display: block;
 }
 
 .nav > li > a:hover {
