@@ -276,6 +276,53 @@ ul#noty_topCenter_layout_container{
     color: #222222;
 }
 
+div.noty_buttons {
+    background: #D8D8D8!important;
+    text-align: center!important;
+}
+
+.noty_buttons .btn.btn-danger {
+    background-color: #222224!important;
+    background-image: -moz-linear-gradient(center top , #222224, #222224)!important;
+    background-image: -webkit-linear-gradient(top , #222224, #222224)!important;
+}
+
+.noty_buttons .btn.btn-danger:hover,
+.noty_buttons .btn.btn-danger:active{
+    background-color: #222224!important;
+}
+
+.noty_buttons .btn.btn-primary {
+    background-color: #707070!important;
+    background: -moz-linear-gradient(center top , #707070, #707070)!important;
+    background-image: -webkit-linear-gradient(top, #707070, #707070)!important;
+    border: 1px solid #222224!important;
+}
+
+.noty_buttons .btn.btn-primary:hover,
+.noty_buttons .btn.btn-primary:active{
+    background-color: #707070!important;
+}
+
+
+.noty_buttons .btn{
+    background-color: #F0F0F0!important;
+    background-image: -moz-linear-gradient(center top , #F0F0F0 , #F0F0F0 )!important;
+    background-image: -webkit-linear-gradient(top , #F0F0F0 , #F0F0F0 )!important;
+    border: 1px solid #666!important;
+}
+
+.noty_buttons .btn:hover,
+.noty_buttons .btn:active{
+    background-color: #F0F0F0!important;
+}
+
+.centrier{
+
+        
+}
+
+
 /*------style for item Browse------*/
 
 #block-tow-pma_menu li:hover.browse-has-submenu a:hover{
@@ -360,9 +407,10 @@ button.ColVis_Button{
 
 /*----Style for Tabs Fields Filters-----*/
 
-.nav-tabs > .active > a,
-.nav-tabs > .active > a:hover {
-    padding-bottom: 8.5px;
+.nav-tabs > li > a,
+.nav-tabs > li > a:hover {
+    line-height: 10px !important;
+    border-bottom-width: 0!important;
 }
 
 .three-in-one .item-list ul {
@@ -390,7 +438,7 @@ button.ColVis_Button{
 
 
 .jspHover{
-    background:url("../js/scroller/images/Scroll4.png") repeat-x transparent!important;
+    background:url("../js/scroller/images/Scroll4.png") repeat-x !important;
     border: 1px solid #3C7FB1;
     border-radius: 2px 2px 2px 2px;
     height: 12px!important
@@ -421,7 +469,7 @@ button.ColVis_Button{
 }
 
 .jspActive {
-    background: url("../js/scroller/images/Scroll5.png")repeat-x transparent!important;
+    background: url("../js/scroller/images/Scroll5.png")repeat-x !important;
     border: 1px solid #3C7FB1;
     border-radius: 2px 2px 2px 2px;
     height: 12px!important;
@@ -455,14 +503,10 @@ button.ColVis_Button{
 }
 
 /*---------Styles for inner-search widget-------*/
-/*.three-in-one .form-item label.option {
+/*div[id*="edit-include-empty"]{
     display: none;
 }*/
 
-/*div[class*="test"]*/
-
-
-div[id*="edit-include-empty"]{
+input.form-checkbox{
     display: none;
 }
-
