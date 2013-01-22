@@ -112,7 +112,7 @@ function tow_field_delete_confirm($form_state, $table_nid, $type, $delta, $index
 
     // Error 403 if no access to table.
     $_tow_table = node_load($table_nid);
-    if ($user->uid != $node->uid && !user_access('edit any table')) {
+    if ($user->uid != $_tow_table->uid && !user_access('edit any table')) {
         drupal_access_denied();
         die();
     }
@@ -183,7 +183,7 @@ function tow_field_edit_form($form_state, $table_nid, $type, $delta, $index) {
 
     // Error 403 if no access to table.
     $_tow_table = node_load($table_nid);
-    if ($user->uid != $node->uid && !user_access('edit any table')) {
+    if ($user->uid != $_tow_table->uid && !user_access('edit any table')) {
         drupal_access_denied();
         die();
     }
@@ -232,6 +232,7 @@ function tow_field_edit_form($form_state, $table_nid, $type, $delta, $index) {
         '#type' => 'textfield',
         '#title' => t('Unit'),
         '#default_value' => _tow_field_remove_fake($_tow_table->field_units[$index]['value']),
+        '#autocomplete_path' => 'tow/tags/autocomplete/Units',
     );
 
     // Read field description from database.
@@ -295,7 +296,7 @@ function tow_field_delete_confirm_submit($form, &$form_state) {
           f.nid IN (
 
             SELECT
-              f.nid AS nid
+              r.nid AS nid
 
               FROM
                 {content_type_record} r
@@ -304,7 +305,7 @@ function tow_field_delete_confirm_submit($form, &$form_state) {
                 r.field_table_value = %d
           )
         AND
-          r.delta = %d
+          f.delta = %d
 
   ", $type, $_tow_table->nid, $delta);
 
@@ -368,6 +369,14 @@ function tow_field_edit_form_submit($form, &$form_state) {
     if ($new_units_array != $_tow_table->field_units) {
         $node_save = TRUE;
         $_tow_table->field_units = $new_units_array;
+        
+        $voc_id = _tow_apachesolr_taxonomy_get_vid('Units');
+        foreach ($new_units_array as $index => $unit) {
+            $units_tag_object = _tow_taxonomy_get_term($unit['value'], $voc_id);
+            if (!$units_tag_object) {
+                _tow_add_taxonomy_term($unit['value'], $voc_id);
+            }
+        }
     }
 
     // Check if should save.

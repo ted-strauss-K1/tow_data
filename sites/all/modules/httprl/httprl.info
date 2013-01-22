@@ -3,10 +3,11 @@ name = HTTP Parallel Request Library
 description = Send http requests out in parallel in a blocking or non-blocking manner.
 package = Performance and scalability
 core = 6.x
+php = 5.0
 
-; Information added by drupal.org packaging script on 2012-12-24
-version = "6.x-1.8"
+; Information added by drupal.org packaging script on 2013-01-18
+version = "6.x-1.9"
 core = "6.x"
 project = "httprl"
-datestamp = "1356317560"
+datestamp = "1358544102"
 

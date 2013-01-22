@@ -91,6 +91,12 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
 
+    /***** Fields/Filters tabs *****/
+    
+    $("#block-tow-saved_searches_description").append('<ul id="InnerSearchTab" class="nav nav-tabs"><li class="active"><a href="#block-tow-search_inner_field_list" data-toggle="tab">Fields</a></li><li><a href="#block-tow-search_inner_facets" data-toggle="tab">Filters</a></li></ul>');
+    $("#block-tow-search_inner_field_list").addClass("tab-pane active");
+    $("#block-tow-search_inner_facets").addClass("tab-pane");
+
 
     /***** Search *****/
 
@@ -212,16 +218,6 @@ Drupal.behaviors.inner_search = function(context) {
     // Delete saved search link click.
     $('.saved-search-delete', context).live('click', function(e) {
         deleteSavedSearch(e, $(this));
-    });
-
-    // Saved search tags autocomplete.
-    var timer = null;
-    $('#edit-ss-tags', context).live('keyup', function(e) {
-        clearTimeout(timer);
-        $this = $(this);
-        timer = setTimeout(function() {
-            ssTagsAutocomplete(e, $this);
-        }, 600);
     });
 
     // Delete comment.
@@ -882,6 +878,7 @@ Drupal.behaviors.inner_search = function(context) {
                         marginTop: 3,
                         marginLeft: 25,
                         marginRight: 10,
+                        width: 215,
                         events: {
                             mousedown: function(e) {
                                 isMouseDown = true;
@@ -1051,6 +1048,7 @@ Drupal.behaviors.inner_search = function(context) {
                         marginLeft: 25,
                         marginRight: 10,
                         type: 'spline',
+                        width: 215,
                         plotBorderWidth: 1
                     },
                     credits: {
@@ -1679,8 +1677,9 @@ Drupal.behaviors.inner_search = function(context) {
                 $('div#block-tow-saved_searches_save_search div.content').html(data.save_this_search);
             }
 
-            // Returns collapsibility.
+            // Returns collapsibility&autocomplete.
             Drupal.behaviors.collapse();
+            Drupal.behaviors.autocomplete();
 
             // Returning user-selected collapsibility.
             $('.tow-inner-search-widget fieldset').each(function() {
@@ -1715,7 +1714,7 @@ Drupal.behaviors.inner_search = function(context) {
             });
 
             $('div.content-content').html(data.search);
-
+            
             //Wrap every three widgets
             var divs = $("div.tow-inner-search-widget");
             for(var i = 0; i < divs.length; i+=3) {
@@ -1762,10 +1761,6 @@ Drupal.behaviors.inner_search = function(context) {
             if (jsp_element.data('jsp')){
                 var jsp_api = jsp_element.data('jsp');
                 var scrollableX = jsp_api.getIsScrollableH();
-
-
-                $("#block-tow-search_inner_field_list").addClass("tab-pane active");
-                $("#block-tow-search_inner_facets").addClass("tab-pane");
 
                 var access = $(".dataTables_scrollHead");
 
@@ -1872,6 +1867,7 @@ Drupal.behaviors.inner_search = function(context) {
         var selectedFields = $('#edit-selected-fields').val();
         var rowsAmount = $('#edit-rows-amount').val();
         var sSComment = $('#edit-ss-comment').val();
+        var sSTags = $('#edit-ss-tags').val();
 
         /**
          * Saved search creation.
@@ -1901,6 +1897,7 @@ Drupal.behaviors.inner_search = function(context) {
                 'filters' : filters,
                 'rows_amount' : rowsAmount,
                 'ss_comment' : sSComment,
+                'ss_tags' : sSTags,
                 'selected_fields' : selectedFields
             },
             success: function(data) {
@@ -2216,35 +2213,6 @@ Drupal.behaviors.inner_search = function(context) {
             }
         }
         location.hash = hash;
-    }
-
-    /**
-     * SS tags
-     */
-    function ssTagsAutocomplete(event, selector) {
-        var urlSSTags = 'http://' + window.location.hostname + '/tags';
-        var ssTag = selector.val();
-        var iOLC = ssTag.lastIndexOf(',');
-        if (iOLC != -1) {
-            var textAfterLastComma = ssTag.substring(iOLC + 1);
-            ssTag = textAfterLastComma.replace(/^\s+/,'');
-        }
-
-        if (ssTag == ''/* || event.keyCode == 8*/) {
-            $('.ss-tags-html').html('');
-            return false;
-        }
-        $.ajax({
-            url: urlSSTags,
-            data: {
-                'tag' : ssTag
-            },
-            success: function(data) {
-                var htmlToInsert = $(data).find('div.view-content');
-                $('.ss-tags-html').html(htmlToInsert);
-            }
-        });
-        return false;
     }
 
 }

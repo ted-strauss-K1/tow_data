@@ -14,26 +14,6 @@
 
 require_once 'sites/all/libraries/ChromePhp/ChromePhp.php';
 
-module_load_include('inc', 'tow', 'includes/tow.access');
-module_load_include('inc', 'tow', 'includes/tow.apachesolr');
-module_load_include('inc', 'tow', 'includes/tow.dataset');
-module_load_include('inc', 'tow', 'includes/tow.debug');
-module_load_include('inc', 'tow', 'includes/tow.field');
-module_load_include('inc', 'tow', 'includes/tow.import');
-module_load_include('inc', 'tow', 'includes/tow.install');
-module_load_include('inc', 'tow', 'includes/tow.invite');
-module_load_include('inc', 'tow', 'includes/tow.pma_menu');
-module_load_include('inc', 'tow', 'includes/tow.record');
-module_load_include('inc', 'tow', 'includes/tow.saved_searches');
-module_load_include('inc', 'tow', 'includes/tow.search_inner');
-module_load_include('inc', 'tow', 'includes/tow.search_inner_linked');
-module_load_include('inc', 'tow', 'includes/tow.search_outer');
-module_load_include('inc', 'tow', 'includes/tow.statistics');
-module_load_include('inc', 'tow', 'includes/tow.table');
-module_load_include('inc', 'tow', 'includes/tow.tests');
-module_load_include('inc', 'tow', 'includes/tow.views');
-module_load_include('inc', 'tow', 'includes/tow.user');
-
 
 
 /* * **************************************************************************************************
@@ -284,6 +264,8 @@ function tow_block($op = 'list', $delta = 0) {
  * Implementation of hook_cron().
  */
 function tow_cron() {
+    //Delete zero viewed lines(may exist because tow_exit())
+    db_query('DELETE FROM {node_counter} WHERE totalcount = 0');
 
     // Create dataset categories if necessary.
     tow_install_create_dataset_categories();
@@ -452,6 +434,26 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_init().
  */
 function tow_init() {
+    module_load_include('inc', 'tow', 'includes/tow.access');
+    module_load_include('inc', 'tow', 'includes/tow.apachesolr');
+    module_load_include('inc', 'tow', 'includes/tow.dataset');
+    module_load_include('inc', 'tow', 'includes/tow.debug');
+    module_load_include('inc', 'tow', 'includes/tow.field');
+    module_load_include('inc', 'tow', 'includes/tow.import');
+    module_load_include('inc', 'tow', 'includes/tow.install');
+    module_load_include('inc', 'tow', 'includes/tow.invite');
+    module_load_include('inc', 'tow', 'includes/tow.pma_menu');
+    module_load_include('inc', 'tow', 'includes/tow.record');
+    module_load_include('inc', 'tow', 'includes/tow.saved_searches');
+    module_load_include('inc', 'tow', 'includes/tow.search_inner');
+    module_load_include('inc', 'tow', 'includes/tow.search_inner_linked');
+    module_load_include('inc', 'tow', 'includes/tow.search_outer');
+    module_load_include('inc', 'tow', 'includes/tow.statistics');
+    module_load_include('inc', 'tow', 'includes/tow.table');
+    module_load_include('inc', 'tow', 'includes/tow.tests');
+    module_load_include('inc', 'tow', 'includes/tow.views');
+    module_load_include('inc', 'tow', 'includes/tow.user');
+    
     global $user, $_tow_user;
     $_tow_user = $user;
     
@@ -532,6 +534,26 @@ function tow_link_alter(&$links, $node, $comment = NULL) {
             $links[$index]['query']['filters'] = 'tid:' . str_replace('taxonomy_term_', '', $index);
         }
     }
+}
+
+/**
+ * Implementation of hook_exit().
+ */
+function tow_exit() {
+    global $user;
+
+  // Check if we are counting views.
+  if (variable_get('statistics_count_content_views', 0)) {
+    // Check if current page displays a node in viewing mode.
+    if ((arg(0) == 'node') && is_numeric(arg(1)) && arg(2) == '') {
+      // Check if the user is admin or author.
+      $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == node_load(arg(1))->uid));
+      if ($is_admin) {
+        // Decrement total view count and day view count of current node.
+        db_query('UPDATE {node_counter} SET daycount = daycount - 1, totalcount = totalcount - 1, timestamp = %d WHERE nid = %d', time(), arg(1));
+      }
+    }
+  }
 }
 
 /**
@@ -940,7 +962,16 @@ function tow_nodeapi(&$node, $op) {
         if ($node->type == 'dataset') {
             global $_tow_dataset;
             $_tow_dataset = $node;
-            //db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
+            #if ($_SERVER['SCRIPT_NAME'] == '/cron.php')
+            $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == $_tow_dataset->uid));
+            if (!$is_admin) {
+                if ((strpos(request_uri(), "/cron.php") === 0) && ($user->uid == 0)) {
+                    //from crontab
+                }
+                else {
+                    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
+                }
+            }
         }
     }
 
