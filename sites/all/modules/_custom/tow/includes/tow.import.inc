@@ -1043,8 +1043,8 @@ function _tow_import_common_type($type1, $type2) {
 
     $common_types = array(
         'bool' => array(
-            'int' => 'text',
-            'float' => 'text',
+            'int' => 'int',
+            'float' => 'float',
             'null' => 'bool',
             'date' => 'text',
             'time' => 'text',
@@ -1052,7 +1052,7 @@ function _tow_import_common_type($type1, $type2) {
             'text' => 'text',
         ),
         'int' => array(
-            'bool' => 'text',
+            'bool' => 'int',
             'float' => 'float',
             'null' => 'int',
             'date' => 'text',
@@ -1061,7 +1061,7 @@ function _tow_import_common_type($type1, $type2) {
             'text' => 'text',
         ),
         'float' => array(
-            'bool' => 'text',
+            'bool' => 'float',
             'int' => 'float',
             'null' => 'float',
             'date' => 'text',
