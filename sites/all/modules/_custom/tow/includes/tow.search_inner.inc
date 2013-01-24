@@ -705,7 +705,7 @@ function tow_search_inner_widget_form(&$form_state, $field_title, $path, $widget
  */
 function tow_search_inner_bar_widget($field, $field_type, $path, $facet_counts, $empty, $stats) {
     $data = array();
-    $function = '_tow_solr_to_' . $field_type;
+    $function = '_tow_apachesolr_solr_to_' . $field_type;
     $function_exists = function_exists($function);
     foreach ($facet_counts as $value => $count) {
         if ($count) {
@@ -791,7 +791,7 @@ function tow_search_inner_chart_data($field, $field_type, $facet_counts) {
         while ($group_start < $end) {
             $interval_start = _tow_search_inner_js_to_solr($field_type, $group_start);
             $interval_end = _tow_search_inner_js_to_solr($field_type, $group_start + $gap - 1);
-            $function = '_tow_solr_to_' . $field_type;
+            $function = '_tow_apachesolr_solr_to_' . $field_type;
             if (function_exists($function)) {
 
                 // Turn date and time to displayed view.
@@ -830,7 +830,7 @@ function tow_search_inner_chart_data($field, $field_type, $facet_counts) {
     array_pop($data);
     $interval_start = _tow_search_inner_js_to_solr($field_type, $group_start - $gap);
     $interval_end = _tow_search_inner_js_to_solr($field_type, $end);
-    $function = '_tow_solr_to_' . $field_type;
+    $function = '_tow_apachesolr_solr_to_' . $field_type;
     if (function_exists($function)) {
 
         // Turn date and time to displayed view.
