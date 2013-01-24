@@ -691,6 +691,9 @@ Drupal.behaviors.inner_search = function(context) {
                     case 'datetime':
                         to_str = '[' + min.replace(' ', 'T') + 'Z TO ' + max.replace(' ', 'T') + 'Z]';
                         break;
+                    case 'timestamp':
+                        to_str = '[' + toTimestamp(min) + ' TO ' + toTimestamp(max) + ']';
+                        break;
                     default:
                         to_str = '[' + min + ' TO ' + max + ']';
                         break;
@@ -2270,6 +2273,15 @@ function time(timestamp) {
     var minutes = ('0' + date.getUTCMinutes()).slice(-2);
     var seconds = ('0' + date.getUTCSeconds()).slice(-2);
     return hours + ':' + minutes + ':' + seconds;
+}
+
+/**
+ * Returns timestamp from 'Y-m-d H:i:s' format.
+ */
+function toTimestamp(strDate){
+    strDate = strDate.split(/-/g).join(' ');
+    var datum = Date.parse(strDate);
+    return datum/1000;
 }
 
 /**
