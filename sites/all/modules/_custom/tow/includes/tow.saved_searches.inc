@@ -574,6 +574,11 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
             } elseif ($end == '*' && $start != '*') {
                 $info[$aux[0]]['search'][$clude][] = 'values ending with substring "' . substr($aux[1], 0, strlen($aux[1]) - 2) . '"';
             } elseif ($start == '"' && $end == '"') {
+                if ($info[$aux[0]]['type'] == 'time') {
+                    $time_output = str_replace('"', '', $aux[1]);
+                    _tow_apachesolr_solr_to_time($time_output);
+                    $aux[1] = '"' . $time_output .'"';
+                }
                 $info[$aux[0]]['search'][$clude][] = "values equal to $aux[1]";
             } else {
 
