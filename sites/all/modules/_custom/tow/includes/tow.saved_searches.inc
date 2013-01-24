@@ -590,6 +590,9 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
                 } else {
                     if ($info[$aux[0]]['type'] == 'enum') {
                         $aux[1] = $info[$aux[0]]['enum_options'][$aux[1]];
+                    } elseif ($info[$aux[0]]['type'] == 'timestamp') {
+                        $aux[1] = str_replace('"', '', $aux[1]);
+                        _tow_apachesolr_solr_to_timestamp($aux[1]);
                     }
                     $info[$aux[0]]['search'][$clude][] = 'values equal to "' . $aux[1] . '"';
                 }
