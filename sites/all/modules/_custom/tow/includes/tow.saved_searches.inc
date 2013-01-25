@@ -516,20 +516,20 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
 
                 // Date.
                 case 'date':
-                    $start = ($start == '*') ? $start : date('Y-m-d', strtotime($start));
-                    $end = ($end == '*') ? $end : date('Y-m-d', strtotime($end));
+                    $start = ($start == '*') ? $start : gmdate('Y-m-d', strtotime($start));
+                    $end = ($end == '*') ? $end : gmdate('Y-m-d', strtotime($end));
                     break;
 
                 // Datetime.
                 case 'datetime':
-                    $start = ($start == '*') ? $start : date('Y-m-d H-i-s', strtotime($start));
-                    $end = ($end == '*') ? $end : date('Y-m-d H-i-s', strtotime($end));
+                    $start = ($start == '*') ? $start : gmdate('Y-m-d H:i:s', strtotime($start));
+                    $end = ($end == '*') ? $end : gmdate('Y-m-d H:i:s', strtotime($end));
                     break;
 
                 // Time.
                 case 'time':
-                    $start = ($start == '*') ? $start : date('H-i-s', strtotime($start));
-                    $end = ($end == '*') ? $end : date('H-i-s', strtotime($end));
+                    $start = ($start == '*') ? $start : gmdate('H:i:s', strtotime($start));
+                    $end = ($end == '*') ? $end : gmdate('H:i:s', strtotime($end));
                     break;
 
                 // Timestamp.
