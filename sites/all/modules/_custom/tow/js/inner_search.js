@@ -2280,7 +2280,7 @@ function time(timestamp) {
  */
 function toTimestamp(strDate){
     strDate = strDate.split(/-/g).join(' ');
-    var datum = Date.parse(strDate);
+    var datum = Date.parse(strDate + ' GMT');
     return datum/1000;
 }
 
