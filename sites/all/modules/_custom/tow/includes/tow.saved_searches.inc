@@ -584,6 +584,11 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
                     _tow_apachesolr_solr_to_date($date_output);
                     $aux[1] = '"' . $date_output .'"';
                 }
+                elseif ($info[$aux[0]]['type'] == 'datetime') {
+                    $datetime_output = str_replace('"', '', $aux[1]);
+                    _tow_apachesolr_solr_to_datetime($datetime_output);
+                    $aux[1] = '"' . $datetime_output .'"';
+                }
                 $info[$aux[0]]['search'][$clude][] = "values equal to $aux[1]";
             } else {
 
