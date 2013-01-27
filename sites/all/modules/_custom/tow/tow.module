@@ -937,6 +937,19 @@ function tow_nodeapi(&$node, $op) {
                 n.field_{%s}_nid_value = %d
 
           ", $children_type, $node->type, $node->nid);
+                } elseif ($children_type == 'document') {
+                    $res = db_query("
+
+            SELECT
+              n.nid AS nid
+
+              FROM
+                {content_type_%s} n
+
+              WHERE
+                n.field_doc_{%s}_nid_value = %d
+
+          ", $children_type, $node->type, $node->nid);
                 } else {
                     $res = db_query("
 
@@ -1692,7 +1705,7 @@ function _tow_bool_to_int($value) {
 }
 
 /**
- * Returns "record" for "table" and ("table", "saved_search" for "dataset".
+ * Returns "record" for "table" and ("table", "saved_search", "document" for "dataset").
  */
 function _tow_children_type($type) {
     switch ($type) {
@@ -1700,7 +1713,7 @@ function _tow_children_type($type) {
             $children_type = array('record');
             break;
         case 'dataset':
-            $children_type = array('table', 'saved_search');
+            $children_type = array('table', 'saved_search', 'document');
             break;
     }
     return $children_type;
