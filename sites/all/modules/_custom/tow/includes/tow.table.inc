@@ -571,7 +571,7 @@ function tow_table($node, $display_options = array()) {
             } elseif ($table_types_key == 'date') {
                 $row[] = array('data' => substr($value, 0, 10));
             } elseif ($table_types_key == 'timestamp') {
-                $row[] = array('data' => date('Y-m-d H:i:s', $value));
+                $row[] = array('data' => gmdate('Y-m-d H:i:s', $value));
             } elseif ($table_types_key == 'enum') {
                 $title_enum = $user_table['titles']['values'][$key];
                 foreach ($node->field_title_enum as $enum_delta => $enum_value) {

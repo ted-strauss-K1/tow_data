@@ -516,26 +516,26 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
 
                 // Date.
                 case 'date':
-                    $start = ($start == '*') ? $start : date('Y-m-d', strtotime($start));
-                    $end = ($end == '*') ? $end : date('Y-m-d', strtotime($end));
+                    $start = ($start == '*') ? $start : gmdate('Y-m-d', strtotime($start));
+                    $end = ($end == '*') ? $end : gmdate('Y-m-d', strtotime($end));
                     break;
 
                 // Datetime.
                 case 'datetime':
-                    $start = ($start == '*') ? $start : date('Y-m-d H-i-s', strtotime($start));
-                    $end = ($end == '*') ? $end : date('Y-m-d H-i-s', strtotime($end));
+                    $start = ($start == '*') ? $start : gmdate('Y-m-d H:i:s', strtotime($start));
+                    $end = ($end == '*') ? $end : gmdate('Y-m-d H:i:s', strtotime($end));
                     break;
 
                 // Time.
                 case 'time':
-                    $start = ($start == '*') ? $start : date('H-i-s', strtotime($start));
-                    $end = ($end == '*') ? $end : date('H-i-s', strtotime($end));
+                    $start = ($start == '*') ? $start : gmdate('H:i:s', strtotime($start));
+                    $end = ($end == '*') ? $end : gmdate('H:i:s', strtotime($end));
                     break;
 
                 // Timestamp.
                 case 'timestamp':
-                    $start = ($start == '*') ? $start : date('Y-m-d H-i-s', strtotime($start));
-                    $end = ($end == '*') ? $end : date('Y-m-d H-i-s', strtotime($end));
+                    $start = ($start == '*') ? $start : gmdate('Y-m-d H:i:s', $start);
+                    $end = ($end == '*') ? $end : gmdate('Y-m-d H:i:s', $end);
                     break;
             }
 
@@ -574,6 +574,21 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
             } elseif ($end == '*' && $start != '*') {
                 $info[$aux[0]]['search'][$clude][] = 'values ending with substring "' . substr($aux[1], 0, strlen($aux[1]) - 2) . '"';
             } elseif ($start == '"' && $end == '"') {
+                if ($info[$aux[0]]['type'] == 'time') {
+                    $time_output = str_replace('"', '', $aux[1]);
+                    _tow_apachesolr_solr_to_time($time_output);
+                    $aux[1] = '"' . $time_output .'"';
+                }
+                elseif ($info[$aux[0]]['type'] == 'date') {
+                    $date_output = str_replace('"', '', $aux[1]);
+                    _tow_apachesolr_solr_to_date($date_output);
+                    $aux[1] = '"' . $date_output .'"';
+                }
+                elseif ($info[$aux[0]]['type'] == 'datetime') {
+                    $datetime_output = str_replace('"', '', $aux[1]);
+                    _tow_apachesolr_solr_to_datetime($datetime_output);
+                    $aux[1] = '"' . $datetime_output .'"';
+                }
                 $info[$aux[0]]['search'][$clude][] = "values equal to $aux[1]";
             } else {
 
@@ -585,6 +600,9 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
                 } else {
                     if ($info[$aux[0]]['type'] == 'enum') {
                         $aux[1] = $info[$aux[0]]['enum_options'][$aux[1]];
+                    } elseif ($info[$aux[0]]['type'] == 'timestamp') {
+                        $aux[1] = str_replace('"', '', $aux[1]);
+                        _tow_apachesolr_solr_to_timestamp($aux[1]);
                     }
                     $info[$aux[0]]['search'][$clude][] = 'values equal to "' . $aux[1] . '"';
                 }

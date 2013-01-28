@@ -1212,7 +1212,7 @@ function _tow_apachesolr_solr_to_time(&$value) {
  * to usual int timestamp.
  */
 function _tow_apachesolr_solr_to_timestamp(&$value) {
-    $value = date('Y-m-d H:i:s', $value);
+    $value = gmdate('Y-m-d H:i:s', $value);
 }
 
 /**

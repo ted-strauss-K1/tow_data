@@ -705,7 +705,7 @@ function tow_search_inner_widget_form(&$form_state, $field_title, $path, $widget
  */
 function tow_search_inner_bar_widget($field, $field_type, $path, $facet_counts, $empty, $stats) {
     $data = array();
-    $function = '_tow_solr_to_' . $field_type;
+    $function = '_tow_apachesolr_solr_to_' . $field_type;
     $function_exists = function_exists($function);
     foreach ($facet_counts as $value => $count) {
         if ($count) {
@@ -791,7 +791,7 @@ function tow_search_inner_chart_data($field, $field_type, $facet_counts) {
         while ($group_start < $end) {
             $interval_start = _tow_search_inner_js_to_solr($field_type, $group_start);
             $interval_end = _tow_search_inner_js_to_solr($field_type, $group_start + $gap - 1);
-            $function = '_tow_solr_to_' . $field_type;
+            $function = '_tow_apachesolr_solr_to_' . $field_type;
             if (function_exists($function)) {
 
                 // Turn date and time to displayed view.
@@ -830,7 +830,7 @@ function tow_search_inner_chart_data($field, $field_type, $facet_counts) {
     array_pop($data);
     $interval_start = _tow_search_inner_js_to_solr($field_type, $group_start - $gap);
     $interval_end = _tow_search_inner_js_to_solr($field_type, $end);
-    $function = '_tow_solr_to_' . $field_type;
+    $function = '_tow_apachesolr_solr_to_' . $field_type;
     if (function_exists($function)) {
 
         // Turn date and time to displayed view.
@@ -1378,14 +1378,42 @@ function tow_search_inner_widget($field_info, $path, $response, $query, $stats, 
         // Charts.
         case 'int':
         case 'float':
-        case 'date':
-        case 'datetime':
-        case 'time':
-        case 'timestamp':
             if (isset($response->facet_counts->facet_ranges->$field)) {
                 return tow_search_inner_graph_widget($field, $type, $path, $response->facet_counts, $empty, $stats);
             } else {
                 $facets_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $field, $field, '');
+                return $facets_list['content'];
+            }
+        // Time facets.
+        case 'time':
+            if (isset($response->facet_counts->facet_ranges->$field)) {
+                return tow_search_inner_graph_widget($field, $type, $path, $response->facet_counts, $empty, $stats);
+            } else {
+                $facets_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $field, $field, '', '_tow_search_inner_facet_time_output');
+                return $facets_list['content'];
+            }
+        // Timestamp facets.
+        case 'timestamp':
+            if (isset($response->facet_counts->facet_ranges->$field)) {
+                return tow_search_inner_graph_widget($field, $type, $path, $response->facet_counts, $empty, $stats);
+            } else {
+                $facets_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $field, $field, '', '_tow_search_inner_facet_timestamp_output');
+                return $facets_list['content'];
+            }
+        // Date facets.
+        case 'date':
+            if (isset($response->facet_counts->facet_ranges->$field)) {
+                return tow_search_inner_graph_widget($field, $type, $path, $response->facet_counts, $empty, $stats);
+            } else {
+                $facets_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $field, $field, '', '_tow_search_inner_facet_date_output');
+                return $facets_list['content'];
+            }
+        // Datetime facets.
+        case 'datetime':
+            if (isset($response->facet_counts->facet_ranges->$field)) {
+                return tow_search_inner_graph_widget($field, $type, $path, $response->facet_counts, $empty, $stats);
+            } else {
+                $facets_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $field, $field, '', '_tow_search_inner_facet_datetime_output');
                 return $facets_list['content'];
             }
 
@@ -1472,6 +1500,54 @@ function _tow_search_inner_add_queryvalue(&$query, $param, $value) {
         $query[$param] = $value;
     } elseif (!empty($_GET[$param]) && ($value === FALSE)) {
         $query[$param] = $_GET[$param];
+    }
+}
+
+/**
+ * Returns time output.
+ */
+function _tow_search_inner_facet_time_output($facet, &$options) {
+    if ($facet == '[* TO *]') {
+        return theme('placeholder', t('<empty>'));
+    } else {
+        _tow_apachesolr_solr_to_time($facet);
+        return $facet;
+    }
+}
+
+/**
+ * Returns timestamp output.
+ */
+function _tow_search_inner_facet_timestamp_output($facet, &$options) {
+    if ($facet == '[* TO *]') {
+        return theme('placeholder', t('<empty>'));
+    } else {
+        _tow_apachesolr_solr_to_timestamp($facet);
+        return $facet;
+    }
+}
+
+/**
+ * Returns date output.
+ */
+function _tow_search_inner_facet_date_output($facet, &$options) {
+    if ($facet == '[* TO *]') {
+        return theme('placeholder', t('<empty>'));
+    } else {
+        _tow_apachesolr_solr_to_date($facet);
+        return $facet;
+    }
+}
+
+/**
+ * Returns datetime output.
+ */
+function _tow_search_inner_facet_datetime_output($facet, &$options) {
+    if ($facet == '[* TO *]') {
+        return theme('placeholder', t('<empty>'));
+    } else {
+        _tow_apachesolr_solr_to_datetime($facet);
+        return $facet;
     }
 }
 

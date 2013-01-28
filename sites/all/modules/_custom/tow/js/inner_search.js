@@ -93,9 +93,9 @@ Drupal.behaviors.inner_search = function(context) {
 
     /***** Fields/Filters tabs *****/
     
-    $("#block-tow-saved_searches_description").append('<ul id="InnerSearchTab" class="nav nav-tabs"><li class="active"><a href="#block-tow-search_inner_field_list" data-toggle="tab">Fields</a></li><li><a href="#block-tow-search_inner_facets" data-toggle="tab">Filters</a></li></ul>');
-    $("#block-tow-search_inner_field_list").addClass("tab-pane active");
-    $("#block-tow-search_inner_facets").addClass("tab-pane");
+    $("#block-tow-saved_searches_description", context).append('<ul id="InnerSearchTab" class="nav nav-tabs"><li class="active"><a href="#block-tow-search_inner_field_list" data-toggle="tab">Fields</a></li><li><a href="#block-tow-search_inner_facets" data-toggle="tab">Filters</a></li></ul>');
+    $("#block-tow-search_inner_field_list", context).addClass("tab-pane active");
+    $("#block-tow-search_inner_facets", context).addClass("tab-pane");
 
 
     /***** Search *****/
@@ -690,6 +690,9 @@ Drupal.behaviors.inner_search = function(context) {
                         break;
                     case 'datetime':
                         to_str = '[' + min.replace(' ', 'T') + 'Z TO ' + max.replace(' ', 'T') + 'Z]';
+                        break;
+                    case 'timestamp':
+                        to_str = '[' + toTimestamp(min) + ' TO ' + toTimestamp(max) + ']';
                         break;
                     default:
                         to_str = '[' + min + ' TO ' + max + ']';
@@ -2270,6 +2273,15 @@ function time(timestamp) {
     var minutes = ('0' + date.getUTCMinutes()).slice(-2);
     var seconds = ('0' + date.getUTCSeconds()).slice(-2);
     return hours + ':' + minutes + ':' + seconds;
+}
+
+/**
+ * Returns timestamp from 'Y-m-d H:i:s' format.
+ */
+function toTimestamp(strDate){
+    strDate = strDate.split(/-/g).join(' ');
+    var datum = Date.parse(strDate + ' GMT');
+    return datum/1000;
 }
 
 /**

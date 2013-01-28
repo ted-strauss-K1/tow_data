@@ -1043,8 +1043,8 @@ function _tow_import_common_type($type1, $type2) {
 
     $common_types = array(
         'bool' => array(
-            'int' => 'text',
-            'float' => 'text',
+            'int' => 'int',
+            'float' => 'float',
             'null' => 'bool',
             'date' => 'text',
             'time' => 'text',
@@ -1052,7 +1052,7 @@ function _tow_import_common_type($type1, $type2) {
             'text' => 'text',
         ),
         'int' => array(
-            'bool' => 'text',
+            'bool' => 'int',
             'float' => 'float',
             'null' => 'int',
             'date' => 'text',
@@ -1061,7 +1061,7 @@ function _tow_import_common_type($type1, $type2) {
             'text' => 'text',
         ),
         'float' => array(
-            'bool' => 'text',
+            'bool' => 'float',
             'int' => 'float',
             'null' => 'float',
             'date' => 'text',
@@ -1140,7 +1140,7 @@ function _tow_import_detect_type($str_value) {
     $res['value'] = $str_value;
 
     // Boolean.
-    if (($value == 'true') || ($value == 'FALSE') || ($value == 'yes') || ($value == 'no')) {
+    if (($value == 'true') || ($value == 'FALSE') || ($value == 'yes') || ($value == 'no') || ($value == '1') || ($value == '0')) {
         $res['type'] = "bool";
     }
 
@@ -1166,7 +1166,7 @@ function _tow_import_detect_type($str_value) {
     }
 
     // Null.
-    elseif ($value === "null") {
+    elseif (($value === "null") || ($value == '')) {
         $res['type'] = "null";
         $res['value'] = NULL;
     }
@@ -1193,10 +1193,10 @@ function _tow_import_reduce_type($type, $value) {
 
         case 'bool':
             $value = strtolower(trim($value));
-            if ($value == 'true' || $value == 'yes') {
-                return 'true';
+            if ($value == 'true' || $value == 'yes' || $value == '1') {
+                return 1;
             } else {
-                return 'false';
+                return 0;
             }
 
         case 'date':

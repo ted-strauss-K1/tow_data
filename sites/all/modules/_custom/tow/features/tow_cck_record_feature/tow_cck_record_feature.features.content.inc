@@ -52,12 +52,14 @@ function tow_cck_record_feature_content_default_fields() {
     'suffix' => '',
     'min' => '',
     'max' => '',
-    'allowed_values' => '',
+    'allowed_values' => '0|false
+1|true',
     'allowed_values_php' => '',
     'widget' => array(
       'default_value' => array(
         '0' => array(
           'value' => '0',
+          '_error_element' => 'default_value_widget][field_bool][0][value',
         ),
       ),
       'default_value_php' => NULL,
