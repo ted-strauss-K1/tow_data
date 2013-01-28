@@ -317,11 +317,27 @@ div.noty_buttons {
     background-color: #F0F0F0!important;
 }
 
-.centrier{
-
-        
+.centrier {
+    position: fixed;
+    left: 0!important;
+    top: 0;
+    width: 100%;
+    z-index: 999;
 }
 
+.centrier #noty_topCenter_layout_container {
+    position: relative !important;
+    left: auto!important;
+    top: auto;
+    max-width: 90%;
+    width: auto;
+    display: table;
+    margin: 0 auto;
+}
+
+.centrier #noty_topCenter_layout_container > div {
+    display: table-row;
+} 
 
 /*------style for item Browse------*/
 

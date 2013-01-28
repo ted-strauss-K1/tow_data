@@ -20,9 +20,9 @@ return $items;
 
 
 function test_mess () {
-    //drupal_set_message('Warning test', 'warning');
-    //drupal_set_message('Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error', 'error');            
-    //drupal_set_message('Status-success test', 'status');
+    drupal_set_message('Warning test', 'warning');
+    drupal_set_message('Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error Error', 'error');            
+    drupal_set_message('Status-success test', 'status');
     
     
     drupal_add_js('$(document).ready(function(){$.hrd.noty({
