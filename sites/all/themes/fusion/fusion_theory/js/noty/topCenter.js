@@ -1,39 +1,43 @@
-;(function($) {
+;
+(function($) {
 
-	$.noty.layouts.topCenter = {
-		name: 'topCenter',
-		options: { // overrides options
-			
-		},
-		container: {
-			object: '<ul id="noty_topCenter_layout_container" />',
-			selector: 'ul#noty_topCenter_layout_container',
-			style: function() {
-				$(this).css({
-					top: 20,
-					left: 0,
-					position: 'fixed',
-					height: 'auto',
-					margin: 0,
-					padding: 0,
-					listStyleType: 'none',
-					zIndex: 10000000
-				});
-				
-				$(this).css({
-					left: ($(window).width() - $(this).outerWidth()) / 2 + 'px',
-				});
-			}
-		},
-		parent: {
-			object: '<li />',
-			selector: 'li',
-			css: {}
-		},
-		css: {
-			display: 'none'
-		},
-		addClass: ''
-	};
+    $.noty.layouts.topCenter = {
+        name: 'topCenter',
+        options: { // overrides options
 
+        },
+
+        container: {
+            object: '<div id="noty_topCenter_layout_container" />',
+            selector: 'div#noty_topCenter_layout_container',
+            style: function() {
+                $(this).css({
+                    top: 0,
+                    left: 0,
+                    position: 'fixed',
+                    height: 'auto',
+                    margin: 0,
+                    padding: 0,
+                    listStyleType: 'none',
+                    zIndex: 10000000
+                });
+
+               /* $('div#noty_topCenter_layout_container').css({
+                    left: ($(window).width() - $('div#noty_topCenter_layout_container').outerWidth()) / 2 + 'px',
+                });*/
+                    $('body > div#noty_topCenter_layout_container').wrap('<div class="centrier" />');
+
+            }
+        },
+        parent: {
+            object: '<div />',
+            selector: 'div',
+            css: {}
+        },
+        css: {
+            display: 'none'
+        },
+        addClass: ''
+
+    };
 })(jQuery);

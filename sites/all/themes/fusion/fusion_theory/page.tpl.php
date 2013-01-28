@@ -36,7 +36,9 @@
             });
         </script>
 
-
+        <?php if (strpos($_SERVER['HTTP_USER_AGENT'], 'Safari') !== FALSE) { ?>
+        <link rel="stylesheet" href="/<?php print(path_to_theme()); ?>/css/safari-fixes.css">
+            <?php } ?>
     </head>
 
     <body id="<?php print $body_id; ?>" class="<?php print $body_classes; ?>">
