@@ -417,7 +417,7 @@ ul.menu li.leaf a.active{
 
 button.ColVis_Button{
     float:right;
-    margin-top: 10px;
+   /*margin-top: 10px;*/
     margin-bottom: 10px;
 }
 
@@ -519,10 +519,62 @@ button.ColVis_Button{
 }
 
 /*---------Styles for inner-search widget-------*/
-/*div[id*="edit-include-empty"]{
+/*input[id*="edit-include-empty"]{
     display: none;
 }*/
 
-input.form-checkbox{
+.page-search-dataset input.form-checkbox{
     display: none;
 }
+
+/*-----Styles for Filter buttons---*/
+
+.ColVis_collection {
+    background: #fff;
+    border: 1px black solid;
+}
+
+.ColVis_radio {    
+    display: block;
+    float: left;
+}
+button[class*="ColVis"] input[type="checkbox"]{
+    margin-top: 1px;
+    margin-right: 4px;
+}
+
+.ColVis_collection .TableTools_Button {
+    margin: 0;
+    border-radius:0;
+    background: #fff;
+    border-color: #000;
+    border: none;
+    text-shadow: none;
+}
+
+.ColVis_collection .TableTools_Button:hover{
+    color: #000;
+    background: #999;
+}
+
+/*------Styles for dropdown-menu----*/
+
+ul.dropdown-menu{
+    border-radius:0;
+    border: 1px solid #000;
+    cursor: pointer;
+    padding-left: 0;
+    
+}
+
+ul.dropdown-menu li{
+   padding-left: 5px;  
+}
+
+ul.dropdown-menu li:hover{
+    background: #999;
+    color:#000;
+     
+    
+}
+
