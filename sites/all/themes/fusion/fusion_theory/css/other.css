@@ -521,10 +521,11 @@ button.ColVis_Button{
 /*---------Styles for inner-search widget-------*/
 /*input[id*="edit-include-empty"]{
     display: none;
-}*/
+}
 
 .page-search-dataset input.form-checkbox{
     display: none;
+<<<<<<< HEAD
 }
 
 /*-----Styles for Filter buttons---*/
@@ -577,4 +578,3 @@ ul.dropdown-menu li:hover{
      
     
 }
-
