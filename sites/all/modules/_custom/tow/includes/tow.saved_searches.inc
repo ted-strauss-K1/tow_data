@@ -57,9 +57,15 @@ function tow_saved_searches_list_block($nid = NULL) {
     #$block['title'] = t('User analysis');
     $block['content'] = '<span class="saved_search-preamble" style="display:none;"><strong>Search history</strong></span>';
 
+    $x = 1;
+    $output = '<div class="tow-saved-search-block-item"><div class="accordion" id="accordion">';
     foreach ($saved_searches as $node) {
-
-        $output = '<div class="tow-saved-search-block-item">';
+        $link_node_url = '#?selected_fields='.$node->field_selected_fields['0']['value'];
+        $output .= '<div class="invis-link-'.$x.'" style="display:none">'.$link_node_url.'</div>';
+        $output .= '<div class="accordion-group"><div class="accordion-heading">
+      <a class="accordion-toggle toggle'.$x.'" data-toggle="collapse" data-parent="#accordion" href="#collapse' . $x . '">';
+        $output .= $node->title . '</a></div>';
+        $output .= '<div id="collapse' . $x . '" class="accordion-body collapse"><div class="accordion-inner">';
         $output .= node_view($node);
         if (function_exists('comment_render') && $node->comment) {
             $output .= comment_render($node, NULL);
@@ -71,12 +77,27 @@ function tow_saved_searches_list_block($nid = NULL) {
                 'class' => 'saved-search-delete',
             ),
         );
+ //Making the accordion + saved-search functionality       
+        $output .= '<script>
+            $(document).ready(function () {
+            var correct_link = $(".tow-saved-search-block-item #collapse'.$x.' h2.title a").attr("href");
+            $(".invis-link-'.$x.'").text(correct_link);
+            var link = $(".invis-link-'.$x.'").text();
+            $(".tow-saved-search-block-item a.toggle'.$x.'").bind("click", function() {$(location).attr("href",link);});
+});                
+                </script>';
+        
+        
+        
         $output .= ($is_admin) ? l('Delete this search', 'node/' . $node->nid . '/delete', $options) : '';
-        $output .= '</div>';
+        $output .= '</div></div></div>';
 
-        $block['content'] .= $output;
+
+        $x++;
     }
-    
+    $output .= '</div></div>';
+    $block['content'] .= $output;
+
     $block['title'] = ($block['content'] == '<span class="saved_search-preamble" style="display:none;"><strong>Search history</strong></span>') ? NULL : t('User analysis');
 
     return $block;
@@ -92,14 +113,14 @@ function tow_saved_searches_save_search_block() {
     $block['title'] = NULL;
 
     $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
-    
+
     $nid = tow_search_inner_get_nid();
     $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
     $selected_fields = isset($_GET['selected_fields']) ? $_GET['selected_fields'] : '';
     $rows_amount = $saved_response->response->numFound;
-    
+
     global $user;
-    
+
     $block['content'] = ($user->uid) ? drupal_get_form('tow_saved_searches_save_search_form', $nid, $filters, $selected_fields, $rows_amount) : (l('Login', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal'))) . ' to share your analysis');
 
     return $block;
@@ -118,15 +139,15 @@ function tow_saved_searches_description_block() {
         $block['content'] = '';
     } else {
         $nid = tow_search_inner_get_nid();
-        
+
         $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
         $selected_fields = isset($_GET['selected_fields']) ? $_GET['selected_fields'] : '';
-        
+
         $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
         $rows_amount = $saved_response->response->numFound;
-        
+
         $summary = tow_saved_searches_summary($nid, $filters, $selected_fields, $rows_amount);
-        
+
         $block['content'] = 'Choose your search parameters';
         if ($summary) {
             $block['content'] = $summary;
@@ -156,7 +177,7 @@ function tow_saved_searches_save_search_form(&$form_state, $nid, $filters, $sele
             'placeholder' => t('Explain your findings...'),
         ),
     );
-    
+
     //Saved search tags
     $form['ss_tags'] = array(
         '#type' => 'textfield',
@@ -244,7 +265,7 @@ function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
 
     // Saved search comment(title).
     $ss_comment = $form['ss_comment']['#value'];
-    
+
     //Saved search tags
     $ss_tags = $form['ss_tags']['#value'];
 
@@ -355,7 +376,7 @@ function tow_saved_searches_get_selected_fields($selected_fields) {
     if (!isset($selected_fields) || $selected_fields == '') {
         return array();
     }
-    
+
     // Get an array of constraints.
     else {
         return json_decode($selected_fields, TRUE);
@@ -372,7 +393,7 @@ function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $f
     $saved_search = new stdClass();
     $saved_search->type = 'saved_search';
     $saved_search->title = ($ss_comment) ? $ss_comment : t('New Saved Search');
-    
+
     $saved_search->taxonomy = array();
     $voc_id = _tow_apachesolr_taxonomy_get_vid('Saved search tags');
     $ss_tags_array = drupal_explode_tags($ss_tags);
@@ -382,8 +403,7 @@ function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $f
             foreach ($ss_tag_object as $object) {
                 $saved_search->taxonomy[$object->tid] = $object;
             }
-        }
-        else {
+        } else {
             $new_term_id = _tow_add_taxonomy_term($tag, $voc_id);
             $new_term = taxonomy_get_term($new_term_id);
             $saved_search->taxonomy[$new_term_id] = $new_term;
@@ -402,7 +422,7 @@ function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $f
         $saved_search->field_table_nid[0]['value'] = $node->nid;
         $saved_search->field_dataset_nid[0]['value'] = $node->field_dataset[0]['value'];
     }
-    
+
     // Body, teaser.
     $saved_search->body = tow_saved_searches_summary(tow_search_inner_get_nid(), $filters, $selected_fields, $rows_amount);
     $saved_search->teaser = node_teaser($saved_search->body);
@@ -486,7 +506,7 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
     // Get the values for ecah constraint into an array.
     $info = array();
     foreach ($fields as $field) {
-        if (empty($selected_fields) || in_array($field['title'] . '_' . $field['type'], (array)$selected_fields)) {
+        if (empty($selected_fields) || in_array($field['title'] . '_' . $field['type'], (array) $selected_fields)) {
             $info[$field['name']] = $field;
         }
     }
@@ -577,17 +597,15 @@ function tow_saved_searches_summary($table_nid, $filters, $selected_fields, $row
                 if ($info[$aux[0]]['type'] == 'time') {
                     $time_output = str_replace('"', '', $aux[1]);
                     _tow_apachesolr_solr_to_time($time_output);
-                    $aux[1] = '"' . $time_output .'"';
-                }
-                elseif ($info[$aux[0]]['type'] == 'date') {
+                    $aux[1] = '"' . $time_output . '"';
+                } elseif ($info[$aux[0]]['type'] == 'date') {
                     $date_output = str_replace('"', '', $aux[1]);
                     _tow_apachesolr_solr_to_date($date_output);
-                    $aux[1] = '"' . $date_output .'"';
-                }
-                elseif ($info[$aux[0]]['type'] == 'datetime') {
+                    $aux[1] = '"' . $date_output . '"';
+                } elseif ($info[$aux[0]]['type'] == 'datetime') {
                     $datetime_output = str_replace('"', '', $aux[1]);
                     _tow_apachesolr_solr_to_datetime($datetime_output);
-                    $aux[1] = '"' . $datetime_output .'"';
+                    $aux[1] = '"' . $datetime_output . '"';
                 }
                 $info[$aux[0]]['search'][$clude][] = "values equal to $aux[1]";
             } else {

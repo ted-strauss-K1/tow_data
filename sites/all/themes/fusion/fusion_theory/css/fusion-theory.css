@@ -2006,7 +2006,7 @@ button:active {
 }
 #block-tow-saved_searches_list #comments
 {
-    margin-left: 18px; /* 23px */
+    /* margin-left: 18px; /* 23px */
     width: 217px;
     margin-bottom:10px;
 }
@@ -2195,13 +2195,13 @@ dt.profile-profile_bio
 }
 .tow-saved-search-block-item
 {
-    border: 1px solid #CCCCCC;
+/*    border: 1px solid #CCCCCC; */
     border-radius: 5px 5px 5px 5px;
     clear: both;
     margin-top: 10px;
     overflow: hidden;
     padding: 3px;
-    width: 232px;
+    width: 100%; /*232px*/
 }
 .tow-saved-search-block-item #comments textarea
 {
@@ -2471,3 +2471,22 @@ ul.dropdown-menu {
 }
 
 /* End of Bootstrap tabs fixes */
+
+/* Saved search accordion */
+
+.tow-saved-search-block-item {
+    position: relative;
+    padding: 0;
+}
+
+.tow-saved-search-block-item .accordion {
+    width: 230px; /*~95%*/
+    margin: 0;
+    border-bottom: none;
+}
+
+.tow-saved-search-block-item .accordion h2.title {
+    display: none;
+}
+
+/* End of Saved search accordion */
