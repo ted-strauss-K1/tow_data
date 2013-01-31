@@ -342,7 +342,7 @@ dataTables_scrollBody tbody tr td {
 
 .page-table .dataTables_scrollBody
 {
-    height:500px !important;
+    /* height:500px !important; */
 }
 #block-menu-primary-links .inner
 {
@@ -2378,6 +2378,7 @@ dt.profile-profile_bio
     position:absolute !important;
     background:#fff;
     z-index: 10;
+    top: 0px;
 
 }
 
@@ -2438,7 +2439,7 @@ ul.dropdown-menu {
 }
 
 .fixed_jspHorizontalBar:after {
-    content: "";
+    content: ".";
     height: 25px;
     width: 100%;
     position: fixed;
@@ -2490,3 +2491,22 @@ ul.dropdown-menu {
 }
 
 /* End of Saved search accordion */
+
+/* Re-styling the Datatables */
+/*
+.fixed_head
+{
+    position:absolute !important;
+    background:#fff;
+    z-index: 10;
+    top: 0px;
+
+}
+
+.fixed-mask-table {
+    position: relative;
+    z-index: 200;
+    width: 700px;
+}
+*/
+/* End of Re-styling the Datatables */
