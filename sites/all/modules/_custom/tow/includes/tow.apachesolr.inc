@@ -6,6 +6,27 @@
  * Apachesolr interface extensions.
  */
 /* * **************************************************************************************************
+ * Hooks
+ * ************************************************************************************************** */
+
+/**
+ * Part of hook_form_alter() implementation.
+ */
+function tow_apachesolr_form_alter(&$form, &$form_state, $form_id) {
+    
+    // New possible cron limits.
+    $numbers = drupal_map_assoc(array(1, 5, 10, 20, 50, 100, 200, 500, 750, 1000, 2000, 5000, 10000));
+    
+    // Apachesolr cron limit may be overridden in settings.php. If its current value is not among the default set of options, add it.
+    $default_cron_limit = variable_get('apachesolr_cron_limit', 50);
+    if (!isset($numbers[$default_cron_limit])) {
+        $numbers[$default_cron_limit] = $default_cron_limit;
+    }
+    
+    $form['apachesolr_cron_limit']['#options'] = $numbers;
+}
+
+/* * **************************************************************************************************
  * Apachesolr hooks
  * ************************************************************************************************** */
 
@@ -78,7 +99,6 @@ function tow_apachesolr_process_results(&$results) {
         //}
         //}
         tow_apachesolr_dataset_process_results($results);
-        
     } elseif ($results[0]['node']->type == 'saved_search') {
 
         // If search was made for saved searches.
@@ -143,7 +163,7 @@ function tow_apachesolr_update_index(&$document, $node) {
 
     ", $node->nid));
         $document->sis_tow_amount_saved_searches = (isset($document->sis_tow_amount_saved_searches) && $document->sis_tow_amount_saved_searches) ? $document->sis_tow_amount_saved_searches : 0;
-        
+
         // Get amount of views.
         tow_statistics_dataset_extract($node->nid);
         global $_tow_dataset_statistics;
@@ -159,10 +179,10 @@ function tow_apachesolr_update_index(&$document, $node) {
             'max_length' => 255,
         );
         $document->ss_teaser = views_trim_text($alter, $node->body);
-    
-    //Build request to show private datasets with granted access
-    if ($node->field_access_type[0]['value'] == 2) {    
-    $result = db_query("
+
+        //Build request to show private datasets with granted access
+        if ($node->field_access_type[0]['value'] == 2) {
+            $result = db_query("
 
       SELECT
         tar.uid,
@@ -171,29 +191,27 @@ function tow_apachesolr_update_index(&$document, $node) {
 
         FROM
           {tow_access_requests} tar
-          
+
         JOIN
           {node} n
-          
+
         ON
           tar.nid = n.nid
 
         WHERE
           tar.nid = %d
-        
+
         AND
           tar.status = 1
 
     ", $node->nid);
-        
-        $users = array();
-        while ($row = db_fetch_object($result)) {
-            $users[] = $row->uid;
+
+            $users = array();
+            while ($row = db_fetch_object($result)) {
+                $users[] = $row->uid;
+            }
+            $document->im_tow_user_access_private = $users;
         }
-        $document->im_tow_user_access_private = $users;
-    }
-        
-    
     }
 
     // Record processing.
@@ -349,25 +367,25 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
 
     // Add filters.
     $query->add_filter('type', 'dataset');
-    
+
     global $_tow_user;
     $is_admin = (in_array('administrator', $_tow_user->roles) || ($_tow_user->uid == 1));
     if (!$is_admin) {
-      $subquery = apachesolr_drupal_query();
-      $subquery->add_filter('uid', $_tow_user->uid);
-      $subquery->add_filter('sis_cck_field_access_type', 0);
-      $subquery->add_filter('sis_cck_field_access_type', 1);
-      $subquery->add_filter('im_tow_user_access_private', $_tow_user->uid);
-      $query->add_subquery($subquery, 'OR');
+        $subquery = apachesolr_drupal_query();
+        $subquery->add_filter('uid', $_tow_user->uid);
+        $subquery->add_filter('sis_cck_field_access_type', 0);
+        $subquery->add_filter('sis_cck_field_access_type', 1);
+        $subquery->add_filter('im_tow_user_access_private', $_tow_user->uid);
+        $query->add_subquery($subquery, 'OR');
     }
-    
+
     $params['fl'] .= ',tid';
     $params['stats'] = 'true';
     $params['facet.limit'] = 100;
     $params['facet.missing'] = 'true';
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $categories_vid . '}' . 'im_vid_' . $categories_vid;
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $tags_vid . '}' . 'im_vid_' . $tags_vid;
-    $params['facet.field'][] = '{!ex=' . 'sis_cck_field_access_type' .'}' . 'sis_cck_field_access_type';
+    $params['facet.field'][] = '{!ex=' . 'sis_cck_field_access_type' . '}' . 'sis_cck_field_access_type';
 
     $current_tab = tow_search_outer_get_homepage_tab();
     switch ($current_tab) {
@@ -413,7 +431,7 @@ function tow_apachesolr_dataset_user_modify_query(&$query, &$params) {
     // Add filters.
     $query->add_filter('type', 'dataset');
     $query->add_filter('uid', $viewed_user->uid);
-    
+
     global $user;
     $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1));
     if (($user->uid != $viewed_user->uid) && !$is_admin) {
@@ -423,7 +441,7 @@ function tow_apachesolr_dataset_user_modify_query(&$query, &$params) {
         $subquery->add_filter('im_tow_user_access_private', $user->uid);
         $query->add_subquery($subquery, 'OR');
     }
- 
+
     $query->set_solrsort('created', 'desc');
 }
 

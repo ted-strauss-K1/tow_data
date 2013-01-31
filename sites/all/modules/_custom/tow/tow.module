@@ -374,6 +374,10 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
         case 'user_profile_form':
             tow_user_profile_form_alter(&$form, $form_state);
             break;
+        
+        case 'apachesolr_settings':
+            tow_apachesolr_form_alter($form, $form_state, $form_id);
+            break;
     }
 
     // Altering deletion and truncation forms.
