@@ -1080,7 +1080,7 @@ function tow_nodeapi(&$node, $op) {
         if (is_null($node->field_available_positions[0]['value'])) {
             $available_positions = array();
             $max_rec = variable_get('tow_max_records_in_table', 920);
-            for ($i = 0; $i < $max_rec; $i++) {
+            for ($i = 1; $i < $max_rec; $i++) {
                 $available_positions[] = $i;
             }
             $node->field_available_positions[0]['value'] = serialize($available_positions);
