@@ -260,8 +260,8 @@ function tow_apachesolr_update_index(&$document, $node) {
 
         // Put records.
         $records = array();
-        foreach ($tables as $key => $table_nid) {
-            $record_nid = $node->field_record_nid[$key]['value'];
+        foreach ($sorted_tables as $key => $table_nid) {
+            $record_nid = $node->field_record_nid[array_search($table_nid, $tables)]['value'];
             $record = node_load($record_nid);
             $records[$table_nid] = $record;
             $document->{'sis_tow_linked_table_nid' . '_' . $key} = $table_nid;
@@ -536,14 +536,20 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
         if ($fc) {
             $nid = implode('+', $nid_full);
             $list = array();
+            $subquery = apachesolr_drupal_query();
             foreach ($nid_collapsed as $n) {
                 $k = array_search($n, $nid_full);
                 $list[] = 'sis_tow_l_p_' . $k;
+                $params['fl'] .= ',sis_tow_l_p_' . $k;
+                $subquery->add_filter('sis_tow_l_p_' . $k, '([* TO *] NOT 0)');
             }
-            # $params['group'] = 'true';
-            # $params['group.func'] = _tow_apachesolr_group_function($list);
+            $query->add_subquery($subquery, 'OR');
+            
+            $params['group'] = 'true';
+            $params['group.func'] = _tow_apachesolr_group_function($list);
             # $params['group.field'] = 'ss_tow_field_table';
-            # $params['group.facet'] = 'true';
+            $params['group.facet'] = 'true';
+            
         }
     }
 
