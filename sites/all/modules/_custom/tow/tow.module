@@ -564,6 +564,8 @@ function tow_exit() {
  * Implementation of hook_menu().
  */
 function tow_menu() {
+    module_load_include('inc', 'tow', 'includes/tow.tests');
+    
     $items = array();
 
     // Dataset creation link.
@@ -913,6 +915,7 @@ function tow_menu() {
  * Implementation of hook_menu_alter().
  */
 function tow_menu_alter(&$items) {
+    module_load_include('inc', 'tow', 'includes/tow.user');
     tow_user_menu_alter($items);
 }
 
