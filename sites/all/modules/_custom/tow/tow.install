@@ -118,6 +118,8 @@ function tow_install() {
     // Clear caches and rebuild menu.
     content_clear_type_cache(TRUE);
     menu_rebuild();
+    
+    db_query("UPDATE {system} SET weight = 999 WHERE name = 'tow'");
 }
 
 /**
