@@ -406,6 +406,7 @@ function tow_search_inner_linked_create_linked_record($nids, $tables, $deleted_n
     foreach ($nids as $nid) {
         $aux_nids[] = (is_null($nid)) ? '[NULL]' : $nid;
     }
+    sort($aux_nids);
     $node->name = "Links " . implode(', ', $aux_nids);
     $node->title = $node->name;
     $node->body = '';
