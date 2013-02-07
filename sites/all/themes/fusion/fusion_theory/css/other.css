@@ -519,6 +519,9 @@ button.ColVis_Button{
 }
 
 /*---------Styles for inner-search widget-------*/
+.page-search-dataset .tab-content {
+    overflow: visible;
+}
 /*input[id*="edit-include-empty"]{
     display: none;
 }
