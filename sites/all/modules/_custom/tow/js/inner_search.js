@@ -2291,8 +2291,13 @@ function getUrlQueryParams(url) {
     var vars = [], hash;
     var hashes = url.slice(url.indexOf('?') + 1).split('&');
     for(var i = 0; i < hashes.length; i++) {
-        hash = hashes[i].split('=');
-        vars[hash[0]] = decodeURIComponent(hash[1]);
+        if (!hashes[i].match(/^selected_fields/) && !hashes[i].match(/^filters/) && !hashes[i].match(/^zoom/) && (hashes[i] != undefined)) {
+            hashes[i] = hashes[i-1] + '&' + hashes[i];
+        }
+        if (decodeURIComponent(hashes[i]).match(/}$/) || !hashes[i].match(/^selected_fields/)) {
+            hash = hashes[i].split('=');
+            vars[hash[0]] = decodeURIComponent(hash[1]);
+        }
     }
     return vars;
 }
