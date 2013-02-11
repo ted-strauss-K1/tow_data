@@ -522,6 +522,15 @@ button.ColVis_Button{
 .page-search-dataset .tab-content {
     overflow: visible;
 }
+
+.page-search-dataset .tow-inner-search-widget .ms-container ul.ms-list {
+    height: 105px;
+}
+
+.page-search-dataset .tow-inner-search-widget .ms-container .ms-selectable,
+.page-search-dataset .tow-inner-search-widget .ms-container .ms-selection {
+    margin: 3px;
+}
 /*input[id*="edit-include-empty"]{
     display: none;
 }

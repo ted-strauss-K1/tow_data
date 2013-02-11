@@ -236,6 +236,9 @@ function tow_search_inner_within_dataset($nid, $ajax = FALSE) {
     drupal_add_js(drupal_get_path('module', 'flag') . '/theme/flag.js');
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/highcharts.js');
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/lou-multi-select/js/jquery.multi-select.js', 'module', 'footer');
+    drupal_add_js(drupal_get_path('module', 'tow') . '/js/quicksearch/jquery.quicksearch.js', 'module', 'footer');
+    drupal_add_css(drupal_get_path('module', 'tow') . '/js/lou-multi-select/css/multi-select.css');
     drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/Scroller/media/js/dataTables.scroller.js');
     drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/ColVis/media/js/ColVis.js');
 
@@ -634,29 +637,32 @@ function tow_search_inner_text_length_widget_form($form_state, $length_field, $p
         '#value' => $url,
     );
 
-    // Input fields for search by # of words/characters.
-    $form['option'] = array(
-        '#type' => 'select',
-        '#options' => array(
-            '_length:#' => '# characters =',
-            '_length:[* TO #]' => '# characters <',
-            '_length:[# TO *]' => '# characters >',
-            '_words:#' => '# words =',
-            '_words:[* TO #]' => '# words <',
-            '_words:[# TO *]' => '# words >',
-        ),
-    );
-
-    if (isset($option)) {
-        $form['option']['#value'] = $option;
-    }
-
-    $form['value'] = array(
-        '#type' => 'textfield',
-    );
-    if (isset($value)) {
-        $form['value']['#value'] = $value;
-    }
+    /**
+     * TEMPORARILY DISABLED
+     */
+    // Input fields for search by # of words/characters.    
+    # $form['option'] = array(
+    #    '#type' => 'select',
+    #    '#options' => array(
+    #        '_length:#' => '# characters =',
+    #        '_length:[* TO #]' => '# characters <',
+    #        '_length:[# TO *]' => '# characters >',
+    #        '_words:#' => '# words =',
+    #        '_words:[* TO #]' => '# words <',
+    #        '_words:[# TO *]' => '# words >',
+    #    ),
+    # );
+    #
+    # if (isset($option)) {
+    #    $form['option']['#value'] = $option;
+    # }
+    # 
+    # $form['value'] = array(
+    #     '#type' => 'textfield',
+    # );
+    # if (isset($value)) {
+    #     $form['value']['#value'] = $value;
+    # }
 
     return $form;
 }
@@ -1001,6 +1007,7 @@ function tow_search_inner_facet_widget($path, $response, $query, $module, $delta
     if (!empty($response->facet_counts->facet_fields->$facet_field)) {
         $contains_active = FALSE;
         $items = array();
+        $select_options = array(); //$items are used if we want to display facets as links. $select_options - as dropdown select list
 
         foreach ($response->facet_counts->facet_fields->$facet_field as $facet => $count) {
             $options = array();
@@ -1053,6 +1060,7 @@ function tow_search_inner_facet_widget($path, $response, $query, $module, $delta
 
             if ($count || $active) {
                 $items[$sortpre . '*' . $facet_text] = $link;
+                $select_options[$facet_text . ' (' . $count . ')'] = $link;
             }
         }
 
@@ -1063,11 +1071,45 @@ function tow_search_inner_facet_widget($path, $response, $query, $module, $delta
             // Get information needed by the rest of the blocks about limits.
             $initial_limits = variable_get('apachesolr_facet_query_initial_limits', array());
             $limit = isset($initial_limits[$module][$delta]) ? $initial_limits[$module][$delta] : variable_get('apachesolr_facet_query_initial_limit_default', 10);
-            $output = theme('apachesolr_facet_list', $items, $limit);
+            #$output = theme('apachesolr_facet_list', $items, $limit);
+            $output = tow_search_inner_generate_select('select-text-widget', $select_options);
             return array('subject' => $filter_by, 'content' => $output);
         }
     }
     return array('content' => t('No results found'));
+}
+
+/**
+ * Returns select dropdown html.
+ */
+function tow_search_inner_generate_select ($cl = '', $options = array()) {
+    $html = '<select class="' . $cl. '">';
+    foreach ($options as $option => $value) {
+        $class = tow_search_inner_get_tag_attribute($value, 'a', 'class');
+        $href = tow_search_inner_get_tag_attribute($value, 'a', 'href');
+        $val = strip_tags($value);
+        $val_text = preg_replace('/\s\(\d+\)/', '', trim($val));
+        $html .= '<option multiple="multiple" class="' . $class . '" href="' . $href . '" value="' . $val_text . '">' . $option . '</option>';
+    }
+    $html .= '</select>';
+    return $html;
+}
+
+/**
+ * Returns attributes from tag string.
+ */
+function tow_search_inner_get_tag_attribute($html, $tag, $attr) {
+ 
+   // Load the HTML in DOM
+   $doc = new DOMDocument();
+   $doc->loadHTML($html);
+ 
+   // Then select all anchor tags
+   $all_anchor_tags = $doc->getElementsByTagName($tag);
+   foreach ($all_anchor_tags as $_tag) {
+      $attribute = $_tag->getAttribute($attr);
+   }
+  return $attribute;
 }
 
 /**
@@ -1437,14 +1479,14 @@ function tow_search_inner_widget($field_info, $path, $response, $query, $stats, 
         case 'text':
             $facet_field = 'f_' . $field;
             $facet_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $facet_field, $facet_field, '', '_tow_search_inner_facet_trim_text');
-            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path) . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
+            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path);#TEMPOPARILY DISABLED . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
             return $facet_list['content'] . $form;
 
         // Char facets.
         case 'char':
             $facet_field = 'f_' . $field;
             $facet_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $facet_field, $facet_field, '');
-            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path) . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
+            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path);#TEMPOPARILY DISABLED . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
             return ($whole_counts > 50) ? $facet_list['content'] . $form : $facet_list['content'];
 
         default:
