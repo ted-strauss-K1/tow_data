@@ -175,7 +175,9 @@ Drupal.behaviors.inner_search = function(context) {
         highchartsTestBarChart($(this));
     });
 
+
     /***** Multi-select *****/
+    
     $('div.ms-selectable ul li.ms-elem-selectable', context).live('click', function() {
         var valText = $(this).text();
         var optionValue = valText.replace(/\s\(\d+\)/, '');
@@ -188,6 +190,19 @@ Drupal.behaviors.inner_search = function(context) {
         var optionHref = $(this).closest('.ms-container').siblings('.select-text-widget').find('option[value="' + optionValue + '"]').attr('href');
         setHash(optionHref);
     });
+    $('.select-all a', context).live('click', function() {
+        $(this).closest('.select-deselect').siblings('.select-text-widget').multiSelect('select_all');
+        var selectAllURLTrue = selectAllWidgetOptions($(this), 'select');
+        setHash(selectAllURLTrue);
+        return false;
+    });
+    $('.deselect-all a', context).live('click', function() {
+        $(this).closest('.select-deselect').siblings('.select-text-widget').multiSelect('deselect_all');
+        var selectAllURLTrue = selectAllWidgetOptions($(this), 'deselect');
+        setHash(selectAllURLTrue);
+        return false;
+    });
+
 
     /***** Saved Searches *****/
 
@@ -1740,8 +1755,10 @@ Drupal.behaviors.inner_search = function(context) {
             $('.select-text-widget').each(function() {
                 var $this = $(this);
                 
+                $this.before("<div class='select-deselect'><div class='select-all'><a href='#'>select all</a></div><div class='deselect-all'><a href='#'>deselect all</a></div></div>");
+                
                 $this.multiSelect({
-                    selectableHeader: "<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>",
+                    selectableFooter: "<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>",
                     afterInit: function() {
                         var selectedOptionArray = [];
                         $this.find('.tow-inner-search-selected').each(function() {
@@ -1753,6 +1770,13 @@ Drupal.behaviors.inner_search = function(context) {
                     }
                 });
             });
+            
+            $('.ms-container ul li[id*="e_m_p_t_y"] span').each(function() {
+                var emptyHTML = $(this).html();
+                var newEmptyHTML = emptyHTML.replace('</empty>','');
+                $(this).text(newEmptyHTML);
+            });
+            
             $('.text-widget-search').each(function() {
                 var selectTextWidget = $(this).closest('.ms-container').siblings('.select-text-widget');
                 var msContainer = $(this).closest('.ms-container');
@@ -2358,4 +2382,62 @@ function getUrlQueryParam(url, arg) {
     }
 
     return result;
+}
+
+/**
+ * Select all/deselect all function.
+ */
+function selectAllWidgetOptions(selector, type) {
+    var selectTextWidget = selector.closest('.select-deselect').siblings('.select-text-widget');
+    var selectAllURLArray = [];
+    var windowHashFilters = getUrlQueryParam(window.location.hash, 'filters');
+    var windowHashFiltersArray = $.trim(windowHashFilters).split(' ');
+    var windowHashSelectedFields = getUrlQueryParam(window.location.hash, 'selected_fields');
+    
+    selectTextWidget.find('option').each(function() {
+        var optionFilter = getUrlQueryParam($(this).attr('href'), 'filters');
+        var optionFilterArray = optionFilter.split(' ');
+        if(type == 'select') {
+            var customFilterS = RemoveArrayItems(windowHashFiltersArray, optionFilterArray);
+            for(var s=0; s < customFilterS.length; s++) {
+                selectAllURLArray.push(customFilterS[s]);
+            }
+        }
+        else if(type == 'deselect') {
+            var customFilterD = RemoveArrayItems(optionFilterArray, windowHashFiltersArray);
+            for(var d=0; d < customFilterD.length; d++) {
+                var idx = windowHashFiltersArray.indexOf(customFilterD[d]);
+                if(idx != -1) windowHashFiltersArray.splice(idx, 1);
+            }
+        }
+    });
+    
+    var filtersToPaste = '';
+    if (type == 'select') {
+        var selectAllURL = selectAllURLArray.filter(function(val) { return val !== ''; }).join(" ");
+        filtersToPaste = windowHashFilters + ' ' + selectAllURL;
+    }
+    else if (type == 'deselect') {
+        var deselectAllURL = windowHashFiltersArray.filter(function(val) { return val !== ''; }).join(" ");
+        filtersToPaste = deselectAllURL;
+    }
+
+    var selectAllURLTrue = window.location.pathname + '#?filters=' + filtersToPaste + '&selected_fields=' + windowHashSelectedFields;
+
+    return selectAllURLTrue;
+}
+
+/**
+ * Remove array items.
+ */
+function RemoveArrayItems(itemsToRemove,array) {
+    if(array.length==0||itemsToRemove.length==0) return array;
+    var sMatchedItems="|"+itemsToRemove.join('|')+"|";
+    var newArray=[];   
+    for(var i=0;i<array.length;i++) {
+        if(sMatchedItems.indexOf("|"+array[i]+"|")<0) {
+            newArray[newArray.length]=array[i];
+        }
+    }
+    return newArray;
 }
