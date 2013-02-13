@@ -1755,11 +1755,11 @@ Drupal.behaviors.inner_search = function(context) {
             $('.select-text-widget').each(function() {
                 var $this = $(this);
                 
-                $this.before("<div class='select-deselect'><div class='select-all'><a href='#'>select all</a></div><div class='deselect-all'><a href='#'>deselect all</a></div></div>");
+                $this.before("<div class='select-deselect'><div class='select-all'><a href='#'>select all</a></div><div class='deselect-all'><a href='#'>select none</a></div></div>");
                 
                 $this.multiSelect({
-                    selectableFooter: "<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>",
                     afterInit: function() {
+                        $this.siblings('.ms-container').find('div.ms-selectable').after("<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>");
                         var selectedOptionArray = [];
                         $this.find('.tow-inner-search-selected').each(function() {
                             selectedOptionArray.push($(this).attr('value'));
@@ -1777,16 +1777,31 @@ Drupal.behaviors.inner_search = function(context) {
                 $(this).text(newEmptyHTML);
             });
             
-            $('.text-widget-search').each(function() {
-                var selectTextWidget = $(this).closest('.ms-container').siblings('.select-text-widget');
+            $('.text-widget-search').on('keyup', function(){
                 var msContainer = $(this).closest('.ms-container');
-                $(this).quicksearch($('.ms-elem-selectable', msContainer)).on('keydown', function(e){
-                    if (e.keyCode == 40){
-                      $(this).trigger('focusout');
-                      selectTextWidget.focus();
-                      return false;
-                    }
-                });
+                var text = $(this).val();
+                msContainer.find('div ul li').each(function(){
+                     if($(this).text().indexOf(text) == -1) {
+                         if($(this).closest('div').hasClass('ms-selectable')) {
+                            $(this).not('.ms-selected').hide();
+                         }
+                         else if ($(this).closest('div').hasClass('ms-selection')) {
+                             if ($(this).hasClass('ms-selected')) {
+                                 $(this).hide();
+                             }
+                         }
+                     }
+                     else {
+                         if($(this).closest('div').hasClass('ms-selectable')) {
+                            $(this).not('.ms-selected').show();
+                         }
+                         else if ($(this).closest('div').hasClass('ms-selection')) {
+                             if ($(this).hasClass('ms-selected')) {
+                                 $(this).show();
+                             }
+                         }
+                     }
+                });     
             });
 
             // Number of rows in searchtable.

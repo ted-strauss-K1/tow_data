@@ -524,7 +524,13 @@ button.ColVis_Button{
 }
 
 .page-search-dataset .tow-inner-search-widget .ms-container ul.ms-list {
-    height: 105px;
+    max-height: 130px;
+    min-height: 26px;
+    height: auto;
+}
+
+.page-search-dataset .tow-inner-search-widget div.ms-selection ul.ms-list {
+    background-color: #BBBDBA;
 }
 
 .page-search-dataset .tow-inner-search-widget .ms-container .ms-selectable,

@@ -10,7 +10,6 @@ stylesheets[all][] = css/other.css
 stylesheets[all][] = css/bootstrap.css
 stylesheets[all][] = css/DT_bootstrap.css
 stylesheets[all][] = css/bootstrap-responsive.css
-stylesheets[all][] = css/bootstrap.min.css
 stylesheets[all][] = css/tow.css
 stylesheets[all][] = js/scroller/jquery.jscrollpane.css
 
