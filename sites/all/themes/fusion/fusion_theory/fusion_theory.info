@@ -22,7 +22,6 @@ scripts[] = js/noty/topCenter.js
 scripts[] = js/bootstrap/bootstrap.min.js
 scripts[] = js/scroller/jquery.jscrollpane.js
 scripts[] = js/scroller/jquery.mousewheel.min.js
-scripts[] = js/other.js
 
 /*regions[sidebar_first = sidebar first */
 regions[sidebar_last] = sidebar last
