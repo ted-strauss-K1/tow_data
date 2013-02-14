@@ -374,6 +374,10 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
         case 'user_profile_form':
             tow_user_profile_form_alter(&$form, $form_state);
             break;
+        
+        case 'apachesolr_settings':
+            tow_apachesolr_form_alter($form, $form_state, $form_id);
+            break;
     }
 
     // Altering deletion and truncation forms.
@@ -560,6 +564,8 @@ function tow_exit() {
  * Implementation of hook_menu().
  */
 function tow_menu() {
+    module_load_include('inc', 'tow', 'includes/tow.tests');
+    
     $items = array();
 
     // Dataset creation link.
@@ -909,6 +915,7 @@ function tow_menu() {
  * Implementation of hook_menu_alter().
  */
 function tow_menu_alter(&$items) {
+    module_load_include('inc', 'tow', 'includes/tow.user');
     tow_user_menu_alter($items);
 }
 
@@ -1076,7 +1083,7 @@ function tow_nodeapi(&$node, $op) {
         if (is_null($node->field_available_positions[0]['value'])) {
             $available_positions = array();
             $max_rec = variable_get('tow_max_records_in_table', 920);
-            for ($i = 0; $i < $max_rec; $i++) {
+            for ($i = 1; $i < $max_rec; $i++) {
                 $available_positions[] = $i;
             }
             $node->field_available_positions[0]['value'] = serialize($available_positions);

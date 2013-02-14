@@ -175,7 +175,19 @@ Drupal.behaviors.inner_search = function(context) {
         highchartsTestBarChart($(this));
     });
 
-
+    /***** Multi-select *****/
+    $('div.ms-selectable ul li.ms-elem-selectable', context).live('click', function() {
+        var valText = $(this).text();
+        var optionValue = valText.replace(/\s\(\d+\)/, '');
+        var optionHref = $(this).closest('.ms-container').siblings('.select-text-widget').find('option[value="' + optionValue + '"]').attr('href');
+        setHash(optionHref);
+    });
+    $('div.ms-selection ul li.ms-elem-selection', context).live('click', function() {
+        var valText = $(this).text();
+        var optionValue = valText.replace(/\s\(\d+\)/, '');
+        var optionHref = $(this).closest('.ms-container').siblings('.select-text-widget').find('option[value="' + optionValue + '"]').attr('href');
+        setHash(optionHref);
+    });
 
     /***** Saved Searches *****/
 
@@ -1723,6 +1735,35 @@ Drupal.behaviors.inner_search = function(context) {
             for(var i = 0; i < divs.length; i+=3) {
                 divs.slice(i, i+3).wrapAll("<div class='three-in-one'></div>");
             }
+            
+            /***** Multi-select & search in text widget*****/
+            $('.select-text-widget').each(function() {
+                var $this = $(this);
+                
+                $this.multiSelect({
+                    selectableHeader: "<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>",
+                    afterInit: function() {
+                        var selectedOptionArray = [];
+                        $this.find('.tow-inner-search-selected').each(function() {
+                            selectedOptionArray.push($(this).attr('value'));
+                        });
+                        $this.multiSelect('deselect_all');
+                        $this.multiSelect('select', selectedOptionArray);
+                        return false;
+                    }
+                });
+            });
+            $('.text-widget-search').each(function() {
+                var selectTextWidget = $(this).closest('.ms-container').siblings('.select-text-widget');
+                var msContainer = $(this).closest('.ms-container');
+                $(this).quicksearch($('.ms-elem-selectable', msContainer)).on('keydown', function(e){
+                    if (e.keyCode == 40){
+                      $(this).trigger('focusout');
+                      selectTextWidget.focus();
+                      return false;
+                    }
+                });
+            });
 
             // Number of rows in searchtable.
             var numberOfRows = $('#datatable-1 tbody tr').size();
@@ -2291,8 +2332,13 @@ function getUrlQueryParams(url) {
     var vars = [], hash;
     var hashes = url.slice(url.indexOf('?') + 1).split('&');
     for(var i = 0; i < hashes.length; i++) {
-        hash = hashes[i].split('=');
-        vars[hash[0]] = decodeURIComponent(hash[1]);
+        if (!hashes[i].match(/^selected_fields/) && !hashes[i].match(/^filters/) && !hashes[i].match(/^zoom/) && (hashes[i] != undefined)) {
+            hashes[i] = hashes[i-1] + '&' + hashes[i];
+        }
+        if (decodeURIComponent(hashes[i]).match(/}$/) || !hashes[i].match(/^selected_fields/)) {
+            hash = hashes[i].split('=');
+            vars[hash[0]] = decodeURIComponent(hash[1]);
+        }
     }
     return vars;
 }
