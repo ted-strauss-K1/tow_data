@@ -615,7 +615,8 @@ function tow_table($node, $display_options = array()) {
         'bSort' => TRUE,
         'bInfo' => FALSE,
         'sScrollX' => '100%',
-        'sScrollY' => '300',
+        //'sScrollY' => '300',
+        "sScrollXInner" => "100%",
         'bScrollCollapse' => TRUE,
         'bRetrieve' => TRUE,
     );
