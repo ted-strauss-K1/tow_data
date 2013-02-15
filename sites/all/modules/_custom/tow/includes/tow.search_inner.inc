@@ -1060,7 +1060,11 @@ function tow_search_inner_facet_widget($path, $response, $query, $module, $delta
 
             if ($count || $active) {
                 $items[$sortpre . '*' . $facet_text] = $link;
-                $select_options[$facet_text . ' (' . $count . ')'] = $link;
+                if ($count != 1) {
+                    $select_options[$facet_text . ' (' . $count . ')'] = $link;
+                } else {
+                    $select_options[$facet_text] = $link;
+                }
             }
         }
 

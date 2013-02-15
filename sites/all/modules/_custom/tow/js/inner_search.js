@@ -178,6 +178,7 @@ Drupal.behaviors.inner_search = function(context) {
 
     /***** Multi-select *****/
     
+    //Select/deselect facet
     $('div.ms-selectable ul li.ms-elem-selectable', context).live('click', function() {
         var valText = $(this).text();
         var optionValue = valText.replace(/\s\(\d+\)/, '');
@@ -190,6 +191,7 @@ Drupal.behaviors.inner_search = function(context) {
         var optionHref = $(this).closest('.ms-container').siblings('.select-text-widget').find('option[value="' + optionValue + '"]').attr('href');
         setHash(optionHref);
     });
+    //Select_all/deselect_all
     $('.select-all a', context).live('click', function() {
         $(this).closest('.select-deselect').siblings('.select-text-widget').multiSelect('select_all');
         var selectAllURLTrue = selectAllWidgetOptions($(this), 'select');
@@ -1755,11 +1757,12 @@ Drupal.behaviors.inner_search = function(context) {
             $('.select-text-widget').each(function() {
                 var $this = $(this);
                 
-                $this.before("<div class='select-deselect'><div class='select-all'><a href='#'>select all</a></div><div class='deselect-all'><a href='#'>select none</a></div></div>");
+                $this.after("<div class='select-deselect'><div class='select-all'><a href='#'>select all</a></div><div class='deselect-all'><a href='#'>select none</a></div></div>");
                 
                 $this.multiSelect({
+                    selectableHeader: "<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>",
                     afterInit: function() {
-                        $this.siblings('.ms-container').find('div.ms-selectable').after("<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>");
+                        //$this.siblings('.ms-container').find('div.ms-selectable').after("<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>");
                         var selectedOptionArray = [];
                         $this.find('.tow-inner-search-selected').each(function() {
                             selectedOptionArray.push($(this).attr('value'));
@@ -1771,13 +1774,36 @@ Drupal.behaviors.inner_search = function(context) {
                 });
             });
             
+            //Switch two divs (select_from and select_to)
+            $('div.ms-selection').each(function () {
+                $(this).after($(this).siblings('div.ms-selectable'));
+            });
+            
+            //Proper <empty> output
             $('.ms-container ul li[id*="e_m_p_t_y"] span').each(function() {
                 var emptyHTML = $(this).html();
                 var newEmptyHTML = emptyHTML.replace('</empty>','');
                 $(this).text(newEmptyHTML);
             });
             
-            $('.text-widget-search').on('keyup', function(){
+            //Search (quicksearch plugin) in facets
+            $('.text-widget-search').each(function() {
+                var msContainer = $(this).closest('.ms-container');
+                var selectTextWidget = $(this).closest('.ms-container').siblings('.select-text-widget');
+                $(this).quicksearch($('.ms-elem-selectable', msContainer)).on('keydown', function(e){
+                    if (e.keyCode == 40){
+                        $(this).trigger('focusout');
+                        selectTextWidget.focus();
+                        return false;
+                    }
+                    }
+                );
+            });
+            
+            /*
+             *TEMPORARILY DISABLED Search in both (select_from and select_to) lists
+             *
+             *$('.text-widget-search').on('keyup', function(){
                 var msContainer = $(this).closest('.ms-container');
                 var text = $(this).val();
                 msContainer.find('div ul li').each(function(){
@@ -1803,6 +1829,8 @@ Drupal.behaviors.inner_search = function(context) {
                      }
                 });     
             });
+            *
+            */
 
             // Number of rows in searchtable.
             var numberOfRows = $('#datatable-1 tbody tr').size();
