@@ -381,7 +381,7 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
 
     $params['fl'] .= ',tid';
     $params['stats'] = 'true';
-    $params['facet.limit'] = 100;
+    $params['facet.limit'] = 999999;
     $params['facet.missing'] = 'true';
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $categories_vid . '}' . 'im_vid_' . $categories_vid;
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $tags_vid . '}' . 'im_vid_' . $tags_vid;
@@ -559,7 +559,7 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
     $query->add_filter('ss_tow_field_table', $nid);
 
     $params['stats'] = 'true';
-    $params['facet.limit'] = 100;
+    $params['facet.limit'] = 999999;
     $params['facet.missing'] = 'true';
     foreach ($table_fields as $index => $field) {
         $params['fl'] .= ',' . $field['name'];
@@ -842,7 +842,7 @@ function tow_apachesolr_facet_menu($facet_field, $values, $is_range = FALSE) {
         apachesolr_search_add_facet_params($params, $query);
         apachesolr_search_add_boost_params($params, $query, apachesolr_get_solr());
 
-        $params['facet.limit'] = 100;
+        $params['facet.limit'] = 999999;
         list($final_query, $response) = apachesolr_do_query('apachesolr_search', $query, $params);
         if (empty($response)) {
             return;

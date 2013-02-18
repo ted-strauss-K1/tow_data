@@ -181,14 +181,12 @@ Drupal.behaviors.inner_search = function(context) {
     //Select/deselect facet
     $('div.ms-selectable ul li.ms-elem-selectable', context).live('click', function() {
         var valText = $(this).text();
-        var optionValue = valText.replace(/\s\(\d+\)/, '');
-        var optionHref = $(this).closest('.ms-container').siblings('.select-text-widget').find('option[value="' + optionValue + '"]').attr('href');
+        var optionHref = $(this).closest('.ms-container').siblings('.select-text-widget').find('option:contains(' + valText + ')').attr('href');
         setHash(optionHref);
     });
     $('div.ms-selection ul li.ms-elem-selection', context).live('click', function() {
         var valText = $(this).text();
-        var optionValue = valText.replace(/\s\(\d+\)/, '');
-        var optionHref = $(this).closest('.ms-container').siblings('.select-text-widget').find('option[value="' + optionValue + '"]').attr('href');
+        var optionHref = $(this).closest('.ms-container').siblings('.select-text-widget').find('option:contains(' + valText + ')').attr('href');
         setHash(optionHref);
     });
     //Select_all/deselect_all
@@ -1762,10 +1760,9 @@ Drupal.behaviors.inner_search = function(context) {
                 $this.multiSelect({
                     selectableHeader: "<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>",
                     afterInit: function() {
-                        //$this.siblings('.ms-container').find('div.ms-selectable').after("<input type='text' class='text-widget-search' autocomplete='off' placeholder='Search...'>");
                         var selectedOptionArray = [];
                         $this.find('.tow-inner-search-selected').each(function() {
-                            selectedOptionArray.push($(this).attr('value'));
+                            selectedOptionArray.push($(this).text(), '');
                         });
                         $this.multiSelect('deselect_all');
                         $this.multiSelect('select', selectedOptionArray);

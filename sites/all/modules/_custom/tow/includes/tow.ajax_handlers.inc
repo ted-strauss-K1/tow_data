@@ -407,7 +407,7 @@ function tow_ajax_handlers_field_zooming() {
         // Request to solr using request built.
         $params['rows'] = 0;
         $params['facet'] = 'true';
-        $params['facet.limit'] = 100;
+        $params['facet.limit'] = 999999;
         $params['facet.missing'] = 'true';
         $params['facet.range.include'][] = 'edge';
         $params['facet.range.include'][] = 'lower';

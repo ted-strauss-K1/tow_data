@@ -133,7 +133,7 @@ function tow_search_inner_widgets_block($path = NULL) {
     // Request to solr using request built.
     $params['rows'] = 0;
     $params['facet'] = 'true';
-    $params['facet.limit'] = 100;
+    $params['facet.limit'] = 999999;
     $params['facet.missing'] = 'true';
     $params['facet.range.include'][] = 'edge';
     $params['facet.range.include'][] = 'lower';
@@ -323,7 +323,7 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
                 $href .= (empty($qsf) && empty($qf)) ? '' : '#?';
                 $href .= (empty($qf)) ? '' : 'filters=' . $qf;
                 $href .= (empty($qsf)) ? '' : ((empty($qf)) ? '' : '&') . 'selected_fields=' . check_plain($qsf);
-                $fields[$table_nid][] = '<button class="' . $options['attributes']['class'] . ' btn btn-mini" href="' . $href . '" f_type="' . $options['attributes']['f_type'] . '" tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
+                $fields[$table_nid][] = "<button class='" . $options['attributes']['class'] . " btn btn-mini' href='" . $href . "' f_type='" . $options['attributes']['f_type'] . "' tableset='" . $options['attributes']['tableset'] . "'>" . $field['title'] . "</button>";
             } else {
                 $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini unavailable disabled"' . ' tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
             }
@@ -1091,9 +1091,9 @@ function tow_search_inner_generate_select ($cl = '', $options = array()) {
     foreach ($options as $option => $value) {
         $class = tow_search_inner_get_tag_attribute($value, 'a', 'class');
         $href = tow_search_inner_get_tag_attribute($value, 'a', 'href');
-        $val = strip_tags($value);
-        $val_text = preg_replace('/\s\(\d+\)/', '', trim($val));
-        $html .= '<option multiple="multiple" class="' . $class . '" href="' . $href . '" value="' . $val_text . '">' . $option . '</option>';
+        #$val = strip_tags($value);
+        #$val_text = preg_replace('/\s\(\d+\)/', '', trim($val));
+        $html .= '<option multiple="multiple" class="' . $class . '" href="' . $href . '">' . $option . '</option>';
     }
     $html .= '</select>';
     return $html;
@@ -1642,7 +1642,7 @@ function _tow_search_inner_facet_trim_text($facet, &$options) {
             'html' => TRUE,
             'ellipsis' => TRUE,
             'word_boundary' => FALSE,
-            'max_length' => 15,
+            'max_length' => 15, //INITIAL VALUE :15 - TEMPORARILY CED TO PROPER FUNCTIONALITY AFTER SELECT GENERATION
         );
 
         return views_trim_text($alter, $facet);
