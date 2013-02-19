@@ -2430,6 +2430,7 @@ function getUrlQueryParam(url, arg) {
 function selectAllWidgetOptions(selector, type) {
     var selectTextWidget = selector.closest('.select-deselect').siblings('.select-text-widget');
     var selectAllURLArray = [];
+    var deselectAllURLArray = [];
     var windowHashFilters = getUrlQueryParam(window.location.hash, 'filters');
     var windowHashFiltersArray = $.trim(windowHashFilters).split(' ');
     var windowHashSelectedFields = getUrlQueryParam(window.location.hash, 'selected_fields');
@@ -2437,6 +2438,7 @@ function selectAllWidgetOptions(selector, type) {
     selectTextWidget.find('option').each(function() {
         var optionFilter = getUrlQueryParam($(this).attr('href'), 'filters');
         var optionFilterArray = optionFilter.split(' ');
+        var wHFA = windowHashFiltersArray.slice(0);
         if(type == 'select') {
             var customFilterS = RemoveArrayItems(windowHashFiltersArray, optionFilterArray);
             for(var s=0; s < customFilterS.length; s++) {
@@ -2444,11 +2446,11 @@ function selectAllWidgetOptions(selector, type) {
             }
         }
         else if(type == 'deselect') {
-            var customFilterD = RemoveArrayItems(optionFilterArray, windowHashFiltersArray);
-            for(var d=0; d < customFilterD.length; d++) {
-                var idx = windowHashFiltersArray.indexOf(customFilterD[d]);
-                if(idx != -1) windowHashFiltersArray.splice(idx, 1);
+            for(var d=0; d < optionFilterArray.length; d++) {
+                var idx = wHFA.indexOf(optionFilterArray[d]);
+                if(idx != -1) wHFA.splice(idx, 1);
             }
+            deselectAllURLArray = deselectAllURLArray.concat(wHFA);
         }
     });
     
@@ -2458,6 +2460,10 @@ function selectAllWidgetOptions(selector, type) {
         filtersToPaste = windowHashFilters + ' ' + selectAllURL;
     }
     else if (type == 'deselect') {
+        for (var w=0; w < deselectAllURLArray.length; w++) {
+                var idx = windowHashFiltersArray.indexOf(deselectAllURLArray[w]);
+                if(idx != -1) windowHashFiltersArray.splice(idx, 1);
+            }
         var deselectAllURL = windowHashFiltersArray.filter(function(val) { return val !== ''; }).join(" ");
         filtersToPaste = deselectAllURL;
     }
