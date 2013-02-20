@@ -133,26 +133,31 @@ function tow_saved_searches_description_block() {
 
     // Construct block.
     $block = array();
-    $block['title'] = t('Search description');
-
-    if (arg(0) != 'search_dataset') {
-        $block['content'] = '';
-    } else {
-        $nid = tow_search_inner_get_nid();
-
-        $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
-        $selected_fields = isset($_GET['selected_fields']) ? $_GET['selected_fields'] : '';
-
-        $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
-        $rows_amount = $saved_response->response->numFound;
-
-        $summary = tow_saved_searches_summary($nid, $filters, $selected_fields, $rows_amount);
-
-        $block['content'] = 'Choose your search parameters';
-        if ($summary) {
-            $block['content'] = $summary;
-        }
-    }
+    $block['content'] = '<span class="saved_search_description-preamble" style="display:none;"><strong>Search description</strong></span>';
+    
+    //    
+    //    TEMPORARILY DISABLED
+    //    
+    #$block['title'] = t('Search description');
+    #
+    #if (arg(0) != 'search_dataset') {
+    #    $block['content'] = '';
+    #} else {
+    #    $nid = tow_search_inner_get_nid();
+    #
+    #    $filters = isset($_GET['filters']) ? $_GET['filters'] : '';
+    #    $selected_fields = isset($_GET['selected_fields']) ? $_GET['selected_fields'] : '';
+    #
+    #    $saved_response = apachesolr_static_response_cache(NULL, 'tow_inner_search');
+    #    $rows_amount = $saved_response->response->numFound;
+    #
+    #    $summary = tow_saved_searches_summary($nid, $filters, $selected_fields, $rows_amount);
+    #
+    #    $block['content'] = 'Choose your search parameters';
+    #    if ($summary) {
+    #        $block['content'] = $summary;
+    #    }
+    #}
 
     return $block;
 }

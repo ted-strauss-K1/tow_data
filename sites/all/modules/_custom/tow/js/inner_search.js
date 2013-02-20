@@ -1831,6 +1831,8 @@ Drupal.behaviors.inner_search = function(context) {
 
             // Number of rows in searchtable.
             var numberOfRows = $('#datatable-1 tbody tr').size();
+            var ifs = (numberOfRows == 1) ? '' : 's';
+            $('#block-tow-saved_searches_description div.content').append('<span class="search-description-rows"><strong>' + numberOfRows + ' row' + ifs + ' of results.</strong></span>');
             $('#tow-search-inner-save-search-form').children('div').children('[name="rows_amount"]').val(numberOfRows);
 
             var oTable = $('#datatable-1').dataTable({
