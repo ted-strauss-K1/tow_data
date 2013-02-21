@@ -39,5 +39,18 @@ function fusion_theory_preprocess_page(&$vars) {
   }
 }
 
+/**
+ * Format the 'submitted' output for comments
+ */
+function fusion_theory_comment_submitted($comment) {
+    
+    return t('!username — !datetime', 
+    array(
+    '!username' => theme('username', $comment), 
+    '!datetime' => format_interval(time() - $comment->timestamp, 1) . ' ' . t('ago'),
+  ));
+
+}
+
 
 ?>

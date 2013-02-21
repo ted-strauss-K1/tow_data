@@ -352,6 +352,8 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
             $form['_author'] = NULL;
             $form['comment_filter']['format'] = NULL;
             $form['comment_filter']['comment']['#resizable'] = FALSE;
+            $form['comment_filter']['comment']['#attributes'] = array('placeholder' => t('write a comment...'), 'class' => 'h20');
+            $form['comment_filter']['comment']['#title'] = FALSE;
             
             $action = parse_url($form['#action']);
             if ($action['path'] == '/ajax/comment/form') {
@@ -1007,7 +1009,7 @@ function tow_nodeapi(&$node, $op) {
         }
 
         // Creation time representation.
-        $node->content['searched']['#value'] = '<div class="user-data">' . '<div class="searched">' . 'Searched ' . date('M j, Y', $node->created) . ' at ' . date('H:i', $node->created) . '</div>';
+        $node->content['searched']['#value'] = '<div class="user-data">' . '<div class="searched">' . 'posted ' . format_interval(time() - $node->created, 1) . ' ' . t('ago') . '</div>';
         $node->content['searched']['#weight'] = 1;
 
         // User settings.
@@ -1022,7 +1024,7 @@ function tow_nodeapi(&$node, $op) {
         $node->content['user_link']['#weight'] = 3;
 
         // User points.
-        $node->content['user_points']['#value'] = '<span>' . '(' . userpoints_get_current_points($result['node']->uid, 'all') . ')' . '</span>' . '</div>';
+        $node->content['user_points']['#value'] = '<span>' . '(' . userpoints_get_current_points($node->uid, 'all') . ')' . '</span>' . '</div>';
         $node->content['user_points']['#weight'] = 4;
 
         // Views.
@@ -1419,6 +1421,7 @@ function tow_theme() {
 function tow_preprocess_node(&$variables) {
     if ($variables['type'] == 'saved_search') {
         $node = $variables['node'];
+        unset($variables['submitted']);
         
         $isset_filters = (isset($node->field_search_constraints[0]['safe']) && $node->field_search_constraints[0]['safe'] != '');
         $isset_selected_fields = (isset($node->field_selected_fields[0]['safe']) && $node->field_selected_fields[0]['safe'] != '');

@@ -1028,7 +1028,7 @@ dataTables_scrollBody tbody tr td {
     text-align:left;
 }
 
-.starflag .flag-bookmarks .flag-action
+.flag-bookmarks .flag-action
 {
     background: url("../img/book_mark.png") no-repeat scroll 0 0 transparent;
     float: left;
@@ -1037,7 +1037,7 @@ dataTables_scrollBody tbody tr td {
     overflow: hidden;
     width: 33px;
 }
-.starflag .flag-bookmarks .unflag-action
+.flag-bookmarks .unflag-action
 {
     background: url("../img/book_mark.png") no-repeat scroll 0 -40px transparent;
     float: left;
@@ -2203,10 +2203,6 @@ dt.profile-profile_bio
     padding: 3px;
     width: 100%; /*232px*/
 }
-.tow-saved-search-block-item #comments textarea
-{
-    height:40px;
-}
 .tow-saved-search-block-item #comments .comcom h2
 {
     display:none;
@@ -2224,6 +2220,7 @@ dt.profile-profile_bio
     max-width:195px;
     width:195px;
     overflow: visible;
+    resize: none;
 }
 
 .box.comcom {

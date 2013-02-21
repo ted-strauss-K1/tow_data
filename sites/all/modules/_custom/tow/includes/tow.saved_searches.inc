@@ -64,7 +64,9 @@ function tow_saved_searches_list_block($nid = NULL) {
         $output .= '<div class="invis-link-'.$x.'" style="display:none">'.$link_node_url.'</div>';
         $output .= '<div class="accordion-group"><div class="accordion-heading">
       <a class="accordion-toggle toggle'.$x.'" data-toggle="collapse" data-parent="#accordion" href="#collapse' . $x . '">';
-        $output .= $node->title . '</a></div>';
+        $total_votes = _votingapi_get_standard_results('node', $node->nid);
+        $add_votes = isset($total_votes['vote']['points']['sum']) ? $total_votes['vote']['points']['sum'] : '';
+        $output .= $node->title . '<span> ' . $add_votes . ' </span></a></div>';
         $output .= '<div id="collapse' . $x . '" class="accordion-body collapse"><div class="accordion-inner">';
         $output .= node_view($node);
         if (function_exists('comment_render') && $node->comment) {
@@ -429,7 +431,7 @@ function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $f
     }
 
     // Body, teaser.
-    $saved_search->body = tow_saved_searches_summary(tow_search_inner_get_nid(), $filters, $selected_fields, $rows_amount);
+    $saved_search->body = '';#TEMPORARILY DISABLED tow_saved_searches_summary(tow_search_inner_get_nid(), $filters, $selected_fields, $rows_amount);
     $saved_search->teaser = node_teaser($saved_search->body);
 
     // Save search constraints and selected fields.

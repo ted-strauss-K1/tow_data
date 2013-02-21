@@ -210,6 +210,11 @@ Drupal.behaviors.inner_search = function(context) {
     $('#tow-saved-searches-save-search-form', context).live('submit', function(e) {
         saveSearch(e);
     });
+    
+    //Taxonomy terms as Bootstrap pills
+    $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
+        $(this).addClass('nav nav-pills');
+    });
 
     //Saved search tags autocomplete. Add commas
     $('#autocomplete ul li div div', context).live('click', function(e) {
@@ -263,6 +268,11 @@ Drupal.behaviors.inner_search = function(context) {
     // Save comment.
     $('[id^="comment-form"] .form-submit', context).live('click', function(e) {
         commentSave(e, $(this));
+    });
+    
+    //Expand comment textarea
+    $('textarea[id*="edit-comment-"]', context).live('focus', function() {
+        $(this).addClass('h40');
     });
 
 
