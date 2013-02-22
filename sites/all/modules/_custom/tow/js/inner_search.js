@@ -1678,11 +1678,13 @@ Drupal.behaviors.inner_search = function(context) {
         var urlISA = 'http://' + window.location.hostname + window.location.pathname + '/refresh_ajax' + window.location.hash;
 
         // Disabling other widget choice while AJAX proceed.
-        $('#tow-search-inner-hash-form').after('<div id="modalDiv" style="position:absolute;top:0px;left:0px;display:none;cursor:progress;z-index:100;"></div>');
+        /*$('#tow-search-inner-hash-form').after('<div id="modalDiv" style="position:absolute;top:0px;left:0px;display:none;cursor:progress;z-index:100;"></div>');
 
         document.getElementById("modalDiv").style.height = "100%";
         document.getElementById("modalDiv").style.width = "100%";
-        document.getElementById("modalDiv").style.display = "block";
+        document.getElementById("modalDiv").style.display = "block";*/
+        var overlay = new ItpOverlay("content-top-inner");
+        overlay.show();
 
         var zoomsToSend = JSON.stringify(arrayOfZooms);
 
@@ -1720,6 +1722,9 @@ Drupal.behaviors.inner_search = function(context) {
             // Returns collapsibility&autocomplete.
             Drupal.behaviors.collapse();
             Drupal.behaviors.autocomplete();
+            
+            //Hide disabling overlay with throbber
+            overlay.hide();
 
             // Returning user-selected collapsibility.
             $('.tow-inner-search-widget fieldset').each(function() {
@@ -2002,6 +2007,11 @@ Drupal.behaviors.inner_search = function(context) {
                 //Returns voting AJAX&flag bookmarks
                 Drupal.behaviors.CToolsAJAX();
                 Drupal.flagLink();
+                
+                //Taxonomy terms as Bootstrap pills
+                $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
+                    $(this).addClass('nav nav-pills');
+                });
 
                 $.hrd.noty({
                     'type' : 'success',
@@ -2046,6 +2056,11 @@ Drupal.behaviors.inner_search = function(context) {
             //Returns voting AJAX&flag bookmarks
             Drupal.behaviors.CToolsAJAX();
             Drupal.flagLink();
+            
+            //Taxonomy terms as Bootstrap pills
+            $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
+                $(this).addClass('nav nav-pills');
+            });
 
             $.hrd.noty({
                 'type' : 'success',
@@ -2089,6 +2104,11 @@ Drupal.behaviors.inner_search = function(context) {
             //Returns voting AJAX&flag bookmarks
             Drupal.behaviors.CToolsAJAX();
             Drupal.flagLink();
+            
+            //Taxonomy terms as Bootstrap pills
+            $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
+                $(this).addClass('nav nav-pills');
+            });
         }
 
         // AJAX.
@@ -2188,6 +2208,11 @@ Drupal.behaviors.inner_search = function(context) {
             //Returns voting AJAX&flag bookmarks
             Drupal.behaviors.CToolsAJAX();
             Drupal.flagLink();
+            
+            //Taxonomy terms as Bootstrap pills
+            $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
+                $(this).addClass('nav nav-pills');
+            });
         }
 
         // AJAX.
