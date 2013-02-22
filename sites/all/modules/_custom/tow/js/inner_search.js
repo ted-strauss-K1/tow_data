@@ -26,6 +26,7 @@ Drupal.behaviors.inner_search = function(context) {
     var sortCurrentTitleDirection = ''; // Current direction of sorting by titile.
     var sortCurrentTypeDirection = ''; // Current direction of sorting by type.
     var initialArrayOfWidgets; // Set of search widgets with 'on load' sorting.
+    var expandedSavedSearchId = ''; //Saved search expanded.
     var minCur; // Current active chart minimum.
     var maxCur; // Current active chart maximum.
 
@@ -212,9 +213,7 @@ Drupal.behaviors.inner_search = function(context) {
     });
     
     //Taxonomy terms as Bootstrap pills
-    $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
-        $(this).addClass('nav nav-pills');
-    });
+    termLinksPills();
 
     //Saved search tags autocomplete. Add commas
     $('#autocomplete ul li div div', context).live('click', function(e) {
@@ -271,7 +270,7 @@ Drupal.behaviors.inner_search = function(context) {
     });
     
     //Expand comment textarea
-    $('textarea[id*="edit-comment-"]', context).live('focus', function() {
+    $('textarea[id*="edit-comment"]', context).live('focus', function() {
         $(this).addClass('h40');
     });
 
@@ -1993,6 +1992,7 @@ Drupal.behaviors.inner_search = function(context) {
         var rowsAmount = $('#edit-rows-amount').val();
         var sSComment = $('#edit-ss-comment').val();
         var sSTags = $('#edit-ss-tags').val();
+        var arrayOfSavedSearches = [];
 
         /**
          * Saved search creation.
@@ -2009,8 +2009,14 @@ Drupal.behaviors.inner_search = function(context) {
                 Drupal.flagLink();
                 
                 //Taxonomy terms as Bootstrap pills
-                $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
-                    $(this).addClass('nav nav-pills');
+                termLinksPills();
+                
+                //Expand new saved search
+                $('.accordion-group div.accordion-body').each(function() {
+                    if(arrayOfSavedSearches.indexOf($(this).attr('id')) == -1) {
+                        $(this).addClass('in');
+                        $(this).siblings('div.accordion-heading').children('a').addClass('collapsed');
+                    }
                 });
 
                 $.hrd.noty({
@@ -2029,6 +2035,11 @@ Drupal.behaviors.inner_search = function(context) {
                 'ss_comment' : sSComment,
                 'ss_tags' : sSTags,
                 'selected_fields' : selectedFields
+            },
+            beforeSend: function() {
+                $('.accordion-group div.accordion-body').each(function() {
+                    arrayOfSavedSearches.push($(this).attr('id'));
+                });
             },
             success: function(data) {
                 saveSearchAjaxSuccess(data);
@@ -2058,9 +2069,7 @@ Drupal.behaviors.inner_search = function(context) {
             Drupal.flagLink();
             
             //Taxonomy terms as Bootstrap pills
-            $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
-                $(this).addClass('nav nav-pills');
-            });
+            termLinksPills();
 
             $.hrd.noty({
                 'type' : 'success',
@@ -2106,9 +2115,14 @@ Drupal.behaviors.inner_search = function(context) {
             Drupal.flagLink();
             
             //Taxonomy terms as Bootstrap pills
-            $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
-                $(this).addClass('nav nav-pills');
-            });
+            termLinksPills();
+            
+            //Expand Saved Search
+            if (expandedSavedSearchId != '') {
+                var acBody = $('div[id="' + expandedSavedSearchId + '"]');
+                acBody.addClass('in');
+                acBody.siblings('div.accordion-heading').children('a').addClass('collapsed');
+            }
         }
 
         // AJAX.
@@ -2118,6 +2132,9 @@ Drupal.behaviors.inner_search = function(context) {
                 'cid' : cid,
                 'dataset_nid' : dataset,
                 'confirm' : confirmToSend
+            },
+            beforeSend: function() {
+                preserveSavedSearchExpanding();
             },
             success: function(data) {
                 deleteCommentSuccess(data);
@@ -2210,9 +2227,14 @@ Drupal.behaviors.inner_search = function(context) {
             Drupal.flagLink();
             
             //Taxonomy terms as Bootstrap pills
-            $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links', context).each(function() {
-                $(this).addClass('nav nav-pills');
-            });
+            termLinksPills();
+            
+            //Expand Saved Search
+            if (expandedSavedSearchId != '') {
+                var acBody = $('div[id="' + expandedSavedSearchId + '"]');
+                acBody.addClass('in');
+                acBody.siblings('div.accordion-heading').children('a').addClass('collapsed');
+            }
         }
 
         // AJAX.
@@ -2226,6 +2248,9 @@ Drupal.behaviors.inner_search = function(context) {
                 'form_build_id' : formBuildId,
                 'form_token' : formToken,
                 'dataset_nid' : dataset
+            },
+            beforeSend: function() {
+                preserveSavedSearchExpanding();
             },
             success: function(data) {
                 saveCommentSuccess(data);
@@ -2358,6 +2383,21 @@ Drupal.behaviors.inner_search = function(context) {
             }
         }
         location.hash = hash;
+    }
+    
+    /** 
+    * Preserving saved search expanding after operations with comments and after saving saved search
+    */
+    function preserveSavedSearchExpanding() {
+        $('.accordion-group').each(function() {
+            var acBody = $(this).children('div.accordion-body');
+            var acBodyId = acBody.attr('id');
+
+            if (acBody.hasClass('in')) {
+                expandedSavedSearchId = acBodyId;
+            }
+        });
+        return expandedSavedSearchId;
     }
 
 }
@@ -2523,4 +2563,13 @@ function RemoveArrayItems(itemsToRemove,array) {
         }
     }
     return newArray;
+}
+
+/**
+* Add nav-pills class to show links as bootstrap pills
+*/
+function termLinksPills() {
+    $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links').each(function() {
+        $(this).addClass('nav nav-pills');
+    });
 }
