@@ -7,8 +7,8 @@
 	height: 100%;
 	background-color: #FEFEFE;
 	z-index:1001;
-	-moz-opacity: 0.6;
-	opacity:.60;
+	-moz-opacity: 0.8;
+	opacity:.80;
 	filter: alpha(opacity=80);
 }
 
@@ -18,13 +18,13 @@
 	top: 30%;
 	left: 40%;
 	padding: 16px;
-        width: 300px;
-        height: 300px;
+        width: 180px;
+        height: 180px;
 	z-index:1002;
 	overflow: auto;
-        background-image: url(throb1.gif);
+        background-image: url(throb1sml2.gif);
         background-repeat: no-repeat;
-        -moz-opacity: 0.6;
-	opacity:.60;
-        filter: alpha(opacity=60);
+        -moz-opacity: 0.8;
+	opacity:.80;
+        filter: alpha(opacity=80);
 }

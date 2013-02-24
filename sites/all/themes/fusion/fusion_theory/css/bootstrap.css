@@ -5234,9 +5234,10 @@ a.thumbnail:hover {
   vertical-align: baseline;
   background-color: #999999;*/
 }
-.rec_info .label
+.rec_info .label,
+ul.links li a.label
 {
-	 font-size: 11.844px;
+  font-size: 11.844px;
   font-weight: bold;
   line-height: 14px;
   color: #ffffff;

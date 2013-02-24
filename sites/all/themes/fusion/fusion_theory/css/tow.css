@@ -2,6 +2,27 @@
     display: none;
 }
 
+/* saved search styling */
+#block-tow-saved_searches_list div.terms {
+    margin-bottom: 5px;
+}
+
+#block-tow-saved_searches_list div.submitted {
+    display: inline;
+}
+
+#block-tow-saved_searches_list div.comments .form-item {
+    margin-bottom: 0;
+}
+
+#block-tow-saved_searches_list .accordion-inner {
+    padding: 6px 10px;
+}
+
+/* Inner search - no results*/
+.page-search-dataset div.content-content h2 {
+    text-align: left;
+}
 
 /* js hide() css() class substitutes*/
 .hidden {
