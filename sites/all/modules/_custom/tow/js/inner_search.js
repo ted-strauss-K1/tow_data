@@ -2569,7 +2569,7 @@ function RemoveArrayItems(itemsToRemove,array) {
 * Add nav-pills class to show links as bootstrap pills
 */
 function termLinksPills() {
-    $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links').each(function() {
-        $(this).addClass('nav nav-pills');
+    $('#block-tow-saved_searches_list div.accordion-group div.terms ul.links a').each(function() {
+        $(this).addClass('label');
     });
 }
