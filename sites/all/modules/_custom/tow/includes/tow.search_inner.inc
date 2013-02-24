@@ -248,7 +248,8 @@ function tow_search_inner_within_dataset($nid, $ajax = FALSE) {
     if ($results) {
         return $results;
     } else {
-        return theme('box', t('Your search yielded no results'), variable_get('apachesolr_search_noresults', apachesolr_search_noresults()));
+        #TEMPORARILY DISABLED return theme('box', t('Your search yielded no results'), variable_get('apachesolr_search_noresults', apachesolr_search_noresults()));
+        return theme('box', t('No results yet'), '');
     }
 }
 
