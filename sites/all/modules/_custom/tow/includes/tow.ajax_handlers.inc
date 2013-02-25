@@ -85,7 +85,7 @@ function tow_ajax_handlers_comment_save() {
         'form_build_id' => $form_build_id,
         'form_token' => $form_token,
         'form_id' => 'comment_form',
-        'subject' => $subject,
+        'subject' => (strlen($subject) < 20) ? $subject : substr($subject, 0, 19),
         'date' => 'now',
         'timestamp' => time(),
         'name' => $user->name,
