@@ -1848,7 +1848,39 @@ Drupal.behaviors.inner_search = function(context) {
             var ifs = (numberOfRows == 1) ? '' : 's';
             $('#block-tow-saved_searches_description div.content').append('<span class="search-description-rows"><strong>' + numberOfRows + ' row' + ifs + ' of results.</strong></span>');
             $('#tow-search-inner-save-search-form').children('div').children('[name="rows_amount"]').val(numberOfRows);
+            
+            //Datatables proper numeric fields sorting
+            var arrayOfNumericFields = [];
+            $('.tow-dataset-field-link.selected').each(function() {
+                if($(this).attr('f_type') == 'float' || $(this).attr('f_type') == 'int') {
+                    arrayOfNumericFields.push($(this).text());
+                }
+            });
+            var arrayOfColumnIndices = [];
+            $('#datatable-1 thead tr th').each(function(index) {
+                var fieldName = $(this).text();
+                if (arrayOfNumericFields.indexOf(fieldName) != -1) {
+                    arrayOfColumnIndices.push(index);
+                }
+            });
+            
+            //Custom sorting function
+            jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+                "formatted_numbers-pre": function ( a ) {
+                    a = (a==="-") ? 0 : a.replace( /[^\d\-\.]/g, "" );
+                    return parseFloat( a );
+                },
 
+                "formatted_numbers-asc": function ( a, b ) {
+                    return a - b;
+                },
+
+                "formatted_numbers-desc": function ( a, b ) {
+                    return b - a;
+                }
+            } );
+            
+            //Datatables initialization
             var oTable = $('#datatable-1').dataTable({
                 "sDom": 'C<"clear">rti',
                 "oColVis": {
@@ -1856,6 +1888,9 @@ Drupal.behaviors.inner_search = function(context) {
                         return (index + 1) + '. ' + title;
                     }
                 },
+                "aoColumnDefs": [
+                    { "sType": "formatted_numbers", "aTargets": arrayOfColumnIndices }
+                ],
                 "sScrollY": "",
                 "bStateSave": true,
                 "bScrollCollapse": true,
