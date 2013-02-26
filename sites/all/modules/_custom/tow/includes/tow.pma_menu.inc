@@ -123,9 +123,14 @@ function tow_pma_menu_breadcrumbs() {
         $destination = explode('/', $_GET['destination']);
         $destination = $destination[1];
         if (!is_numeric($destination)) {
+            drupal_access_denied(); //access denied at node/add/table page
             die();
         }
         $_tow_dataset = node_load($destination);
+        if(!$_tow_dataset) {
+            drupal_access_denied(); //access denied at node/add/table?destination=dataset/nid when nid doesn't belong to dataset
+            die();
+        }
     }
 
     //Set import data page breadcrumbs

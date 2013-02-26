@@ -39,7 +39,9 @@ function tow_record_form_alter(&$form, &$form_state) {
         $_tow_table = node_load($form['#node']->field_table[0]['value']);
     }
     if (!$_tow_table) {
-        return;
+        drupal_access_denied(); //access denied at node/add/record page and at node/add/record?table/nid when nid doesn't belong to table
+        die();
+        #return;
     }
 
     $_tow_dataset = node_load($_tow_table->field_dataset[0]['value']);
