@@ -99,7 +99,7 @@ function tow_saved_searches_list_block($nid = NULL) {
     }
     $output .= '</div></div>';
     $block['content'] .= $output;
-dpm($block['content']);
+
     $block['title'] = ($block['content'] == '<span class="saved_search-preamble" style="display:none;"><strong>Search history</strong></span><div class="tow-saved-search-block-item"><div class="accordion" id="accordion"></div></div>') ? NULL : t('User analysis');
 
     return $block;
