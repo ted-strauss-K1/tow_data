@@ -866,7 +866,7 @@ function _tow_import_file_process_test_phpexcel(&$hash, &$import_action, &$impor
     }
 
     // TXT-file. Value delimiter may be tab or comma.
-    if (($input_file_type == 'CSV') && (strtolower($info['extension']) == "txt")) {
+    if (($input_file_type == 'CSV') /*&& (strtolower($info['extension']) == "txt")*/) {
 
         // Read first line.
         $file = fopen($imported_file_name, 'r');
