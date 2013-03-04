@@ -1,0 +1,146 @@
+<?php
+
+/**
+ * @file
+ * Advanced aggregation js cdn library module.
+ *
+ */
+
+/**
+ * Default value to see if jquery should be grabbed from the Google CDN.
+ */
+define('ADVAGG_JS_CDN_JQUERY', TRUE);
+
+/**
+ * Default value to see if jquery-ui should be grabbed from the Google CDN.
+ */
+define('ADVAGG_JS_CDN_JQUERY_UI', TRUE);
+
+/**
+ * Default value to see if SWFObject should be grabbed from the Google CDN.
+ */
+define('ADVAGG_JS_CDN_SWFOBJECT', TRUE);
+
+/**
+ * Implement hook_advagg_js_pre_alter.
+ */
+function advagg_js_cdn_advagg_js_pre_alter(&$javascript, $preprocess_js, $public_downloads, $scope) {
+  // Exit early if we are not going to CDN any code.
+  $cdn_jquery = variable_get('advagg_js_cdn_jquery', ADVAGG_JS_CDN_JQUERY);
+  $cdn_jquery_ui = variable_get('advagg_js_cdn_jquery_ui', ADVAGG_JS_CDN_JQUERY_UI);
+  $cdn_swfobject = variable_get('advagg_js_cdn_swfobject', ADVAGG_JS_CDN_SWFOBJECT);
+  if (   !$cdn_jquery
+       && !$cdn_jquery_ui
+       && !$cdn_swfobject
+        ) {
+    return FALSE;
+  }
+
+  // Set filepaths/versions
+  $jquery_version = variable_get('advagg_js_cdn_jquery_version', '1.2.6');
+  $jquery_filepath = 'misc/jquery.js';
+  if (module_exists('jquery_update') && variable_get('jquery_update_replace', TRUE)) {
+    // jquery_update_get_version hits disk and doesn't get cached.
+    // advagg_js_cdn_advagg_js_pre_alter will run mutiple times per request so
+    // caching the value of $jquery_update_version here.
+    static $jquery_update_version;
+    if (empty($jquery_update_version)) {
+      $jquery_update_version = variable_get('advagg_js_cdn_jquery_update_version', jquery_update_get_version());
+    }
+    $jquery_update_filepath = drupal_get_path('module', 'jquery_update');
+  }
+  if (module_exists('jquery_ui')) {
+    // jquery_ui_get_version hits disk and doesn't get cached.
+    // advagg_js_cdn_advagg_js_pre_alter will run mutiple times per request so
+    // caching the value of jquery_ui_get_version here.
+    static $jquery_ui_version;
+    if (empty($jquery_ui_version)) {
+      $jquery_ui_version = jquery_ui_get_version();
+    }
+    $jquery_ui_path = advagg_js_cdn_get_jquery_ui_path();
+  }
+  if (module_exists('swftools')) {
+    $swfobject_version = variable_get('advagg_js_cdn_swfobject_version', '2.2');
+    if (function_exists('swftools_get_player_path')) {
+      $swfobject_filepath = swftools_get_player_path() . '/swfobject2/swfobject.js';
+    }
+    elseif (function_exists('swftools_get_library')) {
+      $swfobject_filepath = swftools_get_library('swfobject') . '/swfobject.js';
+    }
+  }
+
+  // http or https.
+  $schema = advagg_get_server_schema();
+  foreach ($javascript as $type => $data) {
+    // Skip inline and setting js.
+    if (!$data || $type == 'setting' || $type == 'inline') {
+      continue;
+    }
+
+    // Search and replace.
+    foreach ($data as $path => $info) {
+      // jquery.js
+      if ($cdn_jquery) {
+        if (isset($jquery_update_filepath) && ($path == $jquery_update_filepath . '/replace/jquery.min.js' || $path == $jquery_filepath . '/replace/jquery.js')) {
+          $info['preprocess'] = FALSE;
+          $javascript['external'][$schema . '://ajax.googleapis.com/ajax/libs/jquery/' . $jquery_update_version . '/jquery.min.js'] = $info;
+          unset($javascript[$type][$path]);
+        }
+        elseif ($path == $jquery_filepath) {
+          $info['preprocess'] = FALSE;
+          $javascript['external'][$schema . '://ajax.googleapis.com/ajax/libs/jquery/' . $jquery_version . '/jquery.min.js'] = $info;
+          unset($javascript[$type][$path]);
+        }
+      }
+
+      // Replace all jquery_ui scripts (jquery.ui.*.js) with a single
+      // Google-hosted minified version containing all of them.
+      if ($cdn_jquery_ui) {
+        if (   isset($jquery_ui_path)
+            && isset($jquery_ui_version)
+            && strpos($path, $jquery_ui_path) === 0
+              ) {
+          $info['preprocess'] = FALSE;
+          $javascript['external'][$schema . '://ajax.googleapis.com/ajax/libs/jqueryui/' . $jquery_ui_version . '/jquery-ui.min.js'] = $info;
+          unset($javascript[$type][$path]);
+        }
+      }
+
+      // swfobject.js
+      if ($cdn_swfobject) {
+        if (   isset($swfobject_filepath)
+             && $path == $swfobject_filepath
+              ) {
+          $info['preprocess'] = FALSE;
+          $javascript['external'][$schema . '://ajax.googleapis.com/ajax/libs/swfobject/' . $swfobject_version . '/swfobject.js'] = $info;
+          unset($javascript[$type][$path]);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Get the path for the jquery-ui.js file.
+ *
+ * @param string $file
+ *   filename.
+ */
+function advagg_js_cdn_get_jquery_ui_path() {
+  $jquery_ui_path_const = 'JQUERY_UI_PATH';
+  if (!defined($jquery_ui_path_const)) {
+    if (!function_exists('jquery_ui_get_path')) {
+      return FALSE;
+    }
+    $jquery_ui_path = jquery_ui_get_path();
+    if ($jquery_ui_path === FALSE) {
+      return FALSE;
+    }
+  }
+  else {
+    $jquery_ui_path = constant($jquery_ui_path_const);
+  }
+  $jquery_ui_path .= '/ui';
+
+  return $jquery_ui_path;
+}
