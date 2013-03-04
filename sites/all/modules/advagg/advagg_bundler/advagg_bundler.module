@@ -200,13 +200,13 @@ function advagg_bundler_analysis($filename = '', $force = FALSE) {
             bundle_md5,
             filename_md5
           FROM
-            {advagg_bundles}
+            {advagg_bundles} advb
           WHERE
             root = 1
             AND
             timestamp > %d
           GROUP BY
-            filename_md5) AS ab
+            advb.bundle_md5, advb.filename_md5) AS ab
         INNER JOIN {advagg_files} AS af USING ( filename_md5 )
       ", time() - variable_get('advagg_bundler_outdated', ADVAGG_BUNDLER_OUTDATED));
 

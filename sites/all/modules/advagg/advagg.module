@@ -967,7 +967,7 @@ function advagg_get_filename($files, $filetype, $counter = FALSE, $bundle_md5 = 
       $counters[$key] = $values['bundle_md5'];
     }
   }
-  $result = advagg_db_multi_select_in('advagg_bundles', 'bundle_md5', "'%s'", $counters, array('counter', 'bundle_md5'), 'GROUP BY bundle_md5');
+  $result = advagg_db_multi_select_in('advagg_bundles advb', 'bundle_md5', "'%s'", $counters, array('counter', 'bundle_md5'), 'GROUP BY advb.counter, advb.bundle_md5');
   while ($row = db_fetch_array($result)) {
     $key = array_search($row['bundle_md5'], $counters);
     if (empty($filenames[$key]['counter']) && $filenames[$key]['counter'] !== 0) {

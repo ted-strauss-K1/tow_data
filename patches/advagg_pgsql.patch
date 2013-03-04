@@ -1,0 +1,33 @@
+diff --git a/sites/all/modules/advagg/advagg.module b/sites/all/modules/advagg/advagg.module
+index 6478e28..c4bba3c 100644
+--- a/sites/all/modules/advagg/advagg.module
++++ b/sites/all/modules/advagg/advagg.module
+@@ -967,7 +967,7 @@ function advagg_get_filename($files, $filetype, $counter = FALSE, $bundle_md5 =
+       $counters[$key] = $values['bundle_md5'];
+     }
+   }
+-  $result = advagg_db_multi_select_in('advagg_bundles', 'bundle_md5', "'%s'", $counters, array('counter', 'bundle_md5'), 'GROUP BY bundle_md5');
++  $result = advagg_db_multi_select_in('advagg_bundles advb', 'bundle_md5', "'%s'", $counters, array('counter', 'bundle_md5'), 'GROUP BY advb.counter, advb.bundle_md5');
+   while ($row = db_fetch_array($result)) {
+     $key = array_search($row['bundle_md5'], $counters);
+     if (empty($filenames[$key]['counter']) && $filenames[$key]['counter'] !== 0) {
+diff --git a/sites/all/modules/advagg/advagg_bundler/advagg_bundler.module b/sites/all/modules/advagg/advagg_bundler/advagg_bundler.module
+index 6d74a0b..105f772 100644
+--- a/sites/all/modules/advagg/advagg_bundler/advagg_bundler.module
++++ b/sites/all/modules/advagg/advagg_bundler/advagg_bundler.module
+@@ -200,13 +200,13 @@ function advagg_bundler_analysis($filename = '', $force = FALSE) {
+             bundle_md5,
+             filename_md5
+           FROM
+-            {advagg_bundles}
++            {advagg_bundles} advb
+           WHERE
+             root = 1
+             AND
+             timestamp > %d
+           GROUP BY
+-            filename_md5) AS ab
++            advb.bundle_md5, advb.filename_md5) AS ab
+         INNER JOIN {advagg_files} AS af USING ( filename_md5 )
+       ", time() - variable_get('advagg_bundler_outdated', ADVAGG_BUNDLER_OUTDATED));
+ 
