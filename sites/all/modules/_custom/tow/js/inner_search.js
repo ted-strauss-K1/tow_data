@@ -1872,10 +1872,22 @@ Drupal.behaviors.inner_search = function(context) {
                 },
 
                 "formatted_numbers-asc": function ( a, b ) {
+                    if(isNaN(a)) {
+                        return isNaN(b) ? 0 : -1;
+                    }
+                    else if (isNaN(b)) {
+                        return 1;
+                    }
                     return a - b;
                 },
 
                 "formatted_numbers-desc": function ( a, b ) {
+                    if(isNaN(a)) {
+                        return isNaN(b) ? 0 : 1;
+                    }
+                    else if (isNaN(b)) {
+                        return -1;
+                    }
                     return b - a;
                 }
             } );
