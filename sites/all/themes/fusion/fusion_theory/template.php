@@ -52,5 +52,14 @@ function fusion_theory_comment_submitted($comment) {
 
 }
 
+function fusion_theory_menu_local_task($link, $active = FALSE) {
+  // Don't return a <li> element if $link is empty
+  if ($link === '') {
+    return '';
+  }
+  else {
+    return '<li '. ($active ? 'class="active" ' : '') .'>'. $link ."</li>\n";  
+  }
+}
 
 ?>
