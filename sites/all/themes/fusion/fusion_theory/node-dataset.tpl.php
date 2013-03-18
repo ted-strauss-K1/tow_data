@@ -5,9 +5,9 @@
 
 <?php print $picture ?>
 
-<?php if ($page == 0): ?>
+<!--<?php if ($page == 0): ?>
   <h2><a href="<?php print $node_url ?>" title="<?php print $title ?>"><?php print $title ?></a></h2>
-<?php endif; ?>
+<?php endif; ?>-->
 
   <div class="content clear-block">
     <div class="dataset-description"><?php print $content ?></div>
