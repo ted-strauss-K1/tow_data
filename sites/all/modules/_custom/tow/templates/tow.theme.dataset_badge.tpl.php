@@ -7,12 +7,12 @@
 ?>
 
 <div class="badge">
-    <p><?php print $posted_by; ?></p>
-    <p><?php print $count; ?></p>
-    <p><?php print $searches; ?></p>
-    <p><?php print $added; ?></p>
-    <p><?php print $updated; ?></p>
-    <p class="dt-at"><?php print $access; ?></p>
-    <p><?php print $visits; ?></p>
+    <?php print $posted_by; ?><br/>
+    <?php print $count; ?><br/>
+    <?php print $searches; ?><br/>
+    <?php print $added; ?><br/>
+    <?php print $updated; ?><br/>
+    <?php print $visits; ?><br/>
+    <div class="dt-at"><?php print $access; ?></div>    
 </div>
 

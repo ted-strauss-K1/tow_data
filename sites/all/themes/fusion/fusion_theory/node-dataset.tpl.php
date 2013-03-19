@@ -8,7 +8,6 @@
 <?php if ($page == 0): ?>
   <h2><a href="<?php print $node_url ?>" title="<?php print $title ?>"><?php print $title ?></a></h2>
 <?php endif; ?>
-
   <div class="content clear-block">
     <div class="dataset-description"><?php print $content ?></div>
     <?php if ($summary['edit_description']): ?>
@@ -19,17 +18,17 @@
   <div class="clear-block">
     <div class="meta">
     <?php if ($taxonomy): ?>
-      <div class="field-label">Keywords:&nbsp;</div>
-      <div class="terms"><?php print $terms ?></div>
+      <!--<div class="field-label">Keywords:&nbsp;</div>-->      
+      <div class="terms"><?php print $terms; ?></div>
     <?php endif;?>
     <?php if ($summary['edit_categories']): ?>
       <span class="edit-link"><?php print $summary['edit_categories']; ?></span>
     <?php endif; ?>
     </div>
   </div>
-
   <div class="clear-block">
     <?php if ($summary['tables']): ?>
+	   <div class="h20"></div>
        <div class="tables-stats">
          <?php 
            print($summary['tables_stats'][0]['title']); 
@@ -48,10 +47,10 @@
   </div>
   
  
-  
   <div class="clear-block"> 
     <?php if ($summary['tables']): ?>
-    <div class="sample-tables">
+ 	 <div class="h20"></div>
+     <div class="sample-tables">
       <span class="field-label">Some random samples from this data set</span>
       <span>&nbsp;(<a href= "<?php print $nid; ?>">refresh</a> for a new sample)</span>
       
@@ -75,6 +74,7 @@
   
   <div class="clear-block">
     <?php if ($summary['saved_searches']): ?>
+      <div class="h20"></div>
       <div class="saved-searches">
     	<span class="saved-searches-label">Saved searches (<?php print $summary['saved_searches']['link_to_full_list']?>)</span>     
         <?php print $summary['saved_searches']['short_list']; ?>
@@ -84,6 +84,7 @@
   
   <div class="clear-block">
     <?php if ($summary['admin_tasks']): ?>
+      <div class="h20"></div>
       <div class="administrator-tasks">
         <div class="field-label">Administrator tasks:&nbsp;</div>
         <?php print $summary['admin_tasks']; ?>
