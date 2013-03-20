@@ -5,8 +5,8 @@ Drupal.behaviors.inner_search = function(context) {
      * ****************************************************************************************************/
 
     // Highcharts constants.
-    var handleHeight = 15; // Real handle height.
-    var handleWidth = 6; // Real handle width.
+    var handleHeight = 21;//15; // Real handle height.
+    var handleWidth = 9;//6; // Real handle width.
     var handleBorder = 1; // Real handle border.
     var visibleHandleHeight = 4; // Visible handle height.
     var visibleHandleWidth = 5; // Visible handle width.
@@ -1355,7 +1355,7 @@ Drupal.behaviors.inner_search = function(context) {
                 top = (top - handleHeight) / 2;
                 $('#' + detailChart.container.id).after('<div id="' + handle_id + '">');
                 $('#' + handle_id)
-                .addClass('pos-abs bs-solid bgc-white z10 cur-e bw1')
+                .addClass('pos-abs bs-solid bgc-white z10 cur-e bw1 bgi-grip')
                 .css('top', top)
                 .css('left', x - handleWidth/2)
                 .css('height', handleHeight)
@@ -1850,6 +1850,7 @@ Drupal.behaviors.inner_search = function(context) {
             $('#tow-search-inner-save-search-form').children('div').children('[name="rows_amount"]').val(numberOfRows);
             
             //Datatables proper numeric fields sorting
+            $('#datatable-1 thead').prepend('<tr role="row" class="units-row"></tr>');
             var arrayOfNumericFields = [];
             $('.tow-dataset-field-link.selected').each(function() {
                 if($(this).attr('f_type') == 'float' || $(this).attr('f_type') == 'int') {
@@ -1862,7 +1863,16 @@ Drupal.behaviors.inner_search = function(context) {
                 if (arrayOfNumericFields.indexOf(fieldName) != -1) {
                     arrayOfColumnIndices.push(index);
                 }
+                
+                //Adding units
+                if (data.units[index] != 'iWy2KupFUYKV4c9wmSrR' && data.units[index] != null && data.units[index] != undefined) {
+                    $('#datatable-1 thead tr.units-row').append('<th><span class="label">' + data.units[index] +'</span></th>');
+                } else {
+                    $('#datatable-1 thead tr.units-row').append('<th><span></span></th>');
+                }
             });
+            
+            
             
             //Custom sorting function
             jQuery.extend( jQuery.fn.dataTableExt.oSort, {
@@ -1872,22 +1882,10 @@ Drupal.behaviors.inner_search = function(context) {
                 },
 
                 "formatted_numbers-asc": function ( a, b ) {
-                    if(isNaN(a)) {
-                        return isNaN(b) ? 0 : -1;
-                    }
-                    else if (isNaN(b)) {
-                        return 1;
-                    }
                     return a - b;
                 },
 
                 "formatted_numbers-desc": function ( a, b ) {
-                    if(isNaN(a)) {
-                        return isNaN(b) ? 0 : 1;
-                    }
-                    else if (isNaN(b)) {
-                        return -1;
-                    }
                     return b - a;
                 }
             } );

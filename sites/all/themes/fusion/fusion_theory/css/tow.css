@@ -85,6 +85,10 @@
     background-image: url(../img/waiting.gif);
 }
 
+.bgi-grip {
+    background: url(../img/grip_sm.png) no-repeat scroll 50% 50% transparent;
+}
+
 .z9 {
     z-index: 9;
 }

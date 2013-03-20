@@ -579,6 +579,16 @@ function tow_ajax_handlers_refresh_search_results($nid) {
 
     // Generate new Save this search block output.
     $save_this_search = tow_saved_searches_save_search_block();
+    
+    //Generate table unit data
+    $current_table_nid = substr($path, strrpos($path, '/' ) + 1);
+    $current_table = node_load($current_table_nid);
+    if($current_table->type == 'table') {
+        $units = array();
+        foreach ($current_table->field_units as $unit) {
+            $units[] = $unit['value'];
+        }
+    }
 
     global $user;
 
@@ -589,6 +599,7 @@ function tow_ajax_handlers_refresh_search_results($nid) {
         'fields' => $fields['content'],
         'save_search' => $save_search['content'],
         'save_this_search' => ($user->uid) ? $save_this_search['content'] : NULL,
+        'units' => $units,
     );
 
     return drupal_json($json);

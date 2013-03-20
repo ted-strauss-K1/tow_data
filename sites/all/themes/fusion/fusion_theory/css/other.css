@@ -415,6 +415,11 @@ ul.menu li.leaf a.active{
     vertical-align: middle;
 }
 
+.page-search-dataset .dataTables_scrollHead tr.units-row th {
+    padding-top: 5px;
+    border-bottom: none;
+}
+
 button.ColVis_Button{
     float:right;
    /*margin-top: 10px;*/
