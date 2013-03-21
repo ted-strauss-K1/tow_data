@@ -1170,6 +1170,7 @@ function _tow_apachesolr_separate_table_fields($nid) {
                         'enum_options' => $enum_options,
                         'index' => $is_index,
                         'table_nid' => $table_node->nid,
+                        'unit' => $table_node->field_units[$x]['value'],
                     );
                     $fields[$weights_array[$index]] = $field;
                     tow_apachesolr_add_facet_field($f_fields, $field);

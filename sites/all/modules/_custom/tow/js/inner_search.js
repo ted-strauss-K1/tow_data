@@ -1849,12 +1849,18 @@ Drupal.behaviors.inner_search = function(context) {
             $('#block-tow-saved_searches_description div.content').append('<span class="search-description-rows"><strong>' + numberOfRows + ' row' + ifs + ' of results.</strong></span>');
             $('#tow-search-inner-save-search-form').children('div').children('[name="rows_amount"]').val(numberOfRows);
             
-            //Datatables proper numeric fields sorting
+            //Datatables proper numeric fields sorting && adding units
             $('#datatable-1 thead').prepend('<tr role="row" class="units-row"></tr>');
             var arrayOfNumericFields = [];
+            var arrayOfUnits = {};
             $('.tow-dataset-field-link.selected').each(function() {
                 if($(this).attr('f_type') == 'float' || $(this).attr('f_type') == 'int') {
                     arrayOfNumericFields.push($(this).text());
+                }
+                if ($(this).attr('unit') != 'iWy2KupFUYKV4c9wmSrR' && $(this).attr('unit') != null && $(this).attr('unit') != undefined) {
+                    arrayOfUnits[$(this).text()] = $(this).attr('unit');
+                } else {
+                    arrayOfUnits[$(this).text()] = '';
                 }
             });
             var arrayOfColumnIndices = [];
@@ -1863,16 +1869,13 @@ Drupal.behaviors.inner_search = function(context) {
                 if (arrayOfNumericFields.indexOf(fieldName) != -1) {
                     arrayOfColumnIndices.push(index);
                 }
-                
-                //Adding units
-                if (data.units[index] != 'iWy2KupFUYKV4c9wmSrR' && data.units[index] != null && data.units[index] != undefined) {
-                    $('#datatable-1 thead tr.units-row').append('<th><span class="label">' + data.units[index] +'</span></th>');
+                //Adding fields
+                if (arrayOfUnits[fieldName] != '') {
+                    $('#datatable-1 thead tr.units-row').append('<th><span class="label">' + arrayOfUnits[fieldName] +'</span></th>');
                 } else {
                     $('#datatable-1 thead tr.units-row').append('<th><span></span></th>');
                 }
             });
-            
-            
             
             //Custom sorting function
             jQuery.extend( jQuery.fn.dataTableExt.oSort, {

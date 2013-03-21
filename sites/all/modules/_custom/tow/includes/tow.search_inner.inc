@@ -303,6 +303,7 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
                     'class' => 'tow-dataset-field-link available',
                     'f_type' => $field['type'],
                     'tableset' => $tableset,
+                    'unit' => $field['unit'],
                 ),
             );
             $options['attributes']['class'] .= (in_array($field['title'] . '_' . $field['type'], $indeces)) ? ' index' : '';
@@ -326,7 +327,7 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
                 $href .= (empty($qsf) && empty($qf)) ? '' : '#?';
                 $href .= (empty($qf)) ? '' : 'filters=' . $qf;
                 $href .= (empty($qsf)) ? '' : ((empty($qf)) ? '' : '&') . 'selected_fields=' . check_plain($qsf);
-                $fields[$table_nid][] = "<button class='" . $options['attributes']['class'] . " btn btn-mini' href='" . $href . "' f_type='" . $options['attributes']['f_type'] . "' tableset='" . $options['attributes']['tableset'] . "'>" . $field['title'] . "</button>";
+                $fields[$table_nid][] = "<button class='" . $options['attributes']['class'] . " btn btn-mini' href='" . $href . "' f_type='" . $options['attributes']['f_type'] . "' tableset='" . $options['attributes']['tableset'] . "' unit='" . $options['attributes']['unit'] . "'>" . $field['title'] . "</button>";
             } else {
                 $fields[$table_nid][] = '<button class="tow-dataset-field-link btn btn-mini unavailable disabled"' . ' tableset="' . $options['attributes']['tableset'] . '">' . $field['title'] . '</button>';
             }

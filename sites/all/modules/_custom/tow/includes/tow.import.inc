@@ -711,6 +711,9 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
 
                     // Column titles.
                     $new_table->{$field_type}[]['value'] = $table['column_titles'][$col_index];
+                    
+                    //Units
+                    $new_table->field_units[]['value'] = 'iWy2KupFUYKV4c9wmSrR';
 
                     // Enum options if needed.
                 }
