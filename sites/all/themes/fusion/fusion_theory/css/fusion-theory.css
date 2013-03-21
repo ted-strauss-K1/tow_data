@@ -2383,6 +2383,7 @@ dt.profile-profile_bio
 #block-tow-saved_searches_description
 {
     width:700px !important;
+    margin-bottom: 0px;
 }
 #block-tow-saved_searches_description h2
 {

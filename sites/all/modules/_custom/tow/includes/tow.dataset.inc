@@ -622,7 +622,7 @@ function tow_dataset_hide_hash(&$node) {
 /**
  * Prepare two global variables for dataset badge block.
  */
-function tow_dataset_prepare_badge_block($node, $count_tables, $count_searches) {
+function tow_dataset_prepare_badge_block($node, $count_tables, $count_searches = 0) {
 	global $_tow_dataset_count_searches;
     $_tow_dataset_count_searches = $count_searches;
 
