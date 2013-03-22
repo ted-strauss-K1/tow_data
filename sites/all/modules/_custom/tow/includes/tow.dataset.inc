@@ -31,14 +31,21 @@ function tow_dataset_badge_block() {
     if (!isset($_tow_dataset_count_records)) {
         $_tow_dataset_count_records = 0;
     }
+	
+	// The same with the records.
+    global $_tow_dataset_count_searches;
+    if (!isset($_tow_dataset_count_searches)) {
+        $_tow_dataset_count_searches = 0;
+    }
 
     // Prepare theming parametres.
     $upoints = userpoints_get_current_points($_tow_dataset->uid, 'all');
     $posted_by = t('Posted by ') . l($_tow_dataset->name, 'user/' . $_tow_dataset->uid) . ' (' . $upoints . ')';
-    $count = $_tow_dataset_count_tables . t(' tables') . ' ' . $_tow_dataset_count_records . t(' rows');
+    $count = $_tow_dataset_count_tables . t(' tables ') . '| ' . $_tow_dataset_count_records . t(' rows');
     $added = t('Added ') . _tow_dataset_ago($_tow_dataset->created);
     $updated = t('Updated ') . _tow_dataset_ago($_tow_dataset->changed);
-    $access = t('Access is <span>') . tow_access_get_access_status($_tow_dataset->field_access_type[0]['value']) . '</span>';
+    $access = t('Access type: ') . tow_access_get_access_status($_tow_dataset->field_access_type[0]['value']);
+    $searches = $_tow_dataset_count_searches . t(' saved searches'); 
     global $_tow_dataset_statistics;
     $visits = $_tow_dataset_statistics['count'] . ' ' . t('views');
     global $user;
@@ -50,7 +57,7 @@ function tow_dataset_badge_block() {
 
     // Save the content of the block.
     $block['content'] = '';
-    $block['content'] .= theme('tow_theme_dataset_badge', $posted_by, $count, NULL, $added, $updated, $access, $visits);
+    $block['content'] .= theme('tow_theme_dataset_badge', $posted_by, $count, $searches, $added, $updated, $access, $visits);
 
     // Params for the user picture.
     $account = new stdClass;
@@ -86,6 +93,11 @@ function tow_dataset_share_block() {
     if (!isset($_tow_dataset_count_records)) {
         $_tow_dataset_count_records = 0;
     }
+	
+	global $_tow_dataset_count_searches;
+    if (!isset($_tow_dataset_count_search)) {
+        $_tow_dataset_count_search = 0;
+    }	
 
     // Prepare theming parametres.
     $path = isset($_GET['q']) ? $_GET['q'] : '<front>';
@@ -97,7 +109,7 @@ function tow_dataset_share_block() {
     $block['title'] = 'Share';
     $block['content'] = theme('tow_theme_dataset_share');
     $block['content'] .= '<p>' . $permalink . '</p>';
-    $block['content'] .= '<p>' . $embedding . '</p>';
+    //$block['content'] .= '<p>' . $embedding . '</p>';
 
     return $block;
 }
@@ -610,7 +622,9 @@ function tow_dataset_hide_hash(&$node) {
 /**
  * Prepare two global variables for dataset badge block.
  */
-function tow_dataset_prepare_badge_block($node, $count_tables) {
+function tow_dataset_prepare_badge_block($node, $count_tables, $count_searches = 0) {
+	global $_tow_dataset_count_searches;
+    $_tow_dataset_count_searches = $count_searches;
 
     global $_tow_dataset_count_tables;
     $_tow_dataset_count_tables = $count_tables;
@@ -816,7 +830,7 @@ function tow_dataset_summary(&$node) {
         }
     }
 
-    tow_dataset_prepare_badge_block($node, count($tables_list));
+    tow_dataset_prepare_badge_block($node, count($tables_list), $ss_qty);
 }
 
 /**

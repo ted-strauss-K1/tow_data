@@ -137,7 +137,7 @@ function tow_saved_searches_description_block() {
 
     // Construct block.
     $block = array();
-    $block['content'] = '<span class="saved_search_description-preamble" style="display:none;"><strong>Search description</strong></span>';
+    $block['content'] = '<span class="saved_search_description-preamble" style="display:none;"/>';
     
     //    
     //    TEMPORARILY DISABLED

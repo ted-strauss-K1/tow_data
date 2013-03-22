@@ -51,20 +51,20 @@ li.leaf, li.collapsed {
 }
 a:active {
     color: #717171;
-    font-weight: bold;
+    /*font-weight: bold;*/
 }
 a:visited {
     color: #717171;
-    font-weight: bold;
+    /*font-weight: bold;*/
 }
 a:link {
     color:#999999;
-    font-weight: bold;
+    /*font-weight: bold;*/
 }
 /* bold style of all menus bottons*/
 a:hover {
     text-decoration: none;
-    color: black;/*font-weight: bold;*/
+    color: black;
 }
 /*php my admin menu in datasets (overview, browse .etc...*/
 
@@ -76,6 +76,8 @@ a:hover {
 #content-content
 {
     overflow:hidden;
+    font-size:14px;
+    line-height:1.5em;
 }
 /* These styles create the dropdown menus. */
 #block-tow-pma_menu ul {
@@ -246,6 +248,8 @@ width: 710px;*/
 {
 }
 #sidebar-last-inner {
+	font-size:14px;
+    line-height:1.5em;
     width: 240px;
 }
 div.badge {
@@ -327,6 +331,18 @@ div.tow-highcharts-handle {
     padding-left:0px !important;
     width: 100% !important;
 }
+
+.dataTable table {
+    font-size: 14px;
+}
+.dataTable table th {
+    font-size: 14px;
+}
+.dataTable table td {
+    font-size: 14px;
+}
+
+
 .dataTables_scrollBody
 {
     /*height:auto !important;*/
@@ -2367,6 +2383,7 @@ dt.profile-profile_bio
 #block-tow-saved_searches_description
 {
     width:700px !important;
+    margin-bottom: 0px;
 }
 #block-tow-saved_searches_description h2
 {
