@@ -187,6 +187,69 @@ function tow_cck_saved_search_feature_content_default_fields() {
     ),
   );
 
+  // Exported field: field_selected_cell
+  $fields['saved_search-field_selected_cell'] = array(
+    'field_name' => 'field_selected_cell',
+    'type_name' => 'saved_search',
+    'display_settings' => array(
+      'weight' => '101',
+      'parent' => '',
+      'label' => array(
+        'format' => 'hidden',
+      ),
+      'teaser' => array(
+        'format' => 'hidden',
+        'exclude' => 1,
+      ),
+      'full' => array(
+        'format' => 'hidden',
+        'exclude' => 0,
+      ),
+      '4' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      '2' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      '3' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+      'token' => array(
+        'format' => 'default',
+        'exclude' => 0,
+      ),
+    ),
+    'widget_active' => '1',
+    'type' => 'text',
+    'required' => '0',
+    'multiple' => '0',
+    'module' => 'text',
+    'active' => '1',
+    'text_processing' => '0',
+    'max_length' => '',
+    'allowed_values' => '',
+    'allowed_values_php' => '',
+    'widget' => array(
+      'rows' => '5',
+      'size' => 60,
+      'default_value' => array(
+        '0' => array(
+          'value' => '',
+          '_error_element' => 'default_value_widget][field_selected_cell][0][value',
+        ),
+      ),
+      'default_value_php' => NULL,
+      'label' => 'Selected Cell',
+      'weight' => '101',
+      'description' => '',
+      'type' => 'text_textarea',
+      'module' => 'text',
+    ),
+  );
+
   // Exported field: field_selected_fields
   $fields['saved_search-field_selected_fields'] = array(
     'field_name' => 'field_selected_fields',
@@ -311,6 +374,7 @@ function tow_cck_saved_search_feature_content_default_fields() {
   t('Dataset NID');
   t('SC Hash');
   t('Search Constraints');
+  t('Selected Cell');
   t('Selected Fields');
   t('Table NID');
 
