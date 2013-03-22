@@ -66,7 +66,9 @@ function tow_saved_searches_list_block($nid = NULL) {
       <a class="accordion-toggle toggle'.$x.'" data-toggle="collapse" data-parent="#accordion" href="#collapse' . $x . '">';
         $total_votes = _votingapi_get_standard_results('node', $node->nid);
         $add_votes = isset($total_votes['vote']['points']['sum']) ? $total_votes['vote']['points']['sum'] : '';
-        $output .= $node->title . '<span> ' . $add_votes . ' </span></a></div>';
+        $selected_cell = explode(',', $node->field_selected_cell[0]['value']);
+        $add_cell = $node->field_selected_cell[0]['value'] != '' ? ('<span class="label label-info" x="' . $selected_cell[2] . '" y="' . $selected_cell[3] . '">' . $selected_cell[0] . '=' . $selected_cell[1] . '</span>') : '';
+        $output .= $node->title . '<span> ' . $add_votes . ' </span></a>' . $add_cell . '</div>';
         $output .= '<div id="collapse' . $x . '" class="accordion-body collapse"><div class="accordion-inner">';
         $output .= node_view($node);
         if (function_exists('comment_render') && $node->comment) {
@@ -275,9 +277,12 @@ function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
 
     //Saved search tags
     $ss_tags = $form['ss_tags']['#value'];
+    
+    //Saved search selected cell
+    $selected_cell = $form['selected_cell']['#value'];
 
     // Create saved search.
-    $saved_search = tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters, $selected_fields, $rows_amount);
+    $saved_search = tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters, $selected_fields, $selected_cell, $rows_amount);
 
     // Put it to the form.
     $form_state['#saved_search'] = $saved_search;
@@ -393,7 +398,7 @@ function tow_saved_searches_get_selected_fields($selected_fields) {
 /**
  * Constructs a Saved Search node object.
  */
-function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters, $selected_fields, $rows_amount = 0) {
+function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters, $selected_fields, $selected_cell, $rows_amount = 0) {
     module_load_include('inc', 'node', 'node.pages');
 
     // Prepare a new Saved Search object.
@@ -440,6 +445,9 @@ function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $f
     $saved_search->field_search_constraints[0]['value'] = $filters;
     $saved_search->field_selected_fields[0]['value'] = $selected_fields;
 
+    //Save selected cell
+    $saved_search->field_selected_cell[0]['value'] = $selected_cell;
+    
     // Calculate a hash.
     $saved_search->field_sc_hash[0]['value'] = md5($saved_search->field_search_constraints[0]['value'] . ' ' . $saved_search->field_selected_fields[0]['value']);
 

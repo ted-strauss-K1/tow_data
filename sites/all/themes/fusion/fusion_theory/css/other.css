@@ -601,3 +601,9 @@ ul.dropdown-menu li:hover{
      
     
 }
+
+/*-----Styles for selected Ccells in datatables------*/
+table#datatable-1 td.selected-cell {
+    border: 3px solid #3366FF;
+    background-color: #49AFFF;
+}
