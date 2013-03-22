@@ -81,6 +81,8 @@ function tow_settings_saved_search_feature_strongarm() {
     'options' => '0',
     'comment_settings' => '1',
     'menu' => '-3',
+    'taxonomy' => '-3',
+    'creativecommons' => '100',
     'vud_node_widget_display' => '-10',
   );
   $export['content_extra_weights_saved_search'] = $strongarm;
