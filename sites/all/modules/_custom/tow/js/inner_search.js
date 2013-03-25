@@ -1680,7 +1680,7 @@ Drupal.behaviors.inner_search = function(context) {
     function innerSearchProcessing(filtersToSend, selectedFieldsToSend) {
         
         var urlISA = 'http://' + window.location.hostname + window.location.pathname + '/refresh_ajax' + window.location.hash;
-
+        
         // Disabling other widget choice while AJAX proceed.
         /*$('#tow-search-inner-hash-form').after('<div id="modalDiv" style="position:absolute;top:0px;left:0px;display:none;cursor:progress;z-index:100;"></div>');
 
@@ -1691,26 +1691,6 @@ Drupal.behaviors.inner_search = function(context) {
         overlay.show();
 
         var zoomsToSend = JSON.stringify(arrayOfZooms);
-
-        // Preserving user-selected collapsibility.
-        function preserveCollapsibility() {
-
-            $('.tow-inner-search-widget fieldset').each(function() {
-                var field = $(this).find('[name="field"]').val();
-                var collapsed;
-
-                if ($(this).hasClass('collapsed')) {
-                    collapsed = true;
-                }
-                else {
-                    collapsed = false;
-                }
-
-                arrayOfCollapse[field] = {
-                    'collapsed': collapsed
-                };
-            });
-        }
 
         function updateOnInnerSearchSuccess(data) {
 
@@ -1724,7 +1704,6 @@ Drupal.behaviors.inner_search = function(context) {
             }
 
             // Returns collapsibility&autocomplete.
-            Drupal.behaviors.collapse();
             Drupal.behaviors.autocomplete();
             
             //Hide disabling overlay with throbber
@@ -1738,7 +1717,6 @@ Drupal.behaviors.inner_search = function(context) {
                 }
             });
 
-            initialArrayOfWidgets = $('.tow-inner-search-widget').get();
             $('.apachesolr-hidden-facet', context).addClass('hidden');
 
             $('<a href="#" class="apachesolr-showhide"></a>')
@@ -1747,13 +1725,6 @@ Drupal.behaviors.inner_search = function(context) {
                 searchFacetsMoreFewer(e, $(this));
             })
             .appendTo($('.item-list:has(.apachesolr-hidden-facet)', context));
-
-            if (sortCurrentTitleDirection != '') {
-                sortWidgets('title', sortCurrentTitleDirection);
-            }
-            if (sortCurrentTypeDirection != '') {
-                sortWidgets('type', sortCurrentTypeDirection);
-            }
 
             $('a.apachesolr-facet, a.apachesolr-hidden-facet, .tow-inner-search-selected').live('click', function(e) {
                 searchFacetClickUpdate(e, $(this));
@@ -2055,9 +2026,6 @@ Drupal.behaviors.inner_search = function(context) {
                 'filters' : filtersToSend,
                 'zoom' : zoomsToSend,
                 'selected_fields' : selectedFieldsToSend
-            },
-            beforeSend: function() {
-                preserveCollapsibility();
             },
             success: function(data) {
                 updateOnInnerSearchSuccess(data);
