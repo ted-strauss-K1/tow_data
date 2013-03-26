@@ -243,7 +243,6 @@ function tow_search_inner_within_dataset($nid, $ajax = FALSE) {
     drupal_add_css(drupal_get_path('module', 'tow') . '/js/itpoverlay/itpoverlay.css');
     drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/Scroller/media/js/dataTables.scroller.js');
     drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/ColVis/media/js/ColVis.js');
-    drupal_add_js(drupal_get_path('module', 'datatables') . '/dataTables/extras/KeyTable/js/KeyTable.js');
 
     // Return results.
     if ($results) {

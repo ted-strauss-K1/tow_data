@@ -60,6 +60,11 @@ function tow_inner_search_search_page($results) {
     );
 
     // DataTable theming.
+    foreach($results as $key=>$record) {
+        if(is_numeric($key)) {
+            $results['rows'][$key]['nid'] = $record['node']->nid;
+        }
+    }
 
     foreach ($results['rows'] as $index => $row) {
         foreach ($row['data'] as $key => $value) {

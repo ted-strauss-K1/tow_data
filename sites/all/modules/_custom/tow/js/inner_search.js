@@ -29,8 +29,7 @@ Drupal.behaviors.inner_search = function(context) {
     var expandedSavedSearchId = ''; //Saved search expanded.
     var minCur; // Current active chart minimum.
     var maxCur; // Current active chart maximum.
-    var arraySelectedCellXY = [null,null];
-
+    var arraySelectedCell = [];
 
 
     /* ****************************************************************************************************
@@ -276,9 +275,38 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
     //Accordion shown event
-    $('#accordion').on('shown', function (e) {
-        var spanXY = $(e.target).closest('div.accordion-group').find('span.label-info');
-        arraySelectedCellXY = [spanXY.attr('x'),spanXY.attr('y')];
+    $('#accordion', context).live('shown', function (e) {
+        var spanSCell = $(e.target).closest('div.accordion-group').find('span.label-info');
+        arraySelectedCell = [spanSCell.attr('c_row'), spanSCell.attr('c_index')];
+    });
+    
+    /***** Datatables *****/
+    
+    //Selected cell
+    $('#datatable-1 tbody tr td', context).live('click', function() {
+        if ($(this).hasClass('selected-cell')) {
+            $(this).removeAttr('c_row c_index');
+            $(this).removeClass('selected-cell');
+        } else {
+            $('.selected-cell').removeAttr('c_row c_index c_value c_field');
+            $('.selected-cell').removeClass('selected-cell');
+            $(this).addClass('selected-cell');
+            var c_row = $(this).closest('tr').attr('nid');
+            var c_index = $(this).index();
+            var c_value = $(this).text();
+            var c_field = $('table.dataTable thead tr:eq(1) th:eq(' + c_index + ')').text();
+            $(this).attr('c_row', c_row);
+            $(this).attr('c_index', c_index);
+            $(this).attr('c_value', c_value);
+            $(this).attr('c_field', c_field);
+        }
+    });
+    //Remove selection on Esc pressing
+    $(document).keyup(function(e) {
+        if (e.which == 27) {
+            $('.selected-cell').removeAttr('c_row c_index c_value c_field');
+            $('.selected-cell').removeClass('selected-cell');
+        }
     });
     
     /* ****************************************************************************************************
@@ -1922,39 +1950,10 @@ Drupal.behaviors.inner_search = function(context) {
                 "sWidth": ''
             });
             
-            //KeyTable
-            var keys = new KeyTable( {
-                "table": document.getElementById('datatable-1'),
-                "datatable": oTable,
-                "focus": arraySelectedCellXY
-            } );
-            /* Event listener for all cells */
-            keys.event.focus( null, null, function(nCell, x, y) {
-                /* handler for focus events on all cells ... */
-                $('.selected-cell').removeAttr('x');
-                $('.selected-cell').removeAttr('y');
-                $('.selected-cell').removeClass('selected-cell');
-                $(nCell).addClass('selected-cell');
-                $(nCell).attr('x', x);
-                $(nCell).attr('y', y);
-                var cell_value = $(nCell).text();
-                var cell_field = $('table.dataTable thead tr:eq(1) th:eq(' + x +')').text();
-                $(nCell).attr('cell_value', cell_value);
-                $(nCell).attr('cell_field', cell_field);
-                $(nCell).live('click', function() {
-                    $('.selected-cell').removeAttr('x y cell_value cell_field');
-                    $('.selected-cell').removeClass('selected-cell focus');
-                });
-            } );
-            keys.event.esc( null, null, function() {
-                /* handler for escape events on all cells ... */
-                $('.selected-cell').removeAttr('x');
-                $('.selected-cell').removeAttr('y');
-                $('.selected-cell').removeAttr('cell_value');
-                $('.selected-cell').removeAttr('cell_field');
-                $('.selected-cell').removeClass('selected-cell focus');
-            } );
-
+            //Datatables selected cell
+            $('#datatable-1 tbody tr[nid="' + arraySelectedCell[0] + '"] td:eq(' + arraySelectedCell[1] + ')').trigger('click');
+            arraySelectedCell.length = 0;
+            
             $(".dataTables_scroll").jScrollPane({
                 showArrows: true
             });
@@ -2078,7 +2077,7 @@ Drupal.behaviors.inner_search = function(context) {
         var rowsAmount = $('#edit-rows-amount').val();
         var sSComment = $('#edit-ss-comment').val();
         var sSTags = $('#edit-ss-tags').val();
-        var sSSelectedCell = $('.selected-cell').attr('cell_field') + ',' + $('.selected-cell').attr('cell_value') + ',' + $('.selected-cell').attr('x') + ',' + $('.selected-cell').attr('y');
+        var sSSelectedCell = ($('.selected-cell').length > 0) ? ($('.selected-cell').attr('c_field') + ',' + $('.selected-cell').attr('c_value') + ',' + $('.selected-cell').attr('c_row') + ',' + $('.selected-cell').attr('c_index')) : '';
         var arrayOfSavedSearches = [];
 
         /**
