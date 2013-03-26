@@ -263,7 +263,7 @@ function tow_search_inner_within_dataset($nid, $ajax = FALSE) {
 function tow_search_inner_field_list_block_form($form_state, $dataset, $selected_fields = array()) {
     $form = array();
     
-    list($nid, $selected_tableset, $tables) = tow_search_inner_get_selected_tables($dataset, $selected_fields);
+    list($nid, $selected_tableset, $tables) = tow_search_inner_get_selected_tables($dataset->nid, $selected_fields);
     $nid = explode('+', $nid);
     if (count($nid) == 1 && !$nid[0]) {
         $nid = array();
@@ -338,8 +338,8 @@ function tow_search_inner_field_list_block_form($form_state, $dataset, $selected
     $form['fields_list']['#value'] = '';
     $index = 1;
     foreach ($fields as $table_nid => $table_fields) {
-        $table = node_load($table_nid);
-        $fields_list = '<h5>' . filter_xss($table->title) . '</h5><div class="btn-group table-field-buttons-' . $index . '" data-toggle="buttons-checkbox">';
+        $title = db_result(db_query("SELECT n.title AS title FROM {node} n WHERE n.nid = %d", $table_nid));
+        $fields_list = '<h5>' . filter_xss($title) . '</h5><div class="btn-group table-field-buttons-' . $index . '" data-toggle="buttons-checkbox">';
         foreach ($table_fields as $f) {
             $fields_list .= $f;
         }
@@ -1132,10 +1132,12 @@ function tow_search_inner_graph_widget($field, $type, $path, $facet_counts, $emp
  */
 function tow_search_inner_get_dataset_nid($table_nid) {
     $table_nids = is_numeric($table_nid) ? array(0 => $table_nid) : explode('+', $table_nid);
-    $table = node_load($table_nids[0]);
+    $query = db_query("SELECT n.nid AS nid, n.vid AS vid, n.type AS type FROM {node} n WHERE n.nid = %d", $table_nids[0]);
+    $node = db_fetch_object($query);
     
-    if ($table->type == 'table') {
-        $dataset_nid = $table->field_dataset[0]['value'];
+    if ($node->type == 'table') {
+        $fields = content_storage('load', $node);
+        $dataset_nid = $fields['field_dataset'];
     }
     else {
         $dataset_nid = $table_nid;
@@ -1150,11 +1152,11 @@ function tow_search_inner_get_dataset_nid($table_nid) {
 function tow_search_inner_get_nid() {
 
     $path = explode('/', $_GET['q']);
-    $dataset = node_load($path[1]);
+    $dataset_nid = $path[1];
     $selected_fields = (isset($_GET['selected_fields'])) ? json_decode($_GET['selected_fields'], TRUE) : array();
 
     if (!empty($selected_fields)) {
-        $return = tow_search_inner_get_selected_tables($dataset, $selected_fields, 'nid');
+        $return = tow_search_inner_get_selected_tables($dataset_nid, $selected_fields, 'nid');
     }
     else {
         $return = count($path) >= 2 ? $path[1] : FALSE;
@@ -1167,13 +1169,13 @@ function tow_search_inner_get_nid() {
 /**
  * Defines a set of tables which the selected fields are relevant to.
  */
-function tow_search_inner_get_selected_tables($dataset, $selected_fields = array(), $return = 'all') {
+function tow_search_inner_get_selected_tables($dataset_nid, $selected_fields = array(), $return = 'all') {
     $nid = array();
     $selected_tableset = array();
 
     // Define selected tableset and nid of the selected table.
     $fields = array();
-    list($tables, $tablesets) = tow_search_inner_linked_build_tablesets($dataset->nid);
+    list($tables, $tablesets) = tow_search_inner_linked_build_tablesets($dataset_nid);
     
     $linking_fields = array();
     foreach ($tablesets as $tableset) {
