@@ -44,7 +44,6 @@ function fusion_theory_links($links, $attributes = array('class' => '')) {
   $output = '';
   
   if (count($links) > 0) {
-  	dpm($links);
 	  
     $output = '<div'. drupal_attributes($attributes) .'>';
 
