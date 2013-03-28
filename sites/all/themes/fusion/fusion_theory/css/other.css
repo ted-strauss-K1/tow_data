@@ -532,6 +532,19 @@ button.ColVis_Button{
     max-height: 130px;
     min-height: 26px;
     height: auto;
+    width: 210px;
+    margin-left: 0;
+}
+
+.page-search-dataset .tow-inner-search-widget .ms-container .ms-list.ms-focus {
+    border-color: #BBBDBA;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset, 0 0 8px #BBBDBA;
+    outline: 0 none;
+}
+
+.page-search-dataset .tow-inner-search-widget div.select-all {
+    float:left;
+    margin: 0 10px;
 }
 
 .page-search-dataset .tow-inner-search-widget div.ms-selection ul.ms-list {
