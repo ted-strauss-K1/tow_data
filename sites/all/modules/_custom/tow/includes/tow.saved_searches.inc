@@ -449,7 +449,7 @@ function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $f
     $saved_search->field_selected_cell[0]['value'] = $selected_cell;
     
     // Calculate a hash.
-    $saved_search->field_sc_hash[0]['value'] = md5($saved_search->field_search_constraints[0]['value'] . ' ' . $saved_search->field_selected_fields[0]['value']);
+    $saved_search->field_sc_hash[0]['value'] = md5($saved_search->field_search_constraints[0]['value'] . ' ' . $saved_search->field_selected_fields[0]['value'] . ' ' . $saved_search->field_selected_cell[0]['value']);
 
     // Check if the search already exists.
     $exists = tow_saved_searches_check_exists($saved_search);

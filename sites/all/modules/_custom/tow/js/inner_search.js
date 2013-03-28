@@ -2057,6 +2057,10 @@ Drupal.behaviors.inner_search = function(context) {
             }
             else {
                 $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
+                
+                //Minimize&clear saved search textarea
+                $('#edit-ss-comment').removeClass('h200').val('');
+                $('#edit-ss-tags').val('');
 
                 //Returns voting AJAX&flag bookmarks
                 Drupal.behaviors.CToolsAJAX();
