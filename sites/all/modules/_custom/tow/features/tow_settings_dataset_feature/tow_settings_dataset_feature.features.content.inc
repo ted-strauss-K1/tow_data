@@ -105,7 +105,7 @@ function tow_settings_dataset_feature_content_default_fields() {
     'widget_active' => '1',
     'type' => 'filefield',
     'required' => '0',
-    'multiple' => '5',
+    'multiple' => '1',
     'module' => 'filefield',
     'active' => '1',
     'list_field' => '0',
@@ -173,7 +173,7 @@ function tow_settings_dataset_feature_content_default_fields() {
     'widget_active' => '1',
     'type' => 'text',
     'required' => '0',
-    'multiple' => '10',
+    'multiple' => '1',
     'module' => 'text',
     'active' => '1',
     'text_processing' => '0',
@@ -235,7 +235,7 @@ function tow_settings_dataset_feature_content_default_fields() {
     'widget_active' => '1',
     'type' => 'text',
     'required' => '0',
-    'multiple' => '10',
+    'multiple' => '1',
     'module' => 'text',
     'active' => '1',
     'text_processing' => '0',
@@ -549,7 +549,7 @@ function tow_settings_dataset_feature_content_default_fields() {
     'widget_active' => '1',
     'type' => 'link',
     'required' => '0',
-    'multiple' => '5',
+    'multiple' => '1',
     'module' => 'link',
     'active' => '1',
     'attributes' => array(
@@ -569,7 +569,6 @@ function tow_settings_dataset_feature_content_default_fields() {
     'widget' => array(
       'default_value' => array(
         '0' => array(
-          'title' => '',
           'url' => '',
         ),
       ),
