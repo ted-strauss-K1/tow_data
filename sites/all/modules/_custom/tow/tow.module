@@ -380,6 +380,20 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
         case 'apachesolr_settings':
             tow_apachesolr_form_alter($form, $form_state, $form_id);
             break;
+        
+        case 'content_add_more_js':
+            foreach ($form as $field) {
+                $field_name = $field['#field_name'];
+                $field_count = count(array_filter(array_keys($field), 'is_numeric'));
+                $add_more = $field_name . '_add_more';
+                if (($field_name == 'field_creator_person' || $field_name == 'field_creator_organization') && $field_count > 9) {
+                    unset($form[$field_name][$add_more]);
+                }
+                elseif (($field_name == 'field_source_url' || $field_name == 'field_attachments') && $field_count > 4) {
+                    unset($form[$field_name][$add_more]);
+                }
+            }
+            break;
     }
 
     // Altering deletion and truncation forms.

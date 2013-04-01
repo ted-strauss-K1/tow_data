@@ -21,5 +21,9 @@ Drupal.behaviors.dataset_tags = function(context) {
             }
         }
     });
+    
+    $('div.filefield-upload input[type="file"]').each(function() {
+        $(this).removeAttr('disabled');
+    });
   
 }
