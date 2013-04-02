@@ -1925,16 +1925,12 @@ Drupal.behaviors.inner_search = function(context) {
             $('#datatable-1 tbody tr[nid="' + arraySelectedCell[0] + '"] td:eq(' + arraySelectedCell[1] + ')').trigger('click');
             arraySelectedCell.length = 0;
             
-            $(".dataTables_scroll").jScrollPane({
-                showArrows: true
-            });
-
             $(".ColVis_Button.TableTools_Button.ColVis_MasterButton").append('<i class="icon-filter"></i>');
 
             /* This is a scroller implementation */
 
 
-            var jsp_element = $(".dataTables_scroll").jScrollPane({
+            var jsp_element = $("#datatable-1_wrapper .dataTables_scroll").jScrollPane({
                 showArrows: true
             });
 
@@ -1942,7 +1938,7 @@ Drupal.behaviors.inner_search = function(context) {
                 var jsp_api = jsp_element.data('jsp');
                 var scrollableX = jsp_api.getIsScrollableH();
 
-                var access = $(".dataTables_scrollHead");
+                var access = $("#datatable-1_wrapper .dataTables_scroll .dataTables_scrollHead");
 
                 $('#InnerSearchTab').click(function() {
                     setTimeout(function () {
@@ -1952,7 +1948,7 @@ Drupal.behaviors.inner_search = function(context) {
                 var pos = access.offset();
                 $(window).scroll(function() {
 
-                    if (pos != null && $(this).scrollTop() > pos.top - $(window).height() + $(".dataTables_scrollHead").height() + 25) {
+                    if (pos != null && ($(this).scrollTop() > (pos.top - $(window).height() + $(".dataTables_scrollHead").height() + 25))) {
                         $(".jspHorizontalBar").addClass('fixed_jspHorizontalBar');
 
                     } else {
@@ -1963,10 +1959,13 @@ Drupal.behaviors.inner_search = function(context) {
                         access.addClass('fixed_head');
                         access.stop().animate({
                             marginTop: $(window).scrollTop() - pos.top
-                        },0);
+                        }, 0);
 
                     } else {
                         access.removeClass('fixed_head');
+                        access.stop().animate({
+                            marginTop: 0
+                        }, 0);
                     }
                 });
                 /* Here is a function, that allows a horizontal scrolling via mouse scroll (+ jquery.mousewheel.min.js */
