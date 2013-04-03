@@ -24,6 +24,14 @@
     text-align: left;
 }
 
+/* Browse dataset */
+.node-type-dataset .content-content div.clear-block .metadata .metadata-label {
+    /*font-weight: bold;*/
+}
+.node-type-dataset .content-content div.clear-block .metadata div.field_output {
+    margin-left: 20px;
+}
+
 /* js hide() css() class substitutes*/
 .hidden {
     display: none;

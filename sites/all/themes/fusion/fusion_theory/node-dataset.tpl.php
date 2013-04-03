@@ -83,6 +83,17 @@
   </div>
   
   <div class="clear-block">
+    <?php if ($summary['metadata']): ?>
+      <div class="metadata">
+    	<span class="metadata-label">Metadata</span>     
+        <?php foreach ($summary['metadata'] as $field => $field_output): ?>
+          <div class="field_output <?php print $field ?>"><?php print $field_output ?></div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+  </div>
+  
+  <div class="clear-block">
     <?php if ($summary['admin_tasks']): ?>
       <div class="h20"></div>
       <div class="administrator-tasks">

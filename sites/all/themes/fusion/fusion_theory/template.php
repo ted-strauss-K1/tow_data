@@ -39,7 +39,14 @@ function fusion_theory_preprocess_page(&$vars) {
   }
 }
 
-function fusion_theory_links($links, $attributes = array('class' => 'links')) {
+/**
+ * Custom function to change taxonomy terms output
+ * @global type $language
+ * @param type $links
+ * @param type $attributes
+ * @return string
+ */
+function fusion_theory_taxonomy_terms_links($links, $attributes = array('class' => 'links')) {
   global $language;
   $output = '';
   
@@ -98,7 +105,7 @@ function fusion_theory_links($links, $attributes = array('class' => 'links')) {
 
 function fusion_theory_preprocess_node(&$variables) {
   $node = $variables['node'];
-  $variables['terms'] = theme('links', $variables['taxonomy'], array('class' => 'tags_btns'));
+  $variables['terms'] = fusion_theory_taxonomy_terms_links($variables['taxonomy'], array('class' => 'tags_btns'));
 }
 
 /**

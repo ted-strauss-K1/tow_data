@@ -2169,6 +2169,10 @@ Drupal.behaviors.inner_search = function(context) {
         var cid = selector.attr('href').split('/')[3];
 
         var dataset = window.location.pathname.split('/')[2];
+        
+        //Throbber
+        var overlay = new ItpOverlay("block-tow-saved_searches_list");
+        overlay.show();
 
         /**
          * Comment deleting.
@@ -2178,6 +2182,9 @@ Drupal.behaviors.inner_search = function(context) {
             //Returns voting AJAX&flag bookmarks
             Drupal.behaviors.CToolsAJAX();
             Drupal.flagLink();
+            
+            //Remove throbber
+            overlay.hide();
             
             //Taxonomy terms as Bootstrap pills
             termLinksPills();
@@ -2281,6 +2288,10 @@ Drupal.behaviors.inner_search = function(context) {
         subject = selector.parent().parent().find('[name="comment"]').val();
 
         var dataset = window.location.pathname.split('/')[2];
+        
+        //Throbber
+        var overlay = new ItpOverlay("block-tow-saved_searches_list");
+        overlay.show();
 
         /**
          * Comment saving.
@@ -2290,6 +2301,9 @@ Drupal.behaviors.inner_search = function(context) {
             //Returns voting AJAX&flag bookmarks
             Drupal.behaviors.CToolsAJAX();
             Drupal.flagLink();
+            
+            //Remove throbber
+            overlay.hide();
             
             //Taxonomy terms as Bootstrap pills
             termLinksPills();

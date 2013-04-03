@@ -837,7 +837,61 @@ function tow_dataset_summary(&$node) {
             $node->summary['saved_searches']['short_list'] = theme_item_list($ss_list, NULL, 'ul');
         }
     }
+    
+    //METADATA
+    //License
+    $node->summary['metadata']['license'] = '<span class="license-title">License: </span>' . t($node->cc->name);
 
+    //Creator person
+    $creator_pers = array();
+    foreach ($node->field_creator_person as $creator) {
+        if ($creator['value'] != '') {
+            $creator_pers[] = $creator['value'];
+        }
+    }
+    if (!empty($creator_pers)) {
+        $s = (count($creator_pers) != 1) ? 's' : '';
+        $node->summary['metadata']['creator_person'] = '<span class="license-title">Creator' . $s . ': </span>' . implode(', ', $creator_pers);
+    }
+    
+    //Creator organization
+    $creator_org = array();
+    foreach ($node->field_creator_organization as $org) {
+        if ($org['value'] != '') {
+            $creator_org[] = $org['value'];
+        }
+    }
+    if (!empty($creator_org)) {
+        $s = (count($creator_org) != 1) ? 's' : '';
+        $node->summary['metadata']['creator_organization'] = '<span class="license-title">Creator organization' . $s . ': </span>' . implode(', ', $creator_org);
+    }
+    
+    //Alternative title
+    if ($node->field_alternative_title[0]['value']) {
+        $node->summary['metadata']['alt_title'] = '<span class="license-title">Alternative Title: </span>' . $node->field_alternative_title[0]['value'];
+    }
+    
+    //Publisher original
+    if ($node->field_publisher_original[0]['value']) {
+        $node->summary['metadata']['publisher'] = '<span class="license-title">Publisher: </span>' . $node->field_publisher_original[0]['value'];
+    }
+    
+    //Source URL
+    $source_url = array();
+    foreach ($node->field_source_url as $url) {
+        if ($url['url']) {
+            $source_url[] = $url['url'];
+        }
+    }
+    if (!empty($source_url)) {
+        $node->summary['metadata']['source_url'] = theme_item_list($source_url, 'Source URL:', 'ul');
+    }
+    
+    //Geo location
+    if (($node->field_geo_location[0]['city'] != '') && ($node->field_geo_location[0]['country_name'] != '')) {
+        $node->summary['metadata']['geo_location'] = t($node->field_geo_location[0]['city'] . ', ' . $node->field_geo_location[0]['country_name']);
+    }
+    
     tow_dataset_prepare_badge_block($node, count($tables_list), $ss_qty);
 }
 
