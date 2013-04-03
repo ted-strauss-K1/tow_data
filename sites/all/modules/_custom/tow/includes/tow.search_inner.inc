@@ -1110,7 +1110,9 @@ function tow_search_inner_get_tag_attribute($html, $tag, $attr) {
  
    // Load the HTML in DOM
    $doc = new DOMDocument();
+   $errorLevel = error_reporting(0);
    $doc->loadHTML($html);
+   error_reporting($errorLevel);
  
    // Then select all anchor tags
    $all_anchor_tags = $doc->getElementsByTagName($tag);
@@ -1118,6 +1120,16 @@ function tow_search_inner_get_tag_attribute($html, $tag, $attr) {
       $attribute = $_tag->getAttribute($attr);
    }
   return $attribute;
+}
+
+/**
+ * Skips warnings from function above
+ */
+function my_error_handler() {
+  if (error_reporting() == 0) {
+    return; // do nothing when error_reporting is disabled.
+  }
+  // normal error handling here
 }
 
 /**
@@ -1648,7 +1660,7 @@ function _tow_search_inner_facet_trim_text($facet, &$options) {
             'html' => TRUE,
             'ellipsis' => TRUE,
             'word_boundary' => FALSE,
-            'max_length' => 15, //INITIAL VALUE :15 - TEMPORARILY CED TO PROPER FUNCTIONALITY AFTER SELECT GENERATION
+            'max_length' => 80, //INITIAL VALUE :15 - TEMPORARILY CED TO PROPER FUNCTIONALITY AFTER SELECT GENERATION
         );
 
         return views_trim_text($alter, $facet);

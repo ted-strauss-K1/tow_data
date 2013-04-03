@@ -173,10 +173,10 @@ function tow_search_outer_tabs_block() {
 
     // A set of links.
     $items = array();
-    $items['featured'] = tow_search_outer_tab_link($tab, 'Featured', 'featured', TRUE);
+    #TEMPORARILY DISABLED $items['featured'] = tow_search_outer_tab_link($tab, 'Featured', 'featured', TRUE);
     $items['newest'] = tow_search_outer_tab_link($tab, 'Newest', 'newest');
     $items['popular'] = tow_search_outer_tab_link($tab, 'Popular', 'popular');
-    $items['debated'] = tow_search_outer_tab_link($tab, 'Debated', 'debated', TRUE);
+    #TEMPORARILY DISABLED $items['debated'] = tow_search_outer_tab_link($tab, 'Debated', 'debated', TRUE);
     global $user;
     $items['newdataset'] = ($user->uid) ? l('New dataset', 'node/add/dataset') : l('New dataset', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal')));
 
@@ -274,7 +274,10 @@ function tow_search_outer_filter_form($form_state) {
     }
 
     //Rows
-$options = tow_apachesolr_facet_menu_solr_range(
+/*TEMPORARILY DISABLED
+ $options = tow_apachesolr_facet_menu_solr_range(
+ 
+
             'sis_tow_amount_records', array(
         '0' => t('any'),
         '10' => t('10+'),
@@ -296,13 +299,30 @@ $options = tow_apachesolr_facet_menu_solr_range(
         '#value' => $value,
         '#type' => 'item',
     );
+ * 
+ */
   
+    $form['size'] = array(
+    '#type' => 'select',
+    '#options' => tow_apachesolr_facet_menu_solr_range('sis_tow_amount_records', array(
+      '0' => t('any'),
+      '10' => t('10+'),
+      '100' => t('100+'),
+      '500' => t('500+'),
+      '1000' => t('1000+'),
+      '2000' => t('2000+'),
+      '5000' => t('5000+'),
+    ), TRUE),
+    '#title' => t('# rows'),  
+  );
+    
     if ($nopost && $value = $values['size']) {
         $form['size']['#value'] = $value;
     }
 
     //Searches  
-  $options = tow_apachesolr_facet_menu_solr_range('sis_tow_amount_saved_searches', array(
+  /*TEMPORARILY DISABLED
+    $options = tow_apachesolr_facet_menu_solr_range('sis_tow_amount_saved_searches', array(
       '0' => t('any'),
       '1' => t('1+'),
       '5' => t('5+'),
@@ -321,7 +341,22 @@ $options = tow_apachesolr_facet_menu_solr_range(
         '#value' => $value,
         '#type' => 'item',
     );
+   * 
+   */
 
+    $form['saved_searches'] = array(
+    '#type' => 'select',
+    '#options' => tow_apachesolr_facet_menu_solr_range('sis_tow_amount_saved_searches', array(
+      '0' => t('any'),
+      '1' => t('1+'),
+      '5' => t('5+'),
+      '10' => t('10+'),
+      '20' => t('20+'),
+      '50' => t('50+'),
+    ), TRUE),
+    '#title' => t('# searches'),
+    );
+    
     if ($nopost && $value = $values['saved_searches']) {
         $form['saved_searches']['#value'] = $value;
     }

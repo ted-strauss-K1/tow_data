@@ -39,7 +39,7 @@ function fusion_theory_preprocess_page(&$vars) {
   }
 }
 
-function fusion_theory_links($links, $attributes = array('class' => '')) {
+function fusion_theory_links($links, $attributes = array('class' => 'links')) {
   global $language;
   $output = '';
   
@@ -64,26 +64,30 @@ function fusion_theory_links($links, $attributes = array('class' => '')) {
           && (empty($link['language']) || $link['language']->language == $language->language)) {
         $class .= ' active';
       }
-      $output .= '<div class="btn btn-small">'; //. drupal_attributes(array('class' => $class)) .'>';
+      
+      if (!in_array($key, array("vud_node_votes_count", "vud_comment_votes_count"))) {
+        
+        $output .= '<div class="btn btn-small">'; //. drupal_attributes(array('class' => $class)) .'>';
 
-      if (isset($link['href'])) {
-        // Pass in $link as $options, they share the same keys.
-        $output .= l($link['title'], $link['href'], $link);
-      }
-      else if (!empty($link['title'])) {
-        // Some links are actually not links, but we wrap these in <span> for adding title and class attributes
-        if (empty($link['html'])) {
-          $link['title'] = check_plain($link['title']);
+        if (isset($link['href'])) {
+          // Pass in $link as $options, they share the same keys.
+          $output .= l($link['title'], $link['href'], $link);
         }
-        $span_attributes = '';
-        if (isset($link['attributes'])) {
-          $span_attributes = drupal_attributes($link['attributes']);
+        else if (!empty($link['title'])) {
+          // Some links are actually not links, but we wrap these in <span> for adding title and class attributes
+          if (empty($link['html'])) {
+            $link['title'] = check_plain($link['title']);
+          }
+          $span_attributes = '';
+          if (isset($link['attributes'])) {
+            $span_attributes = drupal_attributes($link['attributes']);
+          }
+          $output .= '<span'. $span_attributes .'>'. $link['title'] .'</span>';
         }
-        $output .= '<span'. $span_attributes .'>'. $link['title'] .'</span>';
-      }
 
-      $i++;
-      $output .= "</div>\n";
+        $i++;
+        $output .= "</div>\n";
+      }
     }
 
     $output .= '</div>';
@@ -94,7 +98,7 @@ function fusion_theory_links($links, $attributes = array('class' => '')) {
 
 function fusion_theory_preprocess_node(&$variables) {
   $node = $variables['node'];
-  $variables['terms']     = theme('links', $variables['taxonomy'], array('class' => 'tags_btns'));
+  $variables['terms'] = theme('links', $variables['taxonomy'], array('class' => 'tags_btns'));
 }
 
 /**

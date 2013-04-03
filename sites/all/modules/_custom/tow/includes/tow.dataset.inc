@@ -53,7 +53,10 @@ function tow_dataset_badge_block() {
         $extrainfo = t('You are an administrator of this dataset');
     } elseif ($_tow_dataset->field_access_type[0]['value'] == 1) {
         $extrainfo = tow_access_request_widget($_tow_dataset->nid, $user->uid);
+    } elseif ($_tow_dataset->field_access_type[0]['value'] == 0) {
+        $extrainfo = t('You have access to this dataset');
     }
+    
 
     // Save the content of the block.
     $block['content'] = '';
@@ -778,7 +781,8 @@ function tow_dataset_summary(&$node) {
       SELECT
         ctss.nid AS nid,
         n.title AS title,
-        ctss.field_search_constraints_value AS field_search_constraints_value
+        ctss.field_search_constraints_value AS field_search_constraints_value,
+        ctss.field_selected_fields_value AS field_selected_fields_value
 
         FROM
             {content_type_saved_search} ctss
@@ -815,14 +819,18 @@ function tow_dataset_summary(&$node) {
 
             // Limit list of titles size.
             if ($ss_qty <= 4) {
-                if ($ss_count) {
-                    $ss_list[] = l($ss_res['title'], 'node/' . $ss_res['nid']) . ' (' . $ss_count . ')'; //'search_dataset/' . $node->nid . '#?filters=' . $ss_res['field_search_constraints_value']);
-                } else {
-                    $ss_list[] = l($ss_res['title'], 'node/' . $ss_res['nid']) . ' (0)';
-                }
+                #if ($ss_count) {
+                $ss_filters = ($ss_res['field_search_constraints_value']) ? ('filters=' . $ss_res['field_search_constraints_value']) : NULL;
+                $ss_selected_fields = ($ss_res['field_selected_fields_value']) ? ('selected_fields=' . $ss_res['field_selected_fields_value']) : NULL;
+                $ss_amp = ($ss_filters && $ss_selected_fields) ? '&' : '';
+                $ss_hash_string = '?' . $ss_filters . $ss_amp . $ss_selected_fields;
+                    $ss_list[] = l($ss_res['title'], 'search_dataset/' . $node->nid, array('fragment' => $ss_hash_string)); //. ' (' . $ss_count . ')';
+                #} else {
+                #    $ss_list[] = l($ss_res['title'], 'node/' . $ss_res['nid']) . ' (0)';
+                #}
             }
         };
-
+        
         // Put info into 'saved_searches' block of the summary.
         if ($ss_qty) {
             $node->summary['saved_searches']['link_to_full_list'] = l("see all " . $ss_qty, 'search_dataset/' . $node->nid);

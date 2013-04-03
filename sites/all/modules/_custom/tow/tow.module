@@ -1016,10 +1016,10 @@ function tow_nodeapi(&$node, $op) {
         //Output bookmark star
         $flag = flag_get_flag('bookmarks');
         if ($flag) {
-            $node->content['ss_flag']['#value'] = '<div class="ss-flag">' . flag_create_link('bookmarks', $node->nid) . '<b>' . $flag->get_count($node->nid) . '</b></div>';
+            $node->content['ss_flag']['#value'] = '<div class="ss-flag">' . flag_create_link('bookmarks', $node->nid) . /*TEMPORARILY DISABLED '<b>' . $flag->get_count($node->nid) . '</b>*/'</div>';
         }
         else {
-            $node->content['ss_flag']['#value'] = '<div class="ss-flag">' . flag_create_link('bookmarks', $node->nid) . '<b>' . $flag->get_count($node->nid) . '</b></div>';
+            $node->content['ss_flag']['#value'] = '<div class="ss-flag">' . flag_create_link('bookmarks', $node->nid) . /*TEMPORARILY DISABLED '<b>' . $flag->get_count($node->nid) . '</b>*/'</div>';
         }
 
         // Creation time representation.

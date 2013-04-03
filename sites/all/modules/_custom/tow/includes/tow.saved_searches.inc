@@ -65,10 +65,10 @@ function tow_saved_searches_list_block($nid = NULL) {
         $output .= '<div class="accordion-group"><div class="accordion-heading">
       <a class="accordion-toggle toggle'.$x.'" data-toggle="collapse" data-parent="#accordion" href="#collapse' . $x . '">';
         $total_votes = _votingapi_get_standard_results('node', $node->nid);
-        $add_votes = isset($total_votes['vote']['points']['sum']) ? $total_votes['vote']['points']['sum'] : '';
+        $add_votes = isset($total_votes['vote']['points']['sum']) ? ('(' . $total_votes['vote']['points']['sum'] . ')') : '';
         $selected_cell = explode(',', $node->field_selected_cell[0]['value']);
         $add_cell = $node->field_selected_cell[0]['value'] != '' ? ('<span class="label label-info" c_row="' . $selected_cell[2] . '" c_index="' . $selected_cell[3] . '">' . $selected_cell[0] . '=' . $selected_cell[1] . '</span>') : '';
-        $output .= $node->title . '<span> ' . $add_votes . ' </span></a>' . $add_cell . '</div>';
+        $output .= $node->title . '<span> ' . $add_votes . ' </span>' . $add_cell . '</a></div>';
         $output .= '<div id="collapse' . $x . '" class="accordion-body collapse"><div class="accordion-inner">';
         $output .= node_view($node);
         if (function_exists('comment_render') && $node->comment) {
@@ -193,7 +193,7 @@ function tow_saved_searches_save_search_form(&$form_state, $nid, $filters, $sele
         '#title' => NULL,
         '#autocomplete_path' => 'tow/tags/autocomplete/Saved search tags',
         '#attributes' => array(
-            'placeholder' => t('Tags(optional but encouraged)'),
+            'placeholder' => t('Tags'),
         ),
     );
 
@@ -224,7 +224,7 @@ function tow_saved_searches_save_search_form(&$form_state, $nid, $filters, $sele
     // Button.
     $form['save_search'] = array(
         '#type' => 'submit',
-        '#value' => t('Share analysis'),
+        '#value' => t('Share Insight'),
         '#validate' => array('tow_saved_searches_save_search_form_validate'),
         '#submit' => array('tow_saved_searches_save_search_form_submit'),
     );

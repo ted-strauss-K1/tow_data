@@ -2046,6 +2046,10 @@ Drupal.behaviors.inner_search = function(context) {
         var sSTags = $('#edit-ss-tags').val();
         var sSSelectedCell = ($('.selected-cell').length > 0) ? ($('.selected-cell').attr('c_field') + ',' + $('.selected-cell').attr('c_value') + ',' + $('.selected-cell').attr('c_row') + ',' + $('.selected-cell').attr('c_index')) : '';
         var arrayOfSavedSearches = [];
+        
+        //Disable sidebar + Throbber
+        var overlay = new ItpOverlay("sidebar-last-inner");
+        overlay.show();
 
         /**
          * Saved search creation.
@@ -2056,6 +2060,9 @@ Drupal.behaviors.inner_search = function(context) {
             }
             else {
                 $('#block-tow-saved_searches_list div.content').html(data.saved_searches);
+                
+                //Enable sidebar - throbber
+                overlay.hide();
                 
                 //Minimize&clear saved search textarea
                 $('#edit-ss-comment').removeClass('h200').val('');

@@ -616,6 +616,20 @@ ul.dropdown-menu li:hover{
 }
 
 /*-----Styles for selected Ccells in datatables------*/
-table#datatable-1 td.selected-cell {
-    box-shadow: 0 0 10px #000000 inset;
+table#datatable-1 td.selected-cell span{
+    font-size: 11.844px;
+    font-weight: bold;
+    line-height: 21px;
+    color: #ffffff;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+    vertical-align: baseline;
+    background-color: #3a87ad;
+    border-radius: 3px 3px 3px 3px;
+    padding: 1px 4px 2px;
+}
+
+table#datatable-1 td.selected-cell span:hover{
+    white-space: normal;
+    font-weight: normal;
 }

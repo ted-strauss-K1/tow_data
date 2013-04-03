@@ -1062,6 +1062,17 @@ dataTables_scrollBody tbody tr td {
     overflow: hidden;
     width: 33px;
 }
+
+.tow-saved-search-block-item .flag-bookmarks .flag-throbber
+{
+    display:none;
+}
+
+.tow-saved-search-block-item .ss-flag
+{
+    overflow:visible;
+}
+
 .tow-saved-search-block-item .user-data
 {
     background: none repeat scroll 0 0 #CCCCCC;
@@ -1083,11 +1094,12 @@ dataTables_scrollBody tbody tr td {
 {
     display: block;
     float: left;
-    width: 70px;
+    width: 75px;
 }
 .tow-saved-search-block-item .user-data .user-info a
 {
     padding-right:2px;
+    word-wrap: break-word;
 }
 .tow-saved-search-block-item .user-data .views-amount
 {
@@ -2347,13 +2359,14 @@ dt.profile-profile_bio
 {
     /*width:100px;*/
     max-width:100px;
-    padding: 0 1px;
     line-height:21px;
     border: 0px solid red;
     overflow: hidden;
     text-overflow: ellipsis;
     display:block;
     white-space: nowrap;
+    border-radius: 3px 3px 3px 3px;
+    padding: 1px 4px 2px;
 }
 
 /*.dataTables_scrollHead table tr th{
@@ -2513,6 +2526,20 @@ ul.dropdown-menu {
     display: none;
 }
 
+.tow-saved-search-block-item .accordion .accordion-heading a {
+    text-decoration: none;
+}
+
+.tow-saved-search-block-item .accordion a span.label-info {
+    background-color: #3a87ad;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.tow-saved-search-block-item .accordion .accordion-body .tags_btns {
+    float: none;
+}
+
 /* End of Saved search accordion */
 
 /* Re-styling the Datatables */
@@ -2533,3 +2560,13 @@ ul.dropdown-menu {
 }
 */
 /* End of Re-styling the Datatables */
+
+/* Feedback styling */
+#block-feedback-form div.inner h2 {
+    text-align:right;
+}
+
+#block-feedback-form div.inner div.content {
+    float:right;
+}
+/*End of Feedback styling*/
