@@ -1068,11 +1068,6 @@ dataTables_scrollBody tbody tr td {
     display:none;
 }
 
-.tow-saved-search-block-item .ss-flag
-{
-    overflow:visible;
-}
-
 .tow-saved-search-block-item .user-data
 {
     background: none repeat scroll 0 0 #CCCCCC;
@@ -1259,7 +1254,7 @@ dataTables_scrollBody tbody tr td {
 .ss-flag
 {
     float: left;
-    overflow: hidden;
+    /*overflow: hidden;*/
     /*width: 150px;*/
     padding: 3px;
     margin-top: 6px;
