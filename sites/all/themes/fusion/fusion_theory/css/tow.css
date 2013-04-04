@@ -32,6 +32,11 @@
     margin-left: 20px;
 }
 
+/*User view*/
+#block-tow-user_view div.content .profile .picture a img {
+    max-width: 100px;
+}
+
 /* js hide() css() class substitutes*/
 .hidden {
     display: none;

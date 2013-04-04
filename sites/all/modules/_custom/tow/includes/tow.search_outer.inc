@@ -176,7 +176,7 @@ function tow_search_outer_tabs_block() {
     #TEMPORARILY DISABLED $items['featured'] = tow_search_outer_tab_link($tab, 'Featured', 'featured', TRUE);
     $items['newest'] = tow_search_outer_tab_link($tab, 'Newest', 'newest');
     $items['popular'] = tow_search_outer_tab_link($tab, 'Popular', 'popular');
-    #TEMPORARILY DISABLED $items['debated'] = tow_search_outer_tab_link($tab, 'Debated', 'debated', TRUE);
+    $items['debated'] = tow_search_outer_tab_link($tab, 'Debated', 'debated');
     global $user;
     $items['newdataset'] = ($user->uid) ? l('New dataset', 'node/add/dataset') : l('New dataset', 'user/login', array('query' => 'automodalReload=true', 'attributes' => array('class' => 'automodal')));
 

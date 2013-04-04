@@ -163,6 +163,47 @@ function tow_apachesolr_update_index(&$document, $node) {
 
     ", $node->nid));
         $document->sis_tow_amount_saved_searches = (isset($document->sis_tow_amount_saved_searches) && $document->sis_tow_amount_saved_searches) ? $document->sis_tow_amount_saved_searches : 0;
+        
+        // Get amount for #Debated.
+        $amount_debated = 0;
+        $amount_debated += $document->sis_tow_amount_saved_searches;
+        $res = db_query("
+
+            SELECT
+              ctss.nid AS nid,
+              ncs.comment_count AS comment_count
+
+              FROM
+                {content_type_saved_search} ctss
+
+              JOIN
+                {node_comment_statistics} ncs
+
+              ON
+                ctss.nid = ncs.nid
+
+              WHERE
+                field_dataset_nid_value = %d
+
+        ", $node->nid);
+        while($row = db_fetch_object($res)) {
+            $votes_number = db_result(db_query("
+
+                SELECT
+                  COUNT(*)
+
+                  FROM
+                    {votingapi_vote} vv
+
+                  WHERE
+                    content_id = %d
+
+            ", $row->nid));
+
+            $amount_debated += $row->comment_count;
+            $amount_debated += $votes_number;
+        }
+        $document->sis_tow_amount_debated = (isset($document->sis_tow_amount_saved_searches) && $document->sis_tow_amount_saved_searches) ? $amount_debated : 0;
 
         // Get amount of views.
         tow_statistics_dataset_extract($node->nid);
@@ -358,11 +399,13 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
     $params['fl'] .= ',sis_tow_amount_tables';
     $params['fl'] .= ',sis_tow_amount_records';
     $params['fl'] .= ',sis_tow_amount_saved_searches';
+    $params['fl'] .= ',sis_tow_amount_debated';
     $params['fl'] .= ',sis_tow_count_views';
     $params['fl'] .= ',sis_cck_field_access_type';
     $params['fl'] .= ',im_vid_' . $categories_vid;
     $params['fl'] .= ',im_vid_' . $tags_vid;
     $params['fl'] .= ',ss_teaser';
+    $params['fl'] .= ',ss_picture';
     $params['fl'] .= ',im_tow_user_access_private';
 
     // Add filters.
@@ -381,6 +424,7 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
 
     $params['fl'] .= ',tid';
     $params['stats'] = 'true';
+    $params['rows'] = 30;
     $params['facet.limit'] = 999999;
     $params['facet.missing'] = 'true';
     $params['facet.field'][] = '{!ex=' . 'im_vid_' . $categories_vid . '}' . 'im_vid_' . $categories_vid;
@@ -395,10 +439,16 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
             $query->set_solrsort('created', 'desc');
             break;
 
-        // Sort by time created ascending for the most popular datasets.
+        // Sort by #views for the most popular datasets.
         case 'popular':
             $query->set_available_sort('sis_tow_count_views', array('title' => t('Most viewed'), 'default' => 'asc'));
             $query->set_solrsort('sis_tow_count_views', 'desc');
+            break;
+        
+        // Sort by (# searches + # comments + # search votes) for the most debated datasets.
+        case 'debated':
+            $query->set_available_sort('sis_tow_amount_debated', array('title' => t('Most debated'), 'default' => 'asc'));
+            $query->set_solrsort('sis_tow_amount_debated', 'desc');
             break;
 
         // Do nothing by default.

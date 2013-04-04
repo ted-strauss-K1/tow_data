@@ -1792,6 +1792,11 @@ Drupal.behaviors.inner_search = function(context) {
             //Switch two divs (select_from and select_to)
             $('div.ms-selection').each(function () {
                 $(this).after($(this).siblings('div.ms-selectable'));
+                //Hide empty container ms-selection
+                var liSelected = $(this).find('li.ms-selected').length;
+                if (liSelected == 0) {
+                    $(this).addClass('hidden');
+                }
             });
             
             //Proper <empty> output

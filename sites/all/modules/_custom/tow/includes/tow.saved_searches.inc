@@ -67,7 +67,7 @@ function tow_saved_searches_list_block($nid = NULL) {
         $total_votes = _votingapi_get_standard_results('node', $node->nid);
         $add_votes = isset($total_votes['vote']['points']['sum']) ? ('(' . $total_votes['vote']['points']['sum'] . ')') : '';
         $selected_cell = explode(',', $node->field_selected_cell[0]['value']);
-        $add_cell = $node->field_selected_cell[0]['value'] != '' ? ('<span class="label label-info" c_row="' . $selected_cell[2] . '" c_index="' . $selected_cell[3] . '">' . $selected_cell[0] . '=' . $selected_cell[1] . '</span>') : '';
+        $add_cell = $node->field_selected_cell[0]['value'] != '' ? ('<span class="label label-info" c_row="' . $selected_cell[2] . '" c_index="' . $selected_cell[3] . '">' . $selected_cell[0] . ': ' . $selected_cell[1] . '</span>') : '';
         $output .= $node->title . '<span> ' . $add_votes . ' </span>' . $add_cell . '</a></div>';
         $output .= '<div id="collapse' . $x . '" class="accordion-body collapse"><div class="accordion-inner">';
         $output .= node_view($node);

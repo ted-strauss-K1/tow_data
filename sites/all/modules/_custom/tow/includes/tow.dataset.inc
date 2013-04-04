@@ -851,7 +851,7 @@ function tow_dataset_summary(&$node) {
     }
     if (!empty($creator_pers)) {
         $s = (count($creator_pers) != 1) ? 's' : '';
-        $node->summary['metadata']['creator_person'] = '<span class="license-title">Creator' . $s . ': </span>' . implode(', ', $creator_pers);
+        $node->summary['metadata']['creator_person'] = '<span class="creator-person-title">Creator' . $s . ': </span>' . implode(', ', $creator_pers);
     }
     
     //Creator organization
@@ -863,28 +863,29 @@ function tow_dataset_summary(&$node) {
     }
     if (!empty($creator_org)) {
         $s = (count($creator_org) != 1) ? 's' : '';
-        $node->summary['metadata']['creator_organization'] = '<span class="license-title">Creator organization' . $s . ': </span>' . implode(', ', $creator_org);
+        $node->summary['metadata']['creator_organization'] = '<span class="creator-organization-title">Creator organization' . $s . ': </span>' . implode(', ', $creator_org);
     }
     
     //Alternative title
     if ($node->field_alternative_title[0]['value']) {
-        $node->summary['metadata']['alt_title'] = '<span class="license-title">Alternative Title: </span>' . $node->field_alternative_title[0]['value'];
+        $node->summary['metadata']['alt_title'] = '<span class="alternative-title-title">Alternative Title: </span>' . $node->field_alternative_title[0]['value'];
     }
     
     //Publisher original
     if ($node->field_publisher_original[0]['value']) {
-        $node->summary['metadata']['publisher'] = '<span class="license-title">Publisher: </span>' . $node->field_publisher_original[0]['value'];
+        $node->summary['metadata']['publisher'] = '<span class="publisher-title">Publisher: </span>' . $node->field_publisher_original[0]['value'];
     }
     
     //Source URL
     $source_url = array();
     foreach ($node->field_source_url as $url) {
         if ($url['url']) {
-            $source_url[] = $url['url'];
+            $source_url[] = l($url['url'], $url['url']);
         }
     }
     if (!empty($source_url)) {
-        $node->summary['metadata']['source_url'] = theme_item_list($source_url, 'Source URL:', 'ul');
+        $s = (count($source_url) != 1) ? 's' : '';
+        $node->summary['metadata']['source_url'] = '<span class="source-url-title">Source URL' . $s . ': </span>' . implode(', ', $source_url);
     }
     
     //Geo location
