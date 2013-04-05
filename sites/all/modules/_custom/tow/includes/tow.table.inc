@@ -450,11 +450,11 @@ function tow_table_page_callback($nid) {
     $_tow_table = $node;
 
     // Generate an output of the table: title, teaser and admin tasks.
-    $output = "<div>" . $node->title . "</div>";
-    $output .= $node->teaser;
-    if ($user->uid == $_tow_dataset->uid || user_access('edit any table')) {
-        $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
-    }
+    #TEMPORARILY DISABLED #$output = "<div>" . $node->title . "</div>";
+    #$output .= $node->teaser;
+    #if ($user->uid == $_tow_dataset->uid || user_access('edit any table')) {
+    #    $output .= "<div>" . l('Edit', 'node/' . $node->nid . '/edit', array('query' => 'destination=table/' . $node->nid)) . "</div>";
+    #}
 
     // Define display options.
     $display_options = tow_table_display_options($node);
@@ -611,7 +611,7 @@ function tow_table($node, $display_options = array()) {
     $parameters_full['datatable_options'] = array(
         'bLengthChange' => FALSE,
         'bPaginate' => FALSE,
-        'bFilter' => TRUE,
+        'bFilter' => FALSE,
         'bSort' => TRUE,
         'bInfo' => FALSE,
         'sScrollX' => '100%',

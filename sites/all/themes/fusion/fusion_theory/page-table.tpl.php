@@ -83,6 +83,9 @@
 
                         } else {
                             access.removeClass('fixed_head');
+                            access.stop().animate({
+                                marginTop: 0
+                            }, 0);
                             $(".dataTables_scrollHeadInner > .sticky-enabled.dataTable.sticky-table").removeClass('smth-fixed');
                         }
                     });

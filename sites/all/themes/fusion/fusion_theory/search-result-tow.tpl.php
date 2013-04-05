@@ -16,7 +16,7 @@
 				?>
                 <!--<b>420</b><br/><span>Votes</span>-->
                 </div>
-                <div class="searches">
+                    <div class="searches" ss-link="<?php  print url('search_dataset/' . $result['node']->nid, array('absolute' => TRUE)); ?>">
                 	<?php
 					  print '<b>' . $result['ssearches'] . '</b>' . '</br>' . t('<span>searches</span> ');
 					?>
@@ -34,7 +34,7 @@
                 </div>
             </div>
             <div class="rec_detail">
-            	<div class="title"><a href="<?php print $url; ?>"><?php print $title; ?></a></strong></div>
+            	<div class="title"><a href="<?php print $url; ?>"><?php print $title; ?></a></strong><span class="search-dataset-link"> <?php print l('(Search)', 'search_dataset/' . $result['node']->nid); ?></span></div>
                 <div class="desc"><?php print $result['teaser']; ?></div>
                 <div class="tags_btns">
                 <?php

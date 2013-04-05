@@ -1,6 +1,11 @@
 Drupal.behaviors.outer_search = function(context) {
     var default_tab = '#newest';
     
+    //Search_dataset page loading on Searches div click
+    $('.date_vote .searches', context).live('click', function() {
+        window.location.href = $(this).attr('ss-link');
+    });
+    
     //Add class to 'Data' in primary menu
     $('#block-menu-primary-links ul.menu li.first a').addClass('active');
     

@@ -165,7 +165,7 @@
     color: black;
 }
 .tow-dataset-field-link.selected {
-    background: black;
+    background: grey;
     color: white;
 }
 .tow-dataset-field-link.unavailable-hover {
@@ -179,7 +179,7 @@
     color: black;
 }
 .tow-dataset-field-link.selected-hover {
-    background: black;
+    background: grey;
     color: white;
 }
 .tow-dataset-field-link.hover.index {

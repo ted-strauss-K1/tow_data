@@ -60,7 +60,7 @@ Drupal.behaviors.inner_search = function(context) {
                         }
                     });
                     firstPageLoad = false;
-                    var selectedFieldsToSend = JSON.stringify(selectedFields);
+                    var selectedFieldsToSend = encodeURIComponent(JSON.stringify(selectedFields));
                     var url = 'http://' + window.location.hostname + window.location.pathname + '#?' + 'selected_fields=' + selectedFieldsToSend;
                     setHash(url);
                 }
@@ -545,7 +545,8 @@ Drupal.behaviors.inner_search = function(context) {
         $('.tow-dataset-field-link.selected').each(function() {
             selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
         });
-        selectedFieldsToSend = JSON.stringify(selectedFields);
+        selectedFieldsToSend = encodeURIComponent(JSON.stringify(selectedFields));
+        url = 'http://' + window.location.hostname + window.location.pathname + '#?' + 'selected_fields=' + selectedFieldsToSend + '&' + 'filters=' + filtersToSend;
 
         // Set hash.
         setHash(url);
@@ -1450,7 +1451,7 @@ Drupal.behaviors.inner_search = function(context) {
                 id: maskId,
                 from: from,
                 to: to,
-                color: 'rgba(127, 127, 127, 0.5)',
+                color: 'rgba(191, 191, 191, 0.9)',
                 zIndex: 10
             });
         }
@@ -2452,8 +2453,8 @@ Drupal.behaviors.inner_search = function(context) {
      * Set hash.
      */
     function setHash(url) {
-        filtersToSend = getUrlQueryParam(url, 'filters');
-        selectedFieldsToSend = getUrlQueryParam(url, 'selected_fields');
+        filtersToSend = getUrlQueryParam(decodeURIComponent(url), 'filters');
+        selectedFieldsToSend = getUrlQueryParam(decodeURIComponent(url), 'selected_fields');
         if ((filtersToSend.length == 0) && (selectedFieldsToSend.length == 0)) {
             hash = '';
         }
@@ -2560,9 +2561,9 @@ function getUrlQueryParams(url) {
         if (!hashes[i].match(/^selected_fields/) && !hashes[i].match(/^filters/) && !hashes[i].match(/^zoom/) && (hashes[i] != undefined)) {
             hashes[i] = hashes[i-1] + '&' + hashes[i];
         }
-        if (decodeURIComponent(hashes[i]).match(/}$/) || !hashes[i].match(/^selected_fields/)) {
+        if (hashes[i].match(/}$/) || !hashes[i].match(/^selected_fields/)) {
             hash = hashes[i].split('=');
-            vars[hash[0]] = decodeURIComponent(hash[1]);
+            vars[hash[0]] = hash[1];
         }
     }
     return vars;
