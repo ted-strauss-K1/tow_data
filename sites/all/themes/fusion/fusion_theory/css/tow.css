@@ -23,6 +23,9 @@
 .page-search-dataset div.content-content h2 {
     text-align: left;
 }
+#tow-search-inner-hash-form {
+    margin-bottom: 0;
+}
 
 /* Browse dataset */
 .node-type-dataset .content-content div.clear-block .metadata .metadata-label {

@@ -407,7 +407,7 @@ function tow_search_inner_hash_form($form_state, $path, $rid, $hash, $sort_param
     $form['sort'] = array(
         '#type' => 'markup',
         '#prefix' => '<div class="tow-inner-search-widget-sort">',
-        '#value' => 'Sort by ' . $title . ' | ' . $type . ' | ' . $variability . '<br>' . $reset_all,
+        '#value' => /*TEMPORARILY DISABLED 'Sort by ' . $title . ' | ' . $type . ' | ' . $variability . */'<br>' . $reset_all,
         '#suffix' => '</div>',
     );
 

@@ -62,7 +62,7 @@ function tow_search_outer_number_of_results_block() {
         $total = $response->response->numFound;
 
         // Amount of datasets.
-        if ($number_of_results == 1) {
+        if ($total == 1) {
             $content = '<span>' . $total . '</span>' . ' ' . t('dataset');
         } else {
             $content = '<span>' . $total . '</span>' . ' ' . t('datasets');
