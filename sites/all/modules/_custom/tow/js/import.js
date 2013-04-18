@@ -143,7 +143,7 @@ Drupal.behaviors.Import = function(context) {
                         if (response == 0) {
                             $('div.progress div.bar').css('width', '66%');
                         } else {
-                            $('div.progress div.bar').css('width', 66 + response*10 + '%');
+                            $('div.progress div.bar').css('width', 66 + response*10/3 + '%');
                         }
                     }
                     
