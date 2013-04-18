@@ -5,6 +5,13 @@
  */
 
 Drupal.behaviors.Import = function(context) {
+    //Create modal window
+    $('#content-content', context).prepend('<div id="myModal" class="modal hide fade"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button><h3>Import data</h3></div><div class="modal-body"><p>One fine body…</p><div class="progress progress-striped active"><div class="bar" style="width: 0%;"></div></div></div><div class="modal-footer"><a class="cancel-modal" href="#" data-dismiss="modal" aria-hidden="true">Cancel</a></div></div>');
+    //Cancel downloading after Cancel link was clicked
+    $('#myModal a.cancel-modal, #myModal button.close', context).live('click', function() {
+        $("#myModal").remove();
+        window.location.href = window.location.href.replace('import', 'node');
+    });
 
     // Hide and show table select dependently on user choice (whether import to dataset or to table).
     $('#edit-to-table').addClass('hidden');
@@ -119,6 +126,27 @@ Drupal.behaviors.Import = function(context) {
                     nextStage = 4;
                 }
                 else {
+                    $('#myModal').modal('show');
+                    if (stage == 1) {
+                        $('div.modal-body p').text('Uploading your file to the server...');
+                        $('div.progress div.bar').css('width', response*10/3 + '%');
+                    } else if (stage == 2) {
+                        $('div.modal-body p').text('Validating files...');
+                        if (response == 0) {
+                            $('div.progress div.bar').css('width', '33%');
+                        } else {
+                            $('div.progress div.bar').css('width', 33 + response*10/3 + '%');
+                        }
+                        
+                    } else if (stage == 3) {
+                        $('div.modal-body p').text('Creating content...');
+                        if (response == 0) {
+                            $('div.progress div.bar').css('width', '66%');
+                        } else {
+                            $('div.progress div.bar').css('width', 66 + response*10 + '%');
+                        }
+                    }
+                    
                     dots = '';
                     for (var i = 1; i <= response; i++) {
                         dots += '.';
@@ -129,6 +157,7 @@ Drupal.behaviors.Import = function(context) {
 
         }
         else {
+            $('div.progress div.bar').css('width', '100%');
 
             if (stage >= 4 && stage <= 5){
 
@@ -169,6 +198,8 @@ Drupal.behaviors.Import = function(context) {
                     $('.progress-table tr.6 td.status').addClass('ok');
                     $('.progress-table tr.6').removeClass('hidden');
                     $('.progress-table tr.7').removeClass('hidden');
+                    
+                    $('#myModal').modal('hide');
 
                     return;
                 }

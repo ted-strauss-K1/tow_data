@@ -5732,6 +5732,7 @@ a.badge:hover {
 }
 .hide {
   display: none;
+  visibility: visible;
 }
 
 .show {
