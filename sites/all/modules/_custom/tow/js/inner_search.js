@@ -1158,15 +1158,18 @@ Drupal.behaviors.inner_search = function(context) {
                         tickInterval: tickInterval
                     },
                     tooltip: {
+                        borderRadius: 0,
+                        borderWidth: 0,
+                        backgroundColor: 'none',
+                        shadow: false,
+                        enabled: true,
+                        shared: false,
+                        useHTML: true,
                         formatter: function() {
                             tooltip = this.point.name;
                             tooltip = tooltip.replace(/\\\\n/g,'<br/>');
                             tooltip = tooltip.replace(/\\n/g,'<br/>');
-                            return tooltip;
-                        },
-                        style: {
-                            fontSize: '7pt',
-                            zIndex: 11
+                            return '<div class="tooltip-container">' + tooltip + '</div>';
                         }
                     },
                     legend: {
