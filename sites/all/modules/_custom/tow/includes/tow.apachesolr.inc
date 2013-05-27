@@ -424,6 +424,7 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
 
     $params['fl'] .= ',tid';
     $params['stats'] = 'true';
+    $params['hl'] = 'false';
     $params['rows'] = 30;
     $params['facet.limit'] = 999999;
     $params['facet.missing'] = 'true';
@@ -611,6 +612,7 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
     $params['stats'] = 'true';
     $params['facet.limit'] = 999999;
     $params['facet.missing'] = 'true';
+    $params['hl'] = 'false';
     foreach ($table_fields as $index => $field) {
         $params['fl'] .= ',' . $field['name'];
         $params['facet.field'][] = '{!ex=' . $field['name'] . '}' . $field['name'];
