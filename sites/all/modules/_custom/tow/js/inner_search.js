@@ -814,14 +814,14 @@ Drupal.behaviors.inner_search = function(context) {
         var selection_min = selector.parent().find('[name="selection_min"]').val();
         var selection_max = selector.parent().find('[name="selection_max"]').val();
         var yMax = selector.parent().find('[name="max_count"]').val();
-        datastring = datastring.substring(4, datastring.length - 4);
-        datastring = datastring.split(' ], [ ');
+        datastring = datastring.substring(2, datastring.length - 2);
+        datastring = datastring.split('],[');
         namestring = namestring.substring(3, namestring.length - 3);
-        namestring = namestring.split('", "');
+        namestring = namestring.split('","');
         var data = [];
         for (var key in datastring) {
             var val = datastring[key];
-            point = val.split(', ');
+            point = val.split(',');
             data[key] = {
                 x: parseFloat(point[0]),
                 y: parseInt(point[1]),
@@ -1725,7 +1725,7 @@ Drupal.behaviors.inner_search = function(context) {
         var zoomsToSend = JSON.stringify(arrayOfZooms);
 
         function updateOnInnerSearchSuccess(data) {
-
+//console.time('1');
             $('div#block-tow-search_inner_facets div.content').html(data.widgets);
             $('div#block-tow-search_inner_field_list div.content').html(data.fields);
             if (data.save_search !== null) {
@@ -1765,14 +1765,16 @@ Drupal.behaviors.inner_search = function(context) {
                 highchartsTestChart($(this));
             });
 
-            $('div.content-content').html(data.search);
+            $('div.content-content').html('<table cellpadding="0" cellspacing="0" border="0" class="display" id="datatable-1"></table>');
             
             //Wrap every three widgets
             var divs = $("div.tow-inner-search-widget");
             for(var i = 0; i < divs.length; i+=3) {
                 divs.slice(i, i+3).wrapAll("<div class='three-in-one'></div>");
             }
-            
+//console.timeEnd('1');
+//console.time('2');
+
             /***** Multi-select & search in text widget*****/
             $('.select-text-widget').each(function() {
                 var $this = $(this);
@@ -1855,15 +1857,15 @@ Drupal.behaviors.inner_search = function(context) {
             });
             *
             */
-
+//console.timeEnd('2');
+//console.time('3');
             // Number of rows in searchtable.
-            var numberOfRows = $('#datatable-1 tbody tr').size();
+            var numberOfRows = data.search.rows.length;
             var ifs = (numberOfRows == 1) ? '' : 's';
             $('#block-tow-saved_searches_description div.content').append('<span class="search-description-rows"><strong>' + numberOfRows + ' row' + ifs + ' of results.</strong></span>');
             $('#tow-search-inner-save-search-form').children('div').children('[name="rows_amount"]').val(numberOfRows);
             
-            //Datatables proper numeric fields sorting && adding units
-            $('#datatable-1 thead').prepend('<tr role="row" class="units-row"></tr>');
+            //Datatables proper numeric fields sorting && preparing array of units
             var arrayOfNumericFields = [];
             var arrayOfUnits = {};
             $('.tow-dataset-field-link.selected').each(function() {
@@ -1877,16 +1879,10 @@ Drupal.behaviors.inner_search = function(context) {
                 }
             });
             var arrayOfColumnIndices = [];
-            $('#datatable-1 thead tr th').each(function(index) {
-                var fieldName = $(this).text();
+            $.each(data.search.headers, function(index) {
+                var fieldName = this.sTitle;
                 if (arrayOfNumericFields.indexOf(fieldName) != -1) {
                     arrayOfColumnIndices.push(index);
-                }
-                //Adding fields
-                if (arrayOfUnits[fieldName] != '') {
-                    $('#datatable-1 thead tr.units-row').append('<th><span class="label">' + arrayOfUnits[fieldName] +'</span></th>');
-                } else {
-                    $('#datatable-1 thead tr.units-row').append('<th><span></span></th>');
                 }
             });
             
@@ -1905,7 +1901,9 @@ Drupal.behaviors.inner_search = function(context) {
                     return b - a;
                 }
             } );
-            
+//console.timeEnd('3');            
+//console.time('4');
+            var isLoadingData;
             //Datatables initialization
             var oTable = $('#datatable-1').dataTable({
                 "sDom": 'C<"clear">rti',
@@ -1917,6 +1915,15 @@ Drupal.behaviors.inner_search = function(context) {
                 "aoColumnDefs": [
                     { "sType": "formatted_numbers", "aTargets": arrayOfColumnIndices }
                 ],
+                //"aaData": data.search.rows,
+                "aoColumns": data.search.headers,
+                "fnDrawCallback": function( oSettings ) {
+                    isLoadingData = false;
+                },
+                "fnRowCallback": function( nRow, aData, iDisplayIndex ) {
+                    $(nRow).attr("nid",aData.nid);
+                },
+                "bDeferRender": true,
                 "sScrollY": "",
                 "bStateSave": true,
                 "bScrollCollapse": true,
@@ -1926,16 +1933,18 @@ Drupal.behaviors.inner_search = function(context) {
                 "bInfo": false,
                 "bRetrieve": true,
                 "sScrollX": "100%",
-                "sScrollXInner": "100%",
-                "sWidth": ''
+                "sScrollXInner": "100%"
             });
+            oTable.fnAddData(data.search.rows.slice(0,100));
+            var insertedRows = 100;
             
             //Datatables selected cell
             $('#datatable-1 tbody tr[nid="' + arraySelectedCell[0] + '"] td:eq(' + arraySelectedCell[1] + ')').trigger('click');
             arraySelectedCell.length = 0;
             
             $(".ColVis_Button.TableTools_Button.ColVis_MasterButton").append('<i class="icon-filter"></i>');
-
+//console.timeEnd('4');
+//console.time('5');
             /* This is a scroller implementation */
 
 
@@ -1976,6 +1985,22 @@ Drupal.behaviors.inner_search = function(context) {
                             marginTop: 0
                         }, 0);
                     }
+                    
+                    //Adding table rows if scrolled to page bottom
+                    /*if ($(window).scrollTop() + $(window).height() == $(document).height() && isLoadingData === false && insertedRows < numberOfRows) {
+                        isLoadingData = true;
+                        oTable.fnAddData(data.search.rows.slice(insertedRows, insertedRows + 100), false);
+                        var www = $('div.dataTables_scrollBody').css('width');
+                        oTable.fnDraw();
+                        $('.dataTables_scrollBody').css('width', www);
+                        jsp_api.destroy();
+                        jsp_element = $("#datatable-1_wrapper .dataTables_scroll").jScrollPane({                      
+                            showArrows: true
+                        });
+                        jsp_api = jsp_element.data('jsp');
+                        insertedRows += 100;
+                    }*/
+                    
                 });
                 /* Here is a function, that allows a horizontal scrolling via mouse scroll (+ jquery.mousewheel.min.js */
 
@@ -2025,8 +2050,46 @@ Drupal.behaviors.inner_search = function(context) {
                 });
 
             }
-        }
+            
+            //Adding rows in time period
+            function myLoop () {
+               setTimeout(function () {
+                   oTable.fnAddData(data.search.rows.slice(insertedRows, insertedRows + 100), false);
+                   insertedRows += 100;
+                   if (insertedRows < numberOfRows) {
+                       myLoop();
+                   } else {
+                       var www = $('div.dataTables_scrollBody').css('width');
+                       $('.dataTables_scrollBody').css('width', www);
+                       oTable.fnDraw();
+                       jsp_api.destroy();
+                       jsp_element = $("#datatable-1_wrapper .dataTables_scroll").jScrollPane({
+                           showArrows: true
+                       });
+                       console.log('initialisation');
+                       
+                       //Add units
+                        $('.dataTables_scrollHead thead').prepend('<tr role="row" class="units-row"></tr>');
+                        $.each(data.search.headers, function() {
+                            var fieldName = this.sTitle;
+                            //Adding fields
+                            if (arrayOfUnits[fieldName] != '') {
+                                $('.dataTables_scrollHead thead tr.units-row').append('<th><span class="label">' + arrayOfUnits[fieldName] +'</span></th>');
+                            } else {
+                                $('.dataTables_scrollHead thead tr.units-row').append('<th><span></span></th>');
+                            }
+                        });
+                       
+                       return false;
+                   }
+               }, 500);
+            }
 
+            myLoop();
+            
+            //console.timeEnd('5');
+        }
+//console.time('php+response');
         $.ajax({
             url: urlISA,
             data: {
@@ -2035,7 +2098,11 @@ Drupal.behaviors.inner_search = function(context) {
                 'selected_fields' : selectedFieldsToSend
             },
             success: function(data) {
+                //console.timeEnd('php+response');
+                
+                console.time('update');
                 updateOnInnerSearchSuccess(data);
+                console.timeEnd('update');
             },
             dataType: 'json'
         });

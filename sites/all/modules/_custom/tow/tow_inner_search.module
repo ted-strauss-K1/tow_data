@@ -45,7 +45,7 @@ function tow_inner_search_search($op = 'search', $keys = NULL) {
  * Implementation of hook_search_page().
  */
 function tow_inner_search_search_page($results) {
-
+/*
     // Display parameters for datatable theme.
     $parameters_full['datatable_options'] = array(
         'bLengthChange' => FALSE,
@@ -73,6 +73,8 @@ function tow_inner_search_search_page($results) {
     }
 
     $output = theme('datatable', $results['headers'], $results['rows'], $parameters_full);
+*/
+    $output = array_slice($results, -2);
 
     return $output;
 }

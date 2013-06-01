@@ -731,14 +731,14 @@ function tow_apachesolr_record_process_results(&$results) {
                     break;
             }
 
-            $row[$field_key] = array('data' => $value);
-            $headers[$field_key] = array('data' => $field['title']);
+            $row[$field_key] = '<span>' . $value . '</span>';
+            $headers[$field_key] = array('sTitle' => $field['title']);
         }
-
-        $rows[$key] = array('data' => $row);
+        $rows[$key] = array_values($row);
+        $rows[$key]['nid'] = $result['node']->nid;
     }
 
-    $results['headers'] = $headers;
+    $results['headers'] = array_values($headers);
     $results['rows'] = $rows;
 }
 

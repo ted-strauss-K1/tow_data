@@ -865,9 +865,8 @@ function tow_search_inner_chart_widget($field, $field_type, $path, $facet_counts
 
     // Prepare data.
     list($data, $facets_list, $start, $end, $max_count) = tow_search_inner_chart_data($field, $field_type, $facet_counts);
-    $data = drupal_to_js($data);
-    $facets_list = drupal_to_js($facets_list);
-    $facets_list = str_replace('\u005Cn', '\n', $facets_list);
+    $data = json_encode($data);
+    $facets_list = json_encode($facets_list);
 
     // Limits of selection range.
     $selection_limits = tow_search_inner_range_limits($field);
@@ -1501,15 +1500,15 @@ function tow_search_inner_widget($field_info, $path, $response, $query, $stats, 
         case 'text':
             $facet_field = 'f_' . $field;
             $facet_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $facet_field, $facet_field, '', '_tow_search_inner_facet_trim_text');
-            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path);#TEMPOPARILY DISABLED . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
-            return $facet_list['content'] . $form;
+            #TEMPORARILY DISABLED $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path);#TEMPOPARILY DISABLED . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
+            return $facet_list['content']; #TEMPORARILY DISABLED  . $form;
 
         // Char facets.
         case 'char':
             $facet_field = 'f_' . $field;
             $facet_list = tow_search_inner_facet_widget($path, $response, $query, 'tow_inner_search', $facet_field, $facet_field, '');
-            $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path);#TEMPOPARILY DISABLED . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
-            return ($whole_counts > 50) ? $facet_list['content'] . $form : $facet_list['content'];
+            #TEMPORARILY DISABLED $form = drupal_get_form('tow_search_inner_text_length_widget_form', $length_field, $path);#TEMPOPARILY DISABLED . drupal_get_form('tow_search_inner_text_widget_form', $field, $type, $path);
+            return /*TEMPORARILY DISABLED ($whole_counts > 50) ? */$facet_list['content']; #TEMPORARILY DISABLED  . $form : $facet_list['content'];
 
         default:
             return NULL;
