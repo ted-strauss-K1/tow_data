@@ -559,7 +559,7 @@ function tow_ajax_handlers_register_add_more() {
  * Refresh search results according to filters set with Ajax.
  */
 function tow_ajax_handlers_refresh_search_results($nid) {
-    
+
     $selected_fields = isset($_GET['selected_fields']) ? json_decode($_GET['selected_fields']) : array();
     $selected_fields = is_null($selected_fields) ? array() : $selected_fields;
     $selected_fields = is_object($selected_fields) ? (array)$selected_fields : $selected_fields;
@@ -594,7 +594,19 @@ function tow_ajax_handlers_refresh_search_results($nid) {
         'save_this_search' => ($user->uid) ? $save_this_search['content'] : NULL,
     );
 
-    return drupal_json($json);
+    return tow_drupal_json($json);
+}
+
+/**
+ * Return data in JSON format.
+ */
+function tow_drupal_json($var = NULL) {
+  // We are returning JSON, so tell the browser.
+  drupal_set_header('Content-Type: application/json');
+
+  if (isset($var)) {
+    echo json_encode($var);
+  }
 }
 
 /**

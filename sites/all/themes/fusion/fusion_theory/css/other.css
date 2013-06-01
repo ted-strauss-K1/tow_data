@@ -633,3 +633,15 @@ table#datatable-1 td.selected-cell span:hover{
     white-space: normal;
     font-weight: normal;
 }
+
+/*-----Add custom CSS to Highcharts tooltip container-----*/
+.tooltip-container {
+    border-radius: 5px;
+    border: 3px solid #474747;
+    font-size: 7pt;
+    padding: 5px;
+    background-color: white;
+}
+div.highcharts-container div.null {
+    z-index: 99;
+}

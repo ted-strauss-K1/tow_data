@@ -424,6 +424,7 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
 
     $params['fl'] .= ',tid';
     $params['stats'] = 'true';
+    $params['hl'] = 'false';
     $params['rows'] = 30;
     $params['facet.limit'] = 999999;
     $params['facet.missing'] = 'true';
@@ -611,6 +612,7 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
     $params['stats'] = 'true';
     $params['facet.limit'] = 999999;
     $params['facet.missing'] = 'true';
+    $params['hl'] = 'false';
     foreach ($table_fields as $index => $field) {
         $params['fl'] .= ',' . $field['name'];
         $params['facet.field'][] = '{!ex=' . $field['name'] . '}' . $field['name'];
@@ -729,14 +731,14 @@ function tow_apachesolr_record_process_results(&$results) {
                     break;
             }
 
-            $row[$field_key] = array('data' => $value);
-            $headers[$field_key] = array('data' => $field['title']);
+            $row[$field_key] = '<span>' . $value . '</span>';
+            $headers[$field_key] = array('sTitle' => $field['title']);
         }
-
-        $rows[$key] = array('data' => $row);
+        $rows[$key] = array_values($row);
+        $rows[$key]['nid'] = $result['node']->nid;
     }
 
-    $results['headers'] = $headers;
+    $results['headers'] = array_values($headers);
     $results['rows'] = $rows;
 }
 
