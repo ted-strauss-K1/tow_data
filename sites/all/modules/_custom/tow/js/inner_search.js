@@ -2031,13 +2031,13 @@ Drupal.behaviors.inner_search = function(context) {
                    if (insertedRows < numberOfRows) {
                        myLoop();
                    } else {
-                       var width = $('div.dataTables_scrollBody').css('width');
                        oTable.fnDraw();
-                       oTable.fnAdjustColumnSizing();
+                       oTable.fnAdjustColumnSizing(false);
                        jsp_api.destroy();
-                       jsp_element = $("#datatable-1_wrapper .dataTables_scroll").jScrollPane({
+                       jsp_element = $("#datatable-1_wrapper .dataTables_scroll").jScrollPane({                      
                            showArrows: true
-                       });
+                       }); 
+                       var width = $('div.dataTables_scrollHeadInner').css('width');                       
                        $('.dataTables_scrollBody').css('width', width);
                        $('.dataTables_scrollHead').css('width', width);
                        

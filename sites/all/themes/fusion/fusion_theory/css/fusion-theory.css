@@ -324,7 +324,7 @@ div.tow-highcharts-handle {
 .dataTables_scrollHeadInner
 {
     padding-left:0px !important;
-    width: 100% !important;
+    /* width: 100% !important; */
 }
 .sticky-table
 {
