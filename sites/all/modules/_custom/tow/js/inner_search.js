@@ -1922,6 +1922,7 @@ Drupal.behaviors.inner_search = function(context) {
                 "bSort": true,
                 "bInfo": false,
                 "bRetrieve": true,
+                "sWidth" : "",
                 "sScrollX": "100%",
                 "sScrollXInner": "100%"
             });
@@ -2030,13 +2031,15 @@ Drupal.behaviors.inner_search = function(context) {
                    if (insertedRows < numberOfRows) {
                        myLoop();
                    } else {
-                       var www = $('div.dataTables_scrollBody').css('width');
-                       $('.dataTables_scrollBody').css('width', www);
+                       var width = $('div.dataTables_scrollBody').css('width');
                        oTable.fnDraw();
+                       oTable.fnAdjustColumnSizing();
                        jsp_api.destroy();
                        jsp_element = $("#datatable-1_wrapper .dataTables_scroll").jScrollPane({
                            showArrows: true
                        });
+                       $('.dataTables_scrollBody').css('width', width);
+                       $('.dataTables_scrollHead').css('width', width);
                        
                        //Add units if exist
                         $('.dataTables_scrollHead thead').prepend('<tr role="row" class="units-row"></tr>');
