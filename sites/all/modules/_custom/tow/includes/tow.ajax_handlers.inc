@@ -598,7 +598,7 @@ function tow_ajax_handlers_refresh_search_results($nid) {
 }
 
 /**
- * Return data in JSON format.
+ * Return data in JSON format (use json_encode instead of drupal_to_js)
  */
 function tow_drupal_json($var = NULL) {
   // We are returning JSON, so tell the browser.

@@ -2,7 +2,7 @@
 /*
 * Drupal Status Messages
 */
-/*function fusion_theory_status_messages($display = NULL) {
+function fusion_theory_status_messages($display = NULL) {
   $noty = array();
   $noty_pattern = "$.hrd.noty({'text':'%s','type':'%s'});";
   foreach (drupal_get_messages($display) as $type => $messages) {
@@ -37,7 +37,7 @@ function fusion_theory_preprocess_page(&$vars) {
     // Use page-node-add-contenttype.tpl.php for add-a-new-node form.
     $vars['template_files'][] = 'page-'. str_replace('_', '-', $vars['node']->type);
   }
-}*/
+}
 
 /**
  * Custom function to change taxonomy terms output
