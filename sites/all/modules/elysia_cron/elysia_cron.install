@@ -53,8 +53,7 @@ function elysia_cron_schema() {
         'no export' => TRUE,
       ),
       'last_abort_function' => array(
-        'type' => 'varchar',
-        'length' => 32,
+        'type' => 'text',
         'no export' => TRUE,
       ),
       'last_execution_time' => array(
