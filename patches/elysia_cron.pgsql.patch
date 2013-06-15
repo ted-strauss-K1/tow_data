@@ -1,0 +1,27 @@
+diff --git a/sites/all/modules/elysia_cron/elysia_cron.install b/sites/all/modules/elysia_cron/elysia_cron.install
+index 687e256..6eba904 100644
+--- a/sites/all/modules/elysia_cron/elysia_cron.install
++++ b/sites/all/modules/elysia_cron/elysia_cron.install
+@@ -53,8 +53,7 @@ function elysia_cron_schema() {
+         'no export' => TRUE,
+       ),
+       'last_abort_function' => array(
+-        'type' => 'varchar',
+-        'length' => 32,
++        'type' => 'text',
+         'no export' => TRUE,
+       ),
+       'last_execution_time' => array(
+diff --git a/sites/all/modules/elysia_cron/elysia_cron.module b/sites/all/modules/elysia_cron/elysia_cron.module
+index 5393a3b..3e57016 100644
+--- a/sites/all/modules/elysia_cron/elysia_cron.module
++++ b/sites/all/modules/elysia_cron/elysia_cron.module
+@@ -363,7 +363,7 @@ function elysia_cron_set($name, $channel = false, $values = array()) {
+     $fields = array("name" => "'%s'", "disable" => "%d", "rule" => "'%s'", "weight" => "%d", "context" => "'%s'", "running" => "%d", "last_run" => "%d", "last_aborted" => "%d", "abort_count" => "%d", "last_abort_function" => "'%s'", "last_execution_time" => "%d", "execution_count" => "%d", "avg_execution_time" => "%f", "max_execution_time" => "%d", "last_shutdown_time" => "%d");
+     $ifields = array('disable', 'running', 'last_run', 'last_aborted', 'abort_count', 'last_execution_time', 'execution_count', 'avg_execution_time', 'max_execution_time', 'last_shutdown_time');
+     
+-    if (db_result(db_query('SELECT 1 FROM {elysia_cron} WHERE name = "%s"', $name))) {
++    if (db_result(db_query('SELECT 1 FROM {elysia_cron} WHERE name = \'%s\'', $name))) {
+       $uquery = array();
+       $uvalues = array();
+       foreach ($values as $k => $v) {
