@@ -13,16 +13,16 @@
  * Part of hook_form_alter() implementation.
  */
 function tow_apachesolr_form_alter(&$form, &$form_state, $form_id) {
-    
+
     // New possible cron limits.
     $numbers = drupal_map_assoc(array(1, 5, 10, 20, 50, 100, 200, 500, 750, 1000, 2000, 5000, 10000));
-    
+
     // Apachesolr cron limit may be overridden in settings.php. If its current value is not among the default set of options, add it.
     $default_cron_limit = variable_get('apachesolr_cron_limit', 50);
     if (!isset($numbers[$default_cron_limit])) {
         $numbers[$default_cron_limit] = $default_cron_limit;
     }
-    
+
     $form['apachesolr_cron_limit']['#options'] = $numbers;
 }
 
@@ -163,7 +163,7 @@ function tow_apachesolr_update_index(&$document, $node) {
 
     ", $node->nid));
         $document->sis_tow_amount_saved_searches = (isset($document->sis_tow_amount_saved_searches) && $document->sis_tow_amount_saved_searches) ? $document->sis_tow_amount_saved_searches : 0;
-        
+
         // Get amount for #Debated.
         $amount_debated = 0;
         $amount_debated += $document->sis_tow_amount_saved_searches;
@@ -186,7 +186,7 @@ function tow_apachesolr_update_index(&$document, $node) {
                 field_dataset_nid_value = %d
 
         ", $node->nid);
-        while($row = db_fetch_object($res)) {
+        while ($row = db_fetch_object($res)) {
             $votes_number = db_result(db_query("
 
                 SELECT
@@ -445,7 +445,7 @@ function tow_apachesolr_dataset_modify_query(&$query, &$params) {
             $query->set_available_sort('sis_tow_count_views', array('title' => t('Most viewed'), 'default' => 'asc'));
             $query->set_solrsort('sis_tow_count_views', 'desc');
             break;
-        
+
         // Sort by (# searches + # comments + # search votes) for the most debated datasets.
         case 'debated':
             $query->set_available_sort('sis_tow_amount_debated', array('title' => t('Most debated'), 'default' => 'asc'));
@@ -595,12 +595,11 @@ function tow_apachesolr_record_modify_query(&$query, &$params) {
                 $subquery->add_filter('sis_tow_l_p_' . $k, '([* TO *] NOT 0)');
             }
             $query->add_subquery($subquery, 'OR');
-            
+
             $params['group'] = 'true';
             $params['group.func'] = _tow_apachesolr_group_function($list);
             # $params['group.field'] = 'ss_tow_field_table';
             $params['group.facet'] = 'true';
-            
         }
     }
 
@@ -1046,7 +1045,28 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
         $f_fields = array();
         $current_nid = $nid;
         if (is_numeric($nid)) {
-            list($fields, $f_fields) = _tow_apachesolr_separate_table_fields($nid);
+            try {
+                list($fields, $f_fields) = _tow_apachesolr_separate_table_fields($nid);
+            } catch (Exception $e) {
+                global $user;
+                $aux_user = $user;
+                $user = user_load(1);
+
+                $nodes = array();
+                $sql = "SELECT n.nid AS nid FROM {content_field_tables} n WHERE n.field_tables_value = '%s'";
+                $query = db_query($sql, $e->getMessage());
+                while ($record = db_fetch_object($query)) {
+                    $nodes[$record->nid] = $record->nid;
+                }
+                foreach ($nodes as $n) {
+                    node_delete($n);
+                }
+
+                $user = $aux_user;
+
+                drupal_not_found();
+                die();
+            }
         }
         // NID is not numeric - linked table.
         else {
@@ -1059,7 +1079,33 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
             $added_indexes = array();
             $key = 0;
             foreach ($nid as $table_nid) {
-                list($table_fields, $table_f_fields) = _tow_apachesolr_separate_table_fields($table_nid);
+                try {
+                    list($fields, $f_fields) = _tow_apachesolr_separate_table_fields($table_nid);
+                } catch (Exception $e) {
+                    if (is_numeric($e->getMessage())) {
+                        global $user;
+                        $aux_user = $user;
+                        $user = user_load(1);
+
+                        $nodes = array();
+                        $sql = "SELECT n.nid AS nid FROM {content_field_tables} n WHERE n.field_tables_value = '%s'";
+                        $query = db_query($sql, $e->getMessage());
+                        while ($record = db_fetch_object($query)) {
+                            $nodes[$record->nid] = $record->nid;
+                        }
+                        foreach ($nodes as $n) {
+                            node_delete($n);
+                        }
+
+                        $user = $aux_user;
+
+                        drupal_not_found();
+                        die();
+                    } else {
+                        throw $e;
+                    }
+                }
+
                 foreach ($table_fields as $field) {
                     $add_to_list = TRUE;
                     if ($field['index']) {
@@ -1232,8 +1278,7 @@ function _tow_apachesolr_separate_table_fields($nid) {
         }
         ksort($fields);
     } elseif ($table_node->type != 'dataset') {
-        drupal_not_found();
-        die();
+        throw new Exception($nid);
     }
 
     return array($fields, $f_fields);
