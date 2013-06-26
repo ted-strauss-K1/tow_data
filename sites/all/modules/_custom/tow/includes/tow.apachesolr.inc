@@ -1048,24 +1048,11 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
             try {
                 list($fields, $f_fields) = _tow_apachesolr_separate_table_fields($nid);
             } catch (Exception $e) {
-                global $user;
-                $aux_user = $user;
-                $user = user_load(1);
-
-                $nodes = array();
-                $sql = "SELECT n.nid AS nid FROM {content_field_tables} n WHERE n.field_tables_value = '%s'";
-                $query = db_query($sql, $e->getMessage());
-                while ($record = db_fetch_object($query)) {
-                    $nodes[$record->nid] = $record->nid;
+                if (is_numeric($e->getMessage())) {
+                    _tow_apachesolr_separate_table_fields_exception($e);
+                } else {
+                    throw $e;
                 }
-                foreach ($nodes as $n) {
-                    node_delete($n);
-                }
-
-                $user = $aux_user;
-
-                drupal_not_found();
-                die();
             }
         }
         // NID is not numeric - linked table.
@@ -1080,27 +1067,10 @@ function tow_apachesolr_table_fields($nid, $add_facet_string_fields = FALSE) {
             $key = 0;
             foreach ($nid as $table_nid) {
                 try {
-                    list($fields, $f_fields) = _tow_apachesolr_separate_table_fields($table_nid);
+                    list($table_fields, $table_f_fields) = _tow_apachesolr_separate_table_fields($table_nid);
                 } catch (Exception $e) {
                     if (is_numeric($e->getMessage())) {
-                        global $user;
-                        $aux_user = $user;
-                        $user = user_load(1);
-
-                        $nodes = array();
-                        $sql = "SELECT n.nid AS nid FROM {content_field_tables} n WHERE n.field_tables_value = '%s'";
-                        $query = db_query($sql, $e->getMessage());
-                        while ($record = db_fetch_object($query)) {
-                            $nodes[$record->nid] = $record->nid;
-                        }
-                        foreach ($nodes as $n) {
-                            node_delete($n);
-                        }
-
-                        $user = $aux_user;
-
-                        drupal_not_found();
-                        die();
+                        _tow_apachesolr_separate_table_fields_exception($e);
                     } else {
                         throw $e;
                     }
@@ -1282,6 +1252,47 @@ function _tow_apachesolr_separate_table_fields($nid) {
     }
 
     return array($fields, $f_fields);
+}
+
+/**
+ * Makes a deletion of corrupted content (linked records referring nonexistent tables) of the same nonexistent table
+ * as the node for which the exception was thrown belongs to.
+ * 
+ * @global object $user
+ *  Global user entity.
+ * 
+ * @param Exception $e
+ *  The exception been thrown from _tow_apachesolr_separate_table_fields.
+ */
+function _tow_apachesolr_separate_table_fields_exception(Exception $e) {
+
+    // Load admin for node deletion set possible.
+    global $user;
+    $aux_user = $user;
+    $user = user_load(1);
+
+    // Get corrupted nodes.
+    $nodes = array();
+    $sql = "SELECT n.nid AS nid FROM {content_field_tables} n WHERE n.field_tables_value = '%s'";
+    $query = db_query($sql, $e->getMessage());
+    while ($record = db_fetch_object($query)) {
+        $nodes[$record->nid] = $record->nid;
+    }
+
+    // Inform system of deletion of the corrupted content
+    watchdog('Apache Solr', 'Deleting @count corrupted nodes.', array('@count' => count($nodes)));
+
+    // Delete nodes.
+    foreach ($nodes as $n) {
+        node_delete($n);
+    }
+
+    // Set back the user.
+    $user = $aux_user;
+
+    // Redirect.
+    drupal_goto(drupal_get_destination());
+    die();
 }
 
 /**
