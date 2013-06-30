@@ -5,9 +5,6 @@
  *
  * Custom code for Theory on Wheels.
  */
-
-
-
 /* * **************************************************************************************************
  * Requirements
  * ************************************************************************************************** */
@@ -24,7 +21,7 @@ require_once 'sites/all/libraries/ChromePhp/ChromePhp.php';
  * Implementation of hook_access().
  */
 function tow_access($op, $node, $account) {
-    
+
     if (is_string($node)) {
         $type = $node;
         $node = new stdClass;
@@ -155,7 +152,7 @@ function tow_block($op = 'list', $delta = 0) {
             if ($delta == 'dataset_stats') {
                 return tow_dataset_stats_block();
             }
-            
+
             // 'Dataset votes' block.
             if ($delta == 'dataset_votes') {
                 return tow_dataset_votes_block();
@@ -319,7 +316,7 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
         case 'dataset_node_form':
             tow_dataset_form_alter(&$form, $form_state);
             break;
-        
+
         // Documentnode form.
         case 'document_node_form':
             tow_dataset_doc_form_alter(&$form, $form_state);
@@ -340,7 +337,7 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
             module_load_include('inc', 'user', 'user.pages');
             drupal_add_js(drupal_get_path('module', 'tow') . '/js/log_sign_tabs.js');
             $form['#prefix'] = '<div class="login-signup-tab"><div class="log-tab">Log in</div><div class="sign-tab">Sign up</div></div>';
-            $form['pass']['#prefix'] = l('Forget password?', 'user/password', array('query' => 'automodal=true&automodalClose=true&automodalReload=true','attributes' => array('class' => 'modalframe-exclude')));
+            $form['pass']['#prefix'] = l('Forget password?', 'user/password', array('query' => 'automodal=true&automodalClose=true&automodalReload=true', 'attributes' => array('class' => 'modalframe-exclude')));
             if (empty($form_state['storage'])) {
                 $form['#suffix'] = drupal_get_form('user_register');
             }
@@ -354,7 +351,7 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
             $form['comment_filter']['comment']['#resizable'] = FALSE;
             $form['comment_filter']['comment']['#attributes'] = array('placeholder' => t('write a comment...'), 'class' => 'h20');
             $form['comment_filter']['comment']['#title'] = FALSE;
-            
+
             $action = parse_url($form['#action']);
             if ($action['path'] == '/ajax/comment/form') {
                 $aux = explode('&', $action['query']);
@@ -371,16 +368,16 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
                 unset($form['admin']);
             }
             break;
-        
+
         // User profile form.
         case 'user_profile_form':
             tow_user_profile_form_alter(&$form, $form_state);
             break;
-        
+
         case 'apachesolr_settings':
             tow_apachesolr_form_alter($form, $form_state, $form_id);
             break;
-        
+
         case 'content_add_more_js':
             foreach ($form as $field) {
                 $field_name = $field['#field_name'];
@@ -388,8 +385,7 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
                 $add_more = $field_name . '_add_more';
                 if (($field_name == 'field_creator_person' || $field_name == 'field_creator_organization') && $field_count > 9) {
                     unset($form[$field_name][$add_more]);
-                }
-                elseif (($field_name == 'field_source_url' || $field_name == 'field_attachments') && $field_count > 4) {
+                } elseif (($field_name == 'field_source_url' || $field_name == 'field_attachments') && $field_count > 4) {
                     unset($form[$field_name][$add_more]);
                 }
             }
@@ -473,22 +469,22 @@ function tow_init() {
     module_load_include('inc', 'tow', 'includes/tow.tests');
     module_load_include('inc', 'tow', 'includes/tow.views');
     module_load_include('inc', 'tow', 'includes/tow.user');
-    
+
     global $user, $_tow_user;
     $_tow_user = $user;
-    
+
     //Set breadcrumbs on 'users' pages
-    if(arg(0) == 'users') {
+    if (arg(0) == 'users') {
         $bc[] = t('Users');
         drupal_set_breadcrumb($bc);
     }
-    
+
     //Set breadcrumbs on 'tags' pages
-    if(arg(0) == 'tags') {
+    if (arg(0) == 'tags') {
         $bc[] = t('Tags');
         drupal_set_breadcrumb($bc);
     }
-    
+
     // Add dataTables representation to the dataset search page.
     if (arg(0) == 'search_dataset' && arg(1)) {
         $node = node_load(arg(1));
@@ -536,13 +532,13 @@ function tow_init() {
             tow_statistics_node_views_update($node);
         }
     }
-    
+
     //Check user reputation new votes
     tow_user_new_points();
-    
+
     //Check user datasets new requests
     tow_user_new_requests();
-    
+
     //Check new comments to saved searches
     tow_user_new_ss_comments();
 }
@@ -562,18 +558,18 @@ function tow_link_alter(&$links, $node, $comment = NULL) {
 function tow_exit() {
     global $user;
 
-  // Check if we are counting views.
-  if (variable_get('statistics_count_content_views', 0)) {
-    // Check if current page displays a node in viewing mode.
-    if ((arg(0) == 'node') && is_numeric(arg(1)) && arg(2) == '') {
-      // Check if the user is admin or author.
-      $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == node_load(arg(1))->uid));
-      if ($is_admin) {
-        // Decrement total view count and day view count of current node.
-        db_query('UPDATE {node_counter} SET daycount = daycount - 1, totalcount = totalcount - 1, timestamp = %d WHERE nid = %d', time(), arg(1));
-      }
+    // Check if we are counting views.
+    if (variable_get('statistics_count_content_views', 0)) {
+        // Check if current page displays a node in viewing mode.
+        if ((arg(0) == 'node') && is_numeric(arg(1)) && arg(2) == '') {
+            // Check if the user is admin or author.
+            $is_admin = (in_array('administrator', $user->roles) || ($user->uid == 1) || ($user->uid == node_load(arg(1))->uid));
+            if ($is_admin) {
+                // Decrement total view count and day view count of current node.
+                db_query('UPDATE {node_counter} SET daycount = daycount - 1, totalcount = totalcount - 1, timestamp = %d WHERE nid = %d', time(), arg(1));
+            }
+        }
     }
-  }
 }
 
 /**
@@ -581,7 +577,7 @@ function tow_exit() {
  */
 function tow_menu() {
     module_load_include('inc', 'tow', 'includes/tow.tests');
-    
+
     $items = array();
 
     // Dataset creation link.
@@ -863,16 +859,16 @@ function tow_menu() {
 
     // Add test menu items.
     $items = array_merge($items, tow_tests_menu());
-    
+
     // User dataset access through noty messages.
     $items['notyaccess_ajax/%/%/%'] = array(
-        'page callback' => 'tow_ajax_handlers_noty_access', 
+        'page callback' => 'tow_ajax_handlers_noty_access',
         'page arguments' => array(1, 2, 3),
         'access arguments' => array('access content'),
         'file' => 'includes/tow.ajax_handlers.inc',
         'type' => MENU_CALLBACK,
     );
-    
+
     //Dataset doc
     $items['doc'] = array(
         'access arguments' => array('access content'),
@@ -907,7 +903,7 @@ function tow_menu() {
         'file' => 'includes/tow.ajax_handlers.inc',
         'type' => MENU_CALLBACK,
     );
-    
+
     // Saved search tags autocomplete.
     $items['tow/tags/autocomplete/%'] = array(
         'title' => 'Autocomplete for ss_tags',
@@ -917,13 +913,13 @@ function tow_menu() {
         'file' => 'includes/tow.ajax_handlers.inc',
         'type' => MENU_CALLBACK,
     );
-    
+
     //About
     $items['about'] = array(
         'access arguments' => array('access content'),
         'page callback' => '_tow_about_output',
     );
-    
+
     return $items;
 }
 
@@ -1003,8 +999,7 @@ function tow_nodeapi(&$node, $op) {
             if (!$is_admin) {
                 if ((strpos(request_uri(), "/cron.php") === 0) && ($user->uid == 0)) {
                     //from crontab
-                }
-                else {
+                } else {
                     db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
                 }
             }
@@ -1016,10 +1011,9 @@ function tow_nodeapi(&$node, $op) {
         //Output bookmark star
         $flag = flag_get_flag('bookmarks');
         if ($flag) {
-            $node->content['ss_flag']['#value'] = '<div class="ss-flag">' . flag_create_link('bookmarks', $node->nid) . /*TEMPORARILY DISABLED '<b>' . $flag->get_count($node->nid) . '</b>*/'</div>';
-        }
-        else {
-            $node->content['ss_flag']['#value'] = '<div class="ss-flag">' . flag_create_link('bookmarks', $node->nid) . /*TEMPORARILY DISABLED '<b>' . $flag->get_count($node->nid) . '</b>*/'</div>';
+            $node->content['ss_flag']['#value'] = '<div class="ss-flag">' . flag_create_link('bookmarks', $node->nid) . /* TEMPORARILY DISABLED '<b>' . $flag->get_count($node->nid) . '</b> */'</div>';
+        } else {
+            $node->content['ss_flag']['#value'] = '<div class="ss-flag">' . flag_create_link('bookmarks', $node->nid) . /* TEMPORARILY DISABLED '<b>' . $flag->get_count($node->nid) . '</b> */'</div>';
         }
 
         // Creation time representation.
@@ -1178,14 +1172,14 @@ function tow_nodeapi(&$node, $op) {
         $available_positions[] = $node->field_position[0]['value'];
         db_query("UPDATE {content_type_table} SET field_available_positions_value = '%s' WHERE nid = %d", serialize($available_positions), $node->field_table[0]['value']);
     }
-    
+
     //Create document to dataset
     if ($node->type == 'dataset' && $op == 'insert') {
-      $new_document = new stdClass();
-      $new_document->type = 'document';
-      $new_document->title = 'Doc for ' . $node->title . ' dataset';  
-      $new_document->uid = $node->uid;
-      $new_document->body = '## Introduction ##
+        $new_document = new stdClass();
+        $new_document->type = 'document';
+        $new_document->title = 'Doc for ' . $node->title . ' dataset';
+        $new_document->uid = $node->uid;
+        $new_document->body = '## Introduction ##
 Your introduction.
 ## Data collection methods ##
 Describe your data collection methods.
@@ -1193,10 +1187,10 @@ Describe your data collection methods.
 Describe your analysis methods.
 
 You can upload pictures from your computer with the form below or use Image button at toolbar to download picture from Internet.';
-      $new_document->field_doc_dataset_nid[0]['value'] = $node->nid;
-      node_save($new_document);
+        $new_document->field_doc_dataset_nid[0]['value'] = $node->nid;
+        node_save($new_document);
     }
-    
+
     //Update {apachesolr_search_node} table after adding/deleting table or record
     if (($node->type == 'table' || $node->type == 'record') && ($op == 'insert' || $op == 'update')) {
         if ($node->type == 'table') {
@@ -1205,12 +1199,10 @@ You can upload pictures from your computer with the form below or use Image butt
         if ($node->type == 'record') {
             $dnid = db_result(db_query("SELECT ctt.field_dataset_value FROM {content_type_table} ctt JOIN {content_type_record} ctr ON ctr.field_table_value = ctt.nid WHERE ctr.nid = %d", $node->nid));
         }
-        
-        //Update {apachesolr_search_node} table for indexing updates in table/row amount
-        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $dnid);           
-    }
-    
 
+        //Update {apachesolr_search_node} table for indexing updates in table/row amount
+        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $dnid);
+    }
 }
 
 /**
@@ -1436,13 +1428,13 @@ function tow_preprocess_node(&$variables) {
     if ($variables['type'] == 'saved_search') {
         $node = $variables['node'];
         unset($variables['submitted']);
-        
+
         $isset_filters = (isset($node->field_search_constraints[0]['safe']) && $node->field_search_constraints[0]['safe'] != '');
         $isset_selected_fields = (isset($node->field_selected_fields[0]['safe']) && $node->field_selected_fields[0]['safe'] != '');
-        
+
         $variables['node_url'] = '/search_dataset/';
         $variables['node_url'] .= ($node->field_table_nid[0]['value'] == 0) ? $node->field_dataset_nid[0]['value'] : $node->field_table_nid[0]['value'];
-        
+
         if ($isset_filters || $isset_selected_fields) {
             $variables['node_url'] .= '#?';
             if ($isset_filters) {
@@ -1636,6 +1628,19 @@ function tow_possible_fields() {
  */
 function tow_search_cron() {
 
+    // Unite search_cron update index tasks with this cron function
+    // to avoid multiple queries from search_cron() to {search_total} db table
+    // (used only if Elysia Cron is installed and search_cron() is disabled).
+    if (function_exists('elysia_cron_is_job_disabled')) {
+        if (elysia_cron_is_job_disabled('search_cron')) {
+
+            // Update word index.
+            foreach (module_list() as $module) {
+                module_invoke($module, 'update_index');
+            }
+        }
+    }
+
     $res = db_query("
 
     SELECT
@@ -1818,13 +1823,13 @@ function _tow_show_validation_error($error, $err_field_names, $err_msgs) {
  * Get taxonomy term object from known vocabulary.
  */
 function _tow_taxonomy_get_term($name, $voc_id) {
-  $db_result = db_query(db_rewrite_sql("SELECT t.tid, t.vid, t.* FROM {term_data} t WHERE LOWER(t.name) = LOWER('%s') AND t.vid = %d", 't', 'tid'), trim($name), $voc_id);
-  $result = array();
-  while ($term = db_fetch_object($db_result)) {
-    $result[] = $term;
-  }
+    $db_result = db_query(db_rewrite_sql("SELECT t.tid, t.vid, t.* FROM {term_data} t WHERE LOWER(t.name) = LOWER('%s') AND t.vid = %d", 't', 'tid'), trim($name), $voc_id);
+    $result = array();
+    while ($term = db_fetch_object($db_result)) {
+        $result[] = $term;
+    }
 
-  return $result;
+    return $result;
 }
 
 /**
@@ -1832,20 +1837,20 @@ function _tow_taxonomy_get_term($name, $voc_id) {
  */
 function _tow_add_taxonomy_term($name, $vid, $description = '', $weight = 0) {
 
-  $form_values = array();
-  $form_values['name'] = $name;
-  $form_values['description'] = $description;
-  $form_values['vid'] = $vid;
-  $form_values['weight'] = $weight;
-  taxonomy_save_term($form_values);
+    $form_values = array();
+    $form_values['name'] = $name;
+    $form_values['description'] = $description;
+    $form_values['vid'] = $vid;
+    $form_values['weight'] = $weight;
+    taxonomy_save_term($form_values);
 
-  return $form_values['tid'];
+    return $form_values['tid'];
 }
 
 /**
  * About page
  */
 function _tow_about_output() {
-  $output = 'The page is under development. About information will be added soon...';
-  return $output;
+    $output = 'The page is under development. About information will be added soon...';
+    return $output;
 }
