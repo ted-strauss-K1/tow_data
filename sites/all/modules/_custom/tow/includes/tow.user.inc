@@ -18,15 +18,15 @@ function tow_user_view_block() {
     $account = user_load(arg(1));
     user_build_content($account);
     $block['content'] = theme('user_profile', $account);
-    
+
     //Set breadcrumbs
     $breadcrumb[] = l('User', 'users');
     $breadcrumb[] .= $account->realname;
-    if(arg(2) == 'edit') {
-       $breadcrumb[] .= t('edit');
+    if (arg(2) == 'edit') {
+        $breadcrumb[] .= t('edit');
     }
     drupal_set_breadcrumb($breadcrumb);
- 
+
     return $block;
 }
 
@@ -87,18 +87,19 @@ function tow_user_profile_form_alter(&$form, $form_state) {
 
 function tow_user_profile_update_message(&$form, $form_state) {
     $upd_fields = '';
-    foreach ($form['Personal information'] as $item) {
-          $is_profile = strpos($item['#name'], 'profile_');
-          if(($is_profile === 0) && ($item['#value'] != $item['#default_value'])) {
-            $upd_fields .= $item['#title'] . ', ';
-          }
+    if (isset($form['Personal information'])) {
+        foreach ($form['Personal information'] as $item) {
+            $is_profile = strpos($item['#name'], 'profile_');
+            if (($is_profile === 0) && ($item['#value'] != $item['#default_value'])) {
+                $upd_fields .= $item['#title'] . ', ';
+            }
+        }
     }
     if ($upd_fields != '') {
-       $message = substr($upd_fields, 0, -2);
-       drupal_set_message('You\'ve just updated ' . $message . ' in your user profile');
+        $message = substr($upd_fields, 0, -2);
+        drupal_set_message('You\'ve just updated ' . $message . ' in your user profile');
     }
 }
-
 
 /* * **************************************************************************************************
  * Functions
@@ -211,7 +212,7 @@ function tow_user_new_points() {
     $messages = array();
     while ($row = db_fetch_object($result)) {
         $num_rows++;
-         if ($row->description) {
+        if ($row->description) {
             $description = filter_xss($row->description);
         } else {
             $description = t('None');
@@ -221,13 +222,15 @@ function tow_user_new_points() {
     if ($num_rows == 0) {
         return;
     } else {
-        foreach($messages as $message) {
-                drupal_set_message($message);
+        foreach ($messages as $message) {
+            drupal_set_message($message);
         }
         $cur_time = time();
         user_save($account, array('points_last_time' => $cur_time));
     }
-};
+}
+
+;
 
 //Function to display dataset access requests messages
 function tow_user_new_requests() {
@@ -264,32 +267,30 @@ function tow_user_new_requests() {
         $requester = user_load($row->uid);
         $a_dataset = node_load($row->nid);
         $messages[] = array('message' => ($requester->realname . ' has requested access to your dataset ' . $a_dataset->title . ', should we grant access?'),
-                            'requester' => $requester->uid,
-                            'dataset' => $a_dataset->nid);
+            'requester' => $requester->uid,
+            'dataset' => $a_dataset->nid);
     }
     if ($num_rows == 0) {
         return;
-    }
-    else {
-        foreach($messages as $message) {
+    } else {
+        foreach ($messages as $message) {
             if (isset($_SESSION['invite'])) {
                 unset($_SESSION['invite']);
-            }
-            else {
-                 drupal_add_js('$(document).ready(function(){$.hrd.noty({
-  text : "' . $message['message'] .'", 
+            } else {
+                drupal_add_js('$(document).ready(function(){$.hrd.noty({
+  text : "' . $message['message'] . '", 
   buttons: [
     {addClass: "btn btn-primary", text: "Grant", onClick: function($noty) {
         $.get( 
         // Callback URL.
-        "' . base_path() .'notyaccess_ajax/1/" + ' . $message['dataset'] . ' + "/" + ' . $message['requester'] . '
+        "' . base_path() . 'notyaccess_ajax/1/" + ' . $message['dataset'] . ' + "/" + ' . $message['requester'] . '
         ).success(function() { $noty.close(); }).error(function() { alert("error"); });
       }
     },
     {addClass: "btn btn-danger", text: "Deny", onClick: function($noty) {
         $.get( 
         // Callback URL.
-        "' . base_path() .'notyaccess_ajax/-1/" + ' . $message['dataset'] . ' + "/" + ' . $message['requester'] . '
+        "' . base_path() . 'notyaccess_ajax/-1/" + ' . $message['dataset'] . ' + "/" + ' . $message['requester'] . '
         ).success(function() { $noty.close(); }).error(function() { alert("error"); });
       }
     },
@@ -306,7 +307,9 @@ function tow_user_new_requests() {
         $cur_time = time();
         user_save($account, array('requests_last_time' => $cur_time));
     }
-};
+}
+
+;
 
 //Function to display 'comment on saved search' messages
 function tow_user_new_ss_comments() {
@@ -341,22 +344,24 @@ function tow_user_new_ss_comments() {
     $messages = array();
     while ($row = db_fetch_object($result)) {
         $num_rows++;
-         /*if ($row->description) {
-            $description = filter_xss($row->description);
-        } else {
-            $description = t('None');
-        }*/
+        /* if ($row->description) {
+          $description = filter_xss($row->description);
+          } else {
+          $description = t('None');
+          } */
         $commented_ss = node_load($row->nid);
-        $comment = (strlen($row->comment) > 50) ? substr($row->comment,0,47) . '...' : $row->comment;
+        $comment = (strlen($row->comment) > 50) ? substr($row->comment, 0, 47) . '...' : $row->comment;
         $messages[] = ('Comment on ' . $commented_ss->title . ': ' . $comment);
     }
     if ($num_rows == 0) {
         return;
     } else {
-        foreach($messages as $message) {
-                drupal_set_message($message);
+        foreach ($messages as $message) {
+            drupal_set_message($message);
         }
         $cur_time = time();
         user_save($account, array('ss_comments_last_time' => $cur_time));
     }
-};
+}
+
+;
