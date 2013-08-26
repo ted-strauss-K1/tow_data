@@ -1,0 +1,8 @@
+core = 6.x
+
+package = Custom
+name = Theory on Wheels: MongoDB
+description = MongoDB integration and workflow for Theory on Wheels.
+
+dependencies[] = search
+dependencies[] = tow

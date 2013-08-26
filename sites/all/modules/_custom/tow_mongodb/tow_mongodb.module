@@ -1,0 +1,271 @@
+<?php
+
+/**
+ * @file
+ * 
+ * A library of common mechanisms for modules using MongoDB.
+ */
+require_once('includes/tow_mongodb.index.inc');
+
+/**
+ * Implementation of hook_help().
+ */
+function tow_mongodb_help($path, $arg) {
+    switch ($path) {
+        case 'admin/help#tow_mongodb':
+            return '<p>' . t('<a href="!project">MongoDB</a> implements a generic <a href="!mongo">MongoDB</a> interface.', array(
+                        '!project' => 'http://drupal.org/project/mongodb',
+                        '!mongo' => 'http://www.mongodb.org/',
+            ));
+            break;
+    }
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function tow_mongodb_menu() {
+
+    $items = array();
+
+    // Mongo DB settings.
+    $items['admin/settings/tow/mongodb'] = array(
+        'tab_parent' => 'admin/settings/tow',
+        'access arguments' => array('administer site configuration'),
+        'title' => 'MongoDB',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('tow_mongodb_admin_settings_form'),
+        'file' => 'includes/tow_mongodb.admin.inc',
+        'type' => MENU_LOCAL_TASK,
+    );
+    $items['admin/settings/tow/mongodb/settings'] = array(
+        'tab_parent' => 'admin/settings/tow/mongodb',
+        'access arguments' => array('administer site configuration'),
+        'title' => 'Settings',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('tow_mongodb_admin_settings_form'),
+        'file' => 'includes/tow_mongodb.admin.inc',
+        'type' => MENU_DEFAULT_LOCAL_TASK,
+    );
+    $items['admin/settings/tow/mongodb/index'] = array(
+        'tab_parent' => 'admin/settings/tow/mongodb',
+        'title' => 'Index',
+        'page callback' => 'tow_mongodb_admin_index_page',
+        'access arguments' => array('administer search'),
+        'file' => 'includes/tow_mongodb.admin.inc',
+        'type' => MENU_LOCAL_TASK,
+    );
+    $items['admin/settings/tow/mongodb/index/delete/confirm'] = array(
+        'title' => 'Confirm index deletion',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('tow_mongodb_admin_delete_index_confirm'),
+        'access arguments' => array('administer search'),
+        'file' => 'includes/tow_mongodb.admin.inc',
+        'type' => MENU_CALLBACK,
+    );
+
+    return $items;
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function tow_mongodb_nodeapi(&$node, $op, $a3 = NULL, $a4 = NULL) {
+    switch ($op) {
+        case 'delete':
+
+            _tow_mongodb_nodeapi_delete($node);
+            break;
+
+        case 'insert':
+
+            // Make sure no node ends up with a timestamp that's in the future
+            // by using time() rather than the node's changed or created timestamp.
+            db_query("INSERT INTO {tow_mongodb_index} (nid, status, changed) VALUES  (%d, %d, %d)", $node->nid, $node->status, time());
+            break;
+
+        case 'update':
+
+            _tow_mongodb_nodeapi_update($node);
+            break;
+    }
+}
+
+/**
+ * Implementation of hook_user().
+ *
+ * Mark nodes as needing re-indexing if the author name changes.
+ */
+function tow_mongodb_user($op, &$edit, &$account) {
+    switch ($op) {
+        case 'update':
+            if (isset($edit['name']) && $account->name != $edit['name']) {
+                switch ($GLOBALS['db_type']) {
+                    case 'mysql':
+                    case 'mysqli':
+                        db_query("UPDATE {tow_mongodb_index} asn INNER JOIN {node} n ON asn.nid = n.nid SET asn.changed = %d WHERE n.uid = %d", time(), $account->uid);
+                        break;
+                    default:
+                        db_query("UPDATE {tow_mongodb_index} SET changed = %d WHERE nid IN (SELECT nid FROM {node} WHERE uid = %d)", time(), $account->uid);
+                        break;
+                }
+            }
+            break;
+    }
+}
+
+/**
+ * Implementation of hook_taxonomy().
+ * 
+ * Mark nodes as needing re-indexing if a term name changes.
+ * 
+ * @param string $op
+ *  What is being done to $array. Possible values:
+ *    - "delete";
+ *    - "insert";
+ *    - "update".
+ * @param string $type
+ *  What manner of item $array is. Possible values:
+ *    - "term";
+ *    - "vocabulary".
+ * @param array $edit
+ *  The item on which $op is being performed. Possible values:
+ *    - for vocabularies, 'insert' and 'update' ops: $form_values from taxonomy_form_vocabulary_submit();
+ *    - for vocabularies, 'delete' op: $vocabulary from taxonomy_get_vocabulary() cast to an array;
+ *    - for terms, 'insert' and 'update' ops: $form_values from taxonomy_form_term_submit();
+ *    - for terms, 'delete' op: $term from taxonomy_get_term() cast to an array.
+ */
+function tow_mongodb_taxonomy($op, $type, $edit) {
+    if ($type == 'term' && ($op == 'update')) {
+        switch ($GLOBALS['db_type']) {
+            case 'mysql':
+            case 'mysqli':
+                db_query("UPDATE {tow_mongodb_index} asn INNER JOIN {term_node} tn ON asn.nid = tn.nid SET asn.changed = %d WHERE tn.tid = %d", time(), $edit['tid']);
+                break;
+            default:
+                db_query("UPDATE {tow_mongodb_index} SET changed = %d WHERE nid IN (SELECT nid FROM {term_node} WHERE tid = %d)", time(), $edit['tid']);
+                break;
+        }
+    }
+}
+
+/**
+ * Implementation of hook_comment().
+ *
+ * Mark nodes as needing re-indexing if comments are added or changed.
+ * 
+ * @param array|object $a1
+ *  Argument; meaning is dependent on the action being performed.
+ *  For "validate", "update", and "insert": an array of form values submitted by the user.
+ *  For all other operations, the comment the action is being performed on.
+ * @param string $op
+ *  The action being performed. Possible values:
+ *    - "insert": The comment is being inserted.
+ *    - "update": The comment is being updated.
+ *    - "view": The comment is being viewed. This hook can be used to add additional data to the comment before theming.
+ *    - "validate": The user has just finished editing the comment and is trying to preview or submit it. This hook can be used to check the comment. Errors should be set with form_set_error().
+ *    - "publish": The comment is being published by the moderator.
+ *    - "unpublish": The comment is being unpublished by the moderator.
+ *    - "delete": The comment is being deleted by the moderator.
+ */
+function tow_mongodb_comment($a1, $op) {
+    $edit = (array) $a1;
+    switch ($op) {
+
+        // Reindex the node when comments are added or changed.
+        case 'insert':
+        case 'update':
+        case 'delete':
+        case 'publish':
+        case 'unpublish':
+
+            tow_mongodb_index_mark_node($edit['nid']);
+            break;
+    }
+}
+
+/**
+ * Implementation of hook_node_type().
+ *
+ * Mark nodes as needing re-indexing if a node type name changes.
+ */
+function tow_mongodb_node_type($op, $info) {
+    if ($op != 'delete' && !empty($info->old_type) && $info->old_type != $info->type) {
+
+        // We cannot be sure we are going before or after node module.
+        switch ($GLOBALS['db_type']) {
+            case 'mysql':
+            case 'mysqli':
+                db_query("UPDATE {tow_mongodb_index} asn INNER JOIN {node} n ON asn.nid = n.nid SET asn.changed = %d WHERE (n.type = '%s' OR n.type = '%s')", time(), $info->old_type, $info->type);
+                break;
+            default:
+                db_query("UPDATE {tow_mongodb_index} SET changed = %d WHERE nid IN (SELECT nid FROM {node} WHERE type = '%s' OR type = '%s')", time(), $info->old_type, $info->type);
+                break;
+        }
+    }
+}
+
+/**
+ * Implementation of hook_cron().
+ */
+function tow_mongodb_cron() {
+
+    // Mass update and delete functions are in the include file.
+    tow_mongodb_index_check_node_table();
+}
+
+function tow_mongodb_get_mongo() {
+    $options = array();
+    $username = variable_get('tow_mongodb_user', '');
+    $password = variable_get('tow_mongodb_password', '');
+    $database = variable_get('tow_mongodb_db', 'admin');
+    if ($username != '') {
+        $options['username'] = $username;
+    }
+    if ($password != '') {
+        $options['password'] = $password;
+    }
+    $options['db'] = $database;
+
+    $mongo = new Mongo(variable_get('tow_mongodb_connection_url', 'mongodb://localhost:27017'), $options);
+    $mongo = $mongo->selectDB($database);
+
+    return $mongo;
+}
+
+/**
+ * Helper function for hook_nodeapi().
+ */
+function _tow_mongodb_nodeapi_delete($node, $set_message = TRUE) {
+    if (tow_mongodb_index_delete_node_from_index($node)) {
+
+        // There was no exception, so delete from the table.
+        db_query("DELETE FROM {tow_mongodb_index} WHERE nid = %d", $node->nid);
+    }
+}
+
+/**
+ * Helper function for hook_nodeapi().
+ */
+function _tow_mongodb_nodeapi_update($node, $set_message = TRUE) {
+
+    // Check if the node has gone from published to unpublished.
+    if (!$node->status && db_result(db_query("SELECT status FROM {tow_mongodb_index} WHERE nid = %d", $node->nid))) {
+        if (tow_mongodb_index_delete_node_from_index($node)) {
+
+            // There was no exception, so update the table.
+            db_query('UPDATE {tow_mongodb_index} SET changed = %d, status = %d WHERE nid = %d', time(), $node->status, $node->nid);
+        }
+    } else {
+        db_query('UPDATE {tow_mongodb_index} SET changed = %d, status = %d WHERE nid = %d', time(), $node->status, $node->nid);
+    }
+}
+
+/**
+ * Implementation of hook_update_index().
+ */
+function tow_mongodb_update_index() {
+    $cron_limit = variable_get('tow_mongodb_cron_limit', 100);
+    $rows = tow_mongodb_index_get_nodes_to_index($cron_limit);
+    tow_mongodb_index_nodes($rows);
+}

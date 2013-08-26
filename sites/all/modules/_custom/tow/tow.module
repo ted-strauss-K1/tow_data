@@ -580,13 +580,24 @@ function tow_menu() {
 
     $items = array();
 
-    // Dataset creation link.
+    // ToW settings tree.
     $items['admin/settings/tow'] = array(
         'access arguments' => array('administer site configuration'),
         'title' => 'Theory on Wheels settings',
         'page callback' => 'drupal_get_form',
         'page arguments' => array('tow_admin_settings_form'),
         'file' => 'includes/tow.admin.inc',
+    );
+    
+    // ToW settings.
+    $items['admin/settings/tow/settings'] = array(
+        'tab_parent' => 'admin/settings/tow',
+        'access arguments' => array('administer site configuration'),
+        'title' => 'ToW',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('tow_admin_settings_form'),
+        'file' => 'includes/tow.admin.inc',
+        'type' => MENU_DEFAULT_LOCAL_TASK,
     );
 
     // Table node.

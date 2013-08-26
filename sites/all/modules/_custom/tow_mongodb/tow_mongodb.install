@@ -1,0 +1,95 @@
+<?php
+
+/**
+ * @file
+ * 
+ * Provides installation utilities for ToW Mongo DB module.
+ */
+require_once('includes/tow_mongodb.index.inc');
+
+/**
+ * Implementation hook_requirements().
+ */
+function tow_mongodb_requirements($phase) {
+    $requirements = array();
+
+    // Ensure translations don't break at install time.
+    $t = get_t();
+
+    if (!extension_loaded('mongo')) {
+        $requirements['tow_mongo'] = array(
+            'title' => $t('ToW Mongo DB'),
+            'value' => $t('Not found'),
+            'description' => $t('ToW Mongo DB module requires the PHP MongoDB extension to be installed.'),
+            'severity' => REQUIREMENT_ERROR,
+        );
+    }
+
+    return $requirements;
+}
+
+/**
+ * Implementation of hook_install().
+ */
+function tow_mongodb_install() {
+
+    // Create tables.
+    drupal_install_schema('tow_mongodb');
+}
+
+/**
+ * Implementation of hook_enable().
+ */
+function tow_mongodb_enable() {
+
+    // Completely build the index table.
+    tow_mongodb_index_rebuild_index_table();
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function tow_mongodb_schema() {
+    $schema['tow_mongodb_index'] = array(
+        'description' => t('Stores a record of when a node property changed to determine if it needs indexing by MongoDB.'),
+        'fields' => array(
+            'nid' => array(
+                'description' => t('The primary identifier for a node.'),
+                'type' => 'int',
+                'unsigned' => TRUE,
+                'not null' => TRUE),
+            'status' => array(
+                'description' => t('Boolean indicating whether the node is published (visible to non-administrators).'),
+                'type' => 'int',
+                'not null' => TRUE,
+                'default' => 1),
+            'changed' => array(
+                'description' => t('The Unix timestamp when a node property was changed.'),
+                'type' => 'int',
+                'not null' => TRUE,
+                'default' => 0),
+        ),
+        'indexes' => array(
+            'changed' => array('changed', 'status'),
+        ),
+        'primary key' => array('nid'),
+    );
+
+    return $schema;
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function tow_mongodb_uninstall() {
+    variable_del('tow_mongodb_connection_url');
+    variable_del('tow_mongodb_user');
+    variable_del('tow_mongodb_password');
+    variable_del('tow_mongodb_db');
+    variable_del('tow_mongodb_index_last');
+    variable_del('tow_mongodb_cron_limit');
+    variable_del('tow_mongodb_index_updated');
+
+    // Remove tables.
+    drupal_uninstall_schema('tow_mongodb');
+}
