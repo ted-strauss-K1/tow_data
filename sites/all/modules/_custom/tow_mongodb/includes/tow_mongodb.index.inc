@@ -110,6 +110,7 @@ function tow_mongodb_index_delete_node_from_index($node) {
  */
 function tow_mongodb_index_nodes($rows) {
     if (!$rows) {
+
         // Nothing to do.
         return FALSE;
     }
@@ -133,6 +134,7 @@ function tow_mongodb_index_nodes($rows) {
     foreach ($rows as $row) {
         try {
             tow_mongodb_index_add_node_document($documents, $row->nid);
+
             // Variables to track the last item changed.
             $position['last_change'] = $row->changed;
             $position['last_nid'] = $row->nid;
@@ -190,8 +192,10 @@ function tow_mongodb_index_nodes($rows) {
  * Returns an array of rows from a query based on an indexing namespace.
  */
 function tow_mongodb_index_get_nodes_to_index($limit) {
+    extract(tow_mongodb_index_get_last_index());
+    $args = array($last_change, $last_change, $last_nid);
     $rows = array();
-    $result = db_query_range("SELECT asn.nid, asn.changed FROM {tow_mongodb_index} asn WHERE (asn.changed > %d OR (asn.changed = %d AND asn.nid > %d)) AND asn.status = 1 ORDER BY asn.changed ASC, asn.nid ASC", 0, $limit);
+    $result = db_query_range("SELECT tmi.nid, tmi.changed FROM {tow_mongodb_index} tmi INNER JOIN {node} n ON n.nid = tmi.nid WHERE (tmi.changed > %d OR (tmi.changed = %d AND tmi.nid > %d)) AND tmi.status = 1 ORDER BY tmi.changed ASC, tmi.nid ASC", $args, 0, $limit);
     while ($row = db_fetch_object($result)) {
         $rows[] = $row;
     }
@@ -458,26 +462,6 @@ function tow_mongodb_index_node_to_document($nid) {
                 ),
             ),
         );
-//        $records = array();
-//        foreach ($node->field_record_nid as $value) {
-//            $records[] = node_load($value['value']);
-//        }
-//        $values = array();
-//        $header = tow_apachesolr_table_fields($table_nid);
-//        foreach ($records as $record) {
-//            foreach ($header as $h) {
-//                $values[$h['name']] = NULL;
-//                if ($record->field_table[0]['value'] == $h['table_nid']) {
-//                    foreach ($h['table'] as $table_info) {
-//                        if ($table_info['nid'] == $h['table_nid']) {
-//                            $delta = $table_info['delta'];
-//                        }
-//                    }
-//                    $values[$h['name']] = $record->{'field_' . $h['type']}[$delta]['value'];
-//                }
-//            }
-//        }
-        // Put tables.
         $tables = array();
         foreach ($node->field_tables as $table) {
             $tables[] = $table['value'];
@@ -511,4 +495,18 @@ function tow_mongodb_index_node_to_document($nid) {
     }
 
     return $document;
+}
+
+/**
+ * Helper function for modules implmenting hook_search's 'status' op.
+ */
+function tow_mongodb_index_status() {
+    extract(tow_mongodb_index_get_last_index());
+    $args = array($last_change, $last_change, $last_nid);
+
+    $total = db_result(db_query("SELECT COUNT(tmi.nid) FROM {tow_mongodb_index} tmi WHERE tmi.status = 1"));
+    $remaining = db_result(db_query("SELECT COUNT(tmi.nid) FROM {tow_mongodb_index} tmi INNER JOIN {node} n ON n.nid = tmi.nid WHERE (tmi.changed > %d OR (tmi.changed = %d AND tmi.nid > %d)) AND tmi.status = 1", $args));
+    $indexed = $total - $remaining;
+
+    return array('indexed' => $indexed, 'remaining' => $remaining, 'total' => $total);
 }
