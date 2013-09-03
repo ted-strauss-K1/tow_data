@@ -64,7 +64,10 @@ function tow_mongodb_admin_settings_form() {
  */
 function tow_mongodb_admin_index_page() {
 
-    $output = '';
+    $status = tow_mongodb_index_status();
+    $output = "<p>" . t('Number of documents in index: @num', array('@num' => $status['indexed'])) . "</p>\n";
+
+    // Display the Delete Index form.
     $output .= drupal_get_form('tow_mongodb_admin_delete_index_form');
 
     return $output;
