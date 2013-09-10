@@ -89,8 +89,61 @@ function tow_mongodb_index_updated($updated = NULL) {
 function tow_mongodb_index_delete_node_from_index($node) {
     try {
         $mongo = tow_mongodb_get_mongo();
-        $db = variable_get('tow_mongodb_db', 'admin');
-        # $mongo->{$db}->
+        if ($node->type == 'dataset') {
+            $criteria = array('_id' => $node->nid);
+        }
+
+        // Table.
+        if ($node->type == 'table') {
+
+            $criteria = array('_id' => $node->field_dataset[0]['value']);
+            $value = array(
+                '$pull' => array(
+                    'tables' => array(
+                        '_id' => $node->nid
+                    ),
+                ),
+            );
+        }
+
+        // Record.
+        if ($node->type == 'record') {
+            $table = node_load($node->field_table[0]['value']);
+            $criteria = array('_id' => $table->field_dataset[0]['value'], 'tables._id' => $table->nid);
+            $value = array(
+                '$pull' => array(
+                    'tables.$.rows' => array(
+                        '_id' => $node->nid,
+                    ),
+                ),
+            );
+        }
+
+        // Linked record.
+        if ($node->type == 'linked_record') {
+            $tables = array();
+            foreach ($node->field_tables as $f) {
+                $tables[] = $f['value'];
+            }
+            sort($tables);
+            $table_nid = implode('+', $tables);
+            $dataset_nid = node_load($tables[0])->field_dataset[0]['value'];
+            $criteria = array('_id' => $dataset_nid, 'tables._id' => $table_nid);
+            $value = array(
+                '$pull' => array(
+                    'tables.$.rows' => array(
+                        '_id' => $node->nid,
+                    ),
+                ),
+            );
+        }
+
+        if ($node->type == 'dataset') {
+            $mongo->remove($criteria);
+        } else {
+            $mongo->datasets->update($criteria, $value);
+        }
+
         tow_mongodb_index_updated(time());
         return TRUE;
     } catch (Exception $e) {
