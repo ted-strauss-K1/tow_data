@@ -7,6 +7,10 @@
  */
 require_once('includes/tow_mongodb.index.inc');
 
+function tow_mongodb_init() {
+    drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/connection.js');
+}
+
 /**
  * Implementation of hook_help().
  */
