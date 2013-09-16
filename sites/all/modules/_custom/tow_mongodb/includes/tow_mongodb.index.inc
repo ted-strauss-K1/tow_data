@@ -139,7 +139,7 @@ function tow_mongodb_index_delete_node_from_index($node) {
         }
 
         if ($node->type == 'dataset') {
-            $mongo->remove($criteria);
+            $mongo->datasets->remove($criteria);
         } else {
             $mongo->datasets->update($criteria, $value);
         }
@@ -334,19 +334,21 @@ function tow_mongodb_index_nodeapi_mass_update($nodes) {
 
     $published_ids = array();
     $unpublished_ids = array();
+    
+    $errors = 0;
+    
     foreach ($nodes as $node) {
         if ($node->status) {
             $published_ids[$node->nid] = $node->nid;
         } else {
             $unpublished_ids[$node->nid] = $node->nid;
+            if (!tow_mongodb_index_delete_node_from_index($node)) {
+                $errors++;
+            }
         }
     }
-    $time = time();
-    try {
-        $mongo = tow_mongodb_get_mongo();
-        # $mongo->deleteByMultipleIds($unpublished_ids);
-        tow_mongodb_index_updated($time);
-
+    
+    if ($errors == 0) {
         // There was no exception, so update the table.
         if ($published_ids) {
             db_query('UPDATE {tow_mongodb_index} SET changed = %d, status = 1 WHERE nid IN (' . db_placeholders($published_ids) . ')', array_merge((array) $time, array_keys($published_ids)));
@@ -355,10 +357,10 @@ function tow_mongodb_index_nodeapi_mass_update($nodes) {
             db_query('UPDATE {tow_mongodb_index} SET changed = %d, status = 0 WHERE nid IN (' . db_placeholders($unpublished_ids) . ')', array_merge((array) $time, array_keys($unpublished_ids)));
         }
         return TRUE;
-    } catch (Exception $e) {
-        watchdog('ToW MongoDB', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
+    } else {
         return FALSE;
     }
+
 }
 
 function tow_mongodb_index_nodeapi_mass_delete($nodes) {
@@ -368,21 +370,21 @@ function tow_mongodb_index_nodeapi_mass_delete($nodes) {
 
     $ids = array();
     $nids = array();
+
+    $errors = 0;
+    
     foreach ($nodes as $node) {
         $ids[] = $node->nid;
         $nids[] = $node->nid;
+        if (!tow_mongodb_index_delete_node_from_index($node)) {
+            $errors++;
+        }
     }
-    $time = time();
-    try {
-        $mongo = tow_mongodb_get_mongo();
-        # $mongo->deleteByMultipleIds($ids);
-        tow_mongodb_index_updated($time);
-
+    if ($errors == 0) {
         // There was no exception, so update the table.
         db_query("DELETE FROM {tow_mongodb_index} WHERE nid IN (" . db_placeholders($nids) . ")", $nids);
         return TRUE;
-    } catch (Exception $e) {
-        watchdog('ToW MongoDB', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
+    } else {
         return FALSE;
     }
 }
