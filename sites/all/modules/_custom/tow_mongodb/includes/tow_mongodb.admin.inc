@@ -58,6 +58,23 @@ function tow_mongodb_admin_settings_form() {
 
     return system_settings_form($form);
 }
+/**
+ * Admin settings forms.
+ */
+function tow_nodejs_admin_settings_form() {
+
+    $form = array();
+
+    $form['tow_nodejs_port'] = array(
+        '#type' => 'textfield',
+        '#title' => t('ToW Node.js port'),
+        '#size' => 256,
+        '#description' => t('Port which is used for starting a node.js web-server.'),
+        '#default_value' => variable_get('tow_nodejs_port', 1331),
+    );
+
+    return system_settings_form($form);
+}
 
 /**
  * Gets information about the fields already in solr index.
