@@ -8,7 +8,15 @@
 require_once('includes/tow_mongodb.index.inc');
 
 function tow_mongodb_init() {
-    drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/connection.js');
+    if ((arg(0) == 'search_dataset') && !arg(2)) {
+        drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/tow_mongodb.innser_search.js');
+        drupal_add_js(array(
+            'tow_mongodb' => array(
+                'hodejs_port' => variable_get('tow_nodejs_port', 1331),
+                'dataset_nid' => arg(1),
+            )
+                ), 'setting');
+    }
 }
 
 /**
@@ -47,7 +55,7 @@ function tow_mongodb_menu() {
 
     $items = array();
 
-    // Mongo DB settings.
+    // MongoDB settings.
     $items['admin/settings/tow/mongodb'] = array(
         'tab_parent' => 'admin/settings/tow',
         'access arguments' => array('administer site configuration'),
@@ -81,6 +89,26 @@ function tow_mongodb_menu() {
         'access arguments' => array('administer search'),
         'file' => 'includes/tow_mongodb.admin.inc',
         'type' => MENU_CALLBACK,
+    );
+
+    // Node.js settings.
+    $items['admin/settings/tow/nodejs'] = array(
+        'tab_parent' => 'admin/settings/tow',
+        'access arguments' => array('administer site configuration'),
+        'title' => 'Node.js',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('tow_node.js_admin_settings_form'),
+        'file' => 'includes/tow_mongodb.admin.inc',
+        'type' => MENU_LOCAL_TASK,
+    );
+    $items['admin/settings/tow/nodejs/settings'] = array(
+        'tab_parent' => 'admin/settings/tow/nodejs',
+        'access arguments' => array('administer site configuration'),
+        'title' => 'Settings',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('tow_nodejs_admin_settings_form'),
+        'file' => 'includes/tow_mongodb.admin.inc',
+        'type' => MENU_DEFAULT_LOCAL_TASK,
     );
 
     return $items;
