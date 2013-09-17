@@ -6,7 +6,7 @@ Drupal.behaviors.inner_search = function(context) {
     function init() {
 
         $.ajax({
-            url: 'http://' + location.host + ':' + 1338 + '/dataset',
+            url: 'http://' + location.host + ':' + port + '/dataset',
             type: 'GET',
             data: {
                 dataset_nid: dataset_nid
