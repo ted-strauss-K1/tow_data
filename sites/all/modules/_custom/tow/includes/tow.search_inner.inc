@@ -234,7 +234,7 @@ function tow_search_inner_within_dataset($nid, $ajax = FALSE) {
     drupal_add_js('misc/autocomplete.js');
     drupal_add_js(drupal_get_path('module', 'ctools') . '/js/ajax-responder.js');
     drupal_add_js(drupal_get_path('module', 'flag') . '/theme/flag.js');
-    drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
+//    drupal_add_js(drupal_get_path('module', 'tow') . '/js/inner_search.js');
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/highcharts.js');
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/lou-multi-select/js/jquery.multi-select.js', 'module', 'footer');
     drupal_add_js(drupal_get_path('module', 'tow') . '/js/quicksearch/jquery.quicksearch.js', 'module', 'footer');
