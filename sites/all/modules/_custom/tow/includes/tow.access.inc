@@ -60,13 +60,13 @@ function tow_access_dataset($node) {
                 if (tow_access_bypass_solr()) {
                     return;
                 }
-                /*if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
-                    global $_tow_grey_pma_menu;
-                    $_tow_grey_pma_menu = TRUE;
-                } else {
-                    drupal_access_denied();
-                    die();
-                }*/
+                /* if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
+                  global $_tow_grey_pma_menu;
+                  $_tow_grey_pma_menu = TRUE;
+                  } else {
+                  drupal_access_denied();
+                  die();
+                  } */
             }
             return;
         }
@@ -140,6 +140,82 @@ function tow_access_dataset($node) {
             die();
         }
     }
+}
+
+/**
+ * Check access for dataset.
+ */
+function tow_access_dataset_check($node) {
+    global $user, $_tow_user;
+    $_tow_user = $user;
+
+    $type = $node->type;
+    switch ($type) {
+        case 'dataset':
+            $dataset = $node;
+            break;
+        case 'table':
+            $dataset = node_load($node->field_dataset[0]['value']);
+            break;
+        case 'record':
+            $table = node_load($node->field_table[0]['value']);
+            $dataset = node_load($table->field_dataset[0]['value']);
+            break;
+        case 'linked_record':
+            $table = node_load($node->field_tables[0]['value']);
+            $dataset = node_load($table->field_dataset[0]['value']);
+            break;
+        case 'saved_search':
+            $dataset = node_load($node->field_dataset_nid[0]['value']);
+            break;
+        case 'document':
+            $dataset = node_load($node->field_doc_dataset_nid[0]['value']);
+            break;
+    }
+
+    if (tow_access_bypass_solr()) {
+        return TRUE;
+    }
+
+    if ($user->uid != $dataset->uid) {
+
+        // Get access type.
+        $access_type = $dataset->field_access_type[0]['value'];
+
+        // If access is open.
+        if ($access_type == 0) {
+            return TRUE;
+        }
+
+        // If access is by request.
+        if ($access_type == 1) {
+            if ($user->uid) {
+                $status = db_result(db_query("SELECT tar.status AS status FROM {tow_access_requests} tar WHERE tar.nid = %d AND tar.uid = %d", $dataset->nid, $user->uid));
+                if ($status || user_access('edit any dataset')) {
+                    return TRUE;
+                }
+            }
+
+            return FALSE;
+        }
+
+        // Get  status.
+        $status = 0;
+        if ($user->uid) {
+            $status = db_result(db_query("SELECT tar.status FROM {tow_access_requests} tar WHERE tar.nid = %d AND tar.uid = %d", $dataset->nid, $user->uid));
+        }
+
+        // If user has no access.
+        if ($status != 1) {
+            if (user_access('edit any dataset', $user)) {
+                return TRUE;
+            }
+
+            return FALSE;
+        }
+    }
+
+    return TRUE;
 }
 
 /**
@@ -412,9 +488,9 @@ function tow_access_confirm_submit($form, &$form_state) {
           tar.nid = %d
 
     ", $form_state['values']['nid']);
-    
-    //Update {apachesolr_search_node} table for indexing updates in access
-    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $form_state['values']['nid']);
+
+        //Update {apachesolr_search_node} table for indexing updates in access
+        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $form_state['values']['nid']);
     }
 
     // Case 'Grant' or 'Deny' actions.
@@ -442,9 +518,9 @@ function tow_access_confirm_submit($form, &$form_state) {
             uid = %d
 
     ", $status, $form_state['values']['nid'], $form_state['values']['uid']);
-        
-    //Update {apachesolr_search_node} table for indexing updates in access
-    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $form_state['values']['nid']);
+
+        //Update {apachesolr_search_node} table for indexing updates in access
+        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $form_state['values']['nid']);
     }
 
     // Redirect.
@@ -471,9 +547,9 @@ function tow_access_request_form_submit($form, &$form_state) {
             (%d, %d, 0, %d)
 
     ", $_tow_dataset->nid, $user->uid, time());
-    
-    //Update {apachesolr_search_node} table for indexing updates in access
-    db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
+
+        //Update {apachesolr_search_node} table for indexing updates in access
+        db_query("UPDATE {apachesolr_search_node} SET changed = %d WHERE nid = %d", time(), $_tow_dataset->nid);
     }
 
     // Show error 403 otherwise.
