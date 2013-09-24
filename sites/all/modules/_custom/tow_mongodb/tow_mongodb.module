@@ -14,10 +14,10 @@ function tow_mongodb_init() {
 
         $node = node_load((int) arg(1));
         if (tow_access_dataset_check($node)) {
-            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/tow_mongodb.innser_search.js');
+            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/tow_mongodb.inner_search.js');
             drupal_add_js(array(
                 'tow_mongodb' => array(
-                    'hodejs_port' => variable_get('tow_nodejs_port', 1331),
+                    'nodejs_port' => variable_get('tow_nodejs_port', 1331),
                     'dataset_nid' => arg(1),
                 )
                     ), 'setting');
