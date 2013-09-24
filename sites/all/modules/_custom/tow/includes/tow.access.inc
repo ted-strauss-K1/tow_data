@@ -46,7 +46,8 @@ function tow_access_bypass_solr() {
  * Deny access for dataset if access is forbidden.
  */
 function tow_access_dataset($node) {
-    global $user;
+    global $user, $_tow_user;
+    $_tow_user = $user;
 
     if ($user->uid != $node->uid) {
         $args = arg();

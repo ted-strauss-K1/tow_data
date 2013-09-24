@@ -8,8 +8,28 @@
 /* * **************************************************************************************************
  * Requirements
  * ************************************************************************************************** */
-
 require_once 'sites/all/libraries/ChromePhp/ChromePhp.php';
+
+$tow_pwd = dirname(__FILE__);
+require_once $tow_pwd . '/includes/tow.access.inc';
+require_once $tow_pwd . '/includes/tow.apachesolr.inc';
+require_once $tow_pwd . '/includes/tow.dataset.inc';
+require_once $tow_pwd . '/includes/tow.debug.inc';
+require_once $tow_pwd . '/includes/tow.field.inc';
+require_once $tow_pwd . '/includes/tow.import.inc';
+require_once $tow_pwd . '/includes/tow.install.inc';
+require_once $tow_pwd . '/includes/tow.invite.inc';
+require_once $tow_pwd . '/includes/tow.pma_menu.inc';
+require_once $tow_pwd . '/includes/tow.record.inc';
+require_once $tow_pwd . '/includes/tow.saved_searches.inc';
+require_once $tow_pwd . '/includes/tow.search_inner.inc';
+require_once $tow_pwd . '/includes/tow.search_inner_linked.inc';
+require_once $tow_pwd . '/includes/tow.search_outer.inc';
+require_once $tow_pwd . '/includes/tow.statistics.inc';
+require_once $tow_pwd . '/includes/tow.table.inc';
+require_once $tow_pwd . '/includes/tow.tests.inc';
+require_once $tow_pwd . '/includes/tow.views.inc';
+require_once $tow_pwd . '/includes/tow.user.inc';
 
 
 
@@ -450,26 +470,6 @@ function tow_form_alter(&$form, &$form_state, $form_id) {
  * Implementation of hook_init().
  */
 function tow_init() {
-    module_load_include('inc', 'tow', 'includes/tow.access');
-    module_load_include('inc', 'tow', 'includes/tow.apachesolr');
-    module_load_include('inc', 'tow', 'includes/tow.dataset');
-    module_load_include('inc', 'tow', 'includes/tow.debug');
-    module_load_include('inc', 'tow', 'includes/tow.field');
-    module_load_include('inc', 'tow', 'includes/tow.import');
-    module_load_include('inc', 'tow', 'includes/tow.install');
-    module_load_include('inc', 'tow', 'includes/tow.invite');
-    module_load_include('inc', 'tow', 'includes/tow.pma_menu');
-    module_load_include('inc', 'tow', 'includes/tow.record');
-    module_load_include('inc', 'tow', 'includes/tow.saved_searches');
-    module_load_include('inc', 'tow', 'includes/tow.search_inner');
-    module_load_include('inc', 'tow', 'includes/tow.search_inner_linked');
-    module_load_include('inc', 'tow', 'includes/tow.search_outer');
-    module_load_include('inc', 'tow', 'includes/tow.statistics');
-    module_load_include('inc', 'tow', 'includes/tow.table');
-    module_load_include('inc', 'tow', 'includes/tow.tests');
-    module_load_include('inc', 'tow', 'includes/tow.views');
-    module_load_include('inc', 'tow', 'includes/tow.user');
-
     global $user, $_tow_user;
     $_tow_user = $user;
 
@@ -588,7 +588,7 @@ function tow_menu() {
         'page arguments' => array('tow_admin_settings_form'),
         'file' => 'includes/tow.admin.inc',
     );
-    
+
     // ToW settings.
     $items['admin/settings/tow/settings'] = array(
         'tab_parent' => 'admin/settings/tow',
