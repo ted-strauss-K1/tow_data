@@ -334,9 +334,9 @@ function tow_mongodb_index_nodeapi_mass_update($nodes) {
 
     $published_ids = array();
     $unpublished_ids = array();
-    
+
     $errors = 0;
-    
+
     foreach ($nodes as $node) {
         if ($node->status) {
             $published_ids[$node->nid] = $node->nid;
@@ -347,7 +347,7 @@ function tow_mongodb_index_nodeapi_mass_update($nodes) {
             }
         }
     }
-    
+
     if ($errors == 0) {
         // There was no exception, so update the table.
         if ($published_ids) {
@@ -360,7 +360,6 @@ function tow_mongodb_index_nodeapi_mass_update($nodes) {
     } else {
         return FALSE;
     }
-
 }
 
 function tow_mongodb_index_nodeapi_mass_delete($nodes) {
@@ -372,7 +371,7 @@ function tow_mongodb_index_nodeapi_mass_delete($nodes) {
     $nids = array();
 
     $errors = 0;
-    
+
     foreach ($nodes as $node) {
         $ids[] = $node->nid;
         $nids[] = $node->nid;
@@ -491,6 +490,21 @@ function tow_mongodb_index_node_to_document($nid) {
         $header = tow_apachesolr_table_fields($table->nid);
         foreach ($header as $h) {
             $values[$h['name']] = $node->{'field_' . $h['type']}[$h['delta']]['value'];
+            switch ($h['type']) {
+                case 'int':
+                case 'code':
+                case 'timestamp':
+                    $values[$h['name']] = (int) $values[$h['name']];
+                    break;
+
+                case 'float':
+                    $values[$h['name']] = (float) $values[$h['name']];
+                    break;
+
+                case 'bool':
+                    $values[$h['name']] = ($values[$h['name']] || ($values[$h['name']] == '1') || (strtoupper($values[$h['name']]) == 'TRUE')) ? TRUE : FALSE;
+                    break;
+            }
         }
         $values['_id'] = $node->nid;
         $document['values'][] = array(
@@ -537,6 +551,21 @@ function tow_mongodb_index_node_to_document($nid) {
                 $record = $records[$table['nid']];
                 if (!empty($record)) {
                     $values[$field['name']] = $record->{'field_' . $field['type']}[$table['delta']]['value'];
+                    switch ($field['type']) {
+                        case 'int':
+                        case 'code':
+                        case 'timestamp':
+                            $values[$field['name']] = (int) $values[$field['name']];
+                            break;
+
+                        case 'float':
+                            $values[$field['name']] = (float) $values[$field['name']];
+                            break;
+
+                        case 'bool':
+                            $values[$field['name']] = ($values[$field['name']] || ($values[$field['name']] == '1') || (strtoupper($values[$field['name']]) == 'TRUE')) ? TRUE : FALSE;
+                            break;
+                    }
                     break;
                 }
             }
