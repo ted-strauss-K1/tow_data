@@ -150,6 +150,15 @@
                                                             </div><!-- /content-inner -->
                                                         </div><!-- /content-region-inner -->
                                                     </div><!-- /content-region -->
+                                                    
+                                                    <!--Added by pashad 17/09/13-->
+                                                    <script type='text/x-handlebars'>
+                                                        <div id="charts" class="gridster">
+                                                        </div>
+                                                        <table id="datatable-1" class="table dc-data-table">
+                                                        </table>
+                                                        {{view App.ChartView}}
+                                                    </script>
 
                                                     <?php print theme('grid_row', $content_bottom, 'content-bottom', 'nested'); ?>
                                                 </div><!-- /content-group-inner -->
