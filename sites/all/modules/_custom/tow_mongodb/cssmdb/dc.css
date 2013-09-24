@@ -1,0 +1,367 @@
+.dc-chart {
+    float: left;
+}
+
+.dc-chart rect.bar {
+    stroke: none;
+    fill: steelblue;
+}
+
+.dc-chart rect.bar:hover {
+    fill-opacity: .5;
+}
+
+.dc-chart rect.stack1 {
+    stroke: none;
+    fill: red;
+}
+
+.dc-chart rect.stack2 {
+    stroke: none;
+    fill: green;
+}
+
+.dc-chart rect.deselected {
+    stroke: none;
+    fill: #ccc;
+}
+
+.dc-chart .sub .bar {
+    stroke: none;
+    fill: #ccc;
+}
+
+.dc-chart .pie-slice {
+    fill: white;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.dc-chart .pie-slice :hover{
+    fill-opacity: .8;
+}
+
+.dc-chart .selected path{
+    stroke-width: 3;
+    stroke: #ccc;
+    fill-opacity: 1;
+}
+
+.dc-chart .deselected path{
+    strok: none;
+    fill-opacity: .5;
+    fill: #ccc;
+}
+
+.dc-chart .axis path, .axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+}
+.dc-chart .axis line {
+	stroke: #CCC;
+}
+
+.dc-chart .axis text {
+    font: 10px sans-serif;
+}
+
+.dc-chart .grid-line line {
+    fill: none;
+    stroke: #ccc;
+    opacity: .5;
+    shape-rendering: crispEdges;
+}
+
+.dc-chart .brush rect.background {
+    z-index: -999;
+}
+
+.dc-chart .brush rect.extent {
+    fill: steelblue;
+    fill-opacity: .125;
+}
+
+.dc-chart .brush .resize path {
+    fill: #eee;
+    stroke: #666;
+}
+
+.dc-chart path.line {
+    fill: none;
+    stroke: steelblue;
+    stroke-width: 1.5px;
+}
+
+.dc-chart circle.dot{
+    fill: steelblue;
+}
+
+.dc-chart g.stack1 path.line {
+    stroke: green;
+}
+
+.dc-chart g.stack1 circle.dot{
+    fill: green;
+}
+
+.dc-chart g.stack2 path.line {
+    stroke: red;
+}
+
+.dc-chart g.stack2 circle.dot{
+    fill: red;
+}
+
+.dc-chart g.dc-tooltip path{
+    fill: none;
+    stroke: grey;
+    stroke-opacity: .8;
+}
+
+.dc-chart path.area {
+    fill: steelblue;
+    fill-opacity: .3;
+    stroke: none;
+}
+
+.dc-chart g.stack1 path.area {
+    fill: green;
+}
+
+.dc-chart g.stack2 path.area {
+    fill: red;
+}
+
+.dc-chart .node {
+    font-size: 0.7em;
+    cursor: pointer;
+}
+
+.dc-chart .node :hover{
+    fill-opacity: .8;
+}
+
+.dc-chart .selected circle {
+    stroke-width: 3;
+    stroke: #ccc;
+    fill-opacity: 1;
+}
+
+.dc-chart .deselected circle {
+    strok: none;
+    fill-opacity: .5;
+    fill: #ccc;
+}
+
+.dc-chart .bubble {
+    stroke: none;
+    fill-opacity: 0.6;
+}
+
+.dc-data-count {
+    /*float: right;*/
+	float: none;
+    margin-top: 15px;
+    margin-left: 15px;
+    /*margin-right: 15px;*/
+}
+
+.dc-data-count .filter-count {
+    color: #3182bd;
+    font-weight: bold;
+}
+
+.dc-data-count .total-count {
+    color: #3182bd;
+    font-weight: bold;
+}
+
+.dc-data-table {
+	font-size: 75%;
+}
+
+.dc-chart g.state{
+    cursor: pointer;
+}
+
+.dc-chart g.state :hover{
+    fill-opacity: .8;
+}
+
+.dc-chart g.state path {
+    stroke: white;
+}
+
+.dc-chart g.selected path {
+}
+
+.dc-chart g.deselected path {
+    fill: grey;
+}
+
+.dc-chart g.selected text {
+}
+
+.dc-chart g.deselected text {
+    display: none;
+}
+
+.dc-chart g.county path {
+    stroke: white;
+    fill: none;
+}
+
+.dc-chart g.debug rect{
+    fill: blue;
+    fill-opacity: .2;
+}
+
+.dc-chart g.row rect {
+    fill-opacity: 0.3;
+    cursor: pointer;
+}
+
+.dc-chart g.row rect:hover {
+    fill-opacity: 0.8;
+}
+
+.dc-chart g.row text {
+    fill: darkgrey;
+    font-size: 10px;
+    /*fill: white;
+    font-size: 12px;
+    */
+}
+.dc-chart g.row text {
+    fill: grey;
+    font-size: 10px;
+    /*fill: white;
+    font-size: 12px;
+    */
+}
+
+.chart-wrapper {
+	height: 240px;
+    overflow-y: auto;
+    width: 320px;
+	margin: 15px;
+}
+
+.chart-widget {
+	width:350px;
+	float: left;
+	position: relative;
+}
+
+.dc-table-group {
+	display:none;
+}
+
+a.reset {
+	position:absolute;
+}
+
+button.selected {
+	background: none repeat scroll 0 0 grey;
+	color: white;
+}
+
+.hidden {
+	display:none;
+}
+
+/*
+ * Datatables
+ */
+ .dataTable tbody tr td span {
+    /*max-width:100px;*/
+    line-height:21px;
+    border: 0px solid red;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display:block;
+    white-space: nowrap;
+    border-radius: 3px 3px 3px 3px;
+    /*padding: 1px 4px 2px;*/
+	text-align: center;
+}
+.dataTable tbody tr td span:hover {
+    background: none repeat scroll 0 0 #EEEEEE;
+    display: block;
+    overflow: visible;
+    white-space: normal;
+    cursor:pointer;
+}
+.dataTable {
+    font-size: 14px;
+	/*width:auto;*/
+}
+.dataTable th {
+    font-size: 14px;
+}
+.dataTable td {
+    font-size: 14px;
+}
+.dataTable tbody tr td {
+    max-width: 100px;
+}
+.dataTable thead th {
+	background-color: #EEEEEE;
+	text-align: center;
+}
+/*-----Styles for selected cells in datatables------*/
+table#datatable-1 td.selected-cell span{
+    /*font-size: 11.844px;*/
+    font-weight: bold;
+    line-height: 21px;
+    color: #ffffff;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.25);
+    white-space: nowrap;
+    vertical-align: baseline;
+    background-color: #3a87ad;
+    border-radius: 3px 3px 3px 3px;
+    padding: 1px 4px 2px;
+}
+
+table#datatable-1 td.selected-cell span:hover{
+    white-space: normal;
+    font-weight: normal;
+}
+
+/*---ColVis button---*/
+.ColVis_Button.TableTools_Button.ColVis_MasterButton span {
+    display: none;
+}
+button.ColVis_Button {
+    /*float: right;*/
+    margin-bottom: 10px;
+}
+.icon-filter {
+    background-position: -408px -144px;
+}
+.ColVis_collection {
+    background: none repeat scroll 0 0 #FFFFFF;
+    border: 1px solid black;
+	overflow: hidden;
+}
+.ColVis_collection .TableTools_Button {
+    margin: 0;
+    border-radius:0;
+    background: #fff;
+    border-color: #000;
+    border: none;
+    text-shadow: none;
+}
+.ColVis_collection .TableTools_Button:hover{
+    color: #000;
+    background: #999;
+}
+.ColVis_radio {
+    display: block;
+    float: left;
+}
+button[class*="ColVis"] input[type="checkbox"] {
+    margin-right: 4px;
+    margin-top: 0px;
+}
