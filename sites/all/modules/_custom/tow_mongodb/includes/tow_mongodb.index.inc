@@ -489,22 +489,11 @@ function tow_mongodb_index_node_to_document($nid) {
         $values = array();
         $header = tow_apachesolr_table_fields($table->nid);
         foreach ($header as $h) {
-            $values[$h['name']] = $node->{'field_' . $h['type']}[$h['delta']]['value'];
-            switch ($h['type']) {
-                case 'int':
-                case 'code':
-                case 'timestamp':
-                    $values[$h['name']] = (int) $values[$h['name']];
-                    break;
-
-                case 'float':
-                    $values[$h['name']] = (float) $values[$h['name']];
-                    break;
-
-                case 'bool':
-                    $values[$h['name']] = ($values[$h['name']] || ($values[$h['name']] == '1') || (strtoupper($values[$h['name']]) == 'TRUE')) ? TRUE : FALSE;
-                    break;
-            }
+            $name = $h['name'];
+            $type = $h['type'];
+            $delta = $h['delta'];
+            $value = $node->{'field_' . $type}[$delta]['value'];
+            $values[$name] = _tow_mongodb_prepare_node_value(&$value, $type);
         }
         $values['_id'] = $node->nid;
         $document['values'][] = array(
@@ -550,22 +539,11 @@ function tow_mongodb_index_node_to_document($nid) {
             foreach ($field['table'] as $table) {
                 $record = $records[$table['nid']];
                 if (!empty($record)) {
-                    $values[$field['name']] = $record->{'field_' . $field['type']}[$table['delta']]['value'];
-                    switch ($field['type']) {
-                        case 'int':
-                        case 'code':
-                        case 'timestamp':
-                            $values[$field['name']] = (int) $values[$field['name']];
-                            break;
-
-                        case 'float':
-                            $values[$field['name']] = (float) $values[$field['name']];
-                            break;
-
-                        case 'bool':
-                            $values[$field['name']] = ($values[$field['name']] || ($values[$field['name']] == '1') || (strtoupper($values[$field['name']]) == 'TRUE')) ? TRUE : FALSE;
-                            break;
-                    }
+                    $name = $field['name'];
+                    $type = $field['type'];
+                    $delta = $table['delta'];
+                    $value = $node->{'field_' . $type}[$delta]['value'];
+                    $values[$name] = _tow_mongodb_prepare_node_value($value, $type);
                     break;
                 }
             }
@@ -593,4 +571,43 @@ function tow_mongodb_index_status() {
     $indexed = $total - $remaining;
 
     return array('indexed' => $indexed, 'remaining' => $remaining, 'total' => $total);
+}
+
+function _tow_mongodb_prepare_node_value(&$value, $type) {
+    switch ($type) {
+
+        case 'int':
+        case 'enum':
+        case 'timestamp':
+            $value = (int) $value;
+            break;
+
+        case 'float':
+            $value = (float) $value;
+            break;
+
+        case 'bool':
+            $value = ($value || ($value == '1') || (strtoupper($value) == 'TRUE')) ? TRUE : FALSE;
+            break;
+
+        case 'time':
+            _tow_apachesolr_time_to_solr($value);
+            break;
+
+        case 'date':
+            _tow_apachesolr_date_to_solr($value);
+            break;
+
+        case 'datetime':
+            _tow_apachesolr_datetime_to_solr($value);
+            break;
+
+        case 'char';
+        case 'text':
+        case 'code':
+        default:
+            break;
+    }
+
+    return $value;
 }
