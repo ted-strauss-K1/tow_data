@@ -46,8 +46,7 @@ function tow_access_bypass_solr() {
  * Deny access for dataset if access is forbidden.
  */
 function tow_access_dataset($node) {
-    global $user, $_tow_user;
-    $_tow_user = $user;
+    global $user;
 
     if ($user->uid != $node->uid) {
         $args = arg();
@@ -61,13 +60,6 @@ function tow_access_dataset($node) {
                 if (tow_access_bypass_solr()) {
                     return;
                 }
-                /* if ($args[0] == 'node' && $args[1] == $node->nid && count($args) == 2) {
-                  global $_tow_grey_pma_menu;
-                  $_tow_grey_pma_menu = TRUE;
-                  } else {
-                  drupal_access_denied();
-                  die();
-                  } */
             }
             return;
         }
@@ -147,8 +139,7 @@ function tow_access_dataset($node) {
  * Check access for dataset.
  */
 function tow_access_dataset_check($node) {
-    global $user, $_tow_user;
-    $_tow_user = $user;
+    global $user;
 
     $type = $node->type;
     switch ($type) {

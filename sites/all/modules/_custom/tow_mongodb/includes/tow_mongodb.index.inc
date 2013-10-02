@@ -334,9 +334,9 @@ function tow_mongodb_index_nodeapi_mass_update($nodes) {
 
     $published_ids = array();
     $unpublished_ids = array();
-    
+
     $errors = 0;
-    
+
     foreach ($nodes as $node) {
         if ($node->status) {
             $published_ids[$node->nid] = $node->nid;
@@ -347,7 +347,7 @@ function tow_mongodb_index_nodeapi_mass_update($nodes) {
             }
         }
     }
-    
+
     if ($errors == 0) {
         // There was no exception, so update the table.
         if ($published_ids) {
@@ -360,7 +360,6 @@ function tow_mongodb_index_nodeapi_mass_update($nodes) {
     } else {
         return FALSE;
     }
-
 }
 
 function tow_mongodb_index_nodeapi_mass_delete($nodes) {
@@ -372,7 +371,7 @@ function tow_mongodb_index_nodeapi_mass_delete($nodes) {
     $nids = array();
 
     $errors = 0;
-    
+
     foreach ($nodes as $node) {
         $ids[] = $node->nid;
         $nids[] = $node->nid;
@@ -490,7 +489,11 @@ function tow_mongodb_index_node_to_document($nid) {
         $values = array();
         $header = tow_apachesolr_table_fields($table->nid);
         foreach ($header as $h) {
-            $values[$h['name']] = $node->{'field_' . $h['type']}[$h['delta']]['value'];
+            $name = $h['name'];
+            $type = $h['type'];
+            $delta = $h['delta'];
+            $value = $node->{'field_' . $type}[$delta]['value'];
+            $values[$name] = _tow_mongodb_prepare_node_value(&$value, $type);
         }
         $values['_id'] = $node->nid;
         $document['values'][] = array(
@@ -536,7 +539,11 @@ function tow_mongodb_index_node_to_document($nid) {
             foreach ($field['table'] as $table) {
                 $record = $records[$table['nid']];
                 if (!empty($record)) {
-                    $values[$field['name']] = $record->{'field_' . $field['type']}[$table['delta']]['value'];
+                    $name = $field['name'];
+                    $type = $field['type'];
+                    $delta = $table['delta'];
+                    $value = $node->{'field_' . $type}[$delta]['value'];
+                    $values[$name] = _tow_mongodb_prepare_node_value($value, $type);
                     break;
                 }
             }
@@ -564,4 +571,43 @@ function tow_mongodb_index_status() {
     $indexed = $total - $remaining;
 
     return array('indexed' => $indexed, 'remaining' => $remaining, 'total' => $total);
+}
+
+function _tow_mongodb_prepare_node_value(&$value, $type) {
+    switch ($type) {
+
+        case 'int':
+        case 'enum':
+        case 'timestamp':
+            $value = (int) $value;
+            break;
+
+        case 'float':
+            $value = (float) $value;
+            break;
+
+        case 'bool':
+            $value = ($value || ($value == '1') || (strtoupper($value) == 'TRUE')) ? TRUE : FALSE;
+            break;
+
+        case 'time':
+            _tow_apachesolr_time_to_solr($value);
+            break;
+
+        case 'date':
+            _tow_apachesolr_date_to_solr($value);
+            break;
+
+        case 'datetime':
+            _tow_apachesolr_datetime_to_solr($value);
+            break;
+
+        case 'char';
+        case 'text':
+        case 'code':
+        default:
+            break;
+    }
+
+    return $value;
 }
