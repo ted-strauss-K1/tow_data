@@ -9,6 +9,7 @@ var dataArray;
 
 //'date' format
 var formatDate = d3.time.format("%Y-%m-%d");
+var formatDatetime = d3.time.format("%Y-%m-%d %H:%M:%S");
 
 //SelectedFields
 var selectedFields = [0,1,2,3,4,5,6,7,8,9];
@@ -99,7 +100,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                     FieldTitleArray[datamdb[0].tables[0].header[h]['name']] = datamdb[0].tables[0].header[h]['title'];
                     if (datamdb[0].tables[0].header[h]['type'] == 'int' || datamdb[0].tables[0].header[h]['type'] == 'float') {
                         NumericFieldsIndeces.push(h);
-                    } else if (datamdb[0].tables[0].header[h]['type'] == 'date') {
+                    } else if (datamdb[0].tables[0].header[h]['type'] == 'date'/* || datamdb[0].tables[0].header[h]['type'] == 'datetime'*/) {
                         DateFieldsIndeces.push(h);
                     }
                 }
@@ -119,7 +120,8 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                 } else {
                                     NewRow[FieldTitleArray[key]] = null;
                                 }
-                            } else if (type == 'date') {
+                            } else if (type == 'date'/* || type == 'datetime'*/) {
+                                //console.log(datamdb[0].tables[0].rows[r][key]);
                                 NewRow[FieldTitleArray[key]] = new Date(datamdb[0].tables[0].rows[r][key]);
                             } else {
                                 NewRow[FieldTitleArray[key]] = datamdb[0].tables[0].rows[r][key];
@@ -180,7 +182,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                 return d[j];
                             });
 					
-                            widgets['chart' + i + '_dim_foo'] = chartDimension(j, isDate);
+                            widgets['chart' + i + '_dim_foo'] = chartDimension(j, datamdb[0].tables[0].header[i]['type']);
 					
                             var isNumeric = $.inArray(i, NumericFieldsIndeces);
                             if (isNumeric == -1 && isDate == -1) {
@@ -233,7 +235,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                 $('#chart' + i).closest('.chart-widget').addClass('hidden');
                             } else {
                                 tableHeader = tableHeader + '<th field-index="' + i + '">' + j + '</th>';
-                                addFunctionToArray(tableColumns,j, isDate);
+                                addFunctionToArray(tableColumns,j, datamdb[0].tables[0].header[i]['type']);
                             }
 					
 					
@@ -490,15 +492,25 @@ Drupal.behaviors.mdb_inner_search = function(context) {
 };
 
 function addFunctionToArray(array,key,date) {
-    if(typeof(date)==='undefined' || date == -1) date = false;
-    if (date !== false) {
-        var foo = function(d) {
-            return '<span>' + formatDate(new Date(d[key])) + '</span>';
-        };
-    } else {
-        var foo = function(d) {
-            return '<span>' + d[key] + '</span>';
-        };
+    if(typeof(date)==='undefined') date = false;
+    switch (date) {
+        case 'date':
+            var foo = function(d) {
+                return '<span>' + formatDate(new Date(d[key])) + '</span>';
+            };
+            break;
+            
+//        case 'datetime':
+//            var foo = function(d) {
+//                return '<span>' + formatDatetime(new Date(d[key])) + '</span>';
+//            };
+//            break;
+            
+        default:
+            var foo = function(d) {
+                return '<span>' + d[key] + '</span>';
+            };
+            break;
     }
     array.push(foo);
 }
@@ -512,10 +524,19 @@ function filterPrinterFunction(type, key, date) {
                 chartFilters = chartFilters + ' <span class="label">' + d[f] + '</span>';
             }
         } else if (type == 'bar') {
-            if (date !== false) {
-                var chartFilters = 'Selected Range: from <span class="label">' + formatDate(new Date(d[0][0])) + '</span> to <span class="label">' + formatDate(new Date(d[0][1])) + '</span>';
-            } else {
-                var chartFilters = 'Selected Range: from <span class="label">' + d[0][0].toFixed(2) + '</span> to <span class="label">' + d[0][1].toFixed(2) + '</span>';
+            
+            switch (date) {
+                case 'date':
+                    var chartFilters = 'Selected Range: from <span class="label">' + formatDate(new Date(d[0][0])) + '</span> to <span class="label">' + formatDate(new Date(d[0][1])) + '</span>';
+                    break;
+
+//                case 'datetime':
+//                    var chartFilters = 'Selected Range: from <span class="label">' + formatDatetime(new Date(d[0][0])) + '</span> to <span class="label">' + formatDate(new Date(d[0][1])) + '</span>';
+//                    break;
+
+                default:
+                    var chartFilters = 'Selected Range: from <span class="label">' + d[0][0].toFixed(2) + '</span> to <span class="label">' + d[0][1].toFixed(2) + '</span>';
+                    break;
             }
         }
         $('#chart' + key).siblings('.chart-filter').html('<p>' + chartFilters + '</p>');
@@ -525,15 +546,26 @@ function filterPrinterFunction(type, key, date) {
 
 function chartDimension(key, date) {
     if(typeof(date)==='undefined' || date == -1) date = false;
-    if (date !== false) {
-        var foo = function(d) {
-            return formatDate(new Date(d[key]));
-        };
-    } else {
-        var foo = function(d) {
-            return d[key];
-        };
+    switch (date) {
+        case 'date':
+            var foo = function(d) {
+                return formatDate(new Date(d[key]));
+            };
+            break;
+            
+//        case 'datetime':
+//            var foo = function(d) {
+//                return formatDatetime(new Date(d[key]));
+//            };
+//            break;
+            
+        default:
+            var foo = function(d) {
+                return d[key];
+            };
+            break;
     }
+    
     return foo;
 }
 
