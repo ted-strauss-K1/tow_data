@@ -137,12 +137,19 @@ towAccessDatasetCheck = function(request, response, pgClient, url, settings) {
 getDataset = function(request, response, url, settings) {
 
     // Connect to MongoDB.
-    var connection_url = settings.tow_mongodb_connection_url.replace('mongodb://', '');
+    var connection_url = settings.tow_mongodb_connection_url;
     var user = settings.tow_mongodb_user;
     var password = settings.tow_mongodb_password;
     var database = settings.tow_mongodb_db;
-    var databaseUrl = user + ':' + password + '@' + connection_url + '/' + database;
-    databaseUrl = databaseUrl.replace(':@', '');
+
+    var databaseUrl;
+    if ((connection_url === 'mongodb://localhost:27017') && (user === '') && (password === '')) {
+        databaseUrl = database;
+    } else {
+        connection_url = connection_url.replace('mongodb://', '');
+        databaseUrl = user + ':' + password + '@' + connection_url + '/' + database;
+        databaseUrl = databaseUrl.replace(':@', '');
+    }
     var collections = ['datasets'];
     var db = require('mongojs').connect(databaseUrl, collections);
 
