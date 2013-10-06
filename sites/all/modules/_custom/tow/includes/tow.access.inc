@@ -32,7 +32,8 @@ function tow_access_bypass_solr() {
         // Get local IP.
         $ip = gethostbyname($_SERVER['HTTP_HOST']);
         $localhost = '127.0.0.1';
-        $is_admin = (in_array('administrator', $_tow_user->roles) || ($_tow_user->uid == 1));
+        $_tow_user_roles = isset($_tow_user->roles) ? $_tow_user->roles : array();
+        $is_admin = (in_array('administrator', $_tow_user_roles) || ($_tow_user->uid == 1));
 
         // Check if it's the local machine and return the value.
         $current_ip = ip_address();
