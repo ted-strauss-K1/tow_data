@@ -138,33 +138,9 @@ function tow_access_dataset($node) {
 /**
  * Check access for dataset.
  */
-function tow_access_dataset_check($node) {
+function tow_access_dataset_check($dataset) {
     global $user;
-
-    $type = $node->type;
-    switch ($type) {
-        case 'dataset':
-            $dataset = $node;
-            break;
-        case 'table':
-            $dataset = node_load($node->field_dataset[0]['value']);
-            break;
-        case 'record':
-            $table = node_load($node->field_table[0]['value']);
-            $dataset = node_load($table->field_dataset[0]['value']);
-            break;
-        case 'linked_record':
-            $table = node_load($node->field_tables[0]['value']);
-            $dataset = node_load($table->field_dataset[0]['value']);
-            break;
-        case 'saved_search':
-            $dataset = node_load($node->field_dataset_nid[0]['value']);
-            break;
-        case 'document':
-            $dataset = node_load($node->field_doc_dataset_nid[0]['value']);
-            break;
-    }
-
+    
     if (tow_access_bypass_solr()) {
         return TRUE;
     }

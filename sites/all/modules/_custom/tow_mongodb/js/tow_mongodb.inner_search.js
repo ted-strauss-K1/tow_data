@@ -75,6 +75,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
 
     var port = Drupal.settings.tow_mongodb.nodejs_port;
     var dataset_nid = Drupal.settings.tow_mongodb.dataset_nid;
+    var user_id = Drupal.settings.tow_mongodb.user_id;
     
     function init() {
 
@@ -82,7 +83,8 @@ Drupal.behaviors.mdb_inner_search = function(context) {
             url: 'http://' + location.host + ':' + port + '/dataset',
             type: 'GET',
             data: {
-                dataset_nid: dataset_nid
+                dataset_nid: dataset_nid,
+                user_id: user_id
             },
             dataType: 'jsonp',
             async: false,
