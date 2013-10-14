@@ -8,8 +8,9 @@ var oTable;
 var dataArray;
 
 //'date' format
-var formatDate = d3.time.format("%Y-%m-%d");
-var formatDatetime = d3.time.format("%Y-%m-%d %H:%M:%S");
+var formatDate = d3.time.format.utc("%Y-%m-%d");
+var formatTime = d3.time.format.utc("%H:%M:%S");
+var formatDatetime = d3.time.format.utc("%Y-%m-%d %H:%M:%S");
 
 //SelectedFields
 var selectedFields = [0,1,2,3,4,5,6,7,8,9];
@@ -102,7 +103,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                     FieldTitleArray[datamdb[0].tables[0].header[h]['name']] = datamdb[0].tables[0].header[h]['title'];
                     if (datamdb[0].tables[0].header[h]['type'] == 'int' || datamdb[0].tables[0].header[h]['type'] == 'float') {
                         NumericFieldsIndeces.push(h);
-                    } else if (datamdb[0].tables[0].header[h]['type'] == 'date'/* || datamdb[0].tables[0].header[h]['type'] == 'datetime'*/) {
+                    } else if (datamdb[0].tables[0].header[h]['type'] == 'date' || datamdb[0].tables[0].header[h]['type'] == 'datetime' || datamdb[0].tables[0].header[h]['type'] == 'time' || datamdb[0].tables[0].header[h]['type'] == 'timestamp') {
                         DateFieldsIndeces.push(h);
                     }
                 }
@@ -122,9 +123,11 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                 } else {
                                     NewRow[FieldTitleArray[key]] = null;
                                 }
-                            } else if (type == 'date'/* || type == 'datetime'*/) {
+                            } else if (type == 'date' || type == 'datetime' || type == 'time') {
                                 //console.log(datamdb[0].tables[0].rows[r][key]);
                                 NewRow[FieldTitleArray[key]] = new Date(datamdb[0].tables[0].rows[r][key]);
+                            } else if (type == 'timestamp') {
+                                NewRow[FieldTitleArray[key]] = new Date(datamdb[0].tables[0].rows[r][key] * 1000);
                             } else {
                                 NewRow[FieldTitleArray[key]] = datamdb[0].tables[0].rows[r][key];
                             }
@@ -134,6 +137,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                 }
                 
                 console.log(datamdb);
+                console.log(dataArray);
                 
                 
                 //$(function(){
@@ -174,18 +178,13 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                             $('#charts').append('<div class="chart-widget"><p class="widget-title">' + j + '</p><div class="chart-wrapper"><div id="chart' + i + '"><a class="reset" href="javascript:widgets.chart' + i + '.filterAll();dc.redrawAll();" style="display: none; top: 18px">Reset chart filters</a></div><div class="chart-filter"></div></div></div>');
 					
                             var isDate = $.inArray(i, DateFieldsIndeces);
-                            //                                        if (isDate != -1) {
-                            //                                            data.forEach(function(d) {
-                            //                                                d[j] = new Date(d[j]);
-                            //                                            });
-                            //                                        }
 
                             widgets['chart' + i + '_dim'] = ndx.dimension(function (d) {
                                 return d[j];
                             });
-					
+
                             widgets['chart' + i + '_dim_foo'] = chartDimension(j, datamdb[0].tables[0].header[i]['type']);
-					
+
                             var isNumeric = $.inArray(i, NumericFieldsIndeces);
                             if (isNumeric == -1 && isDate == -1) {
                                 widgets['chart' + i] = dc.rowChart("#chart" + i);
@@ -199,15 +198,10 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                 drawRowChart(widgets['chart' + i], height, widgets['chart' + i + '_dim'], widgets['chart' + i + '_grp'], colors, i, ticks);
 						
                             } else {
-                                if (isDate == -1) {
-                                    var xExtent = d3.extent(data, function(d) {
-                                        return d[j];
-                                    });
-                                } else {
-                                    var xExtent = d3.extent(data, function(d) {
-                                        return new Date(d[j]);
-                                    });
-                                }
+                                var xExtent = d3.extent(data, function(d) {
+                                    return d[j];
+                                });
+
                                 var stepWidth = (xExtent[1] - xExtent[0])/step;
                                 if (stepWidth == 0) {
                                     widgets['chart' + i] = dc.rowChart("#chart" + i);
@@ -227,10 +221,10 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                         return Math.floor(v / stepWidth) * stepWidth;
                                     });
                                                     
-                                    drawBarChart(widgets['chart' + i], widgets['chart' + i + '_dim'], widgets['chart' + i + '_grp'], xExtent, stepWidth, i, isDate);
+                                    drawBarChart(widgets['chart' + i], widgets['chart' + i + '_dim'], widgets['chart' + i + '_grp'], xExtent, stepWidth, i, datamdb[0].tables[0].header[i]['type']);
                                 }
                             }
-					
+
                             //Remove unselected charts
                             if (isSelected == -1) {
                                 widgets['chart' + i + '_dim'].remove();
@@ -245,17 +239,17 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                         }
 
                         $('.dc-data-table').append('<thead><tr class="header">' + tableHeader + '</tr></thead>');
-				
+
                         $('#charts').prepend('<div class="btn-group" data-toggle="buttons-checkbox">' + fieldButtons + '</div>');
                         $('#charts').prepend('<div class="dc-data-count"><span class="filter-count"></span> selected out of <span class="total-count"></span> records | <a class="reset-all" href="javascript:dc.filterAll(); dc.renderAll();">Reset All</a><p><a class="save-this-search">Save this search</a></p></div>');
-				
+
                         var savedSearchesOutput = '';
                         for (var ss=0; ss < savedSearches.length; ss++) {
                             var sC = !$.isEmptyObject(savedSearches[ss].selected_cell) ? '<span class="label label-info sc">' + savedSearches[ss].selected_cell.c_field + ': ' + savedSearches[ss].selected_cell.c_value + '</span>' : '';
                             savedSearchesOutput = savedSearchesOutput + '<div class="ss"><a ss-id="' + savedSearches[ss].id + '">' + savedSearches[ss].title +'</a><p>' + savedSearches[ss].body +'</p>' + sC + '</div>'
                         }
                         $('#charts').prepend('<div class="ss-block"><h3>Searches</h3>' + savedSearchesOutput + '</div>');
-				
+			
                         dc.dataCount(".dc-data-count")
                         .dimension(ndx)
                         .group(all);
@@ -310,7 +304,6 @@ Drupal.behaviors.mdb_inner_search = function(context) {
 
                         dc.renderAll();
 
-
                         /*
 				 * Selected fields functionality
 				 */
@@ -318,7 +311,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                         $('.btn-group button:not(.selected)').live('click', function() {
                             var buttonIndex = $(this).index();
                             var buttonText = $(this).text();
-                            addFieldToCrossfilter (ndx, buttonIndex, buttonText, data, step, tableColumns, selectedFields);
+                            addFieldToCrossfilter (ndx, buttonIndex, buttonText, data, step, tableColumns, selectedFields, datamdb[0].tables[0].header[buttonIndex]['type']);
 					
                             $(this).addClass('selected');
                         });
@@ -369,7 +362,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                 });
                                 for (var sfta=0; sfta < selectedFieldsToAdd.length; sfta++) {
                                     var buttonText = $('.btn-group button:eq(' + selectedFieldsToAdd[sfta] + ')').text();
-                                    addFieldToCrossfilter (ndx, selectedFieldsToAdd[sfta], buttonText, data, step, tableColumns, selectedFields, false);
+                                    addFieldToCrossfilter (ndx, selectedFieldsToAdd[sfta], buttonText, data, step, tableColumns, selectedFields, datamdb[0].tables[0].header[selectedFieldsToAdd[sfta]]['type'], false);
                                     $('.btn-group button:eq(' + selectedFieldsToAdd[sfta] + ')').addClass('selected');
                                 }
 						
@@ -498,15 +491,22 @@ function addFunctionToArray(array,key,date) {
     switch (date) {
         case 'date':
             var foo = function(d) {
-                return '<span>' + formatDate(new Date(d[key])) + '</span>';
+                return '<span>' + formatDate(d[key]) + '</span>';
             };
             break;
             
-//        case 'datetime':
-//            var foo = function(d) {
-//                return '<span>' + formatDatetime(new Date(d[key])) + '</span>';
-//            };
-//            break;
+        case 'datetime':
+        case 'timestamp':
+            var foo = function(d) {
+                return '<span>' + formatDatetime(d[key]) + '</span>';
+            };
+            break;
+        
+        case 'time':
+            var foo = function(d) {
+                return '<span>' + formatTime(d[key]) + '</span>';
+            };
+            break;
             
         default:
             var foo = function(d) {
@@ -526,15 +526,19 @@ function filterPrinterFunction(type, key, date) {
                 chartFilters = chartFilters + ' <span class="label">' + d[f] + '</span>';
             }
         } else if (type == 'bar') {
-            
             switch (date) {
                 case 'date':
-                    var chartFilters = 'Selected Range: from <span class="label">' + formatDate(new Date(d[0][0])) + '</span> to <span class="label">' + formatDate(new Date(d[0][1])) + '</span>';
+                    var chartFilters = 'Selected Range: from <span class="label">' + formatDate(d[0][0]) + '</span> to <span class="label">' + formatDate(d[0][1]) + '</span>';
                     break;
 
-//                case 'datetime':
-//                    var chartFilters = 'Selected Range: from <span class="label">' + formatDatetime(new Date(d[0][0])) + '</span> to <span class="label">' + formatDate(new Date(d[0][1])) + '</span>';
-//                    break;
+                case 'datetime':
+                case 'timestamp':
+                    var chartFilters = 'Selected Range: from <span class="label">' + formatDatetime(d[0][0]) + '</span> to <span class="label">' + formatDatetime(d[0][1]) + '</span>';
+                    break;
+                    
+                case 'time':
+                    var chartFilters = 'Selected Range: from <span class="label">' + formatTime(d[0][0]) + '</span> to <span class="label">' + formatTime(d[0][1]) + '</span>';
+                    break;
 
                 default:
                     var chartFilters = 'Selected Range: from <span class="label">' + d[0][0].toFixed(2) + '</span> to <span class="label">' + d[0][1].toFixed(2) + '</span>';
@@ -547,19 +551,26 @@ function filterPrinterFunction(type, key, date) {
 }
 
 function chartDimension(key, date) {
-    if(typeof(date)==='undefined' || date == -1) date = false;
+    if(typeof(date)==='undefined') date = false;
     switch (date) {
         case 'date':
             var foo = function(d) {
-                return formatDate(new Date(d[key]));
+                return formatDate(d[key]);
             };
             break;
             
-//        case 'datetime':
-//            var foo = function(d) {
-//                return formatDatetime(new Date(d[key]));
-//            };
-//            break;
+        case 'datetime':
+        case 'timestamp':
+            var foo = function(d) {
+                return formatDatetime(d[key]);
+            };
+            break;
+            
+        case 'time':
+            var foo = function(d) {
+                return formatTime(d[key]);
+            };
+            break;
             
         default:
             var foo = function(d) {
@@ -591,9 +602,9 @@ function drawRowChart(chartObject, height, chart_dim, chart_grp, colors, index, 
     .xAxis().ticks(ticks);
 }
 
-function drawBarChart(chartObject, chart_dim, chart_grp, xExtent, stepWidth, index, date) {
-    if(typeof(date)==='undefined' || date == -1) date = false;
-    var x = (date !== false) ? d3.time.scale().domain(xExtent).range([0, stepWidth]) : d3.scale.linear().domain(xExtent).range([0, stepWidth]).nice();
+function drawBarChart(chartObject, chart_dim, chart_grp, xExtent, stepWidth, index, type) {
+    if(typeof(type)==='undefined' || (type != 'date' && type != 'datetime' && type != 'time' && type != 'timestamp')) type = false;
+    var x = (type !== false) ? d3.time.scale.utc().domain(xExtent).range([0, stepWidth]) : d3.scale.linear().domain(xExtent).range([0, stepWidth]).nice();
     //var tickFoo = (date !== false) ? function(v) {return formatDate(new Date(v));} : function(v) {return v;};
     
     chartObject.width(300)
@@ -612,7 +623,7 @@ function drawBarChart(chartObject, chart_dim, chart_grp, xExtent, stepWidth, ind
         return 20;
     })
     .gap(3)
-    .filterPrinter(filterPrinterFunction('bar', index, date))
+    .filterPrinter(filterPrinterFunction('bar', index, type))
     .renderHorizontalGridLines(true)
     .title(function(v) {
         return v.value;
@@ -717,7 +728,7 @@ function removeFieldFromCrossfilter(buttonIndex, tableColumns, selectedFields, r
     }
 }
 
-function addFieldToCrossfilter (ndx, buttonIndex, buttonText, data, step, tableColumns, selectedFields, redraw) {
+function addFieldToCrossfilter (ndx, buttonIndex, buttonText, data, step, tableColumns, selectedFields, type, redraw) {
     if(typeof(redraw)==='undefined') redraw = true;
     widgets['chart' + buttonIndex + '_dim'] = ndx.dimension(function (d) {
         return d[buttonText];
@@ -739,7 +750,7 @@ function addFieldToCrossfilter (ndx, buttonIndex, buttonText, data, step, tableC
             return Math.floor(v / stepWidth) * stepWidth;
         });
         widgets['chart' + buttonIndex] = dc.barChart('#chart' + buttonIndex);
-        drawBarChart(widgets['chart' + buttonIndex], widgets['chart' + buttonIndex + '_dim'], widgets['chart' + buttonIndex + '_grp'], xExtent, stepWidth, buttonIndex);
+        drawBarChart(widgets['chart' + buttonIndex], widgets['chart' + buttonIndex + '_dim'], widgets['chart' + buttonIndex + '_grp'], xExtent, stepWidth, buttonIndex, type);
     }
 
     var columnAdded = false;
