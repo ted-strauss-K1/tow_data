@@ -94,7 +94,6 @@ Drupal.behaviors.mdb_inner_search = function(context) {
             success: function(datamdb) {
                 $('#tow-search-inner-field-list-block-form').remove();
                 
-                
                 FieldTitleArray = {};
                 NumericFieldsIndeces = [];
                 DateFieldsIndeces = [];
@@ -112,7 +111,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                 var RowsLength = datamdb[0].tables[0].rows.length;
                 for (var r = 0; r < RowsLength; r++) {
                     NewRow = {};
-                    Object.keys(datamdb[0].tables[0].rows[r]).forEach(function (key) {
+                    Object.keys(datamdb[0].tables[0].rows[r]).forEach(function (key, index) {
                         if (key != '_id') {
                             var TowFieldIndex = key.indexOf('_tow_field_');
                             var LastUnderscoreIndex = key.lastIndexOf('_');
@@ -124,10 +123,11 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                     NewRow[FieldTitleArray[key]] = null;
                                 }
                             } else if (type == 'date' || type == 'datetime' || type == 'time') {
-                                //console.log(datamdb[0].tables[0].rows[r][key]);
                                 NewRow[FieldTitleArray[key]] = new Date(datamdb[0].tables[0].rows[r][key]);
                             } else if (type == 'timestamp') {
                                 NewRow[FieldTitleArray[key]] = new Date(datamdb[0].tables[0].rows[r][key] * 1000);
+                            } else if (type == 'enum') {
+                                NewRow[FieldTitleArray[key]] = datamdb[0].tables[0].header[index].enum_options[datamdb[0].tables[0].rows[r][key]];
                             } else {
                                 NewRow[FieldTitleArray[key]] = datamdb[0].tables[0].rows[r][key];
                             }
@@ -135,9 +135,9 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                     });
                     dataArray.push(NewRow);
                 }
-                
+
                 console.log(datamdb);
-                console.log(dataArray);
+                //console.log(dataArray);
                 
                 
                 //$(function(){
