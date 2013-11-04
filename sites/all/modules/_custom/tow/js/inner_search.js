@@ -39,41 +39,41 @@ Drupal.behaviors.inner_search = function(context) {
     /***** Page *****/
 
     // Hashchange.
-    if (context == document) {
-        $(window).hashchange(function() {
-            if (firstPageLoad) {
-                if (window.location.hash == '') {
-                    var counter = 0;
-                    var selectedFields = {};
-                    $('.btn-group.table-field-buttons-1').children().each(function(index) {
-                        if (counter < firstPageLoadFieldsCount) {
-                            $(this).addClass('selected');
-                            var text = $(this).text();
-                            var type = $(this).attr('f_type');
-                            $('.tow-dataset-field-link').each(function() {
-                                if ($(this).text() == text && ($(this).attr('f_type') == type)) {
-                                    $(this).addClass('selected');
-                                }
-                            });
-                            selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
-                            counter++;
-                        }
-                    });
-                    firstPageLoad = false;
-                    var selectedFieldsToSend = encodeURIComponent(JSON.stringify(selectedFields));
-                    var url = 'http://' + window.location.hostname + window.location.pathname + '#?' + 'selected_fields=' + selectedFieldsToSend;
-                    setHash(url);
-                }
-                else {
-                    hashChange();
-                }
-            }
-            else {
-                hashChange();
-            }
-        });
-    }
-    $(window).hashchange();
+//    if (context == document) {
+//        $(window).hashchange(function() {
+//            if (firstPageLoad) {
+//                if (window.location.hash == '') {
+//                    var counter = 0;
+//                    var selectedFields = {};
+//                    $('.btn-group.table-field-buttons-1').children().each(function(index) {
+//                        if (counter < firstPageLoadFieldsCount) {
+//                            $(this).addClass('selected');
+//                            var text = $(this).text();
+//                            var type = $(this).attr('f_type');
+//                            $('.tow-dataset-field-link').each(function() {
+//                                if ($(this).text() == text && ($(this).attr('f_type') == type)) {
+//                                    $(this).addClass('selected');
+//                                }
+//                            });
+//                            selectedFields[$(this).text() + '_' + $(this).attr('f_type')] = $(this).text() + '_' + $(this).attr('f_type');
+//                            counter++;
+//                        }
+//                    });
+//                    firstPageLoad = false;
+//                    var selectedFieldsToSend = encodeURIComponent(JSON.stringify(selectedFields));
+//                    var url = 'http://' + window.location.hostname + window.location.pathname + '#?' + 'selected_fields=' + selectedFieldsToSend;
+//                    setHash(url);
+//                }
+//                else {
+//                    hashChange();
+//                }
+//            }
+//            else {
+//                hashChange();
+//            }
+//        });
+//    }
+//    $(window).hashchange();
 
     
     /***** Widgets sorting *****/
@@ -275,10 +275,10 @@ Drupal.behaviors.inner_search = function(context) {
     });
 
     //Accordion shown event
-    $('#accordion', context).live('shown', function (e) {
-        var spanSCell = $(e.target).closest('div.accordion-group').find('span.label-info');
-        arraySelectedCell = [spanSCell.attr('c_row'), spanSCell.attr('c_index')];
-    });
+//    $('#accordion', context).live('shown', function (e) {
+//        var spanSCell = $(e.target).closest('div.accordion-group').find('span.label-info');
+//        arraySelectedCell = [spanSCell.attr('c_row'), spanSCell.attr('c_index')];
+//    });
     
     /***** Datatables *****/
     
@@ -323,11 +323,11 @@ Drupal.behaviors.inner_search = function(context) {
         filtersToSend = getUrlQueryParam(hash, 'filters');
         selectedFieldsTosend = getUrlQueryParam(hash, 'selected_fields');
         if (hash != currentHash) {
-            innerSearchProcessing(filtersToSend, selectedFieldsTosend);
+            //innerSearchProcessing(filtersToSend, selectedFieldsTosend);
         }
         else if (hash == currentHash) {
             $(window).load(function () {
-                innerSearchProcessing(filtersToSend, selectedFieldsTosend);
+                //innerSearchProcessing(filtersToSend, selectedFieldsTosend);
             });
         }
         currentHash = hash;
@@ -2082,12 +2082,20 @@ Drupal.behaviors.inner_search = function(context) {
      */
     function saveSearch(event) {
         var urlSS = 'http://' + window.location.hostname + window.location.pathname + '/ajax/save_search';
-        var filters = $('#edit-filters').val();
-        var selectedFields = $('#edit-selected-fields').val();
-        var rowsAmount = $('#edit-rows-amount').val();
+        //var filters = $('#edit-filters').val();
+        var savedSearchFilters = {};
+        $('.btn-group button.selected').each(function() {
+            var selectedFieldIndex = $(this).index();
+            savedSearchFilters[selectedFieldIndex] = widgets['chart' + selectedFieldIndex].filters();
+        });
+        var filters = JSON.stringify(savedSearchFilters);
+        
+        
+//        var selectedFields = $('#edit-selected-fields').val();
+//        var rowsAmount = $('#edit-rows-amount').val();
         var sSComment = $('#edit-ss-comment').val();
         var sSTags = $('#edit-ss-tags').val();
-        var sSSelectedCell = ($('.selected-cell').length > 0) ? ($('.selected-cell').attr('c_field') + ',' + $('.selected-cell').attr('c_value') + ',' + $('.selected-cell').attr('c_row') + ',' + $('.selected-cell').attr('c_index')) : '';
+        //var sSSelectedCell = ($('.selected-cell').length > 0) ? ($('.selected-cell').attr('c_field') + ',' + $('.selected-cell').attr('c_value') + ',' + $('.selected-cell').attr('c_row') + ',' + $('.selected-cell').attr('c_index')) : '';
         var arrayOfSavedSearches = [];
         
         //Disable sidebar + Throbber
@@ -2138,11 +2146,11 @@ Drupal.behaviors.inner_search = function(context) {
             url: urlSS,
             data: {
                 'filters' : filters,
-                'rows_amount' : rowsAmount,
+//                'rows_amount' : rowsAmount,
                 'ss_comment' : sSComment,
-                'ss_tags' : sSTags,
-                'selected_fields' : selectedFields,
-                'selected_cell': sSSelectedCell
+                'ss_tags' : sSTags
+//                'selected_fields' : selectedFields
+//                'selected_cell': sSSelectedCell
             },
             beforeSend: function() {
                 $('.accordion-group div.accordion-body').each(function() {

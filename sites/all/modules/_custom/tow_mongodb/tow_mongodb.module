@@ -148,7 +148,7 @@ function tow_mongodb_menu() {
         'access arguments' => array('administer site configuration'),
         'title' => 'Node.js',
         'page callback' => 'drupal_get_form',
-        'page arguments' => array('tow_node.js_admin_settings_form'),
+        'page arguments' => array('tow_nodejs_admin_settings_form'),
         'file' => 'includes/tow_mongodb.admin.inc',
         'type' => MENU_LOCAL_TASK,
     );

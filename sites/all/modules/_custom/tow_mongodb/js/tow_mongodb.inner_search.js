@@ -13,7 +13,7 @@ var formatTime = d3.time.format.utc("%H:%M:%S");
 var formatDatetime = d3.time.format.utc("%Y-%m-%d %H:%M:%S");
 
 //SelectedFields
-var selectedFields = [0,1,2,3,4,5,6,7,8,9];
+var selectedFields = [0,2,3];
 
 //Selected Cell
 var selectedCell = {};
@@ -92,7 +92,9 @@ Drupal.behaviors.mdb_inner_search = function(context) {
             async: false,
             jsonpCallback: 'parseJsonp',
             success: function(datamdb) {
-                $('#tow-search-inner-field-list-block-form').remove();
+                
+                $('#block-tow-search_inner_field_list').remove();
+                $('#block-tow-saved_searches_description').remove();
                 
                 FieldTitleArray = {};
                 NumericFieldsIndeces = [];
@@ -143,6 +145,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                 //$(function(){
 	
                 App = Ember.Application.create({
+                    rootElement: '#content-group',
                     LOG_TRANSITIONS: true
                 });
 
@@ -248,7 +251,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                             var sC = !$.isEmptyObject(savedSearches[ss].selected_cell) ? '<span class="label label-info sc">' + savedSearches[ss].selected_cell.c_field + ': ' + savedSearches[ss].selected_cell.c_value + '</span>' : '';
                             savedSearchesOutput = savedSearchesOutput + '<div class="ss"><a ss-id="' + savedSearches[ss].id + '">' + savedSearches[ss].title +'</a><p>' + savedSearches[ss].body +'</p>' + sC + '</div>'
                         }
-                        $('#charts').prepend('<div class="ss-block"><h3>Searches</h3>' + savedSearchesOutput + '</div>');
+//                        $('#charts').prepend('<div class="ss-block"><h3>Searches</h3>' + savedSearchesOutput + '</div>');
 			
                         dc.dataCount(".dc-data-count")
                         .dimension(ndx)
@@ -259,48 +262,48 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                         .group(function () {
                             return 'All dataset records you\'ve got';
                         })
-                        .size(1000)
+                        .size(10)
                         .columns(tableColumns)
-                        .on("preRender", function(chart){
-                            if (typeof(oTable) !== 'undefined') {
-                                oTable.fnDestroy();
-                            }
-                        })
-                        .on("postRender", function(chart){
-                            $('tr.dc-table-group').remove();
-							
-                            $('#datatable-1 tbody tr').each(function(index) {
-                                $(this).addClass('row-' + index);
-                            });
-
-                            addDataTables();
-
-                            //Apply selected cell if exists
-                            if (!$.isEmptyObject(selectedCell)) {
-                                var sCTd = $('#datatable-1 tbody tr.' + selectedCell.c_row + ' td:eq(' + selectedCell.c_index + ')');
-                                sCTd.attr('c_row', selectedCell.c_row);
-                                sCTd.attr('c_index', selectedCell.c_index);
-                                sCTd.attr('c_value', selectedCell.c_value);
-                                sCTd.attr('c_field', selectedCell.c_field);
-                                sCTd.addClass('selected-cell');
-                                selectedCell = {};
-                            }
-                        })
-                        .on("preRedraw", function(chart){
-                            if (typeof(oTable) !== 'undefined') {
-                                oTable.fnDestroy();
-                            }
-                        })
-                        .on("postRedraw", function(chart){
-                            $('tr.dc-table-group').remove();
-							
-                            $('#datatable-1 tbody tr').each(function(index) {
-                                $(this).addClass('row-' + index);
-                            });
-							
-                            addDataTables();
-                        })
-                        ;
+//                        .on("preRender", function(chart){
+//                            if (typeof(oTable) !== 'undefined') {
+//                                oTable.fnDestroy();
+//                            }
+//                        })
+//                        .on("postRender", function(chart){
+//                            $('tr.dc-table-group').remove();
+//							
+//                            $('#datatable-1 tbody tr').each(function(index) {
+//                                $(this).addClass('row-' + index);
+//                            });
+//
+//                            addDataTables();
+//
+//                            //Apply selected cell if exists
+//                            if (!$.isEmptyObject(selectedCell)) {
+//                                var sCTd = $('#datatable-1 tbody tr.' + selectedCell.c_row + ' td:eq(' + selectedCell.c_index + ')');
+//                                sCTd.attr('c_row', selectedCell.c_row);
+//                                sCTd.attr('c_index', selectedCell.c_index);
+//                                sCTd.attr('c_value', selectedCell.c_value);
+//                                sCTd.attr('c_field', selectedCell.c_field);
+//                                sCTd.addClass('selected-cell');
+//                                selectedCell = {};
+//                            }
+//                        })
+//                        .on("preRedraw", function(chart){
+//                            if (typeof(oTable) !== 'undefined') {
+//                                oTable.fnDestroy();
+//                            }
+//                        })
+//                        .on("postRedraw", function(chart){
+//                            $('tr.dc-table-group').remove();
+//							
+//                            $('#datatable-1 tbody tr').each(function(index) {
+//                                $(this).addClass('row-' + index);
+//                            });
+//							
+//                            addDataTables();
+//                        })
+//                        ;
 
                         dc.renderAll();
 
@@ -324,17 +327,23 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                         });
 				
                         //Choose saved search. Apply filters
-                        $('.ss-block .ss a').live('click', function() {
+                        //$('333.accordion-group a.accordion-toggle').live('click', function() {
+                        //
+                        $('#accordion', context).live('shown', function (e) {
                             //Clear all previous filters
                             dc.filterAll();
 
-                            var ssId = $(this).attr('ss-id');
-                            var result = $.grep(savedSearches, function(e){
-                                return e.id == ssId;
-                            });
-                            if (result.length == 1) {
+//                            var ssId = $(this).attr('ss-id');
+//                            var result = $.grep(savedSearches, function(e){
+//                                return e.id == ssId;
+//                            });
+//                            if (result.length == 1) {
+                              
+                              var filters_str = $(e.target).closest('div.accordion-group').find('p.ss-filters').text();
+                              var ss_data = $.parseJSON(filters_str);
+                              console.log(ss_data);
                                 var newSelectedFields = [];
-                                for (var sf in result[0].data) {
+                                for (var sf in ss_data) {
                                     newSelectedFields.push(parseInt(sf));
                                 }
 						
@@ -368,21 +377,21 @@ Drupal.behaviors.mdb_inner_search = function(context) {
 						
                                 //Apply filters to saved search selected fields
                                 for (var ssf=0; ssf < selectedFields.length; ssf++) {
-                                    if (result[0].data[selectedFields[ssf]].length !== 0) {
-                                        if (result[0].data[selectedFields[ssf]].length === 1) {
-                                            widgets['chart' + selectedFields[ssf]].filter(result[0].data[selectedFields[ssf]][0]);
+                                    if (ss_data[selectedFields[ssf]].length !== 0) {
+                                        if (ss_data[selectedFields[ssf]].length === 1) {
+                                            widgets['chart' + selectedFields[ssf]].filter(ss_data[selectedFields[ssf]][0]);
                                         } else {
-                                            for (var mf=0; mf < result[0].data[selectedFields[ssf]].length; mf++) {
-                                                widgets['chart' + selectedFields[ssf]].filter(result[0].data[selectedFields[ssf]][mf]);
+                                            for (var mf=0; mf < ss_data[selectedFields[ssf]].length; mf++) {
+                                                widgets['chart' + selectedFields[ssf]].filter(ss_data[selectedFields[ssf]][mf]);
                                             }
                                         }
                                     }
                                 }
                                 //Get selected cell if exists
-                                if (!$.isEmptyObject(result[0].selected_cell)) {
-                                    $.extend(selectedCell, result[0].selected_cell);
-                                }
-                            }
+//                                if (!$.isEmptyObject(ss_data.selected_cell)) {
+//                                    $.extend(selectedCell, ss_data.selected_cell);
+//                                }
+                            //}
 					
                             dc.renderAll();
 					
@@ -433,7 +442,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
 				
 			
                         //Send to ember handlebar
-                        this.$().appendTo("body");
+                        //this.$().appendTo("body");
 			
                         //Clear filters
                         $('a.reset').live('click', function() {
@@ -457,7 +466,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                 var selectedFieldIndex = $(this).index();
                                 savedSearchFilters[selectedFieldIndex] = widgets['chart' + selectedFieldIndex].filters();
                             });
-				
+                            console.log(JSON.stringify(savedSearchFilters));
                         });
 			
                     }

@@ -60,10 +60,11 @@ function tow_saved_searches_list_block($nid = NULL) {
     $x = 1;
     $output = '<div class="tow-saved-search-block-item"><div class="accordion" id="accordion">';
     foreach ($saved_searches as $node) {
-        $link_node_url = '#?selected_fields='.$node->field_selected_fields['0']['value'];
-        $output .= '<div class="invis-link-'.$x.'" style="display:none">'.$link_node_url.'</div>';
-        $output .= '<div class="accordion-group"><div class="accordion-heading">
-      <a class="accordion-toggle toggle'.$x.'" data-toggle="collapse" data-parent="#accordion" href="#collapse' . $x . '">';
+//        $link_node_url = '#?selected_fields='.$node->field_selected_fields['0']['value'];
+//        $output .= '<div class="invis-link-'.$x.'" style="display:none">#</div>';
+        $filters = $node->field_filters['0']['value'];
+        $output .= '<div class="accordion-group"><div class="accordion-heading"><p class="ss-filters" style="display:none">' . $filters . '</p>
+        <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#collapse' . $x . '">';
         $total_votes = _votingapi_get_standard_results('node', $node->nid);
         $add_votes = isset($total_votes['vote']['points']['sum']) ? ('(' . $total_votes['vote']['points']['sum'] . ')') : '';
         $selected_cell = explode(',', $node->field_selected_cell[0]['value']);
@@ -398,7 +399,7 @@ function tow_saved_searches_get_selected_fields($selected_fields) {
 /**
  * Constructs a Saved Search node object.
  */
-function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters, $selected_fields, $selected_cell, $rows_amount = 0) {
+function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters/*, $selected_fields, $selected_cell, $rows_amount = 0*/) {
     module_load_include('inc', 'node', 'node.pages');
 
     // Prepare a new Saved Search object.
@@ -435,21 +436,22 @@ function tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $f
         $saved_search->field_dataset_nid[0]['value'] = $node->field_dataset[0]['value'];
     }
 
-    // Body, teaser.
+    // Body, teaser, filters.
     $saved_search->body = '';#TEMPORARILY DISABLED tow_saved_searches_summary(tow_search_inner_get_nid(), $filters, $selected_fields, $rows_amount);
     $saved_search->teaser = node_teaser($saved_search->body);
+    $saved_search->field_filters[0]['value'] = $filters;
 
     // Save search constraints and selected fields.
     $filters = tow_saved_searches_sort_constraints($filters);
-    $selected_fields = tow_saved_searches_sort_selected_fields($selected_fields);
+//    $selected_fields = tow_saved_searches_sort_selected_fields($selected_fields);
     $saved_search->field_search_constraints[0]['value'] = $filters;
-    $saved_search->field_selected_fields[0]['value'] = $selected_fields;
+//    $saved_search->field_selected_fields[0]['value'] = $selected_fields;
 
     //Save selected cell
-    $saved_search->field_selected_cell[0]['value'] = $selected_cell;
+//    $saved_search->field_selected_cell[0]['value'] = $selected_cell;
     
     // Calculate a hash.
-    $saved_search->field_sc_hash[0]['value'] = md5($saved_search->field_search_constraints[0]['value'] . ' ' . $saved_search->field_selected_fields[0]['value'] . ' ' . $saved_search->field_selected_cell[0]['value']);
+    $saved_search->field_sc_hash[0]['value'] = md5($saved_search->field_search_constraints[0]['value']/* . ' ' . $saved_search->field_selected_fields[0]['value'] . ' ' . $saved_search->field_selected_cell[0]['value']*/);
 
     // Check if the search already exists.
     $exists = tow_saved_searches_check_exists($saved_search);

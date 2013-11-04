@@ -119,8 +119,8 @@ function tow_ajax_handlers_create_saved_search($nid) {
     $filters = $_GET['filters'];
 
     // Selected fields.
-    $selected_fields = (isset($_GET['selected_fields'])) ? $_GET['selected_fields'] : '';
-    $selected_fields = ($selected_fields == json_encode(new stdClass())) ? '' : $selected_fields;
+//    $selected_fields = (isset($_GET['selected_fields'])) ? $_GET['selected_fields'] : '';
+//    $selected_fields = ($selected_fields == json_encode(new stdClass())) ? '' : $selected_fields;
 
     //Saved search comment (title)
     $ss_comment = $_GET['ss_comment'];
@@ -129,13 +129,13 @@ function tow_ajax_handlers_create_saved_search($nid) {
     $ss_tags = $_GET['ss_tags'];
     
     //Saved search selected cell
-    $selected_cell = $_GET['selected_cell'];
+//    $selected_cell = $_GET['selected_cell'];
 
     // Rows amount.
-    $rows_amount = $_GET['rows_amount'];
+//    $rows_amount = $_GET['rows_amount'];
 
     // Create saved search.
-    $saved_search = tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters, $selected_fields, $selected_cell, $rows_amount);
+    $saved_search = tow_saved_searches_saved_search_create($node, $ss_comment, $ss_tags, $filters/*, $selected_fields, $selected_cell, $rows_amount*/);
 
     // Validation.
     if ($saved_search == NULL) {
