@@ -100,6 +100,23 @@ function tow_mongodb_help($path, $arg) {
 }
 
 /**
+ * Implementation of hook_js_alter().
+ * 
+ * @param array $javascript
+ *  An array structured the same way as what would be returned by calling drupal_add_js(NULL, NULL, $scope).
+ *  Altering this array will result in different javascript being sent to the page.
+ * @param string $scope
+ *  The scope, either 'header' or 'footer'.
+ * @param string $query_string
+ *  The string that will be appended to each javascript file's url.
+ *  Drupal uses this to force browsers to get a new file when it's available rather than erroneously relying on what's in the browser cache.
+ *  The hook_js_alter function can modify this string.
+ */
+function tow_mongodb_js_alter(&$javascript, $scope, &$query_string) {
+    # print '<pre>' . print_r(array($javascript, $scope, $query_string), TRUE) . '</pre>';
+}
+
+/**
  * Implementation of hook_menu().
  */
 function tow_mongodb_menu() {
