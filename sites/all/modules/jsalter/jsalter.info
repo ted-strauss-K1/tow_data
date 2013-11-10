@@ -1,0 +1,11 @@
+; $Id: jsalter.info,v 1.1 2008/12/20 20:42:07 effulgentsia Exp $
+name = "JS Alter"
+description = "Allows other modules to alter the javascript code sent to the page. A module can do this by implementing hook_js_alter."
+core = 6.x
+
+; Information added by drupal.org packaging script on 2009-05-19
+version = "6.x-1.0"
+core = "6.x"
+project = "jsalter"
+datestamp = "1242697238"
+

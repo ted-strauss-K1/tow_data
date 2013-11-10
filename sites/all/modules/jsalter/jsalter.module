@@ -1,0 +1,82 @@
+<?php
+// $Id: jsalter.module,v 1.1.2.1 2009/04/16 03:31:29 effulgentsia Exp $
+
+/**
+ * @file
+ * Allows other modules to alter the javascript code sent to the page. A module can do this by implementing hook_js_alter.
+ */
+ 
+/**
+ * Implementation of hook_theme
+ */
+function jsalter_theme($aExisting) {
+  // Introduce a themehook that can be used for theming the closure, but 
+  // that allows the footer javascript to be altered first.
+  $aResult['jsalter_closure'] = array(
+    'arguments' => array('main' => 0),
+  );
+  
+  // Take over Drupal's default closure implementation. However, if the
+  // theme has its own implementation, allow it to be used.
+  if ($aExisting['closure']['function'] === 'theme_closure') {
+    $aResult['closure'] = array(
+      'function' => 'jsalter_themeoverride_closure',
+      'arguments' => $aExisting['closure']['arguments'],
+    );
+  }
+  
+  return $aResult;
+}
+ 
+/**
+ * Implementation of hook_preprocess_page
+ */
+function jsalter_preprocess_page(&$aVars) {
+  // template_preprocess_page() sets this variable using drupal_get_js(),
+  // but we want to use jsalter_get_js() instead.
+  $aVars['scripts'] = jsalter_get_js();
+}
+
+/**
+ * Replacement for drupal_get_js()
+ */
+function jsalter_get_js($sScope = 'header', $aJavascript = NULL)  {
+  if (!isset($aJavascript)) {
+    $aJavascript = drupal_add_js(NULL, NULL, $sScope);
+  }
+  
+  // In addition to letting modules alter the javascript array, we
+  // also want to let them alter the query string suffix that's used
+  // for dealing with browsers that cache too aggressively.
+  $sOriginalCssJsQueryStringWithHistory = variable_get('css_js_query_string', '00000000000000000000');
+  $sOriginalJsQueryString = substr($sOriginalCssJsQueryStringWithHistory, 0, 1);
+  $sJsQueryString = $sOriginalJsQueryString;
+  // We don't want modules taking $sScope by reference.
+  $aJavascript['__drupal_alter_by_ref'] = array($sScope, &$sJsQueryString);
+  drupal_alter('js', $aJavascript);
+  if ($sJsQueryString !== $sOriginalJsQueryString) {
+    variable_set('css_js_query_string', $sJsQueryString);
+  }
+  $sResult = drupal_get_js($sScope, $aJavascript);
+  if ($sJsQueryString !== $sOriginalJsQueryString) {
+    variable_set('css_js_query_string', $sOriginalCssJsQueryStringWithHistory);
+  }
+  
+  return $sResult;
+}
+
+/**
+ * Reroute theme('closure') to theme('jsalter_closure')
+ */
+function jsalter_themeoverride_closure($bMain = 0) {
+  return theme('jsalter_closure', $bMain);
+}
+
+/**
+ * Similar to theme_closure(), but using jsalter_get_js() instead
+ * of drupal_get_js().
+ */
+function theme_jsalter_closure($bMain = 0) {
+  $aFooter = module_invoke_all('footer', $bMain);
+  return implode("\n", $aFooter) . jsalter_get_js('footer');
+}
