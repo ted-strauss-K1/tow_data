@@ -12,6 +12,7 @@ require_once 'sites/all/libraries/ChromePhp/ChromePhp.php';
 
 $tow_pwd = dirname(__FILE__);
 require_once $tow_pwd . '/includes/tow.access.inc';
+require_once $tow_pwd . '/includes/tow.admin.inc';
 require_once $tow_pwd . '/includes/tow.apachesolr.inc';
 require_once $tow_pwd . '/includes/tow.dataset.inc';
 require_once $tow_pwd . '/includes/tow.debug.inc';
@@ -283,6 +284,9 @@ function tow_block($op = 'list', $delta = 0) {
 function tow_cron() {
     //Delete zero viewed lines(may exist because tow_exit())
     db_query('DELETE FROM {node_counter} WHERE totalcount = 0');
+    
+    // Admin cron tasks.
+    tow_admin_cron();
 
     // Create dataset categories if necessary.
     tow_install_create_dataset_categories();

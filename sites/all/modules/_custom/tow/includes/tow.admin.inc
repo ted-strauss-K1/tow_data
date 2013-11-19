@@ -65,5 +65,38 @@ function tow_admin_settings_form() {
         '#default_value' => variable_get('tow_max_allowed_dataset_keywords', 10),
     );
 
+    $form['tow_admin_cron'] = array(
+        '#type' => 'fieldset',
+        '#collapsible' => TRUE,
+        '#collapsed' => FALSE,
+        '#title' => t('Admin cron settings'),
+    );
+
+    $form['tow_admin_cron']['tow_admin_cron_period'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Admin cron period'),
+        '#description' => t('Define the period of time for running admin cron tasks (in seconds).'),
+        '#default_value' => variable_get('tow_admin_cron_period', 24 * 60 * 60),
+    );
+
+    $form['tow_admin_cron']['tow_admin_cron_enabled'] = array(
+        '#type' => 'checkbox',
+        '#title' => t('Check this if you want to run ToW admin cron tasks.'),
+        '#default_value' => variable_get('tow_admin_cron_enabled', 1),
+        '#return_value' => 1,
+    );
+
     return system_settings_form($form);
+}
+
+/**
+ * Admin cron tasks.
+ */
+function tow_admin_cron() {
+    $now = time();
+    if (variable_get('tow_admin_cron_enabled', 1) && ($now - variable_get('tow_admin_cron_last', 0) >= variable_get('tow_admin_cron_period', 24 * 60 * 60))) {
+        $query = "TRUNCATE TABLE {watchdog} RESTART IDENTITY CASCADE";
+        db_query($query);
+        variable_set('tow_admin_cron_last', $now);
+    }
 }
