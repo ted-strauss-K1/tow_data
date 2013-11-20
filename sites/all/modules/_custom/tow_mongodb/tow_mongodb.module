@@ -113,7 +113,101 @@ function tow_mongodb_help($path, $arg) {
  *  The hook_js_alter function can modify this string.
  */
 function tow_mongodb_js_alter(&$javascript, $scope, &$query_string) {
-    # print '<pre>' . print_r(array($javascript, $scope, $query_string), TRUE) . '</pre>';
+
+    // Apply javascript change to Inner Search page only.
+    if ((arg(0) == 'search_dataset') && !arg(2)) {
+
+        // Header.
+        if ($scope == 'header') {
+            foreach (array('core', 'inline', 'module', 'setting', 'theme') as $area) {
+                switch ($area) {
+                    case 'core':
+                        $jquery = array(jquery_update_jquery_path() => $javascript[$area]['misc/jquery.js']);
+                        $javascript['core'] = array_merge($jquery, $javascript[$area]);
+                        unset($javascript['core']['misc/jquery.js']);
+                        break;
+                    case 'inline':
+                        break;
+                    case 'module':
+                        unset($javascript[$area]['sites/all/modules/admin_menu/admin_menu.js']);
+                        unset($javascript[$area]['sites/all/libraries/jquery.ui/ui/minified/ui.core.min.js']);
+                        unset($javascript[$area]['sites/all/libraries/jquery.ui/ui/minified/ui.dialog.min.js']);
+                        unset($javascript[$area]['sites/all/libraries/jquery.ui/ui/minified/ui.draggable.min.js']);
+                        unset($javascript[$area]['sites/all/modules/modalframe/js/parent.js']);
+                        unset($javascript[$area]['sites/all/modules/automodal/automodal.js']);
+                        unset($javascript[$area]['sites/all/modules/jstools/jstools.js']);
+                        unset($javascript[$area]['sites/all/modules/collapsiblock/collapsiblock.js']);
+                        unset($javascript[$area]['sites/all/modules/jstools/jquery.cookie.js']);
+                        unset($javascript[$area]['sites/all/modules/feedback/feedback.js']);
+                        unset($javascript[$area]['sites/all/modules/google_analytics/googleanalytics.js']);
+                        unset($javascript[$area]['sites/all/modules/heartbeat/heartbeat.js']);
+                        unset($javascript[$area]['sites/all/modules/datatables/dataTables/media/js/jquery.dataTables.js']);
+                        unset($javascript[$area]['sites/all/modules/_custom/tow/js/jquery.ba-hashchange.min.js']);
+                        unset($javascript[$area]['misc/collapse.js']);
+                        unset($javascript[$area]['misc/autocomplete.js']);
+                        unset($javascript[$area]['sites/all/modules/ctools/js/ajax-responder.js']);
+                        unset($javascript[$area]['sites/all/modules/flag/theme/flag.js']);
+                        unset($javascript[$area]['sites/all/modules/_custom/tow/js/inner_search.js']);
+                        unset($javascript[$area]['sites/all/modules/_custom/tow/js/highcharts.js']);
+                        unset($javascript[$area]['sites/all/modules/_custom/tow/js/itpoverlay/itpoverlay.js']);
+                        unset($javascript[$area]['sites/all/modules/datatables/dataTables/extras/Scroller/media/js/dataTables.scroller.js']);
+                        unset($javascript[$area]['sites/all/modules/datatables/dataTables/extras/ColVis/media/js/ColVis.js']);
+                        unset($javascript[$area]['misc/textarea.js']);
+                        break;
+                    case 'setting':
+                        foreach ($javascript[$area] as $index => $scripts) {
+                            foreach ($scripts as $name => $settings) {
+                                if (!in_array($name, array('tow_mongodb', 'basePath'))) {
+                                    unset($javascript[$area][$index][$name]);
+                                }
+                            }
+                            if (empty($javascript[$area][$index])) {
+                                unset($javascript[$area][$index]);
+                            }
+                        }
+                        break;
+                    case 'theme':
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_core/js/jquery.bgiframe.min.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_core/js/hoverIntent.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_core/js/supposition.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_core/js/supersubs.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_core/js/superfish.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_core/js/script.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_theory/js/noty/jquery.noty.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_theory/js/noty/noty.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_theory/js/noty/default.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_theory/js/noty/topRight.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_theory/js/noty/top.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_theory/js/noty/topCenter.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_theory/js/bootstrap/bootstrap.min.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_theory/js/scroller/jquery.jscrollpane.js']);
+                        unset($javascript[$area]['sites/all/themes/fusion/fusion_theory/js/scroller/jquery.mousewheel.min.js']);
+                        break;
+                }
+            }
+        }
+
+        // Footer.
+        if ($scope == 'footer') {
+            foreach (array('core', 'inline', 'module', 'setting', 'theme') as $area) {
+                switch ($area) {
+                    case 'core':
+                        break;
+                    case 'inline':
+                        $javascript[$area] = array();
+                        break;
+                    case 'module':
+                        unset($javascript[$area]['sites/all/modules/_custom/tow/js/lou-multi-select/js/jquery.multi-select.js']);
+                        unset($javascript[$area]['sites/all/modules/_custom/tow/js/quicksearch/jquery.quicksearch.js']);
+                        break;
+                    case 'setting':
+                        break;
+                    case 'theme':
+                        break;
+                }
+            }
+        }
+    }
 }
 
 /**
@@ -383,4 +477,23 @@ function tow_mongodb_update_index() {
     $cron_limit = variable_get('tow_mongodb_cron_limit', 100);
     $rows = tow_mongodb_index_get_nodes_to_index($cron_limit);
     tow_mongodb_index_nodes($rows);
+}
+
+/**
+ * Implementation of hook_theme_registry_alter().
+ *
+ * Make JS Alter's page preprocess function run *after* everything else's,
+ * so that a theme can't call drupal_get_js() and mess everything up.
+ */
+function jsalter_theme_registry_alter(&$theme_registry) {
+    if (isset($theme_registry['page'])) {
+        if (count($theme_registry['page']['preprocess functions']) > 0) {
+            // If jquery_update's preprocess function is there already, remove it.
+            if ($key = array_search('jsalter_preprocess_page', $theme_registry['page']['preprocess functions'])) {
+                unset($theme_registry['page']['preprocess functions'][$key]);
+            }
+        }
+        // Now tack it on at the end so it runs after everything else.
+        $theme_registry['page']['preprocess functions'][] = 'jsalter_preprocess_page';
+    }
 }

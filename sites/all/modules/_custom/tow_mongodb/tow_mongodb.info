@@ -6,3 +6,4 @@ description = MongoDB integration and workflow for Theory on Wheels.
 
 dependencies[] = search
 dependencies[] = tow
+dependencies[] = jsalter
