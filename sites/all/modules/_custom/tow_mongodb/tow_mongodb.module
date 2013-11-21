@@ -41,22 +41,20 @@ function tow_mongodb_init() {
         if (tow_access_dataset_check($dataset)) {
 
             // Add css.
-            # drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/cssmdb/bootstrap.min.css');
-            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/cssmdb/dc.css');
-            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/cssmdb/jquery.gridster.css');
-            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/cssmdb/style.gridster.css');
-            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/cssmdb/normalize.css');
-            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/cssmdb/style.css');
+            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/css/dc.css');
+            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/css/jquery.gridster.css');
+            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/css/style.gridster.css');
+            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/css/normalize.css');
+            drupal_add_css(drupal_get_path('module', 'tow_mongodb') . '/css/style.css');
 
             // Add js.
-            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/jsmdb/d3.js', 'module', 'footer');
-            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/jsmdb/crossfilter.js', 'module', 'footer');
-            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/jsmdb/dc.js', 'module', 'footer');
-            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/jsmdb/jquery.gridster.js', 'module', 'footer');
-            # <script type="text/javascript" src="js/DataTables/extras/FixedHeader/js/FixedHeader.js"></script>
-            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/jsmdb/handlebars-1.0.0-rc.4.js', 'module', 'footer');
-            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/jsmdb/ember-1.0.0-rc.6.js', 'module', 'footer');
-            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/jsmdb/ember-data-0.13.js', 'module', 'footer');
+            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/d3.js', 'module', 'footer');
+            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/crossfilter.js', 'module', 'footer');
+            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/dc.js', 'module', 'footer');
+            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/jquery.gridster.js', 'module', 'footer');
+            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/handlebars.js', 'module', 'footer');
+            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/ember.js', 'module', 'footer');
+            drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/ember-data.js', 'module', 'footer');
 
             drupal_add_js(drupal_get_path('module', 'tow_mongodb') . '/js/tow_mongodb.inner_search.js', 'module', 'footer');
             drupal_add_js(array(
