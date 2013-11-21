@@ -1,7 +1,0 @@
-; $id$
-
-name = messages_test
-description = This module allows you to test the result of work with the types of messages
-package = test
-version = 6.x-dev
-core = 6.x
