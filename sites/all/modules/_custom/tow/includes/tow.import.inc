@@ -347,6 +347,7 @@ function tow_import_upload($hash, $to) {
  * Try to parse file and store info to the dataset.
  */
 function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpexcelreader') {
+    watchdog('ToW Import', 'Import started: ' . date('Y-m-d H:i:s'));
 
     try {
         // Default column title, used in case if data file contains no column title.
@@ -711,7 +712,7 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
 
                     // Column titles.
                     $new_table->{$field_type}[]['value'] = $table['column_titles'][$col_index];
-                    
+
                     //Units
                     $new_table->field_units[]['value'] = 'iWy2KupFUYKV4c9wmSrR';
 
@@ -746,7 +747,34 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
 
                 // Node save, get table nid.
                 try {
-                    node_save($new_table);
+                    db_query("INSERT INTO {node} (type, title, uid, created, changed) VALUES ('%s', '%s', %d, %d, %d)", $new_table->type, $new_table->title, $new_table->uid, time(), time());
+                    $nid = db_last_insert_id('node', 'nid');
+                    db_query("INSERT INTO {node_revisions} (nid, title, body, teaser, uid, log) VALUES (%d, '%s', '%s', '%s', %d, '%s')", $nid, $new_table->title, $new_table->body, $new_table->teaser, $new_table->uid, $new_table->title);
+                    $vid = db_last_insert_id('node_revisions', 'vid');
+                    db_query("UPDATE {node} SET vid = %d WHERE nid = %d", $vid, $nid);
+                    $types = tow_possible_fields();
+                    foreach ($types as $type) {
+                        if (isset($new_table->{'field_title_' . $type})) {
+                            foreach ($new_table->{'field_title_' . $type} as $delta => $value) {
+                                db_query("INSERT INTO {content_field_title_$type} (nid, vid, delta, field_title_" . $type . "_value) VALUES (%d, %d, %d, '%s')", $nid, $vid, $delta, $value['value']);
+                            }
+                        }
+                    }
+                    if (isset($new_table->field_units)) {
+                        foreach ($new_table->field_units as $delta => $value) {
+                            db_query("INSERT INTO {content_field_units} (nid, vid, delta, field_units_value) VALUES (%d, %d, %d, '%s')", $nid, $vid, $delta, $value['value']);
+                        }
+                    }
+                    if (is_null($new_table->field_available_positions[0]['value'])) {
+                        $available_positions = array();
+                        $max_rec = variable_get('tow_max_records_in_table', 920);
+                        for ($i = 1; $i < $max_rec; $i++) {
+                            $available_positions[] = $i;
+                        }
+                        $available_positions = serialize($available_positions);
+                    }
+                    db_query("INSERT INTO {content_type_table} (nid, vid, field_weights_value, field_indexes_value, field_dataset_value, field_available_positions_value) VALUES (%d, %d, '%s', '%s', '%s', '%s')", $nid, $vid, $new_table->field_weights[0]['value'], $new_table->field_indexes[0]['value'], $new_table->field_dataset[0]['value'], $available_positions);
+                    $new_table->nid = $nid;
                 } catch (Exception $e) {
                     watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
                 }
@@ -758,6 +786,20 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
                 }
             }
 
+            $now = time();
+            $available_positions = unserialize($available_positions);
+            $content_type_record = array(
+                'sql' => "INSERT INTO {content_type_record} (nid, vid, field_table_value, field_position_value) VALUES ",
+            );
+            $types = tow_possible_fields();
+            foreach ($types as $type) {
+                $fieldtypes[$type] = array(
+                    'sql' => "INSERT INTO {content_field_$type} (nid, vid, delta, field_" . $type . "_value) VALUES ",
+                );
+            }
+            $to_index = array(
+                'sql' => "INSERT INTO {tow_mongodb_index} (nid, changed) VALUES ($table_nid, $now), ",
+            );
             for ($record_index = 0; $record_index < $table['rows_qty']; $record_index++) {
 
                 // Type.
@@ -776,13 +818,44 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
                 }
                 $new_record->field_table[0]['value'] = $table_nid;
                 try {
-                    node_save($new_record);
+                    db_query("INSERT INTO {node} (type, uid, created, changed) VALUES ('%s', %d, %d, %d)", $new_record->type, $new_record->uid, time(), time());
+                    $nid = db_last_insert_id('node', 'nid');
+                    db_query("INSERT INTO {node_revisions} (nid, body, teaser, uid, log) VALUES (%d, '%s', '%s', %d, '%s')", $nid, "$nid", "$nid", $new_table->uid, "$nid");
+                    $vid = db_last_insert_id('node_revisions', 'vid');
+                    db_query("UPDATE {node} SET vid = %d WHERE nid = %d", $vid, $nid);
+                    foreach ($types as $type) {
+                        if (isset($new_record->{'field_' . $type})) {
+                            $delta = 0;
+                            foreach ($new_record->{'field_' . $type} as $value) {
+                                $value = _tow_field_remove_fake($value['value']);
+                                if (is_null($value)) {
+                                    $fieldtypes[$type]['sql'] .= "($nid, $vid, $delta, NULL), ";
+                                } else {
+                                    $value = db_escape_string($value);
+                                    $fieldtypes[$type]['sql'] .= "($nid, $vid, $delta, '$value'), ";
+                                }
+                                $delta++;
+                            }
+                        }
+                    }
+                    $new_record->field_position[0]['value'] = array_shift($available_positions);
+                    $pos = db_escape_string($new_record->field_position[0]['value']);
+                    $content_type_record['sql'] .= "($nid, $vid, '$table_nid', '$pos'), ";
+                    $to_index['sql'] .= "($nid, $now), ";
                 } catch (Exception $e) {
                     watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
                 }
                 tow_import_progress($hash, $stage);
             }
 
+            db_query("UPDATE {content_type_table} SET field_available_positions_value = '%s' WHERE nid = %d", serialize($available_positions), $new_record->field_table[0]['value']);
+            db_query(rtrim($content_type_record['sql'], ', '));
+            foreach ($types as $type) {
+                if (isset($new_record->{'field_' . $type})) {
+                    db_query(rtrim($fieldtypes[$type]['sql'], ', '));
+                }
+            }
+            db_query(rtrim($to_index['sql'], ', '));
             unset($new_table);
             unset($table_nid);
         }
@@ -837,7 +910,10 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
         }
     } catch (Exeption $e) {
         tow_import_progress($hash, $stage, 'fail');
+        watchdog('ToW Import', 'Import failed: ' . date('Y-m-d H:i:s'));
     }
+
+    watchdog('ToW Import', 'Import finished: ' . date('Y-m-d H:i:s'));
 }
 
 /**
@@ -869,7 +945,7 @@ function _tow_import_file_process_test_phpexcel(&$hash, &$import_action, &$impor
     }
 
     // TXT-file. Value delimiter may be tab or comma.
-    if (($input_file_type == 'CSV') /*&& (strtolower($info['extension']) == "txt")*/) {
+    if (($input_file_type == 'CSV') /* && (strtolower($info['extension']) == "txt") */) {
 
         // Read first line.
         $file = fopen($imported_file_name, 'r');
