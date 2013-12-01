@@ -1220,29 +1220,30 @@ function _tow_apachesolr_separate_table_fields($nid) {
 
         foreach (tow_possible_fields() as $field_type) {
             $field_title_name = 'field_title_' . $field_type;
-
-            foreach ($table_node->$field_title_name as $delta => $field_title) {
-                if ($field_title['value'] != NULL) {
-                    if ($field_type == 'enum') {
-                        $enum_options = unserialize($table_node->field_enum_options[$delta]['value']);
-                    } else {
-                        $enum_options = NULL;
+            if (isset($table_node->$field_title_name)) {
+                foreach ($table_node->$field_title_name as $delta => $field_title) {
+                    if ($field_title['value'] != NULL) {
+                        if ($field_type == 'enum') {
+                            $enum_options = unserialize($table_node->field_enum_options[$delta]['value']);
+                        } else {
+                            $enum_options = NULL;
+                        }
+                        $x = $weights_array[$index];
+                        $is_index = $indexes_array[$x];
+                        $field = array(
+                            'name' => tow_apachesolr_field_name($field_type, $delta),
+                            'type' => $field_type,
+                            'title' => $field_title['value'],
+                            'delta' => $delta,
+                            'enum_options' => $enum_options,
+                            'index' => $is_index,
+                            'table_nid' => $table_node->nid,
+                            'unit' => $table_node->field_units[$x]['value'],
+                        );
+                        $fields[$weights_array[$index]] = $field;
+                        tow_apachesolr_add_facet_field($f_fields, $field);
+                        $index++;
                     }
-                    $x = $weights_array[$index];
-                    $is_index = $indexes_array[$x];
-                    $field = array(
-                        'name' => tow_apachesolr_field_name($field_type, $delta),
-                        'type' => $field_type,
-                        'title' => $field_title['value'],
-                        'delta' => $delta,
-                        'enum_options' => $enum_options,
-                        'index' => $is_index,
-                        'table_nid' => $table_node->nid,
-                        'unit' => $table_node->field_units[$x]['value'],
-                    );
-                    $fields[$weights_array[$index]] = $field;
-                    tow_apachesolr_add_facet_field($f_fields, $field);
-                    $index++;
                 }
             }
         }

@@ -717,23 +717,25 @@ function tow_search_inner_linked_update_dataset_indexes($dataset_nid, $table_to_
 
         // Define the field that had been changed.
         foreach (tow_possible_fields() as $type) {
-            foreach ($base_table->{'field_title_' . $type} as &$base_field) {
-                if ($base_field['value'] != NULL) {
-                    $flag = FALSE;
-                    foreach ($tables as $table) {
-                        if ($table->nid != $base_table->nid) {
-                            foreach ($table->{'field_title_' . $type} as $field) {
-                                if ($base_field['value'] == $field['value']) {
-                                    $flag = TRUE;
-                                    break;
+            if (isset($base_table->{'field_title_' . $type})) {
+                foreach ($base_table->{'field_title_' . $type} as &$base_field) {
+                    if ($base_field['value'] != NULL) {
+                        $flag = FALSE;
+                        foreach ($tables as $table) {
+                            if ($table->nid != $base_table->nid) {
+                                foreach ($table->{'field_title_' . $type} as $field) {
+                                    if ($base_field['value'] == $field['value']) {
+                                        $flag = TRUE;
+                                        break;
+                                    }
                                 }
                             }
+                            if ($flag)
+                                break;
                         }
-                        if ($flag)
-                            break;
+                        $indexes[$weights[$ii]] = $flag ? 1 : 0;
+                        $ii++;
                     }
-                    $indexes[$weights[$ii]] = $flag ? 1 : 0;
-                    $ii++;
                 }
             }
         }
