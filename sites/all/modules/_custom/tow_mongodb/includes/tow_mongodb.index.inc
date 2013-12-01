@@ -203,11 +203,11 @@ function tow_mongodb_index_nodes($rows) {
 
     if (count($documents)) {
         try {
-            watchdog('ToW MongoDB', 'Adding @count documents.', array('@count' => count($documents)));
             // Chunk the adds by 20s
             $docs_chunk = array_chunk($documents, 20);
+            $mongo = tow_mongodb_get_mongo();
+            $added = 0;
             foreach ($docs_chunk as $docs) {
-                $mongo = tow_mongodb_get_mongo();
                 foreach ($docs as $doc) {
                     $criteria = $doc['criteria'];
                     $values = $doc['values'];
@@ -216,10 +216,11 @@ function tow_mongodb_index_nodes($rows) {
                         $mongo->datasets->update($criteria, $value, array('upsert' => $upsert));
                     }
                 }
-            }
 
-            // Set the timestamp to indicate an index update.
-            tow_mongodb_index_updated(time());
+                // Set the timestamp to indicate an index update.
+                tow_mongodb_index_updated(time());
+                $added += count($docs);
+            }
         } catch (Exception $e) {
             $nids = array();
             if (!empty($docs)) {
@@ -227,12 +228,15 @@ function tow_mongodb_index_nodes($rows) {
                     $nids[] = $doc->nid;
                 }
             }
+            watchdog('ToW MongoDB', 'Adding @count documents.', array('@count' => $added));
             watchdog('ToW MongoDB', 'Indexing failed on one of the following nodes: @nids <br /> !message', array(
                 '@nids' => implode(', ', $nids),
                 '!message' => nl2br(strip_tags($e->getMessage())),
                     ), WATCHDOG_ERROR);
             return FALSE;
         }
+
+        watchdog('ToW MongoDB', 'Adding @count documents.', array('@count' => $added));
     }
 
     // Save the new position in case it changed.
@@ -401,6 +405,7 @@ function tow_mongodb_index_add_node_document(&$documents, $nid) {
  * Given a node ID, return a document representing that node.
  */
 function tow_mongodb_index_node_to_document($nid) {
+    watchdog('ToW MongoDB', "Node #$nid has been added to document list");
 
     // Set reset = TRUE to avoid static caching of all nodes that get indexed.
     $node = node_load($nid, NULL, TRUE);
