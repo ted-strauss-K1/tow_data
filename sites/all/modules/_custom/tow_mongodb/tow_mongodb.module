@@ -484,14 +484,16 @@ function tow_mongodb_update_index() {
  * so that a theme can't call drupal_get_js() and mess everything up.
  */
 function jsalter_theme_registry_alter(&$theme_registry) {
-    if (isset($theme_registry['page'])) {
-        if (count($theme_registry['page']['preprocess functions']) > 0) {
-            // If jquery_update's preprocess function is there already, remove it.
-            if ($key = array_search('jsalter_preprocess_page', $theme_registry['page']['preprocess functions'])) {
-                unset($theme_registry['page']['preprocess functions'][$key]);
+    if ((arg(0) == 'search_dataset') && !arg(2)) {
+        if (isset($theme_registry['page'])) {
+            if (count($theme_registry['page']['preprocess functions']) > 0) {
+                // If jquery_update's preprocess function is there already, remove it.
+                if ($key = array_search('jsalter_preprocess_page', $theme_registry['page']['preprocess functions'])) {
+                    unset($theme_registry['page']['preprocess functions'][$key]);
+                }
             }
+            // Now tack it on at the end so it runs after everything else.
+            $theme_registry['page']['preprocess functions'][] = 'jsalter_preprocess_page';
         }
-        // Now tack it on at the end so it runs after everything else.
-        $theme_registry['page']['preprocess functions'][] = 'jsalter_preprocess_page';
     }
 }
