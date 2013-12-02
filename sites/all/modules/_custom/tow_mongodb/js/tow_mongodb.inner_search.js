@@ -138,8 +138,8 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                     dataArray.push(NewRow);
                 }
 
-                console.log(datamdb);
-                //console.log(dataArray);
+                // console.log(datamdb);
+                // console.log(dataArray);
                 
                 
                 //$(function(){
@@ -341,7 +341,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                               
                               var filters_str = $(e.target).closest('div.accordion-group').find('p.ss-filters').text();
                               var ss_data = $.parseJSON(filters_str);
-                              console.log(ss_data);
+                              // console.log(ss_data);
                                 var newSelectedFields = [];
                                 for (var sf in ss_data) {
                                     newSelectedFields.push(parseInt(sf));
@@ -466,7 +466,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                                 var selectedFieldIndex = $(this).index();
                                 savedSearchFilters[selectedFieldIndex] = widgets['chart' + selectedFieldIndex].filters();
                             });
-                            console.log(JSON.stringify(savedSearchFilters));
+                            // console.log(JSON.stringify(savedSearchFilters));
                         });
 			
                     }
