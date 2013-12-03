@@ -183,10 +183,12 @@ function tow_mongodb_index_nodes($rows) {
     session_save_session(FALSE);
     $saved_user = $user;
     $user = drupal_anonymous_user();
+    $uids = array();
 
     foreach ($rows as $row) {
         try {
             tow_mongodb_index_add_node_document($documents, $row->nid);
+            $uids[] = $row->uid;
 
             // Variables to track the last item changed.
             $position['last_change'] = $row->changed;
@@ -197,10 +199,10 @@ function tow_mongodb_index_nodes($rows) {
             watchdog('ToW MongoDB', 'Error constructing documents to index: <br /> !message', array('!message' => "Node ID: {$row->nid}<br />" . nl2br(strip_tags($e->getMessage()))), WATCHDOG_ERROR);
         }
     }
+
     // Restore the user.
     $user = $saved_user;
     session_save_session(TRUE);
-
     if (count($documents)) {
         try {
             // Chunk the adds by 20s
@@ -242,6 +244,44 @@ function tow_mongodb_index_nodes($rows) {
     // Save the new position in case it changed.
     variable_set('tow_mongodb_index_last', $position);
 
+    $uids = array_unique($uids);
+    extract(tow_mongodb_index_get_last_index());
+    foreach ($uids as $uid) {
+        $sql = "SELECT COUNT(tmi.nid) AS count FROM {tow_mongodb_index} tmi INNER JOIN {node} n ON n.nid = tmi.nid WHERE (tmi.changed > %d OR (tmi.changed = %d AND tmi.nid > %d)) AND tmi.status = 1";
+        $count = db_result(db_query($sql, $last_change, $last_change, $last_nid));
+        $sql = "SELECT u.mail AS email, u.name AS name FROM {users} u WHERE u.uid = %d";
+        $user = db_fetch_object(db_query($sql, $uid));
+        if ($count == 0) {
+
+            // Define the body of the message.
+            $body = '<p>Hello, ' . $user->name . '!</p>';
+            $body .= '<p>All your content has been indexed and now is available for use on Trudat.</p>';
+            $body .= 'Good luck!';
+
+            // Headers.
+            $headers = array(
+                'MIME-Version' => '1.0',
+                'Content-Type' => 'text/html; charset=UTF-8; format=flowed; delsp=yes',
+                'Content-Transfer-Encoding' => '8Bit',
+                'X-Mailer' => 'Drupal',
+            );
+
+            // Message.
+            $message = array(
+                'id' => 'index',
+                'to' => $user->email,
+                'subject' => 'Trudat index status',
+                'body' => $body,
+                'headers' => $headers,
+                'from' => variable_get('site_mail', 'notify@theoryonwheels.com')
+            );
+
+            // Send mail.
+            drupal_mail_send($message);
+        }
+    }
+    watchdog('ToW Import', '<pre>' . print_r($uids, TRUE) . '</pre>');
+
     return $position;
 }
 
@@ -252,7 +292,7 @@ function tow_mongodb_index_get_nodes_to_index($limit) {
     extract(tow_mongodb_index_get_last_index());
     $args = array($last_change, $last_change, $last_nid);
     $rows = array();
-    $result = db_query_range("SELECT tmi.nid, tmi.changed FROM {tow_mongodb_index} tmi INNER JOIN {node} n ON n.nid = tmi.nid WHERE (tmi.changed > %d OR (tmi.changed = %d AND tmi.nid > %d)) AND tmi.status = 1 ORDER BY tmi.changed ASC, tmi.nid ASC", $args, 0, $limit);
+    $result = db_query_range("SELECT tmi.nid, tmi.changed, n.uid FROM {tow_mongodb_index} tmi INNER JOIN {node} n ON n.nid = tmi.nid WHERE (tmi.changed > %d OR (tmi.changed = %d AND tmi.nid > %d)) AND tmi.status = 1 ORDER BY tmi.changed ASC, tmi.nid ASC", $args, 0, $limit);
     while ($row = db_fetch_object($result)) {
         $rows[] = $row;
     }
@@ -405,7 +445,7 @@ function tow_mongodb_index_add_node_document(&$documents, $nid) {
  * Given a node ID, return a document representing that node.
  */
 function tow_mongodb_index_node_to_document($nid) {
-    watchdog('ToW MongoDB', "Node #$nid has been added to document list");
+    # watchdog('ToW MongoDB', "Node #$nid has been added to document list");
 
     // Set reset = TRUE to avoid static caching of all nodes that get indexed.
     $node = node_load($nid, NULL, TRUE);
@@ -421,6 +461,7 @@ function tow_mongodb_index_node_to_document($nid) {
         $document['values'][] = array(
             '$set' => array(
                 'title' => $node->title,
+                'uid' => $node->uid,
             ),
         );
         list($tables, ) = tow_search_inner_linked_build_tablesets($node->nid);
@@ -473,6 +514,7 @@ function tow_mongodb_index_node_to_document($nid) {
             '$push' => array(
                 'tables' => array(
                     '_id' => $node->nid,
+                    'uid' => $node->uid,
                     'header' => tow_apachesolr_table_fields($node->nid),
                     'rows' => $rows
                 ),
@@ -501,6 +543,7 @@ function tow_mongodb_index_node_to_document($nid) {
             $values[$name] = _tow_mongodb_prepare_node_value(&$value, $type);
         }
         $values['_id'] = $node->nid;
+        $values['uid'] = $node->uid;
         $document['values'][] = array(
             '$push' => array(
                 'tables.$.rows' => $values,
@@ -554,6 +597,7 @@ function tow_mongodb_index_node_to_document($nid) {
             }
         }
         $values['_id'] = $node->nid;
+        $values['uid'] = $node->uid;
         $document['values'][] = array(
             '$push' => array(
                 'tables.$.rows' => $values,
