@@ -111,6 +111,26 @@ function tow_mongodb_help($path, $arg) {
  *  The hook_js_alter function can modify this string.
  */
 function tow_mongodb_js_alter(&$javascript, $scope, &$query_string) {
+    if (variable_get('jquery_update_replace', TRUE) && ($scope == 'header')) {
+
+        // Replace jquery.js first.
+        $new_jquery = array(jquery_update_jquery_path() => $javascript['core']['misc/jquery.js']);
+        $javascript['core'] = array_merge($new_jquery, $javascript['core']);
+        unset($javascript['core']['misc/jquery.js']);
+
+        // Loop through each of the required replacements.
+        foreach (jquery_update_get_replacements() as $type => $replacements) {
+            foreach ($replacements as $find => $replace) {
+                // If the file to replace is loaded on this page...
+                if (isset($javascript[$type][$find])) {
+                    // Create a new entry for the replacement file, and unset the original one.
+                    $replace = JQUERY_UPDATE_REPLACE_PATH . '/' . $replace;
+                    $javascript[$type][$replace] = $javascript[$type][$find];
+                    unset($javascript[$type][$find]);
+                }
+            }
+        }
+    }
 
     // Apply javascript change to Inner Search page only.
     if ((arg(0) == 'search_dataset') && !arg(2)) {
@@ -120,9 +140,6 @@ function tow_mongodb_js_alter(&$javascript, $scope, &$query_string) {
             foreach (array('core', 'inline', 'module', 'setting', 'theme') as $area) {
                 switch ($area) {
                     case 'core':
-                        $jquery = array(jquery_update_jquery_path() => $javascript[$area]['misc/jquery.js']);
-                        $javascript['core'] = array_merge($jquery, $javascript[$area]);
-                        unset($javascript['core']['misc/jquery.js']);
                         break;
                     case 'inline':
                         break;
