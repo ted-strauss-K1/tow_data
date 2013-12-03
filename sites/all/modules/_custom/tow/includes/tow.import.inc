@@ -798,7 +798,10 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
                 );
             }
             $to_index = array(
-                'sql' => "INSERT INTO {tow_mongodb_index} (nid, changed) VALUES ($table_nid, $now), ",
+                'sql' => array(
+                    'mongo' => "INSERT INTO {tow_mongodb_index} (nid, changed) VALUES ($table_nid, $now), ",
+                    'solr' => "INSERT INTO {apachesolr_search_node} (nid, changed) VALUES ($table_nid, $now), ",
+                )
             );
             for ($record_index = 0; $record_index < $table['rows_qty']; $record_index++) {
 
@@ -841,7 +844,8 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
                     $new_record->field_position[0]['value'] = array_shift($available_positions);
                     $pos = db_escape_string($new_record->field_position[0]['value']);
                     $content_type_record['sql'] .= "($nid, $vid, '$table_nid', '$pos'), ";
-                    $to_index['sql'] .= "($nid, $now), ";
+                    $to_index['sql']['mongo'] .= "($nid, $now), ";
+                    $to_index['sql']['solr'] .= "($nid, $now), ";
                 } catch (Exception $e) {
                     watchdog('ToW', $e->getMessage(), array(), WATCHDOG_ERROR);
                 }
@@ -855,7 +859,8 @@ function tow_import_file_process_test($hash, $filename, $to, $processor = 'phpex
                     db_query(rtrim($fieldtypes[$type]['sql'], ', '));
                 }
             }
-            db_query(rtrim($to_index['sql'], ', '));
+            db_query(rtrim($to_index['sql']['mongo'], ', '));
+            db_query(rtrim($to_index['sql']['solr'], ', '));
             unset($new_table);
             unset($table_nid);
         }
