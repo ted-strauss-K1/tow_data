@@ -114,7 +114,7 @@ Drupal.behaviors.mdb_inner_search = function(context) {
                 for (var r = 0; r < RowsLength; r++) {
                     NewRow = {};
                     Object.keys(datamdb[0].tables[0].rows[r]).forEach(function (key, index) {
-                        if (key != '_id') {
+                        if (key != '_id' && key != 'uid') {
                             var TowFieldIndex = key.indexOf('_tow_field_');
                             var LastUnderscoreIndex = key.lastIndexOf('_');
                             var type = key.substring(TowFieldIndex + 11, LastUnderscoreIndex);
