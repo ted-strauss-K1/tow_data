@@ -340,8 +340,10 @@ function tow_record_format_for_search_indexing(&$node) {
 function tow_record_set_empty(&$node) {
     $types = content_types($node->type);
     foreach ($types['fields'] as $field) {
-        foreach ($node->$field['field_name'] as &$instance) {
-            $instance['value'] = _tow_field_remove_fake($instance['value']);
+        if (isset($node->$field['field_name'])) {
+            foreach ($node->$field['field_name'] as &$instance) {
+                $instance['value'] = _tow_field_remove_fake($instance['value']);
+            }
         }
     }
 }
