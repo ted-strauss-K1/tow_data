@@ -248,7 +248,7 @@ function tow_saved_searches_save_search_form(&$form_state, $nid, $filters, $sele
 function tow_saved_searches_save_search_form_validate(&$form, &$form_state) {
 
     // Get current node.
-    $nid = $form['nid'];
+    $nid = $form['nid']['#value'];
     if (!is_numeric($nid)) {
         $nid = str_replace(' ', '+', $nid);
         $nid_array = explode('+', $nid);
